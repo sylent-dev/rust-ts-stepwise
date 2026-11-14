@@ -139,3 +139,7 @@ The built-in functions acting on the map and the sensors, their errors, a value 
 ### 10a. Checks (#37)
 
 How the data crosses the bridge (see [Technical choices](technical-choices.md), Bridge), the places of the source as the editor counts them (a line, and offsets in UTF-16 code units), `check(source)` and every error of syntax, of names and of structure with its TypeScript type; a function of the core that checks a source and gives either its errors or a checked program, the only one the machine will run (decided on 2026-11-14); tests from TypeScript on the place of an error after accents and an emoji.
+
+### 10b. Levels and map (#38)
+
+A level file or the sandbox read through the bridge, each kept in the module as a handle (the exported classes `Level` and `Sandbox`): the starting code and, for each map, the world as plain data (the cells row by row, the paint of a cell with its painted passages on its four sides, the items, the robot without its brush nor its eraser) and the goals that have a cell, to mark; a file the core refuses throws an error with the sentence of the core (decided on 2026-11-14).
