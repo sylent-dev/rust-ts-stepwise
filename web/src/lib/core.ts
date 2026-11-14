@@ -70,12 +70,14 @@ export {
  *
  * `step()` gives a word and `line`, `afterCall` and `steps` a number or a boolean: they are cheap
  * enough to be read after every step, even at **Instant**. `line` is `undefined` once the program
- * has stopped, at its end or on an error: `outcome()` then says how. What `printed()`, `world()`,
+ * has stopped, at its end or on an error: `outcome()` then says how. `printed()` gives the line
+ * of the last step, a text that may be empty, when `step()` gave `printed`. What `world()`,
  * `outcome()` and `calls()` give are plain objects built again at each call: read them when they
- * are needed (a line printed, once per frame, at a pause), and keep the world in `$state.raw`.
+ * are needed (once per frame, at a pause), and keep the world in `$state.raw`.
  *
  * A run stays in the module, as its level, which it outlives: free it at **Reset** and before
- * starting another one (`using`, or `free()`).
+ * starting another one (`using`, or `free()`), and don't call it afterwards: it throws. An
+ * animation frame asked before **Reset** must not step a run that was freed since.
  */
 export {
 	Run,

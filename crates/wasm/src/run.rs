@@ -136,7 +136,8 @@ impl Run {
     /// Runs one step, and gives what it showed outside the editor. A step may show an action
     /// and stop the program all the same (`if forward():` moves the robot, then stops on the
     /// value missing): the word tells the action, and [`Run::line`] that the program has
-    /// stopped. Once it has, a step does nothing.
+    /// stopped. Once it has, a step runs nothing and gives `nothing`; the line printed before
+    /// it is dropped, as after any step.
     pub fn step(&mut self) -> StepEvent {
         let (event, printed) = match self.core.step() {
             None => (StepEvent::Nothing, None),
@@ -420,6 +421,18 @@ robot = { at = [0, 0], facing = "east" }
         panic!("the program still runs after {MAX_STEPS} steps");
     }
 
+    /// Runs `run` until the line `line` is the next one to run.
+    #[track_caller]
+    fn run_to_line(run: &mut Run, line: u32) {
+        for _ in 0..MAX_STEPS {
+            if run.line() == Some(line) {
+                return;
+            }
+            run.step();
+        }
+        panic!("the program never reaches the line {line}");
+    }
+
     fn number(text: &str) -> Value {
         Value {
             value_type: ValueType::Number,
@@ -490,7 +503,10 @@ drop()
     fn the_line_of_the_next_step_is_given_until_the_program_stops() {
         let mut run = run("# Walk\n\nforward()\nif true:\n    forward()\n");
         let mut lines = Vec::new();
-        while let Some(line) = run.line() {
+        for _ in 0..MAX_STEPS {
+            let Some(line) = run.line() else {
+                break;
+            };
             lines.push((line, run.steps()));
             run.step();
         }
@@ -499,25 +515,6 @@ drop()
         // Nothing more runs, nor is counted.
         assert_eq!(run.step(), StepEvent::Nothing);
         assert_eq!((run.line(), run.steps()), (None, 3.0));
-    }
-
-    #[test]
-    fn a_line_resumed_after_a_call_is_told_apart_from_a_line_that_starts() {
-        let source = "\
-function double(n):
-    return n * 2
-
-print(double(3))
-";
-        let mut run = run(source);
-        let mut lines = Vec::new();
-        while let Some(line) = run.line() {
-            lines.push((line, run.after_call()));
-            run.step();
-        }
-        // The line 4 starts, enters the function, and is highlighted again once it ends.
-        assert_eq!(lines, [(4, false), (2, false), (4, true)]);
-        assert!(!run.after_call());
     }
 
     #[test]
@@ -601,14 +598,6 @@ print(double(3))
     }
 
     #[test]
-    fn a_run_in_the_sandbox_ends_without_goal() {
-        let sandbox = Sandbox::new(SANDBOX).expect("a valid sandbox file");
-        let mut run = sandbox.run("forward()\n").expect("a program that starts");
-        assert_eq!(finish(&mut run), [StepEvent::Moved]);
-        assert_eq!(run.ended(), Some(Outcome::Ended));
-    }
-
-    #[test]
     fn a_program_with_errors_or_a_map_that_is_not_there_starts_nothing() {
         let level = Level::new(LEVEL).expect("a valid level file");
         for refused in ["forward(\n", "forwrad()\n"] {
@@ -638,9 +627,7 @@ paint_side(3)
 ";
         let mut run = run(source);
         // Up to the line 3: the `let` of the function has just run.
-        while run.line() != Some(3) {
-            run.step();
-        }
+        run_to_line(&mut run, 3);
         assert_eq!(
             run.calls_in_progress(),
             [

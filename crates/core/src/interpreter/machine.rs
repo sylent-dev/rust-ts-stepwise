@@ -53,17 +53,23 @@ impl Machine {
     /// on [`RuntimeErrorKind::Internal`] rather than panic.
     #[must_use]
     pub fn new(program: &Checked, world: World) -> Self {
-        Self::unchecked(program.program(), world)
+        Self::compiled(program.program(), world)
     }
 
-    /// A machine about to run `program`, whatever the checks before running say of it: only
-    /// the tests give it a program that isn't checked.
+    /// A machine about to run `program`, whatever the checks before running say of it: it
+    /// exists for the tests alone, which see what a program that isn't checked does.
+    #[cfg(test)]
+    pub(super) fn unchecked(program: &Program, world: World) -> Self {
+        Self::compiled(program, world)
+    }
+
+    /// A machine about to run the instructions of `program`.
     ///
     /// A program the compiler can't translate (a name that is no variable, a `break` outside
     /// a loop…) starts stopped on [`RuntimeErrorKind::Internal`], at the place that stops
     /// the compiler. Any other program the checks refuse may run: it never panics, but what
     /// it does isn't specified.
-    pub(super) fn unchecked(program: &Program, world: World) -> Self {
+    fn compiled(program: &Program, world: World) -> Self {
         match compile(program) {
             Ok(code) => Self::start(code, world),
             Err(NotChecked(span)) => {

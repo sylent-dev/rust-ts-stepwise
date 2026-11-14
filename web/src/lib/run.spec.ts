@@ -11,7 +11,9 @@ import {
 	Level,
 	Sandbox,
 	type Cell,
+	type ProgramErrorKind,
 	type Run,
+	type RuntimeErrorKind,
 	type StepEvent
 } from '#lib/wasm/stepwise.js';
 
@@ -65,6 +67,16 @@ function finish(run: Run): Steps {
 		}
 	}
 	return steps;
+}
+
+/** Runs `run` until `line` is the next line to run. */
+function runToLine(run: Run, line: number): void {
+	for (let steps = 0; run.line !== line; steps += 1) {
+		if (run.line === undefined || steps >= MAX_STEPS) {
+			throw new Error(`the program never reaches the line ${line}`);
+		}
+		run.step();
+	}
 }
 
 /** What `source` prints in a small sandbox, run to its end without error. */
@@ -262,6 +274,29 @@ describe('a program run in the sandbox', () => {
 		expect(run.printed()).toBe('2');
 	});
 
+	it('gives the empty line of a print without value, which is still a line', () => {
+		using sandbox = new Sandbox(SMALL_SANDBOX);
+		using run = sandbox.start('print()\nforward()\n');
+		expect(run.step()).toBe('printed');
+		// An empty text, not `undefined`: the word of the step says that a line was printed.
+		expect(run.printed()).toBe('');
+		expect(run.step()).toBe('moved');
+		expect(run.printed()).toBeUndefined();
+	});
+
+	it('gives the line of a print whose step stops the program', () => {
+		using sandbox = new Sandbox(SMALL_SANDBOX);
+		using run = sandbox.start('let line = print("x")\nforward()\n');
+		// One step: the line is printed, then the `let` finds no value.
+		expect(finish(run)).toStrictEqual({ lines: [1], events: ['printed'], printed: ['x'] });
+		expect(run.printed()).toBe('x');
+		const outcome = run.outcome();
+		expect(outcome?.type === 'failed' ? outcome.error.kind : undefined).toStrictEqual({
+			code: 'no-value',
+			function: 'print'
+		});
+	});
+
 	it('keeps running a program that never ends, its steps counted', () => {
 		using sandbox = new Sandbox(SMALL_SANDBOX);
 		using run = sandbox.start('while true:\n    turn_left()\n');
@@ -344,6 +379,14 @@ print("never")
 		});
 	});
 
+	it('has no code that is also one of the checks before running', () => {
+		// Checked by `npm run check`: the type is `never` when no code is in both unions, and
+		// the brackets keep TypeScript from spreading the condition over `never`.
+		type CodeInBoth = Extract<RuntimeErrorKind['code'], ProgramErrorKind['code']>;
+		const noCodeInBoth: [CodeInBoth] extends [never] ? true : false = true;
+		expect(noCodeInBoth).toBe(true);
+	});
+
 	it('gives the values its message needs: types, an operator, a number, a function', () => {
 		const kinds = [
 			'print("Sides: " + 4)\n',
@@ -383,9 +426,7 @@ paint_side(3)
 		using sandbox = new Sandbox(SMALL_SANDBOX);
 		using run = sandbox.start(source);
 		// Up to the line of the `while`, reached for the first time: `let done = 0` has just run.
-		while (run.line !== 3) {
-			run.step();
-		}
+		runToLine(run, 3);
 		// The main program has no `function`: the key is left out rather than undefined.
 		expect(run.calls()).toStrictEqual([
 			{
@@ -427,7 +468,7 @@ paint_side(3)
 		using sandbox = new Sandbox(SMALL_SANDBOX);
 		using run = sandbox.start('function double(n):\n    return n * 2\n\nprint(double(3))\n');
 		const lines: [number, boolean][] = [];
-		for (let line = run.line; line !== undefined; line = run.line) {
+		for (let line = run.line; line !== undefined && lines.length < MAX_STEPS; line = run.line) {
 			lines.push([line, run.afterCall]);
 			run.step();
 		}
@@ -505,9 +546,16 @@ describe('a program at the maximum depth of the tree', () => {
 		expect(printedAtTheLimit(deep(MAX_BLOCK_DEPTH), deep(MAX_BLOCK_DEPTH + 1))).toStrictEqual([
 			'deep'
 		]);
-		// The worst case: the deepest expression the parser takes inside the deepest blocks.
+		// The deepest expression the parser takes inside the deepest blocks.
 		const depth = MAX_DEPTH - MAX_BLOCK_DEPTH - 2;
-		const worst = (levels: number): string => nestedBlocks(MAX_BLOCK_DEPTH, nestedValue(levels));
+		const nested = (levels: number): string => nestedBlocks(MAX_BLOCK_DEPTH, nestedValue(levels));
+		expect(printedAtTheLimit(nested(depth), nested(depth + 1))).toStrictEqual(['1']);
+		// The worst case for the stack: a call costs more of it than a pair of parentheses, in the
+		// parser as in the checker, so the same depth made of calls of a function.
+		const same = 'function same(value):\n    return value\n\n';
+		const calls = (levels: number): string =>
+			`print(${'same('.repeat(levels)}1${')'.repeat(levels)})`;
+		const worst = (levels: number): string => same + nestedBlocks(MAX_BLOCK_DEPTH, calls(levels));
 		expect(printedAtTheLimit(worst(depth), worst(depth + 1))).toStrictEqual(['1']);
 	});
 });
