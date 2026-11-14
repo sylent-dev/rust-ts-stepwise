@@ -22,10 +22,18 @@
 mod check;
 mod level;
 mod position;
+mod run;
+mod runtime_error;
+mod value;
 mod world;
 
 use stepwise_core::probe;
 use wasm_bindgen::prelude::wasm_bindgen;
+
+/// A count of the core as a number that JavaScript holds exactly.
+fn count(count: usize) -> u32 {
+    u32::try_from(count).unwrap_or(u32::MAX)
+}
 
 /// The version of the core, so that the interface can check which module it loaded.
 #[wasm_bindgen(js_name = coreVersion)]

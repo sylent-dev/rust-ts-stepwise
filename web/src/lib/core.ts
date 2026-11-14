@@ -62,5 +62,33 @@ export {
 	type World
 } from '#lib/wasm/stepwise.js';
 
+/**
+ * A program being run (see crates/wasm/src/run.rs): `level.start(map, text)` and
+ * `sandbox.start(text)` give a `Run` paused before its first line, on its own copy of the world.
+ * Check the text first: they throw for a program that has errors. The places of an error while
+ * running are those of that text, as for `check`.
+ *
+ * `step()` gives a word and `line`, `afterCall` and `steps` a number or a boolean: they are cheap
+ * enough to be read after every step, even at **Instant**. `line` is `undefined` once the program
+ * has stopped, at its end or on an error: `outcome()` then says how. What `printed()`, `world()`,
+ * `outcome()` and `calls()` give are plain objects built again at each call: read them when they
+ * are needed (a line printed, once per frame, at a pause), and keep the world in `$state.raw`.
+ *
+ * A run stays in the module, as its level, which it outlives: free it at **Reset** and before
+ * starting another one (`using`, or `free()`).
+ */
+export {
+	Run,
+	type Call,
+	type GoalNotMet,
+	type Outcome,
+	type RuntimeError,
+	type RuntimeErrorKind,
+	type StepEvent,
+	type Value,
+	type ValueType,
+	type Variable
+} from '#lib/wasm/stepwise.js';
+
 /** The probe of step 4c (see crates/core/src/probe.rs), to create once `loadCore` has resolved. */
 export { Probe, type Action, type ProbeDirection } from '#lib/wasm/stepwise.js';

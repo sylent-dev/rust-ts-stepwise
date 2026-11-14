@@ -1,13 +1,15 @@
 //! The levels and the sandbox, for the interface (see *Levels and progression* and *Sandbox*
 //! in `specs.md`): [`Level`] and [`Sandbox`] read a file and keep what the core checked in it,
-//! and give as data the code it starts with, the world of each map and the goals to mark.
+//! give as data the code it starts with, the world of each map and the goals to mark, and
+//! start a program on one of their maps.
 
 use serde::Serialize;
-use stepwise_core::level;
+use stepwise_core::{level, run};
 use tsify::{Ts, Tsify};
 use wasm_bindgen::JsError;
 use wasm_bindgen::prelude::wasm_bindgen;
 
+use crate::run::{Run, StartError};
 use crate::world::{Color, Direction, Point, World, passages};
 
 /// A level, read from its file and checked once. It stays in the module, where a program
@@ -51,6 +53,37 @@ impl Level {
             .map(|map| Ok(Ts::from_rust(&LevelMap::from(map))?))
             .collect()
     }
+
+    /// Starts the program of `source` on the map of index `map`, from 0 in the order of
+    /// [`Level::maps`]: a run paused before its first line, on its own copy of the world of
+    /// the map, which stays as it starts.
+    ///
+    /// # Errors
+    ///
+    /// It throws when the checks before running refuse `source`, or when the level has no
+    /// such map: the interface checks the program first, and starts nothing while it has an
+    /// error.
+    pub fn start(&self, map: usize, source: &str) -> Result<Run, JsError> {
+        Ok(self.run(map, source)?)
+    }
+}
+
+impl Level {
+    /// The run [`Level::start`] gives, before its error crosses to JavaScript.
+    ///
+    /// # Errors
+    ///
+    /// [`StartError`], when the checks before running refuse `source` or the level has no
+    /// map of index `map`.
+    pub fn run(&self, map: usize, source: &str) -> Result<Run, StartError> {
+        let maps = self.0.maps();
+        let no_such_map = StartError::NoSuchMap {
+            index: map,
+            maps: maps.len(),
+        };
+        let map = maps.get(map).ok_or(no_such_map)?;
+        Run::start(source, |program| run::Run::on_map(program, map))
+    }
 }
 
 /// The sandbox, read from its file and checked once: an open map without goal. It stays in
@@ -87,6 +120,27 @@ impl Sandbox {
     /// It throws when the world can't be made a JavaScript object, which it never does.
     pub fn world(&self) -> Result<Ts<World>, JsError> {
         Ok(Ts::from_rust(&World::from(self.0.world()))?)
+    }
+
+    /// Starts the program of `source` in the sandbox: a run paused before its first line, on
+    /// its own copy of the world, which stays as it starts.
+    ///
+    /// # Errors
+    ///
+    /// It throws when the checks before running refuse `source`, as for a level.
+    pub fn start(&self, source: &str) -> Result<Run, JsError> {
+        Ok(self.run(source)?)
+    }
+}
+
+impl Sandbox {
+    /// The run [`Sandbox::start`] gives, before its error crosses to JavaScript.
+    ///
+    /// # Errors
+    ///
+    /// [`StartError::ProgramRefused`], when the checks before running refuse `source`.
+    pub fn run(&self, source: &str) -> Result<Run, StartError> {
+        Run::start(source, |program| run::Run::in_sandbox(program, &self.0))
     }
 }
 
