@@ -223,7 +223,38 @@ pub enum BinaryOperator {
     Or,
 }
 
+impl UnaryOperator {
+    /// The operator as a program writes it.
+    #[must_use]
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Negate => "-",
+            Self::Not => "not",
+        }
+    }
+}
+
 impl BinaryOperator {
+    /// The operator as a program writes it.
+    #[must_use]
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Add => "+",
+            Self::Subtract => "-",
+            Self::Multiply => "*",
+            Self::Divide => "/",
+            Self::Remainder => "%",
+            Self::Equal => "==",
+            Self::NotEqual => "!=",
+            Self::Less => "<",
+            Self::LessEqual => "<=",
+            Self::Greater => ">",
+            Self::GreaterEqual => ">=",
+            Self::And => "and",
+            Self::Or => "or",
+        }
+    }
+
     /// Whether the operator compares two values: comparisons don't chain.
     #[must_use]
     pub const fn is_comparison(self) -> bool {
@@ -241,7 +272,52 @@ impl BinaryOperator {
 
 #[cfg(test)]
 mod tests {
+    use super::{BinaryOperator, ExpressionKind, StatementKind, UnaryOperator};
     use crate::parser::parse;
+
+    /// The expression of `source`, a `let` alone.
+    fn value_of(source: &str) -> ExpressionKind {
+        let program = parse(source).unwrap();
+        match &program.statements[0].kind {
+            StatementKind::Let { value, .. } => value.kind.clone(),
+            other => panic!("{source:?} is no let: {other:?}"),
+        }
+    }
+
+    #[test]
+    fn each_operator_is_written_as_the_parser_reads_it() {
+        use BinaryOperator as B;
+        for expected in [UnaryOperator::Negate, UnaryOperator::Not] {
+            let source = format!("let result = {} value", expected.as_str());
+            let ExpressionKind::Unary { operator, .. } = value_of(&source) else {
+                panic!("{source:?} has no operator in front of its value");
+            };
+            assert_eq!(operator, expected, "in {source:?}");
+        }
+        let between = [
+            (B::Add, "+"),
+            (B::Subtract, "-"),
+            (B::Multiply, "*"),
+            (B::Divide, "/"),
+            (B::Remainder, "%"),
+            (B::Equal, "=="),
+            (B::NotEqual, "!="),
+            (B::Less, "<"),
+            (B::LessEqual, "<="),
+            (B::Greater, ">"),
+            (B::GreaterEqual, ">="),
+            (B::And, "and"),
+            (B::Or, "or"),
+        ];
+        for (expected, written) in between {
+            assert_eq!(expected.as_str(), written);
+            let source = format!("let result = left {written} right");
+            let ExpressionKind::Binary { operator, .. } = value_of(&source) else {
+                panic!("{source:?} has no operator between two values");
+            };
+            assert_eq!(operator, expected, "in {source:?}");
+        }
+    }
 
     /// The number of statements of each block of the first statement of `source`.
     fn block_lengths(source: &str) -> Vec<usize> {
