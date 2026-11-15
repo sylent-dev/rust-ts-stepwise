@@ -71,13 +71,13 @@ const SCENES = {};
 // A scene in the page: the map with its layer of moving things, the program beside it. Its player
 // starts once the sheet is drawn (startScenes).
 // `move` and `turn` choose an easing of EASINGS for this scene alone, instead of the decided ones;
-// `erase` a look of the eraser compared, instead of the decided one, and `carry` a look of the tab Pick up
-// and drop, instead of the tab.
-function motionScene(name, { rate = NORMAL_SPEED, size = 48, code = true, move = "", turn = "", erase = "", carry = "" } = {}) {
+// `erase` a look of the eraser compared, instead of the decided one, and `carry` a look of picking up
+// and dropping compared, and `bump` a look of the tab Bump, instead of the tab.
+function motionScene(name, { rate = NORMAL_SPEED, size = 48, code = true, move = "", turn = "", erase = "", carry = "", bump = "" } = {}) {
   const scene = SCENES[name];
-  const layer = `<div class="motion-layer" style="--cell:${size}px"><svg viewBox="0 0 ${scene.rows[0].length * 64} ${scene.rows.length * 64}" aria-hidden="true"></svg><div class="motion-items"></div><div class="motion-robot"></div></div>`;
+  const layer = `<div class="motion-layer" style="--cell:${size}px"><svg viewBox="0 0 ${scene.rows[0].length * 64} ${scene.rows.length * 64}" aria-hidden="true"></svg><div class="motion-items"></div><div class="motion-robot"></div><svg class="motion-over" viewBox="0 0 ${scene.rows[0].length * 64} ${scene.rows.length * 64}" aria-hidden="true"></svg></div>`;
   const program = code ? `<div class="motion-panel"><ol class="motion-code">${scene.program.map(line => `<li>${line}</li>`).join("")}</ol><div class="motion-status"></div></div>` : "";
-  return `<div class="motion-scene" data-scene="${name}" data-rate="${rate}" data-size="${size}" data-move="${move}" data-turn="${turn}" data-erase="${erase}" data-carry="${carry}"><div class="motion-stage">${appMap(scene.rows, scene.marks, size)}${layer}</div>${program}</div>`;
+  return `<div class="motion-scene" data-scene="${name}" data-rate="${rate}" data-size="${size}" data-move="${move}" data-turn="${turn}" data-erase="${erase}" data-carry="${carry}" data-bump="${bump}"><div class="motion-stage">${appMap(scene.rows, scene.marks, size)}${layer}</div>${program}</div>`;
 }
 
 // The duration of an action at a speed: the one chosen for the normal speed, shortened when a step
@@ -113,6 +113,8 @@ const backedUp = (world, amount) => {
   const [dx, dy] = AHEAD[world.angle];
   return { x: world.x - dx * BACK_OFF * amount, y: world.y - dy * BACK_OFF * amount };
 };
+// Decided at step 11a: the robot steps back to show the item.
+const CARRY_LOOK = "back";
 const CARRY_LOOKS = {
   // The item pops into the bay, or out of it, while the pincer is out.
   pop: {
@@ -176,6 +178,28 @@ const CARRY_LOOKS = {
   },
 };
 
+// The bump into a wall or the edge of the map, the error that stops the program: the robot goes
+// forward until its front touches the border of its cell (0.2 of a cell), faster and faster, then
+// comes back onto its cell, as the tab Bump says. It takes 450 ms at the normal speed: it ends
+// the run, nothing waits after it. A pose may also squash the robot along its length
+// (`squash`, 1 at rest) or draw a spark where it touches (`spark`, 0 to 1).
+const BUMP_TIME = 450;
+const TOUCH = 0.2;
+const touching = p => p < 0.3 ? TOUCH * (p / 0.3) ** 2 : TOUCH * (1 - EASINGS.out(clamp01((p - 0.3) / 0.4)));
+const ahead = (world, amount) => {
+  const [dx, dy] = AHEAD[world.angle];
+  return { x: world.x + dx * amount, y: world.y + dy * amount };
+};
+const BUMP_LOOKS = {
+  back: (world, p) => ahead(world, touching(p)),
+  shake: (world, p) => {
+    const t = clamp01((p - 0.3) / 0.7);
+    return { ...ahead(world, touching(p)), angle: world.angle + (p > 0.3 ? 8 * Math.sin(Math.PI * 6 * t) * (1 - t) : 0) };
+  },
+  squash: (world, p) => ({ ...ahead(world, touching(p)), squash: p > 0.3 && p < 0.55 ? 1 - 0.16 * Math.sin(Math.PI * (p - 0.3) / 0.25) : 1 }),
+  spark: (world, p) => ({ ...ahead(world, touching(p)), spark: p > 0.28 && p < 0.7 ? (p - 0.28) / 0.42 : 0 }),
+};
+
 // The two rules of the eraser compared. "all", the rule of specs.md: a cell erased loses its paint
 // and every painted passage it has, the one toward the next cell too. "crossed": the eraser takes
 // away what it passes over, as the brush paints it: the cell it is on or enters, and the passage it
@@ -234,6 +258,12 @@ const ACTIONS = {
     (world, rule) => erasedFrom(world, key(world.x, world.y), null, rule),
   ),
   "stop-erasing": { commit: world => { world.eraser = false; } },
+  bump: {
+    ease: "linear",
+    time: BUMP_TIME,
+    commit: () => {},
+    pose: (world, p, look, bumpLook) => BUMP_LOOKS[bumpLook](world, p),
+  },
   pick: {
     ease: "linear",
     time: CARRY_TIME,
@@ -348,17 +378,19 @@ function playScene(root) {
   const paintLayer = root.querySelector(".motion-layer svg");
   const itemsLayer = root.querySelector(".motion-items");
   const robot = root.querySelector(".motion-robot");
+  const overLayer = root.querySelector(".motion-over");
   const lines = root.querySelectorAll(".motion-code li");
   const status = root.querySelector(".motion-status");
   const period = 1000 / rate;
-  const durations = { move: actionTime(MOVE_TIME, rate), carry: actionTime(CARRY_TIME, rate) };
+  const durations = { move: actionTime(MOVE_TIME, rate), [CARRY_TIME]: actionTime(CARRY_TIME, rate), [BUMP_TIME]: actionTime(BUMP_TIME, rate) };
   const easings = {
     move: EASINGS[root.dataset.move || MOVE_EASE],
     turn: EASINGS[root.dataset.turn || TURN_EASE],
     cue: EASINGS["in-out"],
   };
   const style = root.dataset.erase || ERASE_STYLE;
-  const look = root.dataset.carry || chosen.carry;
+  const look = root.dataset.carry || CARRY_LOOK;
+  const bumpLook = root.dataset.bump || chosen.bump;
   const rule = ERASE_RULES[style];
   const clipId = `motion-clip-${motionClips += 1}`;
   const [width, height] = [scene.rows[0].length * 64, scene.rows.length * 64];
@@ -380,12 +412,12 @@ function playScene(root) {
       applied += 1;
     }
     const action = current >= 0 && current < steps ? ACTIONS[scene.trace[current][1]] : undefined;
-    const duration = action?.time ? durations.carry : durations.move;
+    const duration = action?.time ? durations[action.time] : durations.move;
     const progress = action?.pose ? clamp01((elapsed - current * period) / duration) : 1;
     const eased = action?.pose ? (easings[action.ease] ?? EASINGS.linear)(progress) : 1;
-    const pose = { x: world.x, y: world.y, angle: world.angle, pincer: 0, floor: true, bay: true, flight: null, dropped: false, ...action?.pose?.(world, eased, look) };
+    const pose = { x: world.x, y: world.y, angle: world.angle, pincer: 0, floor: true, bay: true, flight: null, dropped: false, ...action?.pose?.(world, eased, look, bumpLook) };
     const ended = current >= steps;
-    if (ended) world.lit = scene.end ?? null;
+    if (ended && ["success", "failure"].includes(scene.end)) world.lit = scene.end;
 
     const removing = action?.removes?.(world, rule) ?? null;
     // A robot that scrubs shakes a little while it moves with its eraser down.
@@ -419,7 +451,22 @@ function playScene(root) {
       const [x, y] = cell.split(",").map(Number);
       return `<img src="${element("item")}" alt="" style="transform:translate(${x * size}px,${y * size}px)">`;
     }).join("");
-    robot.style.transform = `translate(${pose.x * size}px, ${pose.y * size}px) rotate(${pose.angle}deg)`;
+    robot.style.transform = `translate(${pose.x * size}px, ${pose.y * size}px) rotate(${pose.angle}deg) scale(1, ${pose.squash ?? 1})`;
+    // A spark where the front of the robot touches the border of its cell, over the robot: four
+    // short strokes flying along the wall and back from it.
+    let over = "";
+    if (pose.spark) {
+      const [dx, dy] = AHEAD[world.angle];
+      const [x, y] = [world.x * 64 + 32 + dx * 32, world.y * 64 + 32 + dy * 32];
+      const from = 8 + 12 * pose.spark;
+      const opacity = 1 - pose.spark ** 2;
+      over = [[0, 1], [0, -1], [-0.6, 0.8], [-0.6, -0.8]].map(([back, side]) => {
+        const [ux, uy] = [dx * back - dy * side, dy * back + dx * side];
+        const d = `M${x + ux * from} ${y + uy * from} L${x + ux * (from + 9)} ${y + uy * (from + 9)}`;
+        return `<path d="${d}" stroke="#222935" stroke-width="6" stroke-linecap="round" opacity="${opacity}"/><path d="${d}" stroke="#ffd23f" stroke-width="3.5" stroke-linecap="round" opacity="${opacity}"/>`;
+      }).join("");
+    }
+    overLayer.innerHTML = over;
     // The pincer slides out from under the front of the robot; the item it holds is drawn over it.
     const pincer = pose.pincer > 0 ? `<img src="${element("pincer")}" alt="" style="transform:translateY(${(1 - pose.pincer) * 14}%)">` : "";
     const carried = world.carrying && pose.bay || action === ACTIONS.pick && pose.bay ? `<img class="is-carried" src="${element("item")}" alt="">` : "";
@@ -432,9 +479,18 @@ function playScene(root) {
     // has ended, so that a line stays lit while the robot does what it says (decided at step 11a).
     const moved = current >= 0 && progress >= 1;
     const next = moved ? current + 1 : Math.max(current, 0);
-    lines.forEach((line, index) => line.classList.toggle("is-next", next < steps && scene.trace[next][0] === index));
+    // An error marks its line once its action has ended, and the status bar names it.
+    const failed = scene.end === "error" && next >= steps;
+    const errorLine = scene.trace[steps - 1][0];
+    lines.forEach((line, index) => {
+      line.classList.toggle("is-next", next < steps && scene.trace[next][0] === index);
+      line.classList.toggle("is-error", failed && index === errorLine);
+    });
     const result = { success: " · map passed", failure: " · goal not met" }[scene.end] ?? "";
-    if (status) status.textContent = ended ? `Ended${result} · ${steps} steps` : `Running · ${next} steps`;
+    if (status) {
+      status.textContent = failed ? `Error at line ${errorLine + 1} · ${steps} steps` : ended ? `Ended${result} · ${steps} steps` : `Running · ${next} steps`;
+      status.classList.toggle("is-error", failed);
+    }
     requestAnimationFrame(frame);
   };
   requestAnimationFrame(frame);

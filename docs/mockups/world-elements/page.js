@@ -5,8 +5,8 @@
 const VARIANTS = {
   theme: { label: "Style", options: Object.fromEntries(Object.entries(THEMES).map(([key, theme]) => [key, theme.title])), fallback: Object.keys(THEMES)[0] },
   vision: { label: "Vision", options: { normal: "Normal", protanopia: "Protanopia", deuteranopia: "Deuteranopia", tritanopia: "Tritanopia" }, fallback: "normal" },
-  // Step 11a, the animations (section-motion-carry.js): pick_up() and drop().
-  carry: { label: "Pick up and drop", options: { pop: "23. In the bay", over: "24. Over the robot", back: "25. Step back" }, fallback: "back" },
+  // Step 11a, the animations (section-motion-bump.js): the bump into a wall.
+  bump: { label: "Bump", options: { back: "26. Back", shake: "27. Back and shake", squash: "28. Squash", spark: "29. Spark" }, fallback: "shake" },
 };
 
 const params = new URLSearchParams(location.search);
