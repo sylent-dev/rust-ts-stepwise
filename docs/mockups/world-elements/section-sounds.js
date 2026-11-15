@@ -1,7 +1,16 @@
 // Section (step 11b): the sounds of a run, a success, a goal not met and a bump, and a sound at each
 // move, compared by ear.
 
-const SOUND_SCENES = [["success", "Every goal met"], ["failure", "A goal not met"], ["bumping", "A bump"]];
+// An error that the robot doesn't show: a division by zero.
+SCENES.dividing = {
+  rows: ["#####", "#...#", "#####"],
+  robot: { x: 1, y: 1, dir: "east" },
+  program: ["forward()", "let side = 4 / 0", "forward()"],
+  trace: [[0, "forward"], [1]],
+  end: "error",
+};
+
+const SOUND_SCENES = [["success", "Every goal met"], ["failure", "A goal not met"], ["bumping", "A bump"], ["pickEmpty", "No item to pick up"], ["dividing", "Another error"]];
 const MOVE_SCENES = [[2, "The square, 2 steps per second"], [5, "The square, 5 steps per second"]];
 
 // A button ▶ over a scene, which plays it once from its start with the sounds chosen.
@@ -27,7 +36,7 @@ const SOUND_PORTS = [
 ];
 
 SECTIONS.push(["Sounds: success, goal not met, bump, moves", () => `
-  <p>Chosen on 2026-11-15, at the volume 60: <b>41. Arpeggio</b> for a success, <b>48. Soft slide down</b> for a goal not met, <b>77. Spring</b> for a bump, <b>88. Tiny blip</b> for a move or a turn, up to 2 steps per second. Decided: the application synthesizes every sound with the Web Audio API, without a file. 77 and 88 were made as files by <code>make-sounds.py</code>: their ports, 90 and 91, have the same curves and the same level. Compare each pair by ear:</p>
+  <p>Chosen on 2026-11-15, at the volume 60: <b>41. Arpeggio</b> for a success, <b>48. Soft slide down</b> for a goal not met, <b>77. Spring</b> for a bump, <b>88. Tiny blip</b> for a move or a turn, up to 2 steps per second. A <code>pick_up()</code> or a <code>drop()</code> that fails plays the spring as it shakes, and an error without animation the soft slide, as its line is marked: a run ends with one sound, never two. Decided: the application synthesizes every sound with the Web Audio API, without a file. 77 and 88 were made as files by <code>make-sounds.py</code>: their ports, 90 and 91, have the same curves and the same level. Compare each pair by ear:</p>
   <ul class="sound-pairs">${SOUND_PORTS.map(([sound, title]) =>
     `<li><button type="button" class="sound-play" data-play-sound="${sound}">▶ ${title}</button></li>`).join("")}</ul>
   <p>How to compare: one sound for each end of a run, short and soft, never scolding. Each tab of <b>Success sound</b>, <b>Goal not met sound</b>, <b>Bump sound</b> and <b>Move sound</b> plays its sound when it is chosen (the numbers are named in the lists below); the button ▶ of a scene plays it once from its start with the sounds chosen (a scene that loops stays silent). The <b>Volume</b> slider sets the level of every sound. Calm: 40 to 42, 47 to 49 and 54 to 56 are synthesized in the browser (no file), the others are files by Kenney under CC0. High and explosive temperatures: bolder, then wilder, made by <code>make-sounds.py</code> (Python, standard library, a recipe per sound). Their levels are matched, so that a louder sound doesn't win by its loudness alone.</p>

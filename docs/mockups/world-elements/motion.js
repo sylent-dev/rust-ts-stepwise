@@ -221,6 +221,7 @@ const BUMP_LOOKS = {
 // wrong (an empty pincer, a full bay that swells, an item that can't go down and goes back), rolls
 // back onto its cell, then shakes. They take 650 ms at the normal speed: nothing waits after them.
 const FAIL_TIME = 650;
+const FAILED_ACTIONS = ["pick-empty", "pick-full", "drop-empty", "drop-full"];
 const tried = (world, p) => ({
   ...backedUp(world, seg(p, 0, 0.2) - seg(p, 0.45, 0.6)),
   pincer: seg(p, 0.05, 0.2) - seg(p, 0.35, 0.5),
@@ -507,13 +508,18 @@ function playScene(root) {
   const reset = now => { world = startWorld(scene); applied = 0; start = now; heard.clear(); };
   // The sounds of the scene, at their time from its start: a move or a turn as it starts, up to
   // MOVE_SOUND_MAX_RATE steps per second (faster when the step is shorter); a bump when the front
-  // of the robot touches the border of its cell; the end of a run when its last step has ended.
+  // of the robot touches the border of its cell, or as it shakes after a pick_up() or a drop() that
+  // fails; the end of a run when its last step has ended, or its error without animation.
   // They play once, after a click on the button ▶ of the scene, never as it loops.
   const moveRate = MOVE_TIME / Math.max(durations.move, 1);
   const moves = rate <= MOVE_SOUND_MAX_RATE;
   const cues = [
     ...scene.trace.flatMap(([, name], index) =>
       name === "bump" ? [[index * period + 0.3 * durations[BUMP_TIME], "bump"]]
+      // A pick_up() or a drop() that fails plays the bump as it starts to shake.
+      : FAILED_ACTIONS.includes(name) ? [[index * period + 0.6 * durations[FAIL_TIME], "bump"]]
+      // An error without animation plays the goal not met, as its line is marked.
+      : scene.end === "error" && index === steps - 1 ? [[index * period, "failure"]]
       : name === "forward" && moves ? [[index * period, "move", { part: "forward", rate: moveRate }]]
       : (name === "left" || name === "right") && moves ? [[index * period, "move", { part: "turn", rate: moveRate }]]
       : []),
