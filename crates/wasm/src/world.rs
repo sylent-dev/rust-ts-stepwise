@@ -48,7 +48,9 @@ pub struct Paint {
     /// The color of the cell.
     pub color: Color,
     /// The painted passages of the cell, by the direction of the neighbor each leads to,
-    /// clockwise from the north. A passage is given by both of its cells.
+    /// clockwise from the north. A passage is given by both of its cells when both are
+    /// painted; toward a cell erased on its own, which has no paint to give, the painted
+    /// neighbor still gives it, and the map draws its half up to the border.
     pub passages: Vec<Direction>,
 }
 

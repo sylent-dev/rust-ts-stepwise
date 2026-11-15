@@ -305,23 +305,56 @@ mod erasing {
     }
 
     #[test]
-    fn the_eraser_removes_the_paint_of_its_cell_at_once_with_its_passages() {
+    fn the_eraser_removes_the_paint_of_its_cell_at_once_and_keeps_its_passages() {
         let mut world = painted();
         world.forward().unwrap();
         world.start_erasing();
         assert!(world.is_erasing());
         assert_eq!(world.robot().tool(), Some(Tool::Eraser));
         assert_eq!(paints(&world), ["r.r", ".r.", ".r."]);
-        assert_eq!(passages(&world), [south(1, 1)]);
+        assert_eq!(
+            passages(&world),
+            [east(0, 0), east(1, 0), south(1, 0), south(1, 1)]
+        );
     }
 
     #[test]
-    fn the_eraser_removes_the_paint_of_every_cell_it_moves_into_with_its_passages() {
+    fn the_eraser_removes_the_paint_of_every_cell_it_moves_into_and_of_the_passage_it_crosses() {
         let mut world = painted();
         world.start_erasing();
         world.forward().unwrap();
         assert_eq!(paints(&world), ["..r", ".r.", ".r."]);
-        assert_eq!(passages(&world), [south(1, 1)]);
+        // The passages ahead of the robot keep their paint until it crosses them.
+        assert_eq!(passages(&world), [east(1, 0), south(1, 0), south(1, 1)]);
+        world.forward().unwrap();
+        assert_eq!(paints(&world), ["...", ".r.", ".r."]);
+        assert_eq!(passages(&world), [south(1, 0), south(1, 1)]);
+    }
+
+    #[test]
+    fn a_cell_erased_alone_joins_its_stroke_again_when_it_is_painted_again() {
+        let mut world = painted();
+        world.forward().unwrap();
+        world.start_erasing();
+        world.start_painting(Color::Blue);
+        assert_eq!(paints(&world), ["rbr", ".r.", ".r."]);
+        assert_eq!(
+            passages(&world),
+            [east(0, 0), east(1, 0), south(1, 0), south(1, 1)]
+        );
+    }
+
+    #[test]
+    fn a_cell_erased_alone_then_turned_into_a_wall_loses_its_passages() {
+        let mut world = painted();
+        world.forward().unwrap();
+        world.start_erasing();
+        let mut map = world.map().clone();
+        map.set_wall(Point::new(1, 0)).unwrap();
+        for direction in Direction::ALL {
+            assert!(!map.passage(Point::new(1, 0), direction));
+        }
+        assert!(map.passage(Point::new(1, 1), Direction::South));
     }
 
     #[test]
@@ -495,10 +528,11 @@ mod sensing {
     }
 }
 
-/// Random actions on a map with walls, items, paints and passages keep the rule of the
-/// passages: a painted passage always joins two painted floor cells.
+/// Random actions on a map with walls, items, paints and passages keep the rules of the
+/// passages: a painted passage always joins two floor cells, the brush paints the passage it
+/// crosses and the eraser takes its paint away.
 #[test]
-fn a_painted_passage_always_joins_two_painted_floor_cells() {
+fn a_painted_passage_joins_two_floor_cells_and_follows_the_tool_that_crosses_it() {
     let mut random = Random(7);
     for round in 0..50 {
         let start = world(&["..#..", ".orbo", "#.>y.", "..b#."]);
@@ -509,7 +543,23 @@ fn a_painted_passage_always_joins_two_painted_floor_cells() {
         for action in 0..200 {
             match random.next() % 9 {
                 0..=2 => {
-                    let _ = world.forward();
+                    let from = world.robot().position();
+                    if world.forward().is_ok() {
+                        let to = world.robot().position();
+                        let direction = from.direction_to(to).unwrap();
+                        let crossed = world.map().passage(from, direction);
+                        match world.robot().tool() {
+                            Some(Tool::Brush(color)) => {
+                                assert!(crossed, "round {round}, action {action}: the brush");
+                                assert_eq!(world.map().paint(to), Some(color));
+                            }
+                            Some(Tool::Eraser) => {
+                                assert!(!crossed, "round {round}, action {action}: the eraser");
+                                assert_eq!(world.map().paint(to), None);
+                            }
+                            None => {}
+                        }
+                    }
                 }
                 3 => world.turn_left(),
                 4 => world.turn_right(),
@@ -527,9 +577,9 @@ fn a_painted_passage_always_joins_two_painted_floor_cells() {
             for (point, direction) in passages(&world) {
                 let other = point.toward(direction).unwrap();
                 assert!(
-                    map.paint(point).is_some() && map.paint(other).is_some(),
+                    map.is_floor(point) && map.is_floor(other),
                     "round {round}, action {action}: the passage {direction:?} of {point:?} \
-                     joins an unpainted cell"
+                     joins a wall"
                 );
             }
             let position = world.robot().position();

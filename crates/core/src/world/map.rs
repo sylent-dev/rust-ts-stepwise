@@ -143,8 +143,11 @@ pub enum BuildError {
 
 /// A grid of cells, at most [`MAX_COLUMNS`] × [`MAX_ROWS`]; outside it counts as a wall.
 ///
-/// A painted passage always joins two painted floor cells: painting a passage needs both
-/// paints, and erasing a cell, or turning it into a wall, removes its passages.
+/// A passage is painted between two painted floor cells: painting a passage needs both paints.
+/// It loses its paint when the eraser crosses it, or when one of its cells becomes a wall; a
+/// cell erased on its own keeps its painted passages, which each painted neighbor draws up to
+/// its border, so that the stroke joins the cell again if it is painted again (see *Map* in
+/// `specs.md`).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Map {
     width: u8,
@@ -244,15 +247,20 @@ impl Map {
     ///
     /// [`BuildError::OutsideMap`] when `point` is outside the map, [`BuildError::NotEmpty`]
     /// when its cell has a paint or an item: the walls are set first, so that a level never
-    /// loses one in silence. An unpainted cell has no painted passage.
+    /// loses one in silence. The painted passages the cell kept after being erased are removed.
     pub fn set_wall(&mut self, point: Point) -> Result<(), BuildError> {
-        let cell = self.cell_mut(point).ok_or(BuildError::OutsideMap(point))?;
+        let cell = self.cell(point).ok_or(BuildError::OutsideMap(point))?;
         if let Cell::Floor(floor) = cell
             && (floor.paint.is_some() || floor.item)
         {
             return Err(BuildError::NotEmpty(point));
         }
-        *cell = Cell::Wall;
+        for direction in Direction::ALL {
+            self.set_passage_paint(point, direction, false);
+        }
+        if let Some(cell) = self.cell_mut(point) {
+            *cell = Cell::Wall;
+        }
         Ok(())
     }
 
@@ -301,13 +309,19 @@ impl Map {
         Ok(())
     }
 
-    /// Removes the paint of the cell at `point` and of its four passages.
-    pub(super) fn erase(&mut self, point: Point) {
+    /// Removes the paint of the cell at `point`, which keeps its painted passages.
+    pub(super) fn erase_cell(&mut self, point: Point) {
         if let Ok(floor) = self.floor_mut(point) {
             floor.paint = None;
         }
-        for direction in Direction::ALL {
-            self.set_passage_paint(point, direction, false);
+    }
+
+    /// Removes the paint of `to` and of the passage from `from`, which the robot just crossed
+    /// with its eraser down: the eraser takes away what it passes over, as the brush paints it.
+    pub(super) fn erase_step(&mut self, from: Point, to: Point) {
+        self.erase_cell(to);
+        if let Some(direction) = from.direction_to(to) {
+            self.set_passage_paint(from, direction, false);
         }
     }
 
