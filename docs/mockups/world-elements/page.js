@@ -5,9 +5,8 @@
 const VARIANTS = {
   theme: { label: "Style", options: Object.fromEntries(Object.entries(THEMES).map(([key, theme]) => [key, theme.title])), fallback: Object.keys(THEMES)[0] },
   vision: { label: "Vision", options: { normal: "Normal", protanopia: "Protanopia", deuteranopia: "Deuteranopia", tritanopia: "Tritanopia" }, fallback: "normal" },
-  // Step 11a, the animations (section-motion-end.js): the end of a run.
-  success: { label: "Success", options: { one: "32. One hop", two: "33. Two hops", spin: "34. Hop and spin", stars: "35. Hop and stars" }, fallback: "one" },
-  failure: { label: "Goal not met", options: { shake: "36. Shake its head", sag: "37. Sag and shake" }, fallback: "shake" },
+  // Step 11a, the animations (section-motion-less.js): less motion, for a learner who asked for it.
+  motion: { label: "Motion", options: { full: "Full", reduced: "38. Less: no bounce", still: "39. Less: none" }, fallback: "reduced" },
 };
 
 const params = new URLSearchParams(location.search);

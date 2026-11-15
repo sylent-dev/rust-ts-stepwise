@@ -24,14 +24,14 @@ const SUCCESS_TITLES = { one: "32. One hop", two: "33. Two hops", spin: "34. Hop
 const FAILURE_TITLES = { shake: "36. Shake its head", sag: "37. Sag and shake" };
 
 SECTIONS.push(["Animations: the end of a run", () => `
-  <p>Once the last step has ended. Every goal met, tab <b>Success</b>: the eyes light up in yellow and the robot hops, seen from above as a robot that grows a little while its shadow moves away toward the bottom left (the sun is at the top right); <b>32</b> one hop, <b>33</b> two smaller hops, <b>34</b> a full turn in the air, <b>35</b> a burst of small yellow stars. A goal not met, tab <b>Goal not met</b>: the eyes dim and the robot shakes its head, slower and wider than the shake of an error, then the flags of the goals not met are planted one after the other; <b>36</b> a shake of the head, <b>37</b> the robot sags a little before. Each takes 900 ms; the success panel of the level appears after it.</p>
+  <p>Decided, once the last step has ended: every goal met, the eyes light up in yellow and the robot <b>hops once</b> (32), seen from above as a robot that grows a little while its shadow moves away toward the bottom left (the sun is at the top right); a goal not met, the eyes dim and the robot <b>shakes its head</b> (36), slower and wider than the shake of an error, then the flags of the goals not met are planted one after the other. Each takes 900 ms; the success panel of the level appears after it, the real celebration.</p>
   <div class="page-row">
     <div class="page-slot"><span>Every goal met</span>${motionScene("success", { size: 80 })}</div>
     <div class="page-slot"><span>The red cell not painted</span>${motionScene("failure", { size: 80 })}</div>
   </div>
-  <h3>Success compared</h3>
+  <h3>Success compared: 32. One hop, 33. Two hops, 34. Hop and spin, 35. Hop and stars</h3>
   <div class="page-row">${Object.entries(SUCCESS_TITLES).map(([success, title]) =>
     `<div class="page-slot"><span>${title}</span>${motionScene("success", { size: 56, code: false, success })}</div>`).join("")}</div>
-  <h3>Goal not met compared</h3>
+  <h3>Goal not met compared: 36. Shake its head, 37. Sag and shake</h3>
   <div class="page-row">${Object.entries(FAILURE_TITLES).map(([failure, title]) =>
     `<div class="page-slot"><span>${title}</span>${motionScene("failure", { size: 56, code: false, failure })}</div>`).join("")}</div>`]);

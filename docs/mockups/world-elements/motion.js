@@ -73,12 +73,13 @@ const SCENES = {};
 // `move` and `turn` choose an easing of EASINGS for this scene alone, instead of the decided ones;
 // `erase` a look of the eraser compared, instead of the decided one, and `carry` a look of picking up
 // and dropping, `bump` a look of the bump and `fail` a look of a pick up or a drop that fails
-// compared, and `success` and `failure` a look of the tabs of the end of a run, instead of the tabs.
-function motionScene(name, { rate = NORMAL_SPEED, size = 48, code = true, move = "", turn = "", erase = "", carry = "", bump = "", fail = "", success = "", failure = "" } = {}) {
+// and `success` and `failure` a look of the end of a run compared; `motion` is "full", or "tab" for a
+// scene that follows the tab Motion.
+function motionScene(name, { rate = NORMAL_SPEED, size = 48, code = true, move = "", turn = "", erase = "", carry = "", bump = "", fail = "", success = "", failure = "", motion = "full" } = {}) {
   const scene = SCENES[name];
   const layer = `<div class="motion-layer" style="--cell:${size}px"><svg viewBox="0 0 ${scene.rows[0].length * 64} ${scene.rows.length * 64}" aria-hidden="true"></svg><div class="motion-items"></div><div class="motion-robot"></div><svg class="motion-over" viewBox="0 0 ${scene.rows[0].length * 64} ${scene.rows.length * 64}" aria-hidden="true"></svg><div class="motion-flags"></div></div>`;
   const program = code ? `<div class="motion-panel"><ol class="motion-code">${scene.program.map(line => `<li>${line}</li>`).join("")}</ol><div class="motion-status"></div></div>` : "";
-  return `<div class="motion-scene" data-scene="${name}" data-rate="${rate}" data-size="${size}" data-move="${move}" data-turn="${turn}" data-erase="${erase}" data-carry="${carry}" data-bump="${bump}" data-fail="${fail}" data-success="${success}" data-failure="${failure}"><div class="motion-stage">${appMap(scene.rows, scene.marks, size)}${layer}</div>${program}</div>`;
+  return `<div class="motion-scene" data-scene="${name}" data-rate="${rate}" data-size="${size}" data-move="${move}" data-turn="${turn}" data-erase="${erase}" data-carry="${carry}" data-bump="${bump}" data-fail="${fail}" data-success="${success}" data-failure="${failure}" data-motion="${motion}"><div class="motion-stage">${appMap(scene.rows, scene.marks, size)}${layer}</div>${program}</div>`;
 }
 
 // The duration of an action at a speed: the one chosen for the normal speed, shortened when a step
@@ -223,6 +224,8 @@ const tried = (world, p) => ({
 const FAIL_LOOK = "try";
 const FAIL_LOOKS = {
   shake: { any: (world, p) => shaking(world, p, 0) },
+  // For less motion: the pincer comes out and goes back in, on the cell, nothing more.
+  still: { any: (world, p) => ({ pincer: seg(p, 0, 0.3) - seg(p, 0.6, 0.9) }) },
   try: {
     "pick-empty": tried,
     "drop-empty": tried,
@@ -243,6 +246,9 @@ const FAIL_LOOKS = {
 // appears after it (specs.md, about a second). `flags` is how far the flags have come (0 to 1),
 // `stars` the burst of stars around a hop (0 to 1), `scale` the robot that sags.
 const END_TIME = 900;
+// Decided at step 11a: one hop, and a shake of the head.
+const SUCCESS_LOOK = "one";
+const FAILURE_LOOK = "shake";
 const hop = t => Math.sin(Math.PI * clamp01(t));
 const END_LOOKS = {
   success: {
@@ -250,17 +256,30 @@ const END_LOOKS = {
     two: (world, p) => ({ lift: 0.7 * hop(p / 0.4) + 0.5 * hop((p - 0.42) / 0.35) }),
     spin: (world, p) => ({ lift: hop(p / 0.6), angle: world.angle + 360 * seg(p, 0.05, 0.55) }),
     stars: (world, p) => ({ lift: hop(p / 0.55), stars: clamp01((p - 0.2) / 0.7) }),
+    still: () => ({}),
   },
   failure: {
     shake: (world, p) => {
       const t = clamp01(p / 0.6);
       return { angle: world.angle + 12 * Math.sin(Math.PI * 4 * t) * (1 - 0.4 * t), flags: clamp01((p - 0.6) / 0.35) };
     },
+    still: () => ({ flags: 1 }),
     sag: (world, p) => {
       const t = clamp01((p - 0.15) / 0.5);
       return { scale: 1 - 0.07 * seg(p, 0, 0.2), angle: world.angle + 10 * Math.sin(Math.PI * 2 * t), flags: clamp01((p - 0.6) / 0.35) };
     },
   },
+};
+
+// Less motion, for a learner who asked for it (prefers-reduced-motion), as the tab Motion says.
+// "reduced": the moves and the turns stay, since they are what the program does, but nothing
+// bounces nor shakes: a turn without overshoot, pick_up() and drop() in place (the item pops into
+// the bay or out of it), the bump without its shake, an action that fails without trying nor
+// shaking, the end of a run with the eyes alone and the flags at once. "still": no animation at
+// all, the robot jumps from cell to cell and turns at once.
+const LESS_MOTION = {
+  reduced: { turn: "in-out", carry: "pop", bump: "back", fail: "still", end: "still" },
+  still: { still: true, turn: "in-out", carry: "pop", bump: "back", fail: "still", end: "still" },
 };
 
 // The two rules of the eraser compared. "all", the rule of specs.md: a cell erased loses its paint
@@ -454,19 +473,23 @@ function playScene(root) {
   const lines = root.querySelectorAll(".motion-code li");
   const status = root.querySelector(".motion-status");
   const period = 1000 / rate;
-  const durations = { move: actionTime(MOVE_TIME, rate), [CARRY_TIME]: actionTime(CARRY_TIME, rate), [BUMP_TIME]: actionTime(BUMP_TIME, rate), [FAIL_TIME]: actionTime(FAIL_TIME, rate) };
+  // Less motion, for a learner who asked for it, as the tab Motion says (see LESS_MOTION).
+  const motion = root.dataset.motion === "tab" ? chosen.motion : root.dataset.motion;
+  const less = LESS_MOTION[motion] ?? {};
+  const timed = time => less.still ? 0 : actionTime(time, rate);
+  const durations = { move: timed(MOVE_TIME), [CARRY_TIME]: timed(CARRY_TIME), [BUMP_TIME]: timed(BUMP_TIME), [FAIL_TIME]: timed(FAIL_TIME) };
   const easings = {
     move: EASINGS[root.dataset.move || MOVE_EASE],
-    turn: EASINGS[root.dataset.turn || TURN_EASE],
+    turn: EASINGS[root.dataset.turn || less.turn || TURN_EASE],
     cue: EASINGS["in-out"],
   };
   const style = root.dataset.erase || ERASE_STYLE;
   const looks = {
-    carry: root.dataset.carry || CARRY_LOOK,
-    bump: root.dataset.bump || BUMP_LOOK,
-    fail: root.dataset.fail || FAIL_LOOK,
-    success: root.dataset.success || chosen.success,
-    failure: root.dataset.failure || chosen.failure,
+    carry: root.dataset.carry || less.carry || CARRY_LOOK,
+    bump: root.dataset.bump || less.bump || BUMP_LOOK,
+    fail: root.dataset.fail || less.fail || FAIL_LOOK,
+    success: root.dataset.success || less.end || SUCCESS_LOOK,
+    failure: root.dataset.failure || less.end || FAILURE_LOOK,
   };
   const rule = ERASE_RULES[style];
   const clipId = `motion-clip-${motionClips += 1}`;
@@ -490,7 +513,7 @@ function playScene(root) {
     }
     const action = current >= 0 && current < steps ? ACTIONS[scene.trace[current][1]] : undefined;
     const duration = action?.time ? durations[action.time] : durations.move;
-    const progress = action?.pose ? clamp01((elapsed - current * period) / duration) : 1;
+    const progress = action?.pose && duration > 0 ? clamp01((elapsed - current * period) / duration) : 1;
     const eased = action?.pose ? (easings[action.ease] ?? EASINGS.linear)(progress) : 1;
     const pose = { x: world.x, y: world.y, angle: world.angle, pincer: 0, floor: true, bay: true, flight: null, dropped: false, ...action?.pose?.(world, eased, looks) };
     const ended = current >= steps;
