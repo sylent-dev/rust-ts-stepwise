@@ -72,13 +72,13 @@ const SCENES = {};
 // starts once the sheet is drawn (startScenes).
 // `move` and `turn` choose an easing of EASINGS for this scene alone, instead of the decided ones;
 // `erase` a look of the eraser compared, instead of the decided one, and `carry` a look of picking up
-// and dropping and `bump` a look of the bump compared, and `fail` a look of the tab Failed pick up and
-// drop, instead of the tab.
-function motionScene(name, { rate = NORMAL_SPEED, size = 48, code = true, move = "", turn = "", erase = "", carry = "", bump = "", fail = "" } = {}) {
+// and dropping, `bump` a look of the bump and `fail` a look of a pick up or a drop that fails
+// compared, and `success` and `failure` a look of the tabs of the end of a run, instead of the tabs.
+function motionScene(name, { rate = NORMAL_SPEED, size = 48, code = true, move = "", turn = "", erase = "", carry = "", bump = "", fail = "", success = "", failure = "" } = {}) {
   const scene = SCENES[name];
-  const layer = `<div class="motion-layer" style="--cell:${size}px"><svg viewBox="0 0 ${scene.rows[0].length * 64} ${scene.rows.length * 64}" aria-hidden="true"></svg><div class="motion-items"></div><div class="motion-robot"></div><svg class="motion-over" viewBox="0 0 ${scene.rows[0].length * 64} ${scene.rows.length * 64}" aria-hidden="true"></svg></div>`;
+  const layer = `<div class="motion-layer" style="--cell:${size}px"><svg viewBox="0 0 ${scene.rows[0].length * 64} ${scene.rows.length * 64}" aria-hidden="true"></svg><div class="motion-items"></div><div class="motion-robot"></div><svg class="motion-over" viewBox="0 0 ${scene.rows[0].length * 64} ${scene.rows.length * 64}" aria-hidden="true"></svg><div class="motion-flags"></div></div>`;
   const program = code ? `<div class="motion-panel"><ol class="motion-code">${scene.program.map(line => `<li>${line}</li>`).join("")}</ol><div class="motion-status"></div></div>` : "";
-  return `<div class="motion-scene" data-scene="${name}" data-rate="${rate}" data-size="${size}" data-move="${move}" data-turn="${turn}" data-erase="${erase}" data-carry="${carry}" data-bump="${bump}" data-fail="${fail}"><div class="motion-stage">${appMap(scene.rows, scene.marks, size)}${layer}</div>${program}</div>`;
+  return `<div class="motion-scene" data-scene="${name}" data-rate="${rate}" data-size="${size}" data-move="${move}" data-turn="${turn}" data-erase="${erase}" data-carry="${carry}" data-bump="${bump}" data-fail="${fail}" data-success="${success}" data-failure="${failure}"><div class="motion-stage">${appMap(scene.rows, scene.marks, size)}${layer}</div>${program}</div>`;
 }
 
 // The duration of an action at a speed: the one chosen for the normal speed, shortened when a step
@@ -219,6 +219,8 @@ const tried = (world, p) => ({
   pincer: seg(p, 0.05, 0.2) - seg(p, 0.35, 0.5),
   ...shaking(world, p, 0.6),
 });
+// Decided at step 11a: the robot tries, then shakes.
+const FAIL_LOOK = "try";
 const FAIL_LOOKS = {
   shake: { any: (world, p) => shaking(world, p, 0) },
   try: {
@@ -229,6 +231,34 @@ const FAIL_LOOKS = {
       const t = seg(p, 0.12, 0.28) - seg(p, 0.3, 0.46);
       const out = p > 0.12 && p < 0.46;
       return { ...tried(world, p), bay: !out, flight: out ? { y: lerp(BAY, -12, t), scale: lerp(0.5, 0.85, t) } : null };
+    },
+  },
+};
+
+// The end of a run, once its last step has ended: every goal met ("success"), the eyes lit in
+// yellow and a hop, as the tab Success says; a goal not met ("failure"), the eyes dimmed, a shake of
+// the head, then the flags of the goals not met, as the tab Goal not met says. A hop is seen from
+// above: the robot grows a little and its shadow moves away toward the bottom left, the sun being
+// at the top right (`lift`, 0 on the floor). It takes 900 ms: the success panel of the level
+// appears after it (specs.md, about a second). `flags` is how far the flags have come (0 to 1),
+// `stars` the burst of stars around a hop (0 to 1), `scale` the robot that sags.
+const END_TIME = 900;
+const hop = t => Math.sin(Math.PI * clamp01(t));
+const END_LOOKS = {
+  success: {
+    one: (world, p) => ({ lift: hop(p / 0.55) }),
+    two: (world, p) => ({ lift: 0.7 * hop(p / 0.4) + 0.5 * hop((p - 0.42) / 0.35) }),
+    spin: (world, p) => ({ lift: hop(p / 0.6), angle: world.angle + 360 * seg(p, 0.05, 0.55) }),
+    stars: (world, p) => ({ lift: hop(p / 0.55), stars: clamp01((p - 0.2) / 0.7) }),
+  },
+  failure: {
+    shake: (world, p) => {
+      const t = clamp01(p / 0.6);
+      return { angle: world.angle + 12 * Math.sin(Math.PI * 4 * t) * (1 - 0.4 * t), flags: clamp01((p - 0.6) / 0.35) };
+    },
+    sag: (world, p) => {
+      const t = clamp01((p - 0.15) / 0.5);
+      return { scale: 1 - 0.07 * seg(p, 0, 0.2), angle: world.angle + 10 * Math.sin(Math.PI * 2 * t), flags: clamp01((p - 0.6) / 0.35) };
     },
   },
 };
@@ -420,6 +450,7 @@ function playScene(root) {
   const itemsLayer = root.querySelector(".motion-items");
   const robot = root.querySelector(".motion-robot");
   const overLayer = root.querySelector(".motion-over");
+  const flagsLayer = root.querySelector(".motion-flags");
   const lines = root.querySelectorAll(".motion-code li");
   const status = root.querySelector(".motion-status");
   const period = 1000 / rate;
@@ -433,7 +464,9 @@ function playScene(root) {
   const looks = {
     carry: root.dataset.carry || CARRY_LOOK,
     bump: root.dataset.bump || BUMP_LOOK,
-    fail: root.dataset.fail || chosen.fail,
+    fail: root.dataset.fail || FAIL_LOOK,
+    success: root.dataset.success || chosen.success,
+    failure: root.dataset.failure || chosen.failure,
   };
   const rule = ERASE_RULES[style];
   const clipId = `motion-clip-${motionClips += 1}`;
@@ -461,7 +494,11 @@ function playScene(root) {
     const eased = action?.pose ? (easings[action.ease] ?? EASINGS.linear)(progress) : 1;
     const pose = { x: world.x, y: world.y, angle: world.angle, pincer: 0, floor: true, bay: true, flight: null, dropped: false, ...action?.pose?.(world, eased, looks) };
     const ended = current >= steps;
-    if (ended && ["success", "failure"].includes(scene.end)) world.lit = scene.end;
+    if (ended && ["success", "failure"].includes(scene.end)) {
+      world.lit = scene.end;
+      const look = END_LOOKS[scene.end][looks[scene.end]];
+      Object.assign(pose, look(world, clamp01((elapsed - steps * period) / END_TIME)));
+    }
 
     const removing = action?.removes?.(world, rule) ?? null;
     // A robot that scrubs shakes a little while it moves with its eraser down.
@@ -486,6 +523,11 @@ function playScene(root) {
       const [x, y] = center(key(world.x, world.y));
       paint += `<circle cx="${x}" cy="${y}" r="${ROBOT_HALF + 16 * progress}" fill="none" stroke="${ring}" stroke-width="${5 * (1 - progress) + 1}" opacity="${1 - progress}"/>`;
     }
+    // The shadow of a hop, which moves away toward the bottom left as the robot rises.
+    if (pose.lift > 0) {
+      const [x, y] = center(key(pose.x, pose.y));
+      paint += `<rect x="${x - 16 - 7 * pose.lift}" y="${y - 18 + 7 * pose.lift}" width="32" height="36" rx="9" fill="#222935" opacity="${0.22 * (1 - 0.3 * pose.lift)}"/>`;
+    }
     paintLayer.innerHTML = paint;
     // The item of the cell of the robot, hidden while its pincer holds it, or shown once it is set down.
     const here = key(world.x, world.y);
@@ -495,7 +537,8 @@ function playScene(root) {
       const [x, y] = cell.split(",").map(Number);
       return `<img src="${element("item")}" alt="" style="transform:translate(${x * size}px,${y * size}px)">`;
     }).join("");
-    robot.style.transform = `translate(${pose.x * size}px, ${pose.y * size}px) rotate(${pose.angle}deg) scale(1, ${pose.squash ?? 1})`;
+    const grown = (pose.scale ?? 1) * (1 + 0.16 * (pose.lift ?? 0));
+    robot.style.transform = `translate(${pose.x * size}px, ${pose.y * size}px) rotate(${pose.angle}deg) scale(${grown}, ${grown * (pose.squash ?? 1)})`;
     // A spark where the front of the robot touches the border of its cell, over the robot: four
     // short strokes flying along the wall and back from it.
     let over = "";
@@ -510,7 +553,25 @@ function playScene(root) {
         return `<path d="${d}" stroke="#222935" stroke-width="6" stroke-linecap="round" opacity="${opacity}"/><path d="${d}" stroke="#ffd23f" stroke-width="3.5" stroke-linecap="round" opacity="${opacity}"/>`;
       }).join("");
     }
+    // The stars of a hop: six small stars that fly away from the robot as they fade.
+    if (pose.stars > 0 && pose.stars < 1) {
+      const [x, y] = center(key(pose.x, pose.y));
+      const reach = 26 + 18 * pose.stars;
+      over += Array.from({ length: 6 }, (_, index) => {
+        const angle = Math.PI / 3 * index + 0.3;
+        const [sx, sy] = [x + Math.cos(angle) * reach, y + Math.sin(angle) * reach];
+        const r = 5 * (1 - 0.5 * pose.stars);
+        return `<path d="M${sx} ${sy - r} L${sx + r * 0.3} ${sy - r * 0.3} L${sx + r} ${sy} L${sx + r * 0.3} ${sy + r * 0.3} L${sx} ${sy + r} L${sx - r * 0.3} ${sy + r * 0.3} L${sx - r} ${sy} L${sx - r * 0.3} ${sy - r * 0.3} Z" fill="#ffd23f" stroke="#222935" stroke-width="1" opacity="${1 - pose.stars ** 2}"/>`;
+      }).join("");
+    }
     overLayer.innerHTML = over;
+    // The flags of the goals not met, planted one after the other, over the robot.
+    flagsLayer.innerHTML = (scene.missed ?? []).map((cell, index, all) => {
+      const t = clamp01((pose.flags ?? 0) * all.length - index);
+      if (t <= 0) return "";
+      const [x, y] = cell.split(",").map(Number);
+      return `<img src="${element("goal-missed")}" alt="" style="transform:translate(${x * size}px,${y * size}px) scale(${EASINGS.overshoot(t)});transform-origin:${size * 0.73}px ${size * 0.42}px">`;
+    }).join("");
     // The pincer slides out from under the front of the robot; the item it holds is drawn over it.
     const pincer = pose.pincer > 0 ? `<img src="${element("pincer")}" alt="" style="transform:translateY(${(1 - pose.pincer) * 14}%)">` : "";
     const carried = world.carrying && pose.bay || action === ACTIONS.pick && pose.bay ? `<img class="is-carried" src="${element("item")}" alt=""${pose.bayScale ? ` style="transform:translateY(11.7%) scale(${pose.bayScale})"` : ""}>` : "";

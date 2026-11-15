@@ -10,6 +10,6 @@ SCENES.dropFull = failedScene(["forward()", "pick_up()", "forward()", "drop()"],
 const FAILED_SCENES = { pickEmpty: "No item to pick up", pickFull: "An item in the bay already", dropEmpty: "No item to drop", dropFull: "An item on the cell already" };
 
 SECTIONS.push(["Animations: picking up and dropping that fail", () => `
-  <p>The other errors of the robot, which stop the program as the bump does. Tab <b>Failed pick up and drop</b>: <b>30</b> the robot only shakes, on its cell, as after a bump; <b>31</b> it starts the action and steps back, finds what goes wrong (its pincer comes out empty, its full bay swells, the item it drops can't go down and goes back into the bay), rolls back onto its cell, then shakes. They take 650 ms at the normal speed: nothing waits after them.</p>
+  <p>Decided: a <code>pick_up()</code> or a <code>drop()</code> that fails <b>tries, then shakes</b> (31): the robot starts the action and steps back, finds what goes wrong (its pincer comes out empty, its full bay swells, the item it drops can't go down and goes back into the bay), rolls back onto its cell, then shakes as after a bump. It takes 650 ms at the normal speed: nothing waits after it. 30 only shook the robot on its cell.</p>
   <div class="page-row">${Object.entries(FAILED_SCENES).map(([name, title]) =>
     `<div class="page-slot"><span>${title}</span>${motionScene(name, { size: 64 })}</div>`).join("")}</div>`]);
