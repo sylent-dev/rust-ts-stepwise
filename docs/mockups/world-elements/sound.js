@@ -178,18 +178,11 @@ const TEMPERATURES = { calm: "Calm", high: "High temperature", explosive: "Explo
 // The sounds of the moves play quieter than the others: they come back at each step.
 const MOVE_QUIETER = -10;
 
-// The sounds chosen by the owner on 2026-11-15, at the volume 60: the tabs open on them. The spring
-// and the blip are their ports to Web Audio, which sound as their files (heard on 2026-11-15).
+// Decided on 2026-11-15: the sounds chosen by the owner, the spring and the blip as their ports to
+// Web Audio, which sound as their files; and the volume they were chosen at, 60 out of 100, a gain of
+// 0.36 on every sound (the tabs and the slider that compared them are gone).
 const SOUNDS_CHOSEN = { success: "arpeggio", failure: "slide", bump: "port77", move: "port88" };
-
-// The groups of tabs of the sounds, added to those of page.js: one per kind, and the volume of
-// every sound, a slider.
-const SOUND_VARIANTS = {
-  ...Object.fromEntries(Object.entries(SOUNDS).map(([kind, { label, options }]) =>
-    // A tab shows the number of its sound alone: the list of the section names them.
-    [`${kind}Sound`, { label, options: Object.fromEntries(Object.entries(options).map(([value, { title }]) => [value, title.split(".")[0]])), fallback: SOUNDS_CHOSEN[kind] }])),
-  volume: { label: "Volume", range: { min: 0, max: 100, step: 5 }, fallback: "60" },
-};
+const VOLUME = 60;
 
 // The audio context, made at the first click (the rule of the browsers), the gain of the volume, and
 // the files once decoded.
@@ -201,13 +194,10 @@ function audioContext() {
     const volume = ctx.createGain();
     volume.connect(ctx.destination);
     audio = { ctx, volume };
-    setVolume(chosen.volume);
+    volume.gain.value = (VOLUME / 100) ** 2;
   }
   if (audio.ctx.state === "suspended") audio.ctx.resume();
   return audio;
-}
-function setVolume(value) {
-  if (audio) audio.volume.gain.value = (Number(value) / 100) ** 2;
 }
 async function decode(file) {
   if (!decoded.has(file)) {
@@ -216,9 +206,9 @@ async function decode(file) {
   return decoded.get(file);
 }
 
-// Plays a sound of a kind: the one chosen in the tabs, or `value`; for a move, its `part` ("forward"
+// Plays a sound of a kind: the one chosen, or `value`; for a move, its `part` ("forward"
 // or "turn"), at `rate` times its speed when a step is shorter than at the normal speed.
-async function playSound(kind, value = chosen[`${kind}Sound`], { part = "forward", rate = 1 } = {}) {
+async function playSound(kind, value = SOUNDS_CHOSEN[kind], { part = "forward", rate = 1 } = {}) {
   const sound = SOUNDS[kind].options[value];
   const { ctx, volume } = audioContext();
   if (sound.play) {
@@ -239,11 +229,8 @@ async function playSound(kind, value = chosen[`${kind}Sound`], { part = "forward
   source.start();
 }
 
-// A click on the page starts the audio context; a tab of a sound plays the sound chosen; the volume
-// applies at once; a button ▶ plays its sound or a scene with its sounds.
+// A click on a button ▶ starts the audio context and plays its sound, or a scene with its sounds.
 document.addEventListener("click", event => {
-  const tab = event.target.closest("[data-variant]");
-  if (tab?.dataset.variant.endsWith("Sound")) playSound(tab.dataset.variant.slice(0, -"Sound".length), tab.dataset.value);
   const button = event.target.closest("[data-play-sound]");
   if (button) {
     const [kind, value, part] = button.dataset.playSound.split(":");
@@ -254,7 +241,4 @@ document.addEventListener("click", event => {
     audioContext();
     document.getElementById(scene.dataset.playScene)?.playWithSound?.();
   }
-});
-document.addEventListener("input", event => {
-  if (event.target.dataset.variant === "volume") setVolume(event.target.value);
 });

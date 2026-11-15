@@ -24,7 +24,7 @@ const soundList = kind => Object.entries(TEMPERATURES).map(([temperature, label]
     const buttons = parts
       ? ["forward", "turn"].map(part => `<button type="button" class="sound-play" data-play-sound="${kind}:${value}:${part}" aria-label="Play ${title}, ${part}">▶ ${part === "forward" ? "move" : "turn"}</button>`).join("")
       : `<button type="button" class="sound-play" data-play-sound="${kind}:${value}" aria-label="Play ${title}">▶</button>`;
-    return `<li><span class="sound-buttons">${buttons}</span><span${chosen[`${kind}Sound`] === value ? ' class="is-chosen"' : ""}>${title}</span><small>${source} · ${length.toFixed(2)} s</small></li>`;
+    return `<li><span class="sound-buttons">${buttons}</span><span${SOUNDS_CHOSEN[kind] === value ? ' class="is-chosen"' : ""}>${title}</span><small>${source} · ${length.toFixed(2)} s</small></li>`;
   }).join("")}</ul>`;
 }).join("");
 
@@ -36,13 +36,13 @@ const SOUND_PORTS = [
 ];
 
 SECTIONS.push(["Sounds: success, goal not met, bump, moves", () => `
-  <p>Chosen on 2026-11-15, at the volume 60: <b>41. Arpeggio</b> for a success, <b>48. Soft slide down</b> for a goal not met, <b>77. Spring</b> for a bump, <b>88. Tiny blip</b> for a move or a turn, up to 2 steps per second. A <code>pick_up()</code> or a <code>drop()</code> that fails plays the spring as it shakes, and an error without animation the soft slide, as its line is marked: a run ends with one sound, never two. At the speed <b>Instant</b>, which draws no animation, only that sound of the end plays. Decided: the application synthesizes every sound with the Web Audio API, without a file. 77 and 88 were made as files by <code>make-sounds.py</code>: their ports, 90 and 91, have the same curves and the same level, and sound the same (heard on 2026-11-15): 90 and 91 are the ones kept.</p>
+  <p>Decided, at the volume they were chosen at (60, a gain of 0.36 on every sound): <b>41. Arpeggio</b> for a run where every goal is met, as the robot hops; <b>48. Soft slide down</b> for a goal not met, as it shakes its head; <b>90. Spring</b> for a bump, when its front touches the border of its cell; <b>91. Tiny blip</b>, 10 dB quieter, as a move or a turn starts, up to 2 steps per second only (faster, it would become a stream that covers the sounds of the end). A <code>pick_up()</code> or a <code>drop()</code> that fails plays the spring as the robot shakes, and an error without animation the soft slide, as its line is marked: a run ends with one sound, never two. At <b>Instant</b>, only that sound of the end. Painting, erasing, picking up and dropping make none. Turning the setting <b>Sounds</b> on plays the arpeggio once.</p>
+  <p>The application synthesizes every sound with the Web Audio API, without a file (the recipes of <code>sound.js</code>). 90 and 91 are the ports of 77 and 88, made as files by <code>make-sounds.py</code>: the same curves and the same level, heard the same.</p>
   <ul class="sound-pairs">${SOUND_PORTS.map(([sound, title]) =>
     `<li><button type="button" class="sound-play" data-play-sound="${sound}">▶ ${title}</button></li>`).join("")}</ul>
-  <p>How to compare: one sound for each end of a run, short and soft, never scolding. Each tab of <b>Success sound</b>, <b>Goal not met sound</b>, <b>Bump sound</b> and <b>Move sound</b> plays its sound when it is chosen (the numbers are named in the lists below); the button ▶ of a scene plays it once from its start with the sounds chosen (a scene that loops stays silent). The <b>Volume</b> slider sets the level of every sound. Calm: 40 to 42, 47 to 49 and 54 to 56 are synthesized in the browser (no file), the others are files by Kenney under CC0. High and explosive temperatures: bolder, then wilder, made by <code>make-sounds.py</code> (Python, standard library, a recipe per sound). Their levels are matched, so that a louder sound doesn't win by its loudness alone.</p>
+  <p>The button ▶ of a scene plays it once from its start with its sounds (a scene that loops stays silent).</p>
   <div class="page-row">${SOUND_SCENES.map(([name, title]) => soundScene(name, title, { size: 64, sound: `sound-${name}` })).join("")}</div>
-  ${["success", "failure", "bump"].map(kind => `<h3>${SOUNDS[kind].label}</h3>${soundList(kind)}`).join("")}
-  <h3>Move sound</h3>
-  <p>Decided: a move or a turn plays its sound up to 2 steps per second, quieter than the other sounds; faster, none, where it would become a stream that covers the sounds of the end. The square at 5 steps per second plays the end alone.</p>
   <div class="page-row">${MOVE_SCENES.map(([rate, title]) => soundScene("square", title, { rate, size: 48, sound: `sound-square-${rate}` })).join("")}</div>
-  ${soundList("move")}`]);
+  <h3>Compared, the chosen ones in bold</h3>
+  <p>One sound for each end of a run, short and soft, never scolding, at the same loudness. Calm: 40 to 42, 47 to 49 and 54 to 56 synthesized in the browser, the others files by Kenney under CC0 (see <code>docs/sound-sources.md</code>). High and explosive temperatures, bolder then wilder: made by <code>make-sounds.py</code> (Python, standard library, a recipe per sound). The moves were compared on request, <code>specs.md</code> having none at each step until then.</p>
+  ${["success", "failure", "bump", "move"].map(kind => `<h3>${SOUNDS[kind].label}</h3>${soundList(kind)}`).join("")}`]);
