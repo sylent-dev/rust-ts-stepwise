@@ -71,12 +71,12 @@ const SCENES = {};
 // A scene in the page: the map with its layer of moving things, the program beside it. Its player
 // starts once the sheet is drawn (startScenes).
 // `move` and `turn` choose an easing of EASINGS for this scene alone, instead of the decided ones;
-// `down`, `up` and `erase` a variant of the tabs of the paint, instead of the tabs.
-function motionScene(name, { rate = NORMAL_SPEED, size = 48, code = true, move = "", turn = "", down = "", up = "", erase = "" } = {}) {
+// `erase` a variant of the tab Erasing, instead of the tab.
+function motionScene(name, { rate = NORMAL_SPEED, size = 48, code = true, move = "", turn = "", erase = "" } = {}) {
   const scene = SCENES[name];
   const layer = `<div class="motion-layer" style="--cell:${size}px"><svg viewBox="0 0 ${scene.rows[0].length * 64} ${scene.rows.length * 64}" aria-hidden="true"></svg><div class="motion-items"></div><div class="motion-robot"></div></div>`;
   const program = code ? `<div class="motion-panel"><ol class="motion-code">${scene.program.map(line => `<li>${line}</li>`).join("")}</ol><div class="motion-status"></div></div>` : "";
-  return `<div class="motion-scene" data-scene="${name}" data-rate="${rate}" data-size="${size}" data-move="${move}" data-turn="${turn}" data-down="${down}" data-up="${up}" data-erase="${erase}"><div class="motion-stage">${appMap(scene.rows, scene.marks, size)}${layer}</div>${program}</div>`;
+  return `<div class="motion-scene" data-scene="${name}" data-rate="${rate}" data-size="${size}" data-move="${move}" data-turn="${turn}" data-erase="${erase}"><div class="motion-stage">${appMap(scene.rows, scene.marks, size)}${layer}</div>${program}</div>`;
 }
 
 // The duration of an action at a speed: the one chosen for the normal speed, shortened when a step
@@ -84,81 +84,78 @@ function motionScene(name, { rate = NORMAL_SPEED, size = 48, code = true, move =
 // step 14.
 const actionTime = (normal, rate) => Math.min(normal, 0.8 * 1000 / rate);
 
-// Half the length of the robot, out of 64 for a cell: its front and its back, from its center.
+// Half the width of the robot with its tracks, out of 64 for a cell, where the ring of a tool
+// starts; and how far behind its center the paint taken away goes: inside its back (18.75 from its
+// center), where its rounded corners still cover the whole width of the stroke.
 const ROBOT_HALF = 21;
+const ROBOT_CLEAN = 14;
 // The shade of the ring of the eraser put down, the one of the dimmed eyes.
 const ERASER_SHADE = "#7d8798";
 
+// The two rules of the eraser compared. "all", the rule of specs.md: a cell erased loses its paint
+// and every painted passage it has, the one toward the next cell too. "crossed": the eraser takes
+// away what it passes over, as the brush paints it: the cell it is on or enters, and the passage it
+// crosses to enter it.
+const ERASE_RULES = { fade: "all", pull: "all", under: "crossed", scrub: "crossed", dust: "crossed", ghost: "crossed" };
+
 // What each action does to the world once it has run (`commit`), and how it draws while it runs:
-// `pose` moves, turns or scales the robot (`p` from 0 to 1, eased by the caller with `ease`),
-// `removes` lists the paint that the action takes away, drawn as the tab Erasing says, and `ring`
-// the color of a ring around the robot when a tool goes down. `timed` says whether the action
-// takes time under the variants of the scene; an action missing here changes nothing (a line of
-// computation) and takes none.
+// `pose` moves or turns the robot (`p` from 0 to 1, eased by the caller with `ease`), `removes`
+// lists the paint that the action takes away, drawn as the tab Erasing says, and `ring` the color
+// of the ring around the robot when a tool goes down (decided: a ring, and nothing when a tool is
+// lifted). An action without `pose` takes no time; an action missing here changes nothing (a line
+// of computation).
 const key = (x, y) => `${x},${y}`;
 const passageKey = (a, b) => [a, b].sort().join(" ");
 const passagesOf = (world, cell) => [...world.passages].filter(passage => passage.split(" ").includes(cell));
-const pressed = p => ({ scale: 1 - 0.1 * Math.sin(Math.PI * p) });
-const lifted = p => ({ scale: 1 + 0.06 * Math.sin(Math.PI * p) });
-// A tool put down. The eraser always takes time: it takes away the paint around its cell.
-const toolDown = (commit, ring, removes) => ({
-  ease: "cue",
-  timed: variants => variants.down !== "none" || removes !== undefined,
-  removes,
-  pose: (world, p, variants) => ["press", "both"].includes(variants.down) ? pressed(p) : {},
-  ring: (world, variants) => ["ripple", "both"].includes(variants.down) ? ring(world) : null,
-  commit,
+const cellAhead = world => {
+  const [dx, dy] = AHEAD[world.angle];
+  return key(world.x + dx, world.y + dy);
+};
+// The paint an eraser takes away from a cell, `crossed` being the passage it crossed to enter it.
+const erasedFrom = (world, cell, crossed, rule) => ({
+  cell,
+  passages: rule === "all" ? passagesOf(world, cell) : [crossed].filter(passage => world.passages.has(passage)),
 });
-const toolUp = commit => ({
-  ease: "cue",
-  timed: variants => variants.up === "lift",
-  pose: (world, p, variants) => variants.up === "lift" ? lifted(p) : {},
-  commit,
-});
+const toolDown = (commit, ring, removes) => ({ ease: "cue", pose: () => ({}), ring, removes, commit });
 const ACTIONS = {
   forward: {
     ease: "move",
-    timed: () => true,
-    commit(world) {
-      const [dx, dy] = AHEAD[world.angle];
+    commit(world, rule) {
       const from = key(world.x, world.y);
-      world.x += dx;
-      world.y += dy;
-      const to = key(world.x, world.y);
+      const to = cellAhead(world);
+      const erased = world.eraser ? erasedFrom(world, to, passageKey(from, to), rule) : null;
+      [world.x, world.y] = to.split(",").map(Number);
       if (world.brush) {
         world.paint.set(to, world.brush);
         world.passages.add(passageKey(from, to));
       }
-      if (world.eraser) eraseCell(world, to);
+      if (erased) erase(world, erased);
     },
     pose(world, p) {
       const [dx, dy] = AHEAD[world.angle];
       return { x: world.x + dx * p, y: world.y + dy * p };
     },
-    removes(world) {
-      if (!world.eraser) return null;
-      const [dx, dy] = AHEAD[world.angle];
-      const to = key(world.x + dx, world.y + dy);
-      return { cell: to, passages: passagesOf(world, to) };
-    },
+    removes: (world, rule) => world.eraser
+      ? erasedFrom(world, cellAhead(world), passageKey(key(world.x, world.y), cellAhead(world)), rule)
+      : null,
   },
-  left: { ease: "turn", timed: () => true, commit: world => { world.angle = (world.angle + 270) % 360; }, pose: (world, p) => ({ angle: world.angle - 90 * p }) },
-  right: { ease: "turn", timed: () => true, commit: world => { world.angle = (world.angle + 90) % 360; }, pose: (world, p) => ({ angle: world.angle + 90 * p }) },
-  stop: toolUp(world => { world.brush = null; }),
+  left: { ease: "turn", commit: world => { world.angle = (world.angle + 270) % 360; }, pose: (world, p) => ({ angle: world.angle - 90 * p }) },
+  right: { ease: "turn", commit: world => { world.angle = (world.angle + 90) % 360; }, pose: (world, p) => ({ angle: world.angle + 90 * p }) },
+  stop: { commit: world => { world.brush = null; } },
   erase: toolDown(
-    world => { world.brush = null; world.eraser = true; eraseCell(world, key(world.x, world.y)); },
+    (world, rule) => { world.brush = null; world.eraser = true; erase(world, erasedFrom(world, key(world.x, world.y), null, rule)); },
     () => ERASER_SHADE,
-    world => ({ cell: key(world.x, world.y), passages: passagesOf(world, key(world.x, world.y)) }),
+    (world, rule) => erasedFrom(world, key(world.x, world.y), null, rule),
   ),
-  "stop-erasing": toolUp(world => { world.eraser = false; }),
+  "stop-erasing": { commit: world => { world.eraser = false; } },
 };
 for (const color of Object.keys(PAINT_SHADES)) {
   ACTIONS[`paint:${color}`] = toolDown(world => { world.eraser = false; world.brush = color; world.paint.set(key(world.x, world.y), color); }, () => paintShade(color));
 }
 
-function eraseCell(world, cell) {
+function erase(world, { cell, passages }) {
   world.paint.delete(cell);
-  for (const passage of passagesOf(world, cell)) world.passages.delete(passage);
+  for (const passage of passages) world.passages.delete(passage);
 }
 
 const startWorld = scene => ({
@@ -174,37 +171,76 @@ const segment = ([x1, y1], [x2, y2], color, cap = "butt", opacity = 1) =>
 const dot = ([x, y], color, opacity = 1) => `<circle cx="${x}" cy="${y}" r="${STROKE / 2}" fill="${paintShade(color)}" opacity="${opacity}"/>`;
 const between = (a, b, t) => [lerp(a[0], b[0], t), lerp(a[1], b[1], t)];
 
-// The paint of the world, each cell drawing its half of a passage in its own color (see map.js).
-// `removing` is the paint an action takes away while it runs, at `p`: with "fade" it fades; with
-// "pull" the robot rolls over the paint of its cell, and each passage pulls back toward the cell
-// at its other end, as if the stroke were drawn back in.
-function drawPaint(world, removing, p, style) {
-  const shapes = [];
+// The paint of the world, each cell drawing its half of a passage in its own color (see map.js),
+// as two lists: what stays, and what the action under way takes away (`removing`).
+function paintShapes(world, removing) {
+  const kept = [];
+  const going = [];
   for (const passage of world.passages) {
     const [a, b] = passage.split(" ");
-    const going = removing?.passages.includes(passage);
-    if (going && style === "pull") {
-      // From the cell that loses its paint toward the other one, which keeps its round end.
+    for (const cell of [a, b]) {
+      const color = world.paint.get(cell);
+      if (!color) continue;
+      // A cell that loses its paint loses its halves too, the one toward a cell ahead included.
+      const crossed = removing?.passages.includes(passage) ?? false;
+      const shape = { kind: "half", passage, cell, from: center(cell), to: between(center(a), center(b), 0.5), color, crossed };
+      (crossed || removing?.cell === cell ? going : kept).push(shape);
+    }
+  }
+  for (const [cell, color] of world.paint) {
+    (removing?.cell === cell ? going : kept).push({ kind: "dot", cell, from: center(cell), color });
+  }
+  return { kept, going };
+}
+const drawShape = (shape, opacity = 1) => shape.kind === "dot" ? dot(shape.from, shape.color, opacity) : segment(shape.from, shape.to, shape.color, "butt", opacity);
+
+// The paint taken away while the action runs, at `p`, as the tab Erasing says:
+// - "fade": it fades;
+// - "pull": the robot rolls over the paint of its cell, and each passage pulls back toward the cell
+//   at its other end, as if the stroke were drawn back in;
+// - "under", "scrub", "dust" and "ghost": it stays until the back of the robot has passed over it,
+//   so that the floor comes out clean from under the robot, as the stroke comes out of it when it
+//   paints; "ghost" leaves a faint trace that fades, "dust" a few specks of the paint, and "scrub"
+//   shakes the robot a little (in its pose). The half of the cell erased toward a cell ahead, which
+//   the robot never covers whole, fades at the end of the move.
+function drawRemoving(world, going, removing, p, style, clip) {
+  if (!going.length) return "";
+  if (style === "fade") return going.map(shape => drawShape(shape, 1 - p)).join("");
+  if (style === "pull") {
+    const shapes = going.filter(shape => shape.kind === "dot").map(shape => drawShape(shape));
+    for (const passage of removing.passages) {
+      const [a, b] = passage.split(" ");
       const [lost, kept] = a === removing.cell ? [a, b] : [b, a];
       const [from, to, middle] = [center(lost), center(kept), between(center(lost), center(kept), 0.5)];
       const tip = between(from, to, p);
       if (p < 0.5 && world.paint.get(lost)) shapes.push(segment(tip, middle, world.paint.get(lost), "round"));
       if (world.paint.get(kept)) shapes.push(segment(p < 0.5 ? middle : tip, to, world.paint.get(kept), "round"));
-      continue;
     }
-    for (const cell of [a, b]) {
-      const color = world.paint.get(cell);
-      if (color) shapes.push(segment(center(cell), between(center(a), center(b), 0.5), color, "butt", going ? 1 - p : 1));
+    return shapes.join("");
+  }
+  const cut = `<clipPath id="${clip.id}"><rect x="${clip.x}" y="${clip.y}" width="${clip.width}" height="${clip.height}"/></clipPath>`;
+  const covered = going.filter(shape => shape.kind === "dot" || shape.crossed);
+  // The half toward the cell ahead fades only once the robot is almost on its cell.
+  const late = p < 0.7 ? 1 : (1 - p) / 0.3;
+  let shapes = going.filter(shape => !covered.includes(shape)).map(shape => drawShape(shape, late)).join("");
+  shapes += `${cut}<g clip-path="url(#${clip.id})">${covered.map(shape => drawShape(shape)).join("")}</g>`;
+  if (style === "ghost") shapes = `<g opacity="${0.3 * (1 - p)}">${covered.map(shape => drawShape(shape)).join("")}</g>` + shapes;
+  if (style === "dust" && p > 0 && p < 1) {
+    // Specks of the paint left behind the back of the robot, drifting apart as they fade.
+    const color = paintShade(going[0].color);
+    const { back, along, across } = clip;
+    for (let index = 0; index < 6; index += 1) {
+      const behind = 4 + index * 5 + 10 * p;
+      const side = (index % 2 ? 1 : -1) * (5 + index * 2.5) * (0.4 + p);
+      const [x, y] = [back[0] - along[0] * behind + across[0] * side, back[1] - along[1] * behind + across[1] * side];
+      shapes += `<circle cx="${x}" cy="${y}" r="${3.5 - index * 0.3}" fill="${color}" opacity="${(1 - p) * 0.9}"/>`;
     }
   }
-  for (const [cell, color] of world.paint) {
-    const going = removing?.cell === cell;
-    shapes.push(dot(center(cell), color, going && style === "fade" ? 1 - p : 1));
-  }
-  return shapes.join("");
+  return shapes;
 }
 
 let motionGeneration = 0;
+let motionClips = 0;
 
 function playScene(root) {
   const generation = motionGeneration;
@@ -223,11 +259,10 @@ function playScene(root) {
     turn: EASINGS[root.dataset.turn || TURN_EASE],
     cue: EASINGS["in-out"],
   };
-  const variants = {
-    down: root.dataset.down || chosen.brushDown,
-    up: root.dataset.up || chosen.brushUp,
-    erase: root.dataset.erase || chosen.eraseMove,
-  };
+  const style = root.dataset.erase || chosen.eraseMove;
+  const rule = ERASE_RULES[style];
+  const clipId = `motion-clip-${motionClips += 1}`;
+  const [width, height] = [scene.rows[0].length * 64, scene.rows.length * 64];
   const steps = scene.trace.length;
   let world;
   let applied;
@@ -242,23 +277,35 @@ function playScene(root) {
     const current = elapsed < 0 ? -1 : Math.min(Math.floor(elapsed / period), steps);
     if (elapsed > steps * period + END_HOLD) { reset(now); requestAnimationFrame(frame); return; }
     while (applied < Math.min(current, steps)) {
-      ACTIONS[scene.trace[applied][1]]?.commit(world);
+      ACTIONS[scene.trace[applied][1]]?.commit(world, rule);
       applied += 1;
     }
     const action = current >= 0 && current < steps ? ACTIONS[scene.trace[current][1]] : undefined;
-    const progress = action?.timed(variants) ? clamp01((elapsed - current * period) / duration) : 1;
-    const eased = action ? easings[action.ease](progress) : 1;
-    const pose = { x: world.x, y: world.y, angle: world.angle, scale: 1, ...action?.pose(world, eased, variants) };
+    const progress = action?.pose ? clamp01((elapsed - current * period) / duration) : 1;
+    const eased = action?.pose ? easings[action.ease](progress) : 1;
+    const pose = { x: world.x, y: world.y, angle: world.angle, ...action?.pose?.(world, eased) };
     const ended = current >= steps;
     if (ended) world.lit = scene.end ?? null;
 
-    let paint = drawPaint(world, action?.removes?.(world), progress, variants.erase);
+    const removing = action?.removes?.(world, rule) ?? null;
+    // A robot that scrubs shakes a little while it moves with its eraser down.
+    if (removing && style === "scrub" && action === ACTIONS.forward) pose.angle += 6 * Math.sin(progress * Math.PI * 6) * Math.sin(progress * Math.PI);
+    // The region ahead of the back of the robot, where the paint taken away still shows.
+    const along = AHEAD[world.angle];
+    const back = [pose.x * 64 + 32 - along[0] * ROBOT_CLEAN, pose.y * 64 + 32 - along[1] * ROBOT_CLEAN];
+    const clip = {
+      id: clipId, back, along, across: [along[1], along[0]],
+      x: along[0] > 0 ? back[0] : 0, width: along[0] > 0 ? width - back[0] : along[0] < 0 ? back[0] : width,
+      y: along[1] > 0 ? back[1] : 0, height: along[1] > 0 ? height - back[1] : along[1] < 0 ? back[1] : height,
+    };
+    const { kept, going } = paintShapes(world, removing);
+    let paint = kept.map(shape => drawShape(shape)).join("") + drawRemoving(world, going, removing, progress, style, clip);
     // The stroke laid behind the robot, from the center of the cell it leaves to its own center.
     if (action === ACTIONS.forward && world.brush) {
       paint += segment(center(key(world.x, world.y)), center(key(pose.x, pose.y)), world.brush, "round");
     }
     // The ring of a tool put down, growing from under the robot as it fades.
-    const ring = action?.ring?.(world, variants);
+    const ring = action?.ring?.(world);
     if (ring && progress < 1) {
       const [x, y] = center(key(world.x, world.y));
       paint += `<circle cx="${x}" cy="${y}" r="${ROBOT_HALF + 16 * progress}" fill="none" stroke="${ring}" stroke-width="${5 * (1 - progress) + 1}" opacity="${1 - progress}"/>`;
@@ -268,7 +315,7 @@ function playScene(root) {
       const [x, y] = cell.split(",").map(Number);
       return `<img src="${element("item")}" alt="" style="transform:translate(${x * size}px,${y * size}px)">`;
     }).join("");
-    robot.style.transform = `translate(${pose.x * size}px, ${pose.y * size}px) rotate(${pose.angle}deg) scale(${pose.scale})`;
+    robot.style.transform = `translate(${pose.x * size}px, ${pose.y * size}px) rotate(${pose.angle}deg)`;
     robot.innerHTML = `<img src="${element("robot")}" alt="">${world.carrying ? `<img class="is-carried" src="${element("item")}" alt="">` : ""}${world.lit ? `<img src="${element(world.lit === "success" ? "eyes-lit" : "eyes-dim")}" alt="">` : ""}`;
 
     // The highlighted line is the one of the next step: it moves on once the action of the step

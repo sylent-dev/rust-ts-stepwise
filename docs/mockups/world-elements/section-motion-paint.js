@@ -35,16 +35,32 @@ SCENES.erasing = {
   trace: [[0, "erase"], [1, "forward"], [2, "forward"], [3, "stop-erasing"], [4, "forward"]],
 };
 
+// An L painted in blue, erased along its long side: a turn shows what the eraser leaves at a corner.
+const ERASE_L = ["1,1", "2,1", "3,1", "4,1", "4,2", "4,3"];
+SCENES.erasingCorner = {
+  rows: ["######", "#....#", "#....#", "#....#", "######"],
+  paint: Object.fromEntries(ERASE_L.map(cell => [cell, "blue"])),
+  passages: pathLinks(...ERASE_L),
+  robot: { x: 1, y: 1, dir: "east" },
+  program: [
+    "start_erasing()",
+    "repeat 3:",
+    "    forward()",
+    "stop_erasing()",
+  ],
+  trace: [[0, "erase"], [1], [2, "forward"], [1], [2, "forward"], [1], [2, "forward"], [1], [3, "stop-erasing"]],
+};
+
+const ERASE_TITLES = { fade: "17. Fade", pull: "18. Pull back", under: "19. Under the robot", scrub: "20. Scrub", dust: "21. Dust", ghost: "22. Ghost" };
+
 SECTIONS.push(["Animations: painting and erasing", () => `
-  <p>The robot covers its cell, so the paint that <code>start_painting()</code> puts there can't be seen, and lifting a tool changes nothing on the map: tab <b>Tool down</b> for <code>start_painting()</code> and <code>start_erasing()</code> (the ring takes the color of the paint, or the gray of the dimmed eyes for the eraser), tab <b>Tool up</b> for <code>stop_painting()</code> and <code>stop_erasing()</code>. The brush and the eraser themselves are never shown (decided on 2026-11-04).</p>
-  <p>The eraser takes away the paint of each cell it enters, with the passages of that cell: the one toward the next cell too, which leaves the paint of that cell alone until the robot enters it. Tab <b>Erasing</b>: the paint taken away <b>fades</b>, or the robot rolls over the paint of its cell and the passages <b>pull back</b> toward the cells that keep their paint. A tool down or up takes 300 ms when it is animated; the line moves on at once otherwise.</p>
+  <p>Decided: a tool put down (<code>start_painting()</code>, <code>start_erasing()</code>) shows a <b>ring</b> growing from under the robot, in the color of the paint or in the gray of the dimmed eyes for the eraser, since the robot covers the paint of its cell; a tool lifted shows <b>nothing</b>. The brush and the eraser themselves are never shown (decided on 2026-11-04).</p>
+  <p>The eraser, tab <b>Erasing</b>. 17 and 18 follow the rule of <code>specs.md</code>: a cell erased loses every passage it has, the one toward the next cell too, so the paint ahead goes before the robot reaches it. 19 to 22 follow another rule: <b>the eraser takes away what it passes over</b>, as the brush paints it, the cell and the passage it crosses, so that the paint goes under the robot and the floor comes out clean behind it; the stroke ahead ends square at the border of the cell. <b>19</b> nothing more; <b>20</b> the robot shakes a little, as if it scrubbed; <b>21</b> a few specks of the paint fly behind it; <b>22</b> a faint trace of the paint stays a moment.</p>
   <div class="page-row">
     <div class="page-slot"><span>Painting</span>${motionScene("painting", { size: 64 })}</div>
     <div class="page-slot"><span>Erasing</span>${motionScene("erasing", { size: 64 })}</div>
+    <div class="page-slot"><span>Erasing up to a corner</span>${motionScene("erasingCorner", { size: 64 })}</div>
   </div>
-  <h3>Tool down compared</h3>
-  <div class="page-row">${Object.entries({ none: "11. Nothing", press: "12. Press", ripple: "13. Ring", both: "14. Press and ring" }).map(([down, title]) =>
-    `<div class="page-slot"><span>${title}</span>${motionScene("painting", { size: 40, code: false, down })}</div>`).join("")}</div>
   <h3>Erasing compared</h3>
-  <div class="page-row">${Object.entries({ fade: "17. Fade", pull: "18. Pull back" }).map(([erase, title]) =>
+  <div class="page-row">${Object.entries(ERASE_TITLES).map(([erase, title]) =>
     `<div class="page-slot"><span>${title}</span>${motionScene("erasing", { size: 40, code: false, erase })}</div>`).join("")}</div>`]);

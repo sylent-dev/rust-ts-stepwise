@@ -5,10 +5,8 @@
 const VARIANTS = {
   theme: { label: "Style", options: Object.fromEntries(Object.entries(THEMES).map(([key, theme]) => [key, theme.title])), fallback: Object.keys(THEMES)[0] },
   vision: { label: "Vision", options: { normal: "Normal", protanopia: "Protanopia", deuteranopia: "Deuteranopia", tritanopia: "Tritanopia" }, fallback: "normal" },
-  // Step 11a, the animations (section-motion-paint.js): putting a tool down, lifting it, erasing.
-  brushDown: { label: "Tool down", options: { none: "11. Nothing", press: "12. Press", ripple: "13. Ring", both: "14. Press and ring" }, fallback: "both" },
-  brushUp: { label: "Tool up", options: { none: "15. Nothing", lift: "16. Lift" }, fallback: "none" },
-  eraseMove: { label: "Erasing", options: { fade: "17. Fade", pull: "18. Pull back" }, fallback: "pull" },
+  // Step 11a, the animations (section-motion-paint.js): the paint taken away by the eraser.
+  eraseMove: { label: "Erasing", options: { fade: "17. Fade", pull: "18. Pull back", under: "19. Under the robot", scrub: "20. Scrub", dust: "21. Dust", ghost: "22. Ghost" }, fallback: "under" },
 };
 
 const params = new URLSearchParams(location.search);
