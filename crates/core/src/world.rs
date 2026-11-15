@@ -14,9 +14,11 @@ use crate::color::Color;
 /// The tool the robot has down: at most one of them, as putting one down lifts the other.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Tool {
-    /// The brush, with its color: the robot paints every cell it moves into.
+    /// The brush, with its color: the robot paints every cell it moves into and the passage it
+    /// crosses.
     Brush(Color),
-    /// The eraser: the robot removes the paint of every cell it moves into.
+    /// The eraser: the robot removes the paint of every cell it moves into and of the passage
+    /// it crosses.
     Eraser,
 }
 
@@ -138,7 +140,7 @@ impl World {
 
     /// `forward()`: moves the robot one cell in front. With the brush down, it paints that
     /// cell and the passage it crosses; with the eraser down, it removes the paint of that
-    /// cell and of its passages.
+    /// cell and of the passage it crosses.
     ///
     /// # Errors
     ///
@@ -153,7 +155,7 @@ impl World {
         self.robot.position = to;
         match self.robot.tool {
             Some(Tool::Brush(color)) => self.map.paint_step(from, to, color),
-            Some(Tool::Eraser) => self.map.erase(to),
+            Some(Tool::Eraser) => self.map.erase_step(from, to),
             None => {}
         }
         Ok(())
@@ -185,10 +187,12 @@ impl World {
     }
 
     /// `start_erasing()`: puts the eraser down, lifting the brush, and removes at once the
-    /// paint of the cell of the robot and of its passages.
+    /// paint of the cell of the robot, which keeps its painted passages toward its painted
+    /// neighbors, the eraser crossing none of them; a passage toward a neighbor without paint
+    /// loses its paint.
     pub fn start_erasing(&mut self) {
         self.robot.tool = Some(Tool::Eraser);
-        self.map.erase(self.robot.position);
+        self.map.erase_cell(self.robot.position);
     }
 
     /// `stop_erasing()`: lifts the eraser; nothing happens when it is already up.

@@ -136,15 +136,19 @@ pub enum BuildError {
     NotEmpty(Point),
     /// A passage between two cells that aren't next to each other.
     NotNeighbors(Point, Point),
-    /// A passage painted from a cell that has no paint: a painted passage always joins two
+    /// A passage painted from a cell that has no paint: a passage is painted only between two
     /// painted cells.
     Unpainted(Point),
 }
 
 /// A grid of cells, at most [`MAX_COLUMNS`] × [`MAX_ROWS`]; outside it counts as a wall.
 ///
-/// A painted passage always joins two painted floor cells: painting a passage needs both
-/// paints, and erasing a cell, or turning it into a wall, removes its passages.
+/// A passage is painted between two painted floor cells: painting a passage needs both paints.
+/// It loses its paint when the eraser crosses it, when neither of its cells is painted any
+/// more, or when one of its cells becomes a wall. So a painted passage always joins two floor
+/// cells, at least one of them painted: a cell erased on its own keeps its passages toward its
+/// painted neighbors, which draw them up to its border, and the stroke joins it again if it is
+/// painted again; no stroke comes back where nothing showed it (see *Map* in `specs.md`).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Map {
     width: u8,
@@ -238,21 +242,27 @@ impl Map {
             .is_some_and(|floor| if eastward { floor.east } else { floor.south })
     }
 
-    /// Turns the cell at `point` into a wall (nothing changes when it is one already).
+    /// Turns the cell at `point` into a wall (nothing changes when it is one already); the
+    /// painted passages it kept after being erased lose their paint.
     ///
     /// # Errors
     ///
     /// [`BuildError::OutsideMap`] when `point` is outside the map, [`BuildError::NotEmpty`]
     /// when its cell has a paint or an item: the walls are set first, so that a level never
-    /// loses one in silence. An unpainted cell has no painted passage.
+    /// loses one in silence.
     pub fn set_wall(&mut self, point: Point) -> Result<(), BuildError> {
-        let cell = self.cell_mut(point).ok_or(BuildError::OutsideMap(point))?;
+        let cell = self.cell(point).ok_or(BuildError::OutsideMap(point))?;
         if let Cell::Floor(floor) = cell
             && (floor.paint.is_some() || floor.item)
         {
             return Err(BuildError::NotEmpty(point));
         }
-        *cell = Cell::Wall;
+        for direction in Direction::ALL {
+            self.set_passage_paint(point, direction, false);
+        }
+        if let Some(cell) = self.cell_mut(point) {
+            *cell = Cell::Wall;
+        }
         Ok(())
     }
 
@@ -301,13 +311,28 @@ impl Map {
         Ok(())
     }
 
-    /// Removes the paint of the cell at `point` and of its four passages.
-    pub(super) fn erase(&mut self, point: Point) {
+    /// Removes the paint of the cell at `point`, which keeps its painted passages toward its
+    /// painted neighbors; a passage toward a neighbor without paint loses its paint too.
+    pub(super) fn erase_cell(&mut self, point: Point) {
         if let Ok(floor) = self.floor_mut(point) {
             floor.paint = None;
         }
         for direction in Direction::ALL {
-            self.set_passage_paint(point, direction, false);
+            let neighbor_painted = point
+                .toward(direction)
+                .is_some_and(|neighbor| self.paint(neighbor).is_some());
+            if !neighbor_painted {
+                self.set_passage_paint(point, direction, false);
+            }
+        }
+    }
+
+    /// Removes the paint of `to` and of the passage from `from`, which the robot just crossed
+    /// with its eraser down: the eraser takes away what it passes over, as the brush paints it.
+    pub(super) fn erase_step(&mut self, from: Point, to: Point) {
+        self.erase_cell(to);
+        if let Some(direction) = from.direction_to(to) {
+            self.set_passage_paint(from, direction, false);
         }
     }
 

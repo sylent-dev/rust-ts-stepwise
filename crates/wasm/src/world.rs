@@ -48,7 +48,9 @@ pub struct Paint {
     /// The color of the cell.
     pub color: Color,
     /// The painted passages of the cell, by the direction of the neighbor each leads to,
-    /// clockwise from the north. A passage is given by both of its cells.
+    /// clockwise from the north. A passage is given by both of its cells when both are
+    /// painted; toward a cell erased on its own, which has no paint to give, the painted
+    /// neighbor still gives it, and the map draws its half up to the border.
     pub passages: Vec<Direction>,
 }
 
@@ -327,6 +329,30 @@ paints = [
         assert_eq!(
             world.cells,
             [painted(Color::Red, &[]), painted(Color::Red, &[])]
+        );
+    }
+
+    #[test]
+    fn a_painted_cell_gives_its_passage_toward_a_neighbor_erased_alone() {
+        let mut core = core_world(
+            r#"
+terrain = '''
+...
+'''
+robot = { at = [1, 0], facing = "east" }
+paints = [{ color = "red", path = [[0, 0], [1, 0], [2, 0]] }]
+"#,
+        );
+        core.start_erasing();
+        let world = World::from(&core);
+        // The erased cell gives nothing; each neighbor draws its half up to its border.
+        assert_eq!(
+            world.cells,
+            [
+                painted(Color::Red, &[East]),
+                EMPTY,
+                painted(Color::Red, &[West]),
+            ]
         );
     }
 

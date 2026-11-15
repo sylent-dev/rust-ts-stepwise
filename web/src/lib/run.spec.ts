@@ -202,8 +202,9 @@ forward()
 				{ type: 'floor', paint: { color: 'red', passages: ['east'] }, item: false },
 				{ type: 'floor', paint: { color: 'red', passages: ['east', 'west'] }, item: false },
 				{ type: 'floor', paint: { color: 'red', passages: ['west'] }, item: false },
-				// The blue cell that is left lost its passage with the cell erased next to it.
-				{ type: 'floor', paint: { color: 'blue', passages: [] }, item: false },
+				// The blue cell that is left keeps its passage toward the cell erased next to it, which
+				// the eraser didn't cross: the map draws its half, up to the border of that cell.
+				{ type: 'floor', paint: { color: 'blue', passages: ['east'] }, item: false },
 				erased,
 				erased
 			],
