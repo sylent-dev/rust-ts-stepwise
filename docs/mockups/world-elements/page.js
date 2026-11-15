@@ -5,8 +5,6 @@
 const VARIANTS = {
   theme: { label: "Style", options: Object.fromEntries(Object.entries(THEMES).map(([key, theme]) => [key, theme.title])), fallback: Object.keys(THEMES)[0] },
   vision: { label: "Vision", options: { normal: "Normal", protanopia: "Protanopia", deuteranopia: "Deuteranopia", tritanopia: "Tritanopia" }, fallback: "normal" },
-  // Step 11a, the animations (section-motion-less.js): less motion, for a learner who asked for it.
-  motion: { label: "Motion", options: { full: "Full", reduced: "38. Less: no bounce", still: "39. Less: none" }, fallback: "reduced" },
 };
 
 const params = new URLSearchParams(location.search);

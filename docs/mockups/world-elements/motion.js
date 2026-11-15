@@ -73,8 +73,8 @@ const SCENES = {};
 // `move` and `turn` choose an easing of EASINGS for this scene alone, instead of the decided ones;
 // `erase` a look of the eraser compared, instead of the decided one, and `carry` a look of picking up
 // and dropping, `bump` a look of the bump and `fail` a look of a pick up or a drop that fails
-// and `success` and `failure` a look of the end of a run compared; `motion` is "full", or "tab" for a
-// scene that follows the tab Motion.
+// and `success` and `failure` a look of the end of a run compared; `motion` is "full", or a level of
+// less motion of LESS_MOTION.
 function motionScene(name, { rate = NORMAL_SPEED, size = 48, code = true, move = "", turn = "", erase = "", carry = "", bump = "", fail = "", success = "", failure = "", motion = "full" } = {}) {
   const scene = SCENES[name];
   const layer = `<div class="motion-layer" style="--cell:${size}px"><svg viewBox="0 0 ${scene.rows[0].length * 64} ${scene.rows.length * 64}" aria-hidden="true"></svg><div class="motion-items"></div><div class="motion-robot"></div><svg class="motion-over" viewBox="0 0 ${scene.rows[0].length * 64} ${scene.rows.length * 64}" aria-hidden="true"></svg><div class="motion-flags"></div></div>`;
@@ -121,6 +121,11 @@ const backedUp = (world, amount) => {
 const CARRY_LOOK = "back";
 const CARRY_LOOKS = {
   // The item pops into the bay, or out of it, while the pincer is out.
+  // For less motion: no pincer, the item fades into the bay, or out of it.
+  fade: {
+    pick: (world, p) => ({ floor: false, bay: true, bayOpacity: p }),
+    drop: (world, p) => ({ bay: true, bayOpacity: 1 - p, dropped: p >= 1 }),
+  },
   pop: {
     pick: (world, p) => ({
       pincer: seg(p, 0, 0.35) - seg(p, 0.6, 0.95),
@@ -224,8 +229,8 @@ const tried = (world, p) => ({
 const FAIL_LOOK = "try";
 const FAIL_LOOKS = {
   shake: { any: (world, p) => shaking(world, p, 0) },
-  // For less motion: the pincer comes out and goes back in, on the cell, nothing more.
-  still: { any: (world, p) => ({ pincer: seg(p, 0, 0.3) - seg(p, 0.6, 0.9) }) },
+  // For less motion: nothing on the map, the error says it.
+  none: { any: () => ({}) },
   try: {
     "pick-empty": tried,
     "drop-empty": tried,
@@ -271,15 +276,15 @@ const END_LOOKS = {
   },
 };
 
-// Less motion, for a learner who asked for it (prefers-reduced-motion), as the tab Motion says.
-// "reduced": the moves and the turns stay, since they are what the program does, but nothing
-// bounces nor shakes: a turn without overshoot, pick_up() and drop() in place (the item pops into
-// the bay or out of it), the bump without its shake, an action that fails without trying nor
-// shaking, the end of a run with the eyes alone and the flags at once. "still": no animation at
+// Less motion, for a learner who asked for it (prefers-reduced-motion). "reduced", decided at step
+// 11a: the moves and the turns stay, since they are what the program does, but nothing bounces nor
+// shakes: a turn without overshoot, pick_up() and drop() without the pincer, the item fading into
+// the bay or out of it, the bump without its shake, an action that fails shown by its error alone,
+// the end of a run with the eyes alone and the flags at once. "still", compared: no animation at
 // all, the robot jumps from cell to cell and turns at once.
 const LESS_MOTION = {
-  reduced: { turn: "in-out", carry: "pop", bump: "back", fail: "still", end: "still" },
-  still: { still: true, turn: "in-out", carry: "pop", bump: "back", fail: "still", end: "still" },
+  reduced: { turn: "in-out", carry: "fade", bump: "back", fail: "none", end: "still" },
+  still: { still: true, turn: "in-out", carry: "fade", bump: "back", fail: "none", end: "still" },
 };
 
 // The two rules of the eraser compared. "all", the rule of specs.md: a cell erased loses its paint
@@ -474,7 +479,7 @@ function playScene(root) {
   const status = root.querySelector(".motion-status");
   const period = 1000 / rate;
   // Less motion, for a learner who asked for it, as the tab Motion says (see LESS_MOTION).
-  const motion = root.dataset.motion === "tab" ? chosen.motion : root.dataset.motion;
+  const motion = root.dataset.motion;
   const less = LESS_MOTION[motion] ?? {};
   const timed = time => less.still ? 0 : actionTime(time, rate);
   const durations = { move: timed(MOVE_TIME), [CARRY_TIME]: timed(CARRY_TIME), [BUMP_TIME]: timed(BUMP_TIME), [FAIL_TIME]: timed(FAIL_TIME) };
@@ -597,7 +602,7 @@ function playScene(root) {
     }).join("");
     // The pincer slides out from under the front of the robot; the item it holds is drawn over it.
     const pincer = pose.pincer > 0 ? `<img src="${element("pincer")}" alt="" style="transform:translateY(${(1 - pose.pincer) * 14}%)">` : "";
-    const carried = world.carrying && pose.bay || action === ACTIONS.pick && pose.bay ? `<img class="is-carried" src="${element("item")}" alt=""${pose.bayScale ? ` style="transform:translateY(11.7%) scale(${pose.bayScale})"` : ""}>` : "";
+    const carried = world.carrying && pose.bay || action === ACTIONS.pick && pose.bay ? `<img class="is-carried" src="${element("item")}" alt="" style="${pose.bayScale ? `transform:translateY(11.7%) scale(${pose.bayScale});` : ""}opacity:${pose.bayOpacity ?? 1}">` : "";
     const eyes = world.lit ? `<img src="${element(world.lit === "success" ? "eyes-lit" : "eyes-dim")}" alt="">` : "";
     const { flight } = pose;
     const held = flight ? `<img src="${element("item")}" alt="" style="transform:translateY(${flight.y}%) scale(${flight.scale});opacity:${flight.opacity ?? 1};filter:drop-shadow(0 ${2 * (flight.scale - 0.5)}px 2px #0005)">` : "";

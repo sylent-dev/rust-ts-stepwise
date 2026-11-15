@@ -23,9 +23,12 @@ SCENES.tour = {
 };
 
 SECTIONS.push(["Animations: less motion", () => `
-  <p>For a learner who asked their system for less motion. Tab <b>Motion</b>: <b>Full</b> is what the other sections decided; <b>38</b> keeps the moves and the turns, since they are what the program does, but nothing bounces nor shakes: a turn without overshoot, <code>pick_up()</code> and <code>drop()</code> in place (the item pops into the bay or out of it), the bump without its shake, the end of a run with the eyes alone and the flags at once; <b>39</b> has no animation at all: the robot jumps from cell to cell and turns at once.</p>
+  <p>Decided, for a learner who asked their system for less motion (38): the moves and the turns stay, since they are what the program does, but nothing bounces nor shakes. A turn without overshoot; <code>pick_up()</code> and <code>drop()</code> without the pincer nor the step back, the item fading into the bay or out of it; the bump without its shake; a <code>pick_up()</code> or a <code>drop()</code> that fails shown by its error alone; the end of a run with the eyes alone and the flags at once. 39, rejected, had no animation at all: at two steps per second, the eye no longer follows which action happened.</p>
   <div class="page-row">
-    <div class="page-slot"><span>Every gesture</span>${motionScene("tour", { size: 64, motion: "tab" })}</div>
-    <div class="page-slot"><span>A bump</span>${motionScene("bumping", { size: 64, motion: "tab" })}</div>
-    <div class="page-slot"><span>A goal not met</span>${motionScene("failure", { size: 64, motion: "tab" })}</div>
-  </div>`]);
+    <div class="page-slot"><span>Every gesture</span>${motionScene("tour", { size: 64, motion: "reduced" })}</div>
+    <div class="page-slot"><span>A bump</span>${motionScene("bumping", { size: 64, motion: "reduced" })}</div>
+    <div class="page-slot"><span>A goal not met</span>${motionScene("failure", { size: 64, motion: "reduced" })}</div>
+  </div>
+  <h3>Compared: full motion, 38. Less: no bounce, 39. Less: none</h3>
+  <div class="page-row">${[["full", "Full"], ["reduced", "38. Less: no bounce"], ["still", "39. Less: none"]].map(([motion, title]) =>
+    `<div class="page-slot"><span>${title}</span>${motionScene("tour", { size: 48, code: false, motion })}</div>`).join("")}</div>`]);
