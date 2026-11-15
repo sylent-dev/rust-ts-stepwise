@@ -85,6 +85,11 @@ pub enum RuntimeErrorKind {
         found: ValueType,
     },
 
+    // What `print` can't write.
+    LineTooLong {
+        limit: u32,
+    },
+
     // A mistake of the core.
     Internal,
 }
@@ -152,6 +157,9 @@ impl RuntimeErrorKind {
             K::ValueNotColor { function, found } => Self::ValueNotColor {
                 function: function.as_str().to_owned(),
                 found: found.into(),
+            },
+            K::LineTooLong => Self::LineTooLong {
+                limit: count(MAX_TEXT_LENGTH),
             },
             K::Internal => Self::Internal,
         }
@@ -241,7 +249,7 @@ mod tests {
             ),
             (K::DivisionByZero, B::DivisionByZero),
             (K::Overflow, B::Overflow),
-            (K::TextTooLong, B::TextTooLong { limit: 10_000 }),
+            (K::TextTooLong, B::TextTooLong { limit: 1_000 }),
         ] {
             assert_eq!(B::new(&core), expected);
         }
@@ -282,6 +290,7 @@ mod tests {
                     found: ValueType::Number,
                 },
             ),
+            (K::LineTooLong, B::LineTooLong { limit: 1_000 }),
             (K::Internal, B::Internal),
         ] {
             assert_eq!(B::new(&core), expected);

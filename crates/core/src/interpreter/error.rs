@@ -98,6 +98,10 @@ pub enum RuntimeErrorKind {
         /// The type of the value it was given.
         found: ValueType,
     },
+    /// A line of `print` of more than [`MAX_TEXT_LENGTH`](super::MAX_TEXT_LENGTH)
+    /// characters, the spaces between its values counted: nothing is written. The span is
+    /// the call.
+    LineTooLong,
     /// What the checks before running rule out (a name that is no variable, a `break` outside
     /// a loop…), or a mistake of the core: never for a checked program. The span is the
     /// closest place known.

@@ -8,7 +8,8 @@ use std::iter;
 use super::code::{Code, Instruction};
 use super::compiler::compile;
 use super::{
-    Action, Event, MAX_CALL_DEPTH, Machine, RuntimeError, RuntimeErrorKind as E, State, ValueType,
+    Action, Event, MAX_CALL_DEPTH, MAX_TEXT_LENGTH, Machine, RuntimeError, RuntimeErrorKind as E,
+    State, ValueType,
 };
 use crate::ast::{BinaryOperator, Program, Statement, StatementKind, UnaryOperator};
 use crate::builtin::Builtin;
@@ -832,6 +833,55 @@ fn print_writes_a_text_without_its_quotes_nor_its_escapes() {
 }
 
 #[test]
+fn print_writes_a_line_of_at_most_a_thousand_characters() {
+    // An accent and an emoji are one character each, whatever their bytes.
+    let thousand = "é🤖".repeat(500);
+    assert_eq!(MAX_TEXT_LENGTH, thousand.chars().count());
+    assert_eq!(value(&format!("\"{thousand}\"")), thousand);
+    // The spaces between the values count: 499 characters, a space and 500 more.
+    let most = "é🤖".repeat(250);
+    let less = most.strip_suffix("🤖").unwrap();
+    assert_eq!(
+        value(&format!("\"{less}\", \"{most}\"")),
+        format!("{less} {most}")
+    );
+    assert_eq!(refused(&format!("\"{most}\", \"{most}\"")), E::LineTooLong);
+    assert_eq!(refused(&format!("\"{thousand}\", 1")), E::LineTooLong);
+    assert_eq!(refused(&format!("\"{thousand}\", \"\"")), E::LineTooLong);
+}
+
+#[test]
+fn a_line_too_long_stops_the_program_on_its_print_and_writes_nothing() {
+    let half = "0123456789".repeat(50);
+    let run = run(&format!(
+        "let half = \"{half}\"\nprint(\"before\")\nprint(half, half, true)\nprint(\"after\")\n"
+    ));
+    assert_eq!(run.lines, [1, 2, 3]);
+    assert_eq!(run.printed, ["before"]);
+    let error = RuntimeError {
+        kind: E::LineTooLong,
+        span: span(3, 1, 24),
+    };
+    assert_eq!(run.state, State::Failed(error));
+}
+
+#[test]
+fn a_text_written_in_the_program_may_be_longer_than_a_line_of_print() {
+    // The size of the program bounds it; `print` and `+` refuse what they would make of it.
+    let long = "é".repeat(MAX_TEXT_LENGTH + 1);
+    let source = format!("let long = \"{long}\"\n");
+    assert_eq!(printed(&format!("{source}print(long == long)\n")), ["true"]);
+    assert_eq!(
+        failure(&format!("{source}print(long)\n")).kind,
+        E::LineTooLong
+    );
+    assert_eq!(
+        failure(&format!("{source}let longer = long + \"\"\n")).kind,
+        E::TextTooLong
+    );
+}
+
+#[test]
 fn the_result_of_print_is_no_value() {
     let run = run("let line = print(\"a\")\nprint(\"after\")\n");
     assert_eq!(run.lines, [1]);
@@ -980,18 +1030,19 @@ fn plus_refuses_a_text_and_a_number() {
 }
 
 #[test]
-fn a_text_holds_at_most_ten_thousand_characters() {
-    // Ten characters, then ten times as many at each turn: 10 000 after three turns.
-    let ten_thousand = "\
-let line = \"0123456789\"
-repeat 3:
+fn two_texts_joined_hold_at_most_a_thousand_characters() {
+    // Ten characters, then ten times as many at each turn: 1 000 after two turns. An accent
+    // and an emoji are one character each, whatever their bytes.
+    let thousand = "\
+let line = \"01234567é🤖\"
+repeat 2:
     line = line + line + line + line + line + line + line + line + line + line
 ";
     assert_eq!(
-        printed(&format!("{ten_thousand}print(line == line)\n")),
+        printed(&format!("{thousand}print(line == line)\n")),
         ["true"]
     );
-    let error = failure(&format!("{ten_thousand}let longer = line + \"x\"\n"));
+    let error = failure(&format!("{thousand}let longer = line + \"x\"\n"));
     assert_eq!(error.kind, E::TextTooLong);
     assert_eq!(error.span, span(4, 14, 24));
 }

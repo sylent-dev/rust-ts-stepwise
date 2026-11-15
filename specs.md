@@ -69,7 +69,7 @@ else:
 |---|---|---|
 | Whole number | `0`, `42`, `-7` | 64-bit; a result beyond that range stops the program with an error. A number is written up to 9223372036854775807, with or without `-`: the smallest value, -9223372036854775808, can only be computed. No decimal numbers in version 1. |
 | Boolean | `true`, `false` | The only values a condition accepts: `if 3:` is an error, there is no "truthy" value. |
-| Text | `"I am stuck"` | Double quotes, on one line; `\"`, `\\` and `\n` inside. Used by `print`. Two texts joined by `+` give at most 10 000 characters: a longer result stops the program with an error, so that a loop that doubles a text never fills the memory of the page. A text written in the program has no such limit: the size of the program bounds it. |
+| Text | `"I am stuck"` | Double quotes, on one line; `\"`, `\\` and `\n` inside. Used by `print`. Two texts joined by `+` give at most 1 000 characters, and a line of `print` holds as many at most: a longer one stops the program with an error, so that neither a loop that doubles a text nor a `print` of many texts fills the memory of the page (about 800 characters fill the console; decided on 2026-11-15). A text written in the program has no such limit: the size of the program bounds it, and `+` and `print` stop on what they would make of it. |
 | Color | `red`, `yellow`, `blue` | The three paints of the world: enough for the sensors to tell three cases apart (four with an unpainted cell), few enough to read at a glance and to stay distinct with a red-green color blindness. Their shades are in [Look of the world](#look-of-the-world). |
 
 Lists and decimal numbers come later (see the [backlog](docs/backlog.md)).
@@ -137,7 +137,7 @@ The robot stands on one cell and faces one of the four directions. It can carry 
 | Sense | `item_here()`, `item_in_front()` | `true` when its cell, or the cell in front, has an item. | Never. |
 | Sense | `is_carrying()` | `true` when the robot carries an item. | Never. |
 | Sense | `is_painting()`, `is_erasing()` | `true` when the brush, or the eraser, is down. | Never. |
-| Write | `print(value, …)` | Writes its values to the console, separated by spaces, on one line. Without a value (`print()`), it writes an empty line. | Never. |
+| Write | `print(value, …)` | Writes its values to the console, separated by spaces, on one line. Without a value (`print()`), it writes an empty line. | The line has more than 1 000 characters, the spaces between its values counted: nothing is written. |
 
 - An error of a built-in function stops the program on its call, and the function does nothing: the robot stays against the wall, the item where it was.
 - A function that takes a color, given any other value (`start_painting(3)`, `here_is("red")`), stops the program with an error that names the function and the type of the value, as a condition that isn't a boolean does. A sensor doesn't answer `false` to it, which would hide the mistake. Only the values decide it (`start_painting(paint)`), so the checks before running don't find it (decided on 2026-11-14).
