@@ -32,11 +32,12 @@ export function paceFrame(
 
 /**
  * The steps an **Instant** frame runs between two looks at the clock, which costs a little. A
- * batch can run past the budget when the steps are slow. Measured at step 10d with the real
- * interpreter, in Node.js 24, the line printed and the next line read after each step: a batch
- * takes 0.03 to 0.1 ms for a usual program, 0.6 ms when each line prints twenty values, and up to
- * 9 ms for lines nobody writes by hand (190 values printed, a hundred texts joined on one line).
- * The page then draws one frame in two and still answers: the batch stays as it is.
+ * batch can run past the budget when the steps are slow, by the time of one batch at most, the
+ * clock being read before each. Measured at step 10d with the real interpreter, in Node.js 24,
+ * the line printed and the next line read after each step: a batch takes 0.03 to 0.1 ms for a
+ * usual program, 0.6 ms when each line prints twenty values, and up to 9 ms for lines nobody
+ * writes by hand (190 values printed, a hundred texts joined on one line). The page then draws
+ * one frame in two at worst and still answers: the batch stays as it is.
  */
 const BATCH = 1000;
 

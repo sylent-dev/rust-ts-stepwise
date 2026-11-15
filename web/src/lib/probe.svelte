@@ -57,7 +57,7 @@
 		return run.line !== undefined;
 	}
 
-	/** Copies the run of the core into the page, once per frame whatever the steps run. */
+	/** Copies the run of the core into the page: once per frame that ran steps, and at **Reset**. */
 	function draw(): void {
 		world = run.world();
 		line = run.line;
