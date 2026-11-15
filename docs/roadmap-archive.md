@@ -143,3 +143,7 @@ How the data crosses the bridge (see [Technical choices](technical-choices.md), 
 ### 10b. Levels and map (#38)
 
 A level file or the sandbox read through the bridge, each kept in the module as a handle (the exported classes `Level` and `Sandbox`): the starting code and, for each map, the world as plain data (the cells row by row, the paint of a cell with its painted passages on its four sides, the items, the robot without its brush nor its eraser) and the goals that have a cell, to mark; a file the core refuses throws an error with the sentence of the core (decided on 2026-11-14).
+
+### 10c. Running (#39)
+
+Start, the machine asking for the checked program of 10a, step, the state, the events, the errors while running, the goals checked at the end by a type of the core that holds a map and its machine, the calls in progress and their variables. A step gives back a word (what it showed: an action of the robot, a line printed, nothing); the next line, the line printed, the world, the end and the variables are read by other calls, when the interface needs them (decided on 2026-11-14). The two tests through the real module (the maximum depth, the lines highlighted with accents and an emoji).
