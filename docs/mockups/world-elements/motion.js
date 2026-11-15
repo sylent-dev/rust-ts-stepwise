@@ -71,12 +71,13 @@ const SCENES = {};
 // A scene in the page: the map with its layer of moving things, the program beside it. Its player
 // starts once the sheet is drawn (startScenes).
 // `move` and `turn` choose an easing of EASINGS for this scene alone, instead of the decided ones;
-// `erase` a look of the eraser compared, instead of the decided one.
-function motionScene(name, { rate = NORMAL_SPEED, size = 48, code = true, move = "", turn = "", erase = "" } = {}) {
+// `erase` a look of the eraser compared, instead of the decided one, and `carry` a look of the tab Pick up
+// and drop, instead of the tab.
+function motionScene(name, { rate = NORMAL_SPEED, size = 48, code = true, move = "", turn = "", erase = "", carry = "" } = {}) {
   const scene = SCENES[name];
   const layer = `<div class="motion-layer" style="--cell:${size}px"><svg viewBox="0 0 ${scene.rows[0].length * 64} ${scene.rows.length * 64}" aria-hidden="true"></svg><div class="motion-items"></div><div class="motion-robot"></div></div>`;
   const program = code ? `<div class="motion-panel"><ol class="motion-code">${scene.program.map(line => `<li>${line}</li>`).join("")}</ol><div class="motion-status"></div></div>` : "";
-  return `<div class="motion-scene" data-scene="${name}" data-rate="${rate}" data-size="${size}" data-move="${move}" data-turn="${turn}" data-erase="${erase}"><div class="motion-stage">${appMap(scene.rows, scene.marks, size)}${layer}</div>${program}</div>`;
+  return `<div class="motion-scene" data-scene="${name}" data-rate="${rate}" data-size="${size}" data-move="${move}" data-turn="${turn}" data-erase="${erase}" data-carry="${carry}"><div class="motion-stage">${appMap(scene.rows, scene.marks, size)}${layer}</div>${program}</div>`;
 }
 
 // The duration of an action at a speed: the one chosen for the normal speed, shortened when a step
@@ -91,6 +92,89 @@ const ROBOT_HALF = 21;
 const ROBOT_CLEAN = 14;
 // The shade of the ring of the eraser put down, the one of the dimmed eyes.
 const ERASER_SHADE = "#7d8798";
+
+// The time `pick_up()` and `drop()` take at the normal speed: longer than a move, since the item
+// goes from the floor to the bay or back, and they are rarer; it still leaves the robot a moment of
+// rest in a step of 500 ms.
+const CARRY_TIME = 400;
+
+// `pick_up()` and `drop()`, as the tab Pick up and drop says. A pose gives, beside the place of
+// the robot: how far its pincer is out (`pincer`, 0 to 1), the item in its pincer between the
+// floor and the bay (`flight`: its place along the robot, in % of a cell from its center, the
+// front being negative, its scale and its opacity), whether the item of the floor or of the bay
+// is hidden (`floor`, `bay`: false), and the item already on the floor after a drop (`dropped`).
+// The robot covers the item of its cell: only "back" moves it back to show the item.
+const seg = (p, from, to) => EASINGS["in-out"](clamp01((p - from) / (to - from)));
+const BAY = 11.7;
+const FRONT = -34;
+const BACK_OFF = 0.34;
+const lifted = t => 1 + 0.15 * Math.sin(Math.PI * t);
+const backedUp = (world, amount) => {
+  const [dx, dy] = AHEAD[world.angle];
+  return { x: world.x - dx * BACK_OFF * amount, y: world.y - dy * BACK_OFF * amount };
+};
+const CARRY_LOOKS = {
+  // The item pops into the bay, or out of it, while the pincer is out.
+  pop: {
+    pick: (world, p) => ({
+      pincer: seg(p, 0, 0.35) - seg(p, 0.6, 0.95),
+      floor: false,
+      bay: p >= 0.65,
+      flight: p >= 0.4 && p < 0.65 ? { y: BAY, scale: 0.5 * lifted((p - 0.4) / 0.25 / 2) } : null,
+    }),
+    drop: (world, p) => ({
+      pincer: seg(p, 0, 0.35) - seg(p, 0.6, 0.95),
+      bay: false,
+      flight: p < 0.5 ? { y: BAY, scale: 0.5 * (1 - seg(p, 0.3, 0.5)) } : null,
+      dropped: p >= 0.5,
+    }),
+  },
+  // The item comes out at the front of the robot and goes over it into the bay, or back.
+  over: {
+    pick: (world, p) => {
+      const t = seg(p, 0.35, 0.8);
+      return {
+        pincer: seg(p, 0, 0.25) - seg(p, 0.6, 0.9),
+        floor: false,
+        bay: p >= 0.8,
+        flight: p >= 0.2 && p < 0.8 ? { y: lerp(FRONT, BAY, t), scale: lerp(1, 0.5, t) * lifted(t), opacity: seg(p, 0.2, 0.35) } : null,
+      };
+    },
+    drop: (world, p) => {
+      const t = seg(p, 0.15, 0.6);
+      return {
+        pincer: seg(p, 0, 0.25) - seg(p, 0.65, 0.9),
+        bay: p < 0.15,
+        flight: p >= 0.15 && p < 0.8 ? { y: lerp(BAY, FRONT, t), scale: lerp(0.5, 1, t) * lifted(t) * (1 - 0.1 * seg(p, 0.6, 0.8)), opacity: 1 - seg(p, 0.6, 0.8) } : null,
+        dropped: p >= 0.8,
+      };
+    },
+  },
+  // The robot moves back a third of a cell, so that the item of its cell shows at its front, takes
+  // it over itself into the bay, or sets it down there, then rolls back onto its cell.
+  back: {
+    pick: (world, p) => {
+      const t = seg(p, 0.4, 0.8);
+      return {
+        ...backedUp(world, seg(p, 0, 0.3) - seg(p, 0.7, 1)),
+        pincer: seg(p, 0.05, 0.3) - seg(p, 0.55, 0.8),
+        floor: p < 0.4,
+        bay: p >= 0.8,
+        flight: p >= 0.4 && p < 0.8 ? { y: lerp(FRONT, BAY, t), scale: lerp(1, 0.5, t) * lifted(t) } : null,
+      };
+    },
+    drop: (world, p) => {
+      const t = seg(p, 0.25, 0.65);
+      return {
+        ...backedUp(world, seg(p, 0, 0.3) - seg(p, 0.7, 1)),
+        pincer: seg(p, 0.05, 0.3) - seg(p, 0.6, 0.85),
+        bay: p < 0.25,
+        flight: p >= 0.25 && p < 0.65 ? { y: lerp(BAY, FRONT, t), scale: lerp(0.5, 1, t) * lifted(t) } : null,
+        dropped: p >= 0.65,
+      };
+    },
+  },
+};
 
 // The two rules of the eraser compared. "all", the rule of specs.md: a cell erased loses its paint
 // and every painted passage it has, the one toward the next cell too. "crossed": the eraser takes
@@ -150,6 +234,18 @@ const ACTIONS = {
     (world, rule) => erasedFrom(world, key(world.x, world.y), null, rule),
   ),
   "stop-erasing": { commit: world => { world.eraser = false; } },
+  pick: {
+    ease: "linear",
+    time: CARRY_TIME,
+    commit: world => { world.items.delete(key(world.x, world.y)); world.carrying = true; },
+    pose: (world, p, look) => CARRY_LOOKS[look].pick(world, p),
+  },
+  drop: {
+    ease: "linear",
+    time: CARRY_TIME,
+    commit: world => { world.items.add(key(world.x, world.y)); world.carrying = false; },
+    pose: (world, p, look) => CARRY_LOOKS[look].drop(world, p),
+  },
 };
 for (const color of Object.keys(PAINT_SHADES)) {
   ACTIONS[`paint:${color}`] = toolDown(world => { world.eraser = false; world.brush = color; world.paint.set(key(world.x, world.y), color); }, () => paintShade(color));
@@ -255,13 +351,14 @@ function playScene(root) {
   const lines = root.querySelectorAll(".motion-code li");
   const status = root.querySelector(".motion-status");
   const period = 1000 / rate;
-  const duration = actionTime(MOVE_TIME, rate);
+  const durations = { move: actionTime(MOVE_TIME, rate), carry: actionTime(CARRY_TIME, rate) };
   const easings = {
     move: EASINGS[root.dataset.move || MOVE_EASE],
     turn: EASINGS[root.dataset.turn || TURN_EASE],
     cue: EASINGS["in-out"],
   };
   const style = root.dataset.erase || ERASE_STYLE;
+  const look = root.dataset.carry || chosen.carry;
   const rule = ERASE_RULES[style];
   const clipId = `motion-clip-${motionClips += 1}`;
   const [width, height] = [scene.rows[0].length * 64, scene.rows.length * 64];
@@ -283,9 +380,10 @@ function playScene(root) {
       applied += 1;
     }
     const action = current >= 0 && current < steps ? ACTIONS[scene.trace[current][1]] : undefined;
+    const duration = action?.time ? durations.carry : durations.move;
     const progress = action?.pose ? clamp01((elapsed - current * period) / duration) : 1;
-    const eased = action?.pose ? easings[action.ease](progress) : 1;
-    const pose = { x: world.x, y: world.y, angle: world.angle, ...action?.pose?.(world, eased) };
+    const eased = action?.pose ? (easings[action.ease] ?? EASINGS.linear)(progress) : 1;
+    const pose = { x: world.x, y: world.y, angle: world.angle, pincer: 0, floor: true, bay: true, flight: null, dropped: false, ...action?.pose?.(world, eased, look) };
     const ended = current >= steps;
     if (ended) world.lit = scene.end ?? null;
 
@@ -313,12 +411,22 @@ function playScene(root) {
       paint += `<circle cx="${x}" cy="${y}" r="${ROBOT_HALF + 16 * progress}" fill="none" stroke="${ring}" stroke-width="${5 * (1 - progress) + 1}" opacity="${1 - progress}"/>`;
     }
     paintLayer.innerHTML = paint;
-    itemsLayer.innerHTML = [...world.items].map(cell => {
+    // The item of the cell of the robot, hidden while its pincer holds it, or shown once it is set down.
+    const here = key(world.x, world.y);
+    const items = [...world.items].filter(cell => pose.floor || cell !== here);
+    if (pose.dropped) items.push(here);
+    itemsLayer.innerHTML = items.map(cell => {
       const [x, y] = cell.split(",").map(Number);
       return `<img src="${element("item")}" alt="" style="transform:translate(${x * size}px,${y * size}px)">`;
     }).join("");
     robot.style.transform = `translate(${pose.x * size}px, ${pose.y * size}px) rotate(${pose.angle}deg)`;
-    robot.innerHTML = `<img src="${element("robot")}" alt="">${world.carrying ? `<img class="is-carried" src="${element("item")}" alt="">` : ""}${world.lit ? `<img src="${element(world.lit === "success" ? "eyes-lit" : "eyes-dim")}" alt="">` : ""}`;
+    // The pincer slides out from under the front of the robot; the item it holds is drawn over it.
+    const pincer = pose.pincer > 0 ? `<img src="${element("pincer")}" alt="" style="transform:translateY(${(1 - pose.pincer) * 14}%)">` : "";
+    const carried = world.carrying && pose.bay || action === ACTIONS.pick && pose.bay ? `<img class="is-carried" src="${element("item")}" alt="">` : "";
+    const eyes = world.lit ? `<img src="${element(world.lit === "success" ? "eyes-lit" : "eyes-dim")}" alt="">` : "";
+    const { flight } = pose;
+    const held = flight ? `<img src="${element("item")}" alt="" style="transform:translateY(${flight.y}%) scale(${flight.scale});opacity:${flight.opacity ?? 1};filter:drop-shadow(0 ${2 * (flight.scale - 0.5)}px 2px #0005)">` : "";
+    robot.innerHTML = `${pincer}<img src="${element("robot")}" alt="">${carried}${eyes}${held}`;
 
     // The highlighted line is the one of the next step: it moves on once the action of the step
     // has ended, so that a line stays lit while the robot does what it says (decided at step 11a).
