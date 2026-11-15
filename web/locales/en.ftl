@@ -10,11 +10,12 @@ app-tagline = Learn to program step by step.
 core-version = Core { $version }, computed in Rust.
 core-load-failed = The core of Stepwise could not load.
 
-## The probe of step 4c: a fake program run at each animation frame, replaced by the level
-## screen of step 13 onward.
+## The probe of step 4c, on the real machine since step 10d: a program run on the map of the
+## sandbox at each animation frame, replaced by the level screen of step 13 onward.
 
-probe-title = A fake program, run one step at each frame
-probe-map = The robot walking around a square on a small map.
+probe-title = A program run by the core, one step at a time
+probe-map = The robot walking around the map of the sandbox.
+probe-program = The program, the line of its next step marked
 probe-run = Run
 probe-pause = Pause
 probe-reset = Reset
@@ -39,3 +40,4 @@ probe-steps-measured =
         [one] { $count } step
        *[other] { $count } steps
     } · { $rate } steps per second measured
+probe-stopped = The program has stopped.

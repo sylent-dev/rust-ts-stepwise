@@ -91,6 +91,3 @@ export {
 	type ValueType,
 	type Variable
 } from '#lib/wasm/stepwise.js';
-
-/** The probe of step 4c (see crates/core/src/probe.rs), to create once `loadCore` has resolved. */
-export { Probe, type Action, type ProbeDirection } from '#lib/wasm/stepwise.js';

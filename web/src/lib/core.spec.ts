@@ -8,7 +8,6 @@ import {
 	coreVersion,
 	initSync,
 	Level,
-	Probe,
 	Sandbox,
 	type Cell,
 	type Span
@@ -24,17 +23,6 @@ describe('the WebAssembly module', () => {
 	it('gives the version of the workspace, computed in Rust', () => {
 		expect(workspaceVersion).toMatch(/^\d+\.\d+\.\d+/);
 		expect(coreVersion()).toBe(workspaceVersion);
-	});
-
-	it('runs the fake program of the probe one step at a time', () => {
-		using probe = new Probe();
-		expect([probe.step(), probe.step(), probe.step()]).toEqual(['moved', 'moved', 'turned']);
-		expect({ x: probe.x, y: probe.y, direction: probe.direction }).toEqual({
-			x: 3,
-			y: 1,
-			direction: 'south'
-		});
-		expect(probe.steps).toBe(3n);
 	});
 });
 

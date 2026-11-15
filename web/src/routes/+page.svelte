@@ -1,6 +1,6 @@
 <!-- The probe of step 4: a message from Fluent, a value computed by the core in Rust (step 4b),
-     and a fake program advanced at each animation frame (step 4c). Replaced by the home screen
-     in step 13. -->
+     and a program advanced at each animation frame (step 4c), a real one since step 10d.
+     Replaced by the home screen in step 13. -->
 <script lang="ts">
 	import { loadCore } from '#lib/core.ts';
 	import { t } from '#lib/i18n.ts';
