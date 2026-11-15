@@ -46,3 +46,4 @@ body { margin: 0; background: #2a2d31; color: #e9ecef; font: 14px/1.4 system-ui,
 .sound-list small { color: #868e96; }
 .sound-temperature { margin: 10px 0 4px; color: #868e96; font-size: 12px; }
 .sound-buttons { display: flex; gap: 4px; }
+.sound-pairs { display: grid; grid-template-columns: repeat(2, max-content); gap: 6px 12px; margin: 0 0 12px; padding: 0; list-style: none; }

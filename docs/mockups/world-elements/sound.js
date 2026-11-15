@@ -57,6 +57,51 @@ const bell = (ctx, out, { at = 0, freq, decay = 0.5, level = 0.16, partial = 2.7
   note(ctx, out, { at, freq: freq * partial, decay: decay * 0.35, level: level * 0.25 });
 };
 
+// A note whose frequency and level follow curves computed beforehand, one point per millisecond:
+// the port to the Web Audio API of a recipe of make-sounds.py, with the same functions of the time.
+// `freq` is a function of the time in seconds; the level rises in `attack`, holds `hold`, then dies
+// out as exp(-curve·x)·(1 - x), as `env` of make-sounds.py.
+function curveNote(ctx, out, { at = 0, dur, freq, type = "sine", attack = 0.005, curve = 5, hold = 0, level = 1 }) {
+  const start = ctx.currentTime + at;
+  const points = Math.max(2, Math.round(dur * 1000));
+  const rest = Math.max(dur - attack - hold, 1e-6);
+  const frequencies = new Float32Array(points);
+  const levels = new Float32Array(points);
+  for (let i = 0; i < points; i += 1) {
+    const t = dur * i / (points - 1);
+    frequencies[i] = freq(t);
+    const x = Math.min(Math.max((t - attack - hold) / rest, 0), 1);
+    levels[i] = level * (t < attack ? t / attack : t < attack + hold ? 1 : Math.exp(-curve * x) * (1 - x));
+  }
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = type;
+  osc.frequency.setValueCurveAtTime(frequencies, start, dur);
+  gain.gain.setValueCurveAtTime(levels, start, dur);
+  osc.connect(gain).connect(out);
+  osc.start(start);
+  osc.stop(start + dur);
+}
+
+// The spring of a bump (77), ported: a low tone and its partial that wobble 18 times a second and
+// settle, and a click of noise at the contact; at the gain make-sounds.py gave the file (0.4177), so
+// that it plays as loud.
+function springBump(ctx, out) {
+  const wobble = (base, depth, fade) => t => base + depth * Math.exp(-fade * t) * Math.sin(2 * Math.PI * 18 * t);
+  const level = 0.4177;
+  curveNote(ctx, out, { dur: 0.45, freq: wobble(180, 60, 7), curve: 4, level });
+  curveNote(ctx, out, { dur: 0.25, freq: wobble(432, 120, 8), curve: 5, level: 0.3 * level });
+  noise(ctx, out, { cutoff: 20000, decay: 0.005, level: 0.5 * level });
+}
+
+// The tiny blip of a move (88), ported: one short note that rises a little for `forward()`, two for
+// a turn, at the gains make-sounds.py gave the files.
+function tinyBlip(ctx, out, part) {
+  const notes = part === "turn" ? [HZ.G5, HZ.E5] : [HZ.E5];
+  const level = part === "turn" ? 0.4383 : 0.3843;
+  notes.forEach((f, index) => curveNote(ctx, out, { at: 0.06 * index, dur: 0.04, freq: t => f * (1 + 0.15 * t / 0.04), curve: 4, level }));
+}
+
 // The frequencies of the notes used, in hertz.
 const HZ = { E4: 329.63, F4: 349.23, G4: 392, A4: 440, C5: 523.25, E5: 659.25, G5: 783.99, C6: 1046.5, E6: 1318.5 };
 
@@ -120,6 +165,14 @@ const SOUNDS = {
   },
 };
 for (const [kind, options] of Object.entries(MADE_SOUNDS)) Object.assign(SOUNDS[kind].options, options);
+// Decided on 2026-11-15: the application synthesizes its sounds with the Web Audio API (no file, no
+// license, no format a browser may not read). The two sounds chosen among the files, ported, to
+// compare with their file by ear.
+SOUNDS.bump.options.port77 = { title: "90. Spring, in Web Audio (77)", source: "synthesized, port of 77", temperature: "high", length: 0.41, play: springBump };
+SOUNDS.move.options.port88 = { title: "91. Tiny blip, in Web Audio (88)", source: "synthesized, port of 88", temperature: "calm", length: 0.1, play: tinyBlip, parts: { forward: {}, turn: {} } };
+// Decided on 2026-11-15: a move or a turn plays its sound up to 2 steps per second, and none
+// faster, where it would become a stream that covers the sounds of the end.
+const MOVE_SOUND_MAX_RATE = 2;
 // The temperatures, in the order the lists show them; the sounds without one are calm.
 const TEMPERATURES = { calm: "Calm", high: "High temperature", explosive: "Explosive temperature" };
 // The sounds of the moves play quieter than the others: they come back at each step.
@@ -168,7 +221,10 @@ async function playSound(kind, value = chosen[`${kind}Sound`], { part = "forward
   const sound = SOUNDS[kind].options[value];
   const { ctx, volume } = audioContext();
   if (sound.play) {
-    sound.play(ctx, volume);
+    const level = ctx.createGain();
+    level.gain.value = 10 ** ((kind === "move" ? MOVE_QUIETER : 0) / 20);
+    level.connect(volume);
+    sound.play(ctx, level, part);
     return;
   }
   const { file, mean } = sound.parts?.[part] ?? sound;

@@ -505,16 +505,17 @@ function playScene(root) {
   let applied;
   let start;
   const reset = now => { world = startWorld(scene); applied = 0; start = now; heard.clear(); };
-  // The sounds of the scene, at their time from its start: a move or a turn as it starts, faster
-  // when the step is shorter; a bump when the front of the robot touches the border of its cell;
-  // the end of a run when its last step has ended. They play once, after a click on the button ▶ of
-  // the scene, never as it loops.
+  // The sounds of the scene, at their time from its start: a move or a turn as it starts, up to
+  // MOVE_SOUND_MAX_RATE steps per second (faster when the step is shorter); a bump when the front
+  // of the robot touches the border of its cell; the end of a run when its last step has ended.
+  // They play once, after a click on the button ▶ of the scene, never as it loops.
   const moveRate = MOVE_TIME / Math.max(durations.move, 1);
+  const moves = rate <= MOVE_SOUND_MAX_RATE;
   const cues = [
     ...scene.trace.flatMap(([, name], index) =>
       name === "bump" ? [[index * period + 0.3 * durations[BUMP_TIME], "bump"]]
-      : name === "forward" ? [[index * period, "move", { part: "forward", rate: moveRate }]]
-      : name === "left" || name === "right" ? [[index * period, "move", { part: "turn", rate: moveRate }]]
+      : name === "forward" && moves ? [[index * period, "move", { part: "forward", rate: moveRate }]]
+      : (name === "left" || name === "right") && moves ? [[index * period, "move", { part: "turn", rate: moveRate }]]
       : []),
     ...["success", "failure"].includes(scene.end) ? [[steps * period, scene.end]] : [],
   ];
