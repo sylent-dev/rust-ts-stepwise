@@ -178,8 +178,9 @@ const TEMPERATURES = { calm: "Calm", high: "High temperature", explosive: "Explo
 // The sounds of the moves play quieter than the others: they come back at each step.
 const MOVE_QUIETER = -10;
 
-// The sounds chosen by the owner on 2026-11-15, at the volume 60: the tabs open on them.
-const SOUNDS_CHOSEN = { success: "arpeggio", failure: "slide", bump: "made77", move: "made88" };
+// The sounds chosen by the owner on 2026-11-15, at the volume 60: the tabs open on them. The spring
+// and the blip are their ports to Web Audio, which sound as their files (heard on 2026-11-15).
+const SOUNDS_CHOSEN = { success: "arpeggio", failure: "slide", bump: "port77", move: "port88" };
 
 // The groups of tabs of the sounds, added to those of page.js: one per kind, and the volume of
 // every sound, a slider.
