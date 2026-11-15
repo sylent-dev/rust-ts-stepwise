@@ -242,8 +242,8 @@ impl Map {
             .is_some_and(|floor| if eastward { floor.east } else { floor.south })
     }
 
-    /// Turns the cell at `point` into a wall (nothing changes when it is one already), with the
-    /// painted passages it kept after being erased.
+    /// Turns the cell at `point` into a wall (nothing changes when it is one already); the
+    /// painted passages it kept after being erased lose their paint.
     ///
     /// # Errors
     ///

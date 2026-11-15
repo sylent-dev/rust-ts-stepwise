@@ -557,8 +557,8 @@ fn passage_key(point: Point, direction: Direction) -> Option<(Point, Direction)>
 }
 
 /// The painted passages the rules of *Map* give after an action, from the ones before it: the
-/// brush paints the passage it crosses, the eraser takes away the one it crosses, and a cell
-/// that loses its paint loses its passages toward its neighbors without paint.
+/// brush paints the passage it crosses, the eraser takes away the one it crosses, and a passage
+/// between two cells without paint loses its paint.
 struct PassageModel(HashSet<(Point, Direction)>);
 
 impl PassageModel {
@@ -577,17 +577,12 @@ impl PassageModel {
         }
     }
 
-    fn erased(&mut self, world: &World, cell: Point) {
-        for direction in Direction::ALL {
-            let painted = cell
-                .toward(direction)
-                .is_some_and(|neighbor| world.map().paint(neighbor).is_some());
-            if let Some(key) = passage_key(cell, direction)
-                && !painted
-            {
-                self.0.remove(&key);
-            }
-        }
+    /// Takes away the passages between two cells without paint, after any action.
+    fn settle(&mut self, world: &World) {
+        let painted = |point: Point| world.map().paint(point).is_some();
+        self.0.retain(|&(point, direction)| {
+            painted(point) || point.toward(direction).is_some_and(painted)
+        });
     }
 
     fn sorted(&self) -> Vec<(Point, Direction)> {
@@ -619,17 +614,29 @@ fn the_painted_passages_follow_the_rules_of_the_map() {
                         let to = world.robot().position();
                         let tool = world.robot().tool();
                         model.crossed(from, to, tool);
-                        if tool == Some(Tool::Eraser) {
-                            model.erased(&world, to);
+                        match tool {
+                            Some(Tool::Brush(color)) => {
+                                assert_eq!(world.map().paint(to), Some(color), "{round}, {action}");
+                            }
+                            Some(Tool::Eraser) => {
+                                assert_eq!(world.map().paint(to), None, "{round}, {action}");
+                            }
+                            None => {}
                         }
                     }
                 }
                 3 => world.turn_left(),
                 4 => world.turn_right(),
-                5 => world.start_painting(Color::ALL[random.next() % 3]),
+                5 => {
+                    let color = Color::ALL[random.next() % 3];
+                    world.start_painting(color);
+                    let here = world.robot().position();
+                    assert_eq!(world.map().paint(here), Some(color), "{round}, {action}");
+                }
                 6 => {
                     world.start_erasing();
-                    model.erased(&world, world.robot().position());
+                    let here = world.robot().position();
+                    assert_eq!(world.map().paint(here), None, "{round}, {action}");
                 }
                 7 => {
                     world.stop_painting();
@@ -639,6 +646,7 @@ fn the_painted_passages_follow_the_rules_of_the_map() {
                     let _ = world.pick_up().or_else(|_| world.drop_item());
                 }
             }
+            model.settle(&world);
             assert_eq!(
                 passages(&world),
                 model.sorted(),

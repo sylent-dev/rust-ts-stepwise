@@ -187,8 +187,9 @@ impl World {
     }
 
     /// `start_erasing()`: puts the eraser down, lifting the brush, and removes at once the
-    /// paint of the cell of the robot, which keeps its painted passages: the eraser crosses
-    /// none of them.
+    /// paint of the cell of the robot, which keeps its painted passages toward its painted
+    /// neighbors, the eraser crossing none of them; a passage toward a neighbor without paint
+    /// loses its paint.
     pub fn start_erasing(&mut self) {
         self.robot.tool = Some(Tool::Eraser);
         self.map.erase_cell(self.robot.position);
