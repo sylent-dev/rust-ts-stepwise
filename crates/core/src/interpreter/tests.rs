@@ -851,6 +851,20 @@ fn print_writes_a_line_of_at_most_a_thousand_characters() {
 }
 
 #[test]
+fn a_line_of_print_counts_the_characters_of_every_value() {
+    // 995 characters, a space and the four of `true`: 1 000. One more is refused, by the
+    // characters of a value that is no text.
+    let text = |characters: usize| format!("\"{}\"", "é".repeat(characters));
+    let longest = value(&format!("{}, true", text(995)));
+    assert_eq!(longest.chars().count(), MAX_TEXT_LENGTH);
+    assert_eq!(refused(&format!("{}, true", text(996))), E::LineTooLong);
+    // Many short values: 500 numbers of one digit and their 499 spaces are 999 characters.
+    let ones = |count: usize| vec!["1"; count].join(", ");
+    assert_eq!(value(&ones(500)).chars().count(), 999);
+    assert_eq!(refused(&ones(501)), E::LineTooLong);
+}
+
+#[test]
 fn a_line_too_long_stops_the_program_on_its_print_and_writes_nothing() {
     let half = "0123456789".repeat(50);
     let run = run(&format!(
