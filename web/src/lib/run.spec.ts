@@ -387,12 +387,16 @@ print("never")
 		expect(noCodeInBoth).toBe(true);
 	});
 
-	it('gives the values its message needs: types, an operator, a number, a function', () => {
+	it('gives the values its message needs: types, an operator, a number, a function, a limit', () => {
+		// As many characters as a text or a line of `print` holds, each an accent or an emoji.
+		const longest = 'é🤖'.repeat(500);
 		const kinds = [
 			'print("Sides: " + 4)\n',
 			'repeat 0 - 3:\n    forward()\n',
 			'start_painting(3)\n',
-			'forward()\nforward()\n'
+			'forward()\nforward()\n',
+			`let line = "${longest}" + "x"\n`,
+			`print("${longest}", "x")\n`
 		].map((source) => {
 			using sandbox = new Sandbox(SMALL_SANDBOX);
 			using run = sandbox.start(source);
@@ -405,7 +409,10 @@ print("never")
 			// A whole number of the program crosses as its digits.
 			{ code: 'negative-repeat-count', count: '-3' },
 			{ code: 'value-not-color', function: 'start_painting', found: 'number' },
-			{ code: 'bump' }
+			{ code: 'bump' },
+			// A limit of the language comes with the error that it stops.
+			{ code: 'text-too-long', limit: 1000 },
+			{ code: 'line-too-long', limit: 1000 }
 		]);
 	});
 });

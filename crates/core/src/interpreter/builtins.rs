@@ -1,9 +1,11 @@
 //! What each built-in function does when a program calls it (see *Built-in functions* in
 //! `specs.md`): the one door between the language and the world of the robot.
 
+use std::borrow::Cow;
+
 use super::error::RuntimeErrorKind;
 use super::event::{Action, Event};
-use super::value::Value;
+use super::value::{MAX_TEXT_LENGTH, Value};
 use crate::builtin::Builtin;
 use crate::color::Color;
 use crate::world::{Side, World};
@@ -26,8 +28,9 @@ pub(super) enum Outcome {
 ///
 /// [`RuntimeErrorKind::Robot`] when the robot can't do the action,
 /// [`RuntimeErrorKind::ValueNotColor`] when a function that takes a color is given another
-/// value, and [`RuntimeErrorKind::Internal`] for a wrong number of values, which the checks
-/// before running rule out. The world then stays as it was.
+/// value, [`RuntimeErrorKind::LineTooLong`] when `print` is given more than a line holds, and
+/// [`RuntimeErrorKind::Internal`] for a wrong number of values, which the checks before
+/// running rule out. The world then stays as it was, and nothing is written.
 pub(super) fn call(
     builtin: Builtin,
     values: &[Value],
@@ -88,7 +91,7 @@ pub(super) fn call(
         Builtin::IsCarrying => Outcome::Sensed(world.is_carrying()),
         Builtin::IsPainting => Outcome::Sensed(world.is_painting()),
         Builtin::IsErasing => Outcome::Sensed(world.is_erasing()),
-        Builtin::Print => Outcome::Acted(Event::Printed(printed_line(values))),
+        Builtin::Print => Outcome::Acted(Event::Printed(printed_line(values)?)),
     })
 }
 
@@ -121,7 +124,31 @@ fn color(function: Builtin, values: &[Value]) -> Result<Color, RuntimeErrorKind>
 }
 
 /// The line `print` writes for `values`: each as it is written, separated by spaces.
-fn printed_line(values: &[Value]) -> String {
-    let written: Vec<String> = values.iter().map(Value::to_string).collect();
-    written.join(" ")
+///
+/// # Errors
+///
+/// [`RuntimeErrorKind::LineTooLong`] for a line of more than [`MAX_TEXT_LENGTH`] characters.
+/// Each value is measured before it is copied, so that a line too long is given up without
+/// being built: many long texts printed at once take no memory.
+fn printed_line(values: &[Value]) -> Result<String, RuntimeErrorKind> {
+    let mut line = String::new();
+    // The characters the line may still take.
+    let mut room = MAX_TEXT_LENGTH;
+    for (index, value) in values.iter().enumerate() {
+        let separator = if index == 0 { "" } else { " " };
+        // A text is read where it is; the other values are a few characters each.
+        let written = match value {
+            Value::Text(text) => Cow::Borrowed(&**text),
+            other => Cow::Owned(other.to_string()),
+        };
+        for part in [separator, &*written] {
+            // Counted no further than the room left, however long a text is.
+            let characters = part.chars().take(room.saturating_add(1)).count();
+            room = room
+                .checked_sub(characters)
+                .ok_or(RuntimeErrorKind::LineTooLong)?;
+            line.push_str(part);
+        }
+    }
+    Ok(line)
 }

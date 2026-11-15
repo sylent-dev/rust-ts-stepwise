@@ -6,13 +6,14 @@ use std::rc::Rc;
 
 use crate::color::Color;
 
-/// The most characters of two texts joined by `+`: a longer result stops the program.
+/// The most characters of a text a program makes, whether two texts joined by `+` or a line
+/// written by `print`: a longer one stops the program.
 ///
 /// Without it, a loop that doubles a text (`line = line + line`) would fill the memory of the
-/// page in a few dozen turns, which aborts the WebAssembly module as a panic does. The numbers
-/// and the calls have their own limits. A text written in a program may be longer: the size
-/// of the program bounds it.
-pub const MAX_TEXT_LENGTH: usize = 10_000;
+/// page in a few dozen turns, and a `print` of many long texts sooner still, which aborts the
+/// WebAssembly module as a panic does. The numbers and the calls have their own limits. A
+/// text written in a program may be longer: the size of the program bounds it.
+pub const MAX_TEXT_LENGTH: usize = 1_000;
 
 /// A value of a program.
 #[derive(Debug, Clone, PartialEq, Eq)]
