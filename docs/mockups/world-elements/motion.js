@@ -505,11 +505,17 @@ function playScene(root) {
   let applied;
   let start;
   const reset = now => { world = startWorld(scene); applied = 0; start = now; heard.clear(); };
-  // The sounds of the scene, at their time from its start: a bump when the front of the robot
-  // touches the border of its cell, the end of a run when its last step has ended. They play once,
-  // after a click on the button ▶ of the scene, never as it loops.
+  // The sounds of the scene, at their time from its start: a move or a turn as it starts, faster
+  // when the step is shorter; a bump when the front of the robot touches the border of its cell;
+  // the end of a run when its last step has ended. They play once, after a click on the button ▶ of
+  // the scene, never as it loops.
+  const moveRate = MOVE_TIME / Math.max(durations.move, 1);
   const cues = [
-    ...scene.trace.flatMap(([, name], index) => name === "bump" ? [[index * period + 0.3 * durations[BUMP_TIME], "bump"]] : []),
+    ...scene.trace.flatMap(([, name], index) =>
+      name === "bump" ? [[index * period + 0.3 * durations[BUMP_TIME], "bump"]]
+      : name === "forward" ? [[index * period, "move", { part: "forward", rate: moveRate }]]
+      : name === "left" || name === "right" ? [[index * period, "move", { part: "turn", rate: moveRate }]]
+      : []),
     ...["success", "failure"].includes(scene.end) ? [[steps * period, scene.end]] : [],
   ];
   const heard = new Set();
@@ -523,8 +529,8 @@ function playScene(root) {
     // The step under way, started at its own time, and how far its action has gone.
     const current = elapsed < 0 ? -1 : Math.min(Math.floor(elapsed / period), steps);
     if (elapsed > steps * period + END_HOLD) { armed = false; reset(now); requestAnimationFrame(frame); return; }
-    cues.forEach(([time, kind], index) => {
-      if (armed && elapsed >= time && !heard.has(index)) playSound(kind);
+    cues.forEach(([time, kind, options], index) => {
+      if (armed && elapsed >= time && !heard.has(index)) playSound(kind, undefined, options);
       if (elapsed >= time) heard.add(index);
     });
     while (applied < Math.min(current, steps)) {

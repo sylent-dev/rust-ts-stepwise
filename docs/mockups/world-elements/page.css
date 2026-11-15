@@ -44,3 +44,5 @@ body { margin: 0; background: #2a2d31; color: #e9ecef; font: 14px/1.4 system-ui,
 .sound-list li { display: grid; grid-template-columns: auto 13em 1fr; align-items: baseline; gap: 10px; }
 .sound-list .is-chosen { font-weight: 600; color: #fff; }
 .sound-list small { color: #868e96; }
+.sound-temperature { margin: 10px 0 4px; color: #868e96; font-size: 12px; }
+.sound-buttons { display: flex; gap: 4px; }

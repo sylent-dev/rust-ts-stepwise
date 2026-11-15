@@ -1,6 +1,7 @@
-// The sounds of a run (step 11b): a success, a goal not met, a bump. Each kind compares sounds
-// synthesized with the Web Audio API (no file) and CC0 files by Kenney (sounds/, see
-// docs/sound-sources.md). The browser plays a sound only after a click: the audio context starts at
+// The sounds of a run (step 11b): a success, a goal not met, a bump, and a move. Each kind compares
+// sounds synthesized with the Web Audio API (no file), CC0 files by Kenney (sounds/, see
+// docs/sound-sources.md) and the sounds made by make-sounds.py (sounds-made.js), at a high or an
+// explosive temperature: bolder, or wilder. The browser plays a sound only after a click: the audio context starts at
 // the first click on the page.
 
 // A synthesized note: an oscillator whose level rises in `attack` seconds and dies out in `decay`,
@@ -109,13 +110,27 @@ const SOUNDS = {
       leather: { title: "60. Leather dropped", source: "Kenney, RPG Sound Pack", file: "kenney-drop-leather.ogg", mean: -18.7, length: 0.42 },
     },
   },
+  // A sound at each move and turn, which specs.md rules out today ("none at each step"): compared
+  // on request. A move has a sound for `forward()` and one for a turn (`parts`).
+  move: {
+    label: "Move sound",
+    options: {
+      none: { title: "None", source: "specs.md: none at each step", length: 0 },
+    },
+  },
 };
+for (const [kind, options] of Object.entries(MADE_SOUNDS)) Object.assign(SOUNDS[kind].options, options);
+// The temperatures, in the order the lists show them; the sounds without one are calm.
+const TEMPERATURES = { calm: "Calm", high: "High temperature", explosive: "Explosive temperature" };
+// The sounds of the moves play quieter than the others: they come back at each step.
+const MOVE_QUIETER = -10;
 
 // The groups of tabs of the sounds, added to those of page.js: one per kind, and the volume of
 // every sound, a slider.
 const SOUND_VARIANTS = {
   ...Object.fromEntries(Object.entries(SOUNDS).map(([kind, { label, options }]) =>
-    [`${kind}Sound`, { label, options: Object.fromEntries(Object.entries(options).map(([value, { title }]) => [value, title])), fallback: Object.keys(options)[0] }])),
+    // A tab shows the number of its sound alone: the list of the section names them.
+    [`${kind}Sound`, { label, options: Object.fromEntries(Object.entries(options).map(([value, { title }]) => [value, title.split(".")[0]])), fallback: Object.keys(options)[0] }])),
   volume: { label: "Volume", range: { min: 0, max: 100, step: 5 }, fallback: "60" },
 };
 
@@ -144,18 +159,22 @@ async function decode(file) {
   return decoded.get(file);
 }
 
-// Plays a sound of a kind: the one chosen in the tabs, or `value`.
-async function playSound(kind, value = chosen[`${kind}Sound`]) {
+// Plays a sound of a kind: the one chosen in the tabs, or `value`; for a move, its `part` ("forward"
+// or "turn"), at `rate` times its speed when a step is shorter than at the normal speed.
+async function playSound(kind, value = chosen[`${kind}Sound`], { part = "forward", rate = 1 } = {}) {
   const sound = SOUNDS[kind].options[value];
   const { ctx, volume } = audioContext();
   if (sound.play) {
     sound.play(ctx, volume);
     return;
   }
+  const { file, mean } = sound.parts?.[part] ?? sound;
+  if (!file) return;
   const source = ctx.createBufferSource();
   const gain = ctx.createGain();
-  source.buffer = await decode(sound.file);
-  gain.gain.value = 10 ** ((SOUND_LEVEL - sound.mean) / 20);
+  source.buffer = await decode(file);
+  source.playbackRate.value = rate;
+  gain.gain.value = 10 ** ((SOUND_LEVEL + (kind === "move" ? MOVE_QUIETER : 0) - mean) / 20);
   source.connect(gain).connect(volume);
   source.start();
 }
@@ -167,8 +186,8 @@ document.addEventListener("click", event => {
   if (tab?.dataset.variant.endsWith("Sound")) playSound(tab.dataset.variant.slice(0, -"Sound".length), tab.dataset.value);
   const button = event.target.closest("[data-play-sound]");
   if (button) {
-    const [kind, value] = button.dataset.playSound.split(":");
-    playSound(kind, value);
+    const [kind, value, part] = button.dataset.playSound.split(":");
+    playSound(kind, value, { part });
   }
   const scene = event.target.closest("[data-play-scene]");
   if (scene) {
