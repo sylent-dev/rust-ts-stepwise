@@ -7,6 +7,7 @@ use super::error::{RuntimeError, RuntimeErrorKind};
 use super::event::Event;
 use super::memory::{CallInProgress, Flow, Memory};
 use crate::ast::Program;
+use crate::program::Checked;
 use crate::span::Span;
 use crate::world::World;
 
@@ -47,12 +48,28 @@ impl Machine {
     /// machine owns the world from then on: running the program again takes a new machine,
     /// on a copy of the world as it starts.
     ///
-    /// The checker must have found `program` without error. A program the compiler can't
-    /// translate (a name that is no variable, a `break` outside a loop…) starts stopped on
-    /// [`RuntimeErrorKind::Internal`], at the place that stops the compiler. Any other
-    /// program the checks refuse may run: it never panics, but what it does isn't specified.
+    /// Only a program the checks before running found without error runs. Should the
+    /// compiler refuse one all the same, a mistake of the core, the machine starts stopped
+    /// on [`RuntimeErrorKind::Internal`] rather than panic.
     #[must_use]
-    pub fn new(program: &Program, world: World) -> Self {
+    pub fn new(program: &Checked, world: World) -> Self {
+        Self::compiled(program.program(), world)
+    }
+
+    /// A machine about to run `program`, whatever the checks before running say of it: it
+    /// exists for the tests alone, which see what a program that isn't checked does.
+    #[cfg(test)]
+    pub(super) fn unchecked(program: &Program, world: World) -> Self {
+        Self::compiled(program, world)
+    }
+
+    /// A machine about to run the instructions of `program`.
+    ///
+    /// A program the compiler can't translate (a name that is no variable, a `break` outside
+    /// a loop…) starts stopped on [`RuntimeErrorKind::Internal`], at the place that stops
+    /// the compiler. Any other program the checks refuse may run: it never panics, but what
+    /// it does isn't specified.
+    fn compiled(program: &Program, world: World) -> Self {
         match compile(program) {
             Ok(code) => Self::start(code, world),
             Err(NotChecked(span)) => {
@@ -101,6 +118,13 @@ impl Machine {
     #[must_use]
     pub fn calls(&self) -> Vec<CallInProgress<'_>> {
         self.memory.calls()
+    }
+
+    /// The number of steps run so far: what the step counter of the status bar shows. The
+    /// step that stopped the program on an error is one of them.
+    #[must_use]
+    pub const fn steps(&self) -> u64 {
+        self.memory.steps()
     }
 
     /// Runs one step: the line of [`State::Running`], up to the next line, to the first
@@ -170,7 +194,7 @@ mod tests {
     use crate::builtin::Builtin;
     use crate::interpreter::code::{Code, Function, Instruction};
     use crate::interpreter::{RuntimeError, RuntimeErrorKind, Value};
-    use crate::parser::parse;
+    use crate::program::check;
     use crate::test_support::{span, world};
 
     #[test]
@@ -184,7 +208,7 @@ while true:
             break
     turns = turns + 1
 ";
-        let program = parse(source).unwrap();
+        let program = check(source).unwrap();
         let mut machine = Machine::new(&program, world(&[">"]));
         let mut sizes = Vec::new();
         for _ in 0..1000 {
@@ -215,7 +239,7 @@ let total = 0
 while true:
     total = find(2) + find(1) - 30
 ";
-        let program = parse(source).unwrap();
+        let program = check(source).unwrap();
         let mut machine = Machine::new(&program, world(&[">"]));
         let mut sizes = Vec::new();
         for _ in 0..3000 {

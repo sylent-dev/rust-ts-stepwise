@@ -12,8 +12,8 @@
 //! built-in functions do to the world of the robot (`builtins`), what each instruction
 //! changes (`memory`), and the machine (`machine`) above them all, which runs the
 //! instructions up to the end of a step. The program acts on the world through `builtins`
-//! alone; the machine knows nothing of the goals of a level, which are checked on its world
-//! once the program has ended.
+//! alone; the machine knows nothing of the goals of a level, which a run checks on its world
+//! once the program has ended (`crate::run`).
 
 mod builtins;
 mod code;

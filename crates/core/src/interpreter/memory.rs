@@ -144,6 +144,11 @@ impl Memory {
         self.step = self.step.saturating_add(1);
     }
 
+    /// The number of steps started so far.
+    pub(super) const fn steps(&self) -> u64 {
+        self.step
+    }
+
     /// The calls in progress, from the main program to the call being run.
     pub(super) fn calls(&self) -> Vec<CallInProgress<'_>> {
         let frames = self.callers.iter().chain(iter::once(&self.frame));

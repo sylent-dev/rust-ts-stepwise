@@ -15,6 +15,7 @@ use crate::builtin::Builtin;
 use crate::checker::check;
 use crate::color::Color;
 use crate::parser::{MAX_BLOCK_DEPTH, MAX_DEPTH, ParseErrorKind, SyntaxError, parse};
+use crate::program::{self, Checked};
 use crate::span::Span;
 use crate::test_support::{Random, paints, span, world};
 use crate::world::{Direction, Point, RobotError, Tool, World};
@@ -58,13 +59,21 @@ fn run(source: &str) -> Run {
     run_on(ONE_CELL, source)
 }
 
+/// The checked program of `source`, which must pass the checks before running.
+#[track_caller]
+fn checked(source: &str) -> Checked {
+    match program::check(source) {
+        Ok(checked) => checked,
+        Err(refused) => panic!("{refused:?} in {source:?}"),
+    }
+}
+
 /// Runs `source`, which must pass the checks before running, for at most [`MAX_STEPS`], on
 /// the world drawn as `rows` (see [`world`]).
 #[track_caller]
 fn run_on(rows: &[&str], source: &str) -> Run {
-    let program = parse(source).unwrap();
-    assert_eq!(check(&program), [], "in {source:?}");
-    run_program(&program, world(rows))
+    let checked = checked(source);
+    run_program(checked.program(), Machine::new(&checked, world(rows)))
 }
 
 /// Runs `source` without the checks before running, which would refuse it.
@@ -72,19 +81,18 @@ fn run_on(rows: &[&str], source: &str) -> Run {
 fn run_unchecked(source: &str) -> Run {
     let program = parse(source).unwrap();
     assert_ne!(check(&program), [], "in {source:?}");
-    run_program(&program, world(ONE_CELL))
+    run_program(&program, Machine::unchecked(&program, world(ONE_CELL)))
 }
 
-/// Runs `program` on `world`, and checks at each step that the line highlighted is one the
-/// program runs and the one of the call being run, and first that its instructions follow
-/// the rule that ends a step: a mistake of the compiler is caught even by a test that looks
-/// at something else.
+/// Runs `machine`, about to run `program`, and checks at each step that the line highlighted
+/// is one the program runs and the one of the call being run, and first that its instructions
+/// follow the rule that ends a step: a mistake of the compiler is caught even by a test that
+/// looks at something else.
 #[track_caller]
-fn run_program(program: &Program, world: World) -> Run {
+fn run_program(program: &Program, mut machine: Machine) -> Run {
     assert_every_step_ends(program);
     let mut steps = Vec::new();
     lines_run(&program.statements, &mut steps);
-    let mut machine = Machine::new(program, world);
     let mut lines = Vec::new();
     let mut printed = Vec::new();
     let mut actions = Vec::new();
@@ -284,9 +292,7 @@ fn calls(machine: &Machine) -> Vec<String> {
 /// time.
 #[track_caller]
 fn paused_on(source: &str, line: u32) -> Machine {
-    let program = parse(source).unwrap();
-    assert_eq!(check(&program), [], "in {source:?}");
-    let mut machine = Machine::new(&program, world(ONE_CELL));
+    let mut machine = Machine::new(&checked(source), world(ONE_CELL));
     for _ in 0..MAX_STEPS {
         match machine.state() {
             State::Running { line: next, .. } if next.start.line == line => return machine,
@@ -318,7 +324,7 @@ fn each_statement_is_a_step() {
 
 #[test]
 fn a_program_starts_paused_before_its_first_line() {
-    let program = parse("# Count the sides\n\nlet sides = 4\n").unwrap();
+    let program = checked("# Count the sides\n\nlet sides = 4\n");
     let machine = Machine::new(&program, world(ONE_CELL));
     let (line, after_call) = (span(3, 1, 14), false);
     assert_eq!(*machine.state(), State::Running { line, after_call });
@@ -335,7 +341,7 @@ else if 2 > 1:
     repeat 0:
         print(3)
 ";
-    let program = parse(source).unwrap();
+    let program = checked(source);
     let mut machine = Machine::new(&program, world(ONE_CELL));
     let mut lines = Vec::new();
     while let State::Running { line, .. } = *machine.state() {
@@ -355,7 +361,7 @@ else if 2 > 1:
 
 #[test]
 fn a_step_after_the_end_does_nothing() {
-    let program = parse("print(1)\n").unwrap();
+    let program = checked("print(1)\n");
     let mut machine = Machine::new(&program, world(ONE_CELL));
     assert_eq!(machine.step(), Some(Event::Printed("1".to_owned())));
     for _ in 0..3 {
@@ -365,8 +371,30 @@ fn a_step_after_the_end_does_nothing() {
 }
 
 #[test]
+fn the_steps_run_are_counted_up_to_the_one_that_stops_the_program() {
+    let program = checked("print(1)\nprint(1 / 0)\nprint(3)\n");
+    let mut machine = Machine::new(&program, world(ONE_CELL));
+    assert_eq!(machine.steps(), 0);
+    machine.step();
+    assert_eq!(machine.steps(), 1);
+    // The step that stops on the division is one of them; the ones asked after it aren't.
+    machine.step();
+    assert!(matches!(machine.state(), State::Failed(_)));
+    for _ in 0..3 {
+        assert_eq!(machine.steps(), 2);
+        machine.step();
+    }
+    // Nor the ones asked once a program has ended.
+    let mut machine = Machine::new(&checked("print(1)\n"), world(ONE_CELL));
+    for _ in 0..3 {
+        machine.step();
+        assert_eq!(machine.steps(), 1);
+    }
+}
+
+#[test]
 fn a_step_after_an_error_does_nothing() {
-    let program = parse("print(1 / 0)\nprint(2)\n").unwrap();
+    let program = checked("print(1 / 0)\nprint(2)\n");
     let mut machine = Machine::new(&program, world(ONE_CELL));
     assert_eq!(machine.step(), None);
     let failed = machine.state().clone();
@@ -1191,7 +1219,7 @@ function double(n):
 let total = double(3) + 1
 print(total)
 ";
-    let program = parse(source).unwrap();
+    let program = checked(source);
     let mut machine = Machine::new(&program, world(ONE_CELL));
     let mut states = Vec::new();
     while let State::Running { line, after_call } = *machine.state() {
@@ -1954,8 +1982,7 @@ fn an_item_the_robot_could_not_drop_stays_carried() {
 
 #[test]
 fn the_result_of_an_action_is_no_value_once_the_robot_has_acted() {
-    let program = parse("if forward():\n    print(\"moved\")\n").unwrap();
-    assert_eq!(check(&program), []);
+    let program = checked("if forward():\n    print(\"moved\")\n");
     let mut machine = Machine::new(&program, world(&[">."]));
     // One step: the robot moves, then the condition finds no value.
     assert_eq!(machine.step(), Some(Event::Robot(Action::Moved)));
@@ -2395,16 +2422,14 @@ fn random_checked_programs_never_stop_on_a_mistake_of_the_core() {
     let (mut with_action, mut with_robot_error) = (0, 0);
     for _ in 0..20_000 {
         let source = random_program(&mut random);
-        let Ok(program) = parse(&source) else {
+        let Ok(program) = program::check(&source) else {
             continue;
         };
-        if !check(&program).is_empty() {
-            continue;
-        }
         with_else += usize::from(source.contains("else"));
         with_logic += usize::from(source.contains(" and ") || source.contains(" or "));
         with_break += usize::from(source.contains("break"));
-        let run = run_program(&program, world(RANDOM_WORLD));
+        let machine = Machine::new(&program, world(RANDOM_WORLD));
+        let run = run_program(program.program(), machine);
         with_action += usize::from(!run.actions.is_empty());
         with_return += usize::from(!run.returned_from.is_empty());
         let mut returned_from = run.returned_from.iter();

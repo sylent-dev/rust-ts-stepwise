@@ -11,6 +11,7 @@ use tsify::{Ts, Tsify};
 use wasm_bindgen::JsError;
 use wasm_bindgen::prelude::wasm_bindgen;
 
+use crate::count;
 use crate::position::{Offsets, Span};
 
 /// Checks a program before it runs, as the learner types and again when **Run** is pressed.
@@ -321,11 +322,6 @@ impl ProgramErrorKind {
             K::ExpressionAlone => Self::ExpressionAlone,
         }
     }
-}
-
-/// A count of the core as a number that JavaScript holds exactly.
-fn count(count: usize) -> u32 {
-    u32::try_from(count).unwrap_or(u32::MAX)
 }
 
 #[cfg(test)]

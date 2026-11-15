@@ -5,11 +5,11 @@
 //! The levels of the website come with the steps of their chapters: the ones of
 //! `trial-levels/` are for these tests only.
 
-use stepwise_core::checker::check;
 use stepwise_core::color::Color;
-use stepwise_core::interpreter::{Action, Event, Machine, RuntimeErrorKind, State};
+use stepwise_core::interpreter::{Action, Event, RuntimeErrorKind, State};
 use stepwise_core::level::{GoalNotMet, Level};
-use stepwise_core::parser::parse;
+use stepwise_core::program::{Checked, check};
+use stepwise_core::run::{Outcome, Run};
 use stepwise_core::world::{Point, RobotError};
 
 const PAINT_A_SQUARE: &str = include_str!("trial-levels/paint-a-square.toml");
@@ -19,7 +19,8 @@ const TURN_THE_CORNER: &str = include_str!("trial-levels/turn-the-corner.toml");
 /// The most steps a program of these tests runs: they all end well before.
 const MAX_STEPS: usize = 1000;
 
-/// How a program ends on a map.
+/// How a program ends on a map: the outcome of its run, an error told by its kind and its
+/// line alone.
 #[derive(Debug, PartialEq, Eq)]
 enum End {
     /// It ended, every goal met: the map is passed.
@@ -30,32 +31,35 @@ enum End {
     Stopped(RuntimeErrorKind, u32),
 }
 
+/// The checked program of `source`, which must have no error.
+#[track_caller]
+fn checked(source: &str) -> Checked {
+    match check(source) {
+        Ok(checked) => checked,
+        Err(refused) => panic!("{refused:?} in {source:?}"),
+    }
+}
+
 /// Runs `source` on each map of `level`, a level file, and says how it ends on each.
 #[track_caller]
 fn run(level: &str, source: &str) -> Vec<End> {
     let level = Level::from_toml(level).expect("a valid level file");
-    let program = parse(source).expect("a program without syntax error");
-    assert_eq!(check(&program), [], "in {source:?}");
+    let program = checked(source);
     let ends = level.maps().iter().map(|map| {
         // Each map starts from its own world, which the level keeps as it is.
-        let mut machine = Machine::new(&program, map.world().clone());
+        let mut run = Run::on_map(&program, map);
         for _ in 0..MAX_STEPS {
-            if !matches!(machine.state(), State::Running { .. }) {
+            if run.outcome().is_some() {
                 break;
             }
-            machine.step();
+            run.step();
         }
-        match machine.state() {
-            State::Ended => {
-                let not_met = map.goals().check(machine.world());
-                if not_met.is_empty() {
-                    End::Passed
-                } else {
-                    End::GoalsNotMet(not_met)
-                }
-            }
-            State::Failed(error) => End::Stopped(error.kind.clone(), error.span.start.line),
-            State::Running { .. } => panic!("{source:?} still runs after {MAX_STEPS} steps"),
+        match run.outcome() {
+            Some(Outcome::Passed) => End::Passed,
+            Some(Outcome::GoalsNotMet(not_met)) => End::GoalsNotMet(not_met),
+            Some(Outcome::Failed(error)) => End::Stopped(error.kind, error.span.start.line),
+            Some(Outcome::Ended) => panic!("a map of a level has goals"),
+            None => panic!("{source:?} still runs after {MAX_STEPS} steps"),
         }
     });
     ends.collect()
@@ -76,8 +80,7 @@ fn red_missing(x: u8, y: u8) -> GoalNotMet {
 fn the_starting_code_of_the_trial_levels_is_checked() {
     for source in [PAINT_A_SQUARE, CARRY_THE_ITEM, TURN_THE_CORNER] {
         let level = Level::from_toml(source).expect("a valid level file");
-        let program = parse(level.starting_code()).expect("a starting code without error");
-        assert_eq!(check(&program), []);
+        check(level.starting_code()).expect("a starting code without error");
         assert_eq!(level.maps().len(), 2);
     }
 }
@@ -89,18 +92,17 @@ fn each_step_gives_what_the_learner_sees_of_it() {
     let level = Level::from_toml(CARRY_THE_ITEM).expect("a valid level file");
     let map = level.maps().first().expect("a first map");
     let source = "forward()\nforward()\npick_up()\nprint(is_carrying())\nturn_left()\ndrop()\n";
-    let program = parse(source).expect("a program without syntax error");
-    assert_eq!(check(&program), []);
-    let mut machine = Machine::new(&program, map.world().clone());
+    let mut run = Run::on_map(&checked(source), map);
     let mut events = Vec::new();
     for _ in 0..MAX_STEPS {
-        if !matches!(machine.state(), State::Running { .. }) {
+        if run.outcome().is_some() {
             break;
         }
         // A step gives one event or none.
-        events.extend(machine.step());
+        events.extend(run.step());
     }
-    assert_eq!(*machine.state(), State::Ended);
+    // The program ran to its end: it isn't one that solves the level.
+    assert_eq!(*run.machine().state(), State::Ended);
     assert_eq!(
         events,
         [
