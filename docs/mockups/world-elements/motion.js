@@ -8,7 +8,19 @@ const SPEEDS_ANIMATED = [1, 2, 5, 20];
 
 const ANGLES ={ north: 0, east: 90, south: 180, west: 270 };
 const AHEAD = { 0: [0, -1], 90: [1, 0], 180: [0, 1], 270: [-1, 0] };
-const easeInOut = t => t < 0.5 ? 4 * t ** 3 : 1 - (-2 * t + 2) ** 3 / 2;
+// The normal speed, the one of a first visit, and the time a move or a turn takes at that speed
+// (decided at step 11a).
+const NORMAL_SPEED = 2;
+const MOVE_TIME = 300;
+
+// The easings compared for a move and a turn: `t` from 0 to 1, the share of the way done.
+const EASINGS = {
+  "in-out": t => t < 0.5 ? 4 * t ** 3 : 1 - (-2 * t + 2) ** 3 / 2,
+  linear: t => t,
+  out: t => 1 - (1 - t) ** 3,
+  // Goes a little past its end, then settles back (about 5 % of a cell or of a quarter turn).
+  overshoot: t => 1 + 2.2 * (t - 1) ** 3 + 1.2 * (t - 1) ** 2,
+};
 const lerp = (from, to, t) => from + (to - from) * t;
 const clamp01 = t => Math.min(Math.max(t, 0), 1);
 
@@ -21,11 +33,12 @@ const SCENES = {};
 
 // A scene in the page: the map with its layer of moving things, the program beside it. Its player
 // starts once the sheet is drawn (startScenes).
-function motionScene(name, { rate, size = 48, code = true } = {}) {
+// `move` and `turn` choose an easing of EASINGS for this scene alone, instead of the tabs.
+function motionScene(name, { rate = NORMAL_SPEED, size = 48, code = true, move = "", turn = "" } = {}) {
   const scene = SCENES[name];
   const layer = `<div class="motion-layer" style="--cell:${size}px"><svg viewBox="0 0 ${scene.rows[0].length * 64} ${scene.rows.length * 64}" aria-hidden="true"></svg><div class="motion-items"></div><div class="motion-robot"></div></div>`;
   const program = code ? `<div class="motion-panel"><ol class="motion-code">${scene.program.map(line => `<li>${line}</li>`).join("")}</ol><div class="motion-status"></div></div>` : "";
-  return `<div class="motion-scene" data-scene="${name}" data-rate="${rate}" data-size="${size}"><div class="motion-stage">${appMap(scene.rows, scene.marks, size)}${layer}</div>${program}</div>`;
+  return `<div class="motion-scene" data-scene="${name}" data-rate="${rate}" data-size="${size}" data-move="${move}" data-turn="${turn}"><div class="motion-stage">${appMap(scene.rows, scene.marks, size)}${layer}</div>${program}</div>`;
 }
 
 // The duration of an action at a speed: the one chosen for the normal speed, shortened when a step
@@ -39,6 +52,7 @@ const key = (x, y) => `${x},${y}`;
 const passageKey = (a, b) => [a, b].sort().join(" ");
 const ACTIONS = {
   forward: {
+    ease: "move",
     commit(world) {
       const [dx, dy] = AHEAD[world.angle];
       const from = key(world.x, world.y);
@@ -56,8 +70,8 @@ const ACTIONS = {
       return { x: world.x + dx * p, y: world.y + dy * p };
     },
   },
-  left: { commit: world => { world.angle = (world.angle + 270) % 360; }, pose: (world, p) => ({ angle: world.angle - 90 * p }) },
-  right: { commit: world => { world.angle = (world.angle + 90) % 360; }, pose: (world, p) => ({ angle: world.angle + 90 * p }) },
+  left: { ease: "turn", commit: world => { world.angle = (world.angle + 270) % 360; }, pose: (world, p) => ({ angle: world.angle - 90 * p }) },
+  right: { ease: "turn", commit: world => { world.angle = (world.angle + 90) % 360; }, pose: (world, p) => ({ angle: world.angle + 90 * p }) },
   stop: { commit: world => { world.brush = null; } },
   erase: { commit: world => { world.brush = null; world.eraser = true; eraseCell(world, key(world.x, world.y)); } },
   "stop-erasing": { commit: world => { world.eraser = false; } },
@@ -113,7 +127,11 @@ function playScene(root) {
   const lines = root.querySelectorAll(".motion-code li");
   const status = root.querySelector(".motion-status");
   const period = 1000 / rate;
-  const duration = actionTime(Number(chosen.moveTime), rate);
+  const duration = actionTime(MOVE_TIME, rate);
+  const easings = {
+    move: EASINGS[root.dataset.move || chosen.moveEase],
+    turn: EASINGS[root.dataset.turn || chosen.turnEase],
+  };
   const steps = scene.trace.length;
   let world;
   let applied;
@@ -133,7 +151,7 @@ function playScene(root) {
     }
     const action = current >= 0 && current < steps ? ACTIONS[scene.trace[current][1]] : undefined;
     const progress = action?.pose ? clamp01((elapsed - current * period) / duration) : 1;
-    const pose = { x: world.x, y: world.y, angle: world.angle, ...action?.pose?.(world, easeInOut(progress)) };
+    const pose = { x: world.x, y: world.y, angle: world.angle, ...action?.pose?.(world, easings[action.ease](progress)) };
     const ended = current >= steps;
     if (ended) world.lit = scene.end ?? null;
 
@@ -150,9 +168,9 @@ function playScene(root) {
     robot.style.transform = `translate(${pose.x * size}px, ${pose.y * size}px) rotate(${pose.angle}deg)`;
     robot.innerHTML = `<img src="${element("robot")}" alt="">${world.carrying ? `<img class="is-carried" src="${element("item")}" alt="">` : ""}${world.lit ? `<img src="${element(world.lit === "success" ? "eyes-lit" : "eyes-dim")}" alt="">` : ""}`;
 
-    // The highlighted line is the one of the next step: it moves on when the action of the step
-    // ends, or as soon as the step starts (the tab Highlight).
-    const moved = current >= 0 && (chosen.highlight === "start" || progress >= 1);
+    // The highlighted line is the one of the next step: it moves on once the action of the step
+    // has ended, so that a line stays lit while the robot does what it says (decided at step 11a).
+    const moved = current >= 0 && progress >= 1;
     const next = moved ? current + 1 : Math.max(current, 0);
     lines.forEach((line, index) => line.classList.toggle("is-next", next < steps && scene.trace[next][0] === index));
     if (status) status.textContent = ended ? `Ended · ${scene.end === "success" ? "map passed" : "goal not met"} · ${steps} steps` : `Running · ${next} steps`;

@@ -5,10 +5,9 @@
 const VARIANTS = {
   theme: { label: "Style", options: Object.fromEntries(Object.entries(THEMES).map(([key, theme]) => [key, theme.title])), fallback: Object.keys(THEMES)[0] },
   vision: { label: "Vision", options: { normal: "Normal", protanopia: "Protanopia", deuteranopia: "Deuteranopia", tritanopia: "Tritanopia" }, fallback: "normal" },
-  // Step 11a, the animations (section-motion-speed.js).
-  speed: { label: "Normal speed", options: { 1: "1 step/s", 2: "2 steps/s", 5: "5 steps/s", 20: "20 steps/s" }, fallback: "2" },
-  moveTime: { label: "Move and turn (ms)", range: { min: 100, max: 900, step: 25 }, fallback: "300" },
-  highlight: { label: "Highlight moves", options: { end: "When the action ends", start: "When the step starts" }, fallback: "end" },
+  // Step 11a, the animations (section-motion-moves.js): the easing of a move and of a turn.
+  moveEase: { label: "Move", options: { "in-out": "1. Smooth", linear: "2. Even", out: "3. Quick start", overshoot: "4. Overshoot" }, fallback: "in-out" },
+  turnEase: { label: "Turn", options: { "in-out": "5. Smooth", linear: "6. Even", out: "7. Quick start", overshoot: "8. Overshoot" }, fallback: "in-out" },
 };
 
 const params = new URLSearchParams(location.search);
