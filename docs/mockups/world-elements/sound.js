@@ -125,12 +125,15 @@ const TEMPERATURES = { calm: "Calm", high: "High temperature", explosive: "Explo
 // The sounds of the moves play quieter than the others: they come back at each step.
 const MOVE_QUIETER = -10;
 
+// The sounds chosen by the owner on 2026-11-15, at the volume 60: the tabs open on them.
+const SOUNDS_CHOSEN = { success: "arpeggio", failure: "slide", bump: "made77", move: "made88" };
+
 // The groups of tabs of the sounds, added to those of page.js: one per kind, and the volume of
 // every sound, a slider.
 const SOUND_VARIANTS = {
   ...Object.fromEntries(Object.entries(SOUNDS).map(([kind, { label, options }]) =>
     // A tab shows the number of its sound alone: the list of the section names them.
-    [`${kind}Sound`, { label, options: Object.fromEntries(Object.entries(options).map(([value, { title }]) => [value, title.split(".")[0]])), fallback: Object.keys(options)[0] }])),
+    [`${kind}Sound`, { label, options: Object.fromEntries(Object.entries(options).map(([value, { title }]) => [value, title.split(".")[0]])), fallback: SOUNDS_CHOSEN[kind] }])),
   volume: { label: "Volume", range: { min: 0, max: 100, step: 5 }, fallback: "60" },
 };
 
