@@ -5,6 +5,10 @@
 const VARIANTS = {
   theme: { label: "Style", options: Object.fromEntries(Object.entries(THEMES).map(([key, theme]) => [key, theme.title])), fallback: Object.keys(THEMES)[0] },
   vision: { label: "Vision", options: { normal: "Normal", protanopia: "Protanopia", deuteranopia: "Deuteranopia", tritanopia: "Tritanopia" }, fallback: "normal" },
+  // Step 11a, the animations (section-motion-speed.js).
+  speed: { label: "Normal speed", options: { 1: "1 step/s", 2: "2 steps/s", 5: "5 steps/s", 20: "20 steps/s" }, fallback: "2" },
+  moveTime: { label: "Move and turn (ms)", range: { min: 100, max: 900, step: 25 }, fallback: "300" },
+  highlight: { label: "Highlight moves", options: { end: "When the action ends", start: "When the step starts" }, fallback: "end" },
 };
 
 const params = new URLSearchParams(location.search);
@@ -16,6 +20,8 @@ const chosen = Object.fromEntries(Object.entries(VARIANTS).map(([key, variant]) 
 
 // Each section script adds itself: [title, function returning its HTML]. The newest goes first.
 const SECTIONS = [];
+// What runs once the sheet is drawn again, such as the players of the animations (motion.js).
+const AFTER_RENDER = [];
 
 function renderTabs() {
   // A group with a single option is decided: it isn't shown.
@@ -35,6 +41,7 @@ function renderSheet() {
     ${SECTIONS.length > 10 ? `<nav class="page-contents" aria-label="Sections">${SECTIONS.map(([title], index) =>
       `<a href="#section-${index + 1}">${index + 1}. ${title}</a>`).join("")}</nav>` : ""}
     ${SECTIONS.map(([title, content], index) => `<section class="page-section" id="section-${index + 1}"><h2>${index + 1}. ${title}</h2>${content()}</section>`).join("")}`;
+  AFTER_RENDER.forEach(hook => hook());
 }
 
 function render() {
