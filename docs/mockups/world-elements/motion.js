@@ -13,13 +13,45 @@ const AHEAD = { 0: [0, -1], 90: [1, 0], 180: [0, 1], 270: [-1, 0] };
 const NORMAL_SPEED = 2;
 const MOVE_TIME = 300;
 
+// How far an overshoot goes past its end, as a share of a cell or of a quarter turn (slider).
+const overshootShare = () => Number(chosen.overshoot) / 100;
+
+// The curve 1 + (c + 1)(t - 1)³ + c(t - 1)², which leaves at once and goes past its end by
+// 4c³ / 27(c + 1)² before it settles back: `c` found by bisection for the share asked, once.
+const backCurves = new Map();
+function backCurve(share) {
+  if (!backCurves.has(share)) {
+    let [low, high] = [0, 10];
+    for (let round = 0; round < 40; round += 1) {
+      const c = (low + high) / 2;
+      if (4 * c ** 3 / (27 * (c + 1) ** 2) < share) low = c; else high = c;
+    }
+    backCurves.set(share, low);
+  }
+  return backCurves.get(share);
+}
+
+const smooth = t => t < 0.5 ? 4 * t ** 3 : 1 - (-2 * t + 2) ** 3 / 2;
+// The share of the time a smooth overshoot spends going past its end, the rest settling back.
+const SMOOTH_REACH = 0.65;
+
 // The easings compared for a move and a turn: `t` from 0 to 1, the share of the way done.
 const EASINGS = {
-  "in-out": t => t < 0.5 ? 4 * t ** 3 : 1 - (-2 * t + 2) ** 3 / 2,
+  "in-out": smooth,
   linear: t => t,
   out: t => 1 - (1 - t) ** 3,
-  // Goes a little past its end, then settles back (about 5 % of a cell or of a quarter turn).
-  overshoot: t => 1 + 2.2 * (t - 1) ** 3 + 1.2 * (t - 1) ** 2,
+  // Leaves at once, goes a little past its end, then settles back.
+  overshoot: t => {
+    const c = backCurve(overshootShare());
+    return 1 + (c + 1) * (t - 1) ** 3 + c * (t - 1) ** 2;
+  },
+  // Leaves gently as Smooth, goes a little past its end, then settles back as gently.
+  "smooth-overshoot": t => {
+    const share = overshootShare();
+    return t < SMOOTH_REACH
+      ? (1 + share) * smooth(t / SMOOTH_REACH)
+      : 1 + share - share * smooth((t - SMOOTH_REACH) / (1 - SMOOTH_REACH));
+  },
 };
 const lerp = (from, to, t) => from + (to - from) * t;
 const clamp01 = t => Math.min(Math.max(t, 0), 1);
