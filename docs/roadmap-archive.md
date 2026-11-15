@@ -151,3 +151,9 @@ Start, the machine asking for the checked program of 10a, step, the state, the e
 ### 10d. Probe and measures (#41)
 
 The probe of step 4c run by the real machine: a real program on the map of the sandbox, at the five speeds, the line of its next step marked; its fake program removed from the core and the bridge. The size and the speed of the module measured again, `opt-level` 3 kept and `wasm-opt` left out (see [Technical choices](technical-choices.md), WebAssembly size).
+
+## 11. Animations and sounds
+
+### 11a. Animations (#42)
+
+The robot playing each action on a small map: moving, turning, painting and erasing, `pick_up()` and `drop()` with the pincer, the bump into a wall, an action that fails, the end of a run that succeeds or fails; the normal speed, the duration of each action, and the motion for a learner who asked for less; the decisions written in `specs.md`.
