@@ -147,3 +147,7 @@ A level file or the sandbox read through the bridge, each kept in the module as 
 ### 10c. Running (#39)
 
 Start, the machine asking for the checked program of 10a, step, the state, the events, the errors while running, the goals checked at the end by a type of the core that holds a map and its machine, the calls in progress and their variables. A step gives back a word (what it showed: an action of the robot, a line printed, nothing); the next line, the line printed, the world, the end and the variables are read by other calls, when the interface needs them (decided on 2026-11-14). The two tests through the real module (the maximum depth, the lines highlighted with accents and an emoji).
+
+### 10d. Probe and measures (#41)
+
+The probe of step 4c run by the real machine: a real program on the map of the sandbox, at the five speeds, the line of its next step marked; its fake program removed from the core and the bridge. The size and the speed of the module measured again, `opt-level` 3 kept and `wasm-opt` left out (see [Technical choices](technical-choices.md), WebAssembly size).
