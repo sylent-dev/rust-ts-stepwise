@@ -333,6 +333,30 @@ paints = [
     }
 
     #[test]
+    fn a_painted_cell_gives_its_passage_toward_a_neighbor_erased_alone() {
+        let mut core = core_world(
+            r#"
+terrain = '''
+...
+'''
+robot = { at = [1, 0], facing = "east" }
+paints = [{ color = "red", path = [[0, 0], [1, 0], [2, 0]] }]
+"#,
+        );
+        core.start_erasing();
+        let world = World::from(&core);
+        // The erased cell gives nothing; each neighbor draws its half up to its border.
+        assert_eq!(
+            world.cells,
+            [
+                painted(Color::Red, &[East]),
+                EMPTY,
+                painted(Color::Red, &[West]),
+            ]
+        );
+    }
+
+    #[test]
     fn the_world_follows_what_the_robot_does() {
         let mut core = core_world(
             r#"

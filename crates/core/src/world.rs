@@ -14,7 +14,8 @@ use crate::color::Color;
 /// The tool the robot has down: at most one of them, as putting one down lifts the other.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Tool {
-    /// The brush, with its color: the robot paints every cell it moves into.
+    /// The brush, with its color: the robot paints every cell it moves into and the passage it
+    /// crosses.
     Brush(Color),
     /// The eraser: the robot removes the paint of every cell it moves into and of the passage
     /// it crosses.
