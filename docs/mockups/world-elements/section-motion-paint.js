@@ -55,12 +55,12 @@ const ERASE_TITLES = { fade: "17. Fade", pull: "18. Pull back", under: "19. Unde
 
 SECTIONS.push(["Animations: painting and erasing", () => `
   <p>Decided: a tool put down (<code>start_painting()</code>, <code>start_erasing()</code>) shows a <b>ring</b> growing from under the robot, in the color of the paint or in the gray of the dimmed eyes for the eraser, since the robot covers the paint of its cell; a tool lifted shows <b>nothing</b>. The brush and the eraser themselves are never shown (decided on 2026-11-04).</p>
-  <p>The eraser, tab <b>Erasing</b>. 17 and 18 follow the rule of <code>specs.md</code>: a cell erased loses every passage it has, the one toward the next cell too, so the paint ahead goes before the robot reaches it. 19 to 22 follow another rule: <b>the eraser takes away what it passes over</b>, as the brush paints it, the cell and the passage it crosses, so that the paint goes under the robot and the floor comes out clean behind it; the stroke ahead ends square at the border of the cell. <b>19</b> nothing more; <b>20</b> the robot shakes a little, as if it scrubbed; <b>21</b> a few specks of the paint fly behind it; <b>22</b> a faint trace of the paint stays a moment.</p>
+  <p>Decided, the eraser: <b>it takes away what it passes over</b> (19), as the brush paints it: the cell it is on or enters, and the passage it crosses to enter it, no longer every passage of the cell as <code>specs.md</code> said (17 and 18), which took the paint ahead away before the robot reached it. The paint goes under the robot and the floor comes out clean behind it, with nothing more; the stroke ahead ends square at the border of the cell. A cell erased alone keeps its passages, so a stroke joins it again if it is painted again.</p>
   <div class="page-row">
     <div class="page-slot"><span>Painting</span>${motionScene("painting", { size: 64 })}</div>
     <div class="page-slot"><span>Erasing</span>${motionScene("erasing", { size: 64 })}</div>
     <div class="page-slot"><span>Erasing up to a corner</span>${motionScene("erasingCorner", { size: 64 })}</div>
   </div>
-  <h3>Erasing compared</h3>
+  <h3>Erasing compared: 17 and 18 with the rule of specs.md, 19 to 22 with the new one</h3>
   <div class="page-row">${Object.entries(ERASE_TITLES).map(([erase, title]) =>
     `<div class="page-slot"><span>${title}</span>${motionScene("erasing", { size: 40, code: false, erase })}</div>`).join("")}</div>`]);

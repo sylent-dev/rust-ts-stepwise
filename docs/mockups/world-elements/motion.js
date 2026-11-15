@@ -71,7 +71,7 @@ const SCENES = {};
 // A scene in the page: the map with its layer of moving things, the program beside it. Its player
 // starts once the sheet is drawn (startScenes).
 // `move` and `turn` choose an easing of EASINGS for this scene alone, instead of the decided ones;
-// `erase` a variant of the tab Erasing, instead of the tab.
+// `erase` a look of the eraser compared, instead of the decided one.
 function motionScene(name, { rate = NORMAL_SPEED, size = 48, code = true, move = "", turn = "", erase = "" } = {}) {
   const scene = SCENES[name];
   const layer = `<div class="motion-layer" style="--cell:${size}px"><svg viewBox="0 0 ${scene.rows[0].length * 64} ${scene.rows.length * 64}" aria-hidden="true"></svg><div class="motion-items"></div><div class="motion-robot"></div></div>`;
@@ -96,6 +96,8 @@ const ERASER_SHADE = "#7d8798";
 // and every painted passage it has, the one toward the next cell too. "crossed": the eraser takes
 // away what it passes over, as the brush paints it: the cell it is on or enters, and the passage it
 // crosses to enter it.
+// Decided at step 11a: "crossed", drawn "under" the robot.
+const ERASE_STYLE = "under";
 const ERASE_RULES = { fade: "all", pull: "all", under: "crossed", scrub: "crossed", dust: "crossed", ghost: "crossed" };
 
 // What each action does to the world once it has run (`commit`), and how it draws while it runs:
@@ -259,7 +261,7 @@ function playScene(root) {
     turn: EASINGS[root.dataset.turn || TURN_EASE],
     cue: EASINGS["in-out"],
   };
-  const style = root.dataset.erase || chosen.eraseMove;
+  const style = root.dataset.erase || ERASE_STYLE;
   const rule = ERASE_RULES[style];
   const clipId = `motion-clip-${motionClips += 1}`;
   const [width, height] = [scene.rows[0].length * 64, scene.rows.length * 64];
