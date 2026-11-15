@@ -28,7 +28,6 @@ pub mod interpreter;
 pub mod level;
 pub mod lexer;
 pub mod parser;
-pub mod probe;
 pub mod program;
 pub mod run;
 pub mod span;
