@@ -107,9 +107,9 @@ const CARRY_TIME = 400;
 const seg = (p, from, to) => EASINGS["in-out"](clamp01((p - from) / (to - from)));
 const BAY = 11.7;
 const FRONT = -34;
-// How far the robot steps back, as a share of a cell (slider Step back): the item of its cell then
-// lies that far in front of its center.
-const backOff = () => Number(chosen.backOff) / 100;
+// How far the robot steps back, as a share of a cell (decided at step 11a): the item of its cell
+// then lies that far in front of its center.
+const backOff = () => 0.25;
 const lifted = t => 1 + 0.15 * Math.sin(Math.PI * t);
 const backedUp = (world, amount) => {
   const [dx, dy] = AHEAD[world.angle];

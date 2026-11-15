@@ -19,7 +19,7 @@ SCENES.carrying = {
 const CARRY_TITLES = { pop: "23. In the bay", over: "24. Over the robot", back: "25. Step back" };
 
 SECTIONS.push(["Animations: picking up and dropping", () => `
-  <p>Decided: <b>the robot steps back</b> (25) a third of a cell, so that the item of its cell shows at its front; its pincer takes it over the robot into the bay, or sets it down there, then the robot rolls back onto its cell. It takes 400 ms at the normal speed, a little longer than a move: the item travels, and these actions are rarer. The slider <b>Step back</b> sets how far it goes back, as a share of a cell (34 % at first): less looks like a small shuffle, but hides more of the item.</p>
+  <p>Decided: <b>the robot steps back</b> (25) a quarter of a cell, so that the item of its cell shows at its front; its pincer takes it over the robot into the bay, or sets it down there, then the robot rolls back onto its cell. It takes 400 ms at the normal speed, a little longer than a move: the item travels, and these actions are rarer. A quarter of a cell rather than a third: a small shuffle more than a retreat, the item still showing at its front.</p>
   ${motionScene("carrying", { size: 80 })}
   <h3>Compared: 23. In the bay, 24. Over the robot, 25. Step back</h3>
   <div class="page-row">${Object.entries(CARRY_TITLES).map(([carry, title]) =>
