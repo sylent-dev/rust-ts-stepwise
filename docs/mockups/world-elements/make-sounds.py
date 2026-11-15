@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Makes the sounds of the sheet that no library gives (step 11b): each sound is a small recipe of
-oscillators, noise, filters and echoes, written to an Ogg Vorbis file in sounds/, and the list of the
-sounds made to sounds-made.js, which the page reads. Python's standard library alone, and ffmpeg to
+"""Makes sounds for the sheet (step 11b), the workshop of new sounds: each sound is a small recipe
+built from the blocks below (oscillators, frequency modulation, noise, filters, a plucked string, a
+voice, echoes), written to an Ogg Vorbis file in sounds/, and the list of the sounds made to
+sounds-made.js, which the page reads. Python's standard library alone, and ffmpeg to
 encode the files. From the repository root:
 
     python3 docs/mockups/world-elements/make-sounds.py
@@ -256,295 +257,33 @@ def clicks(dur, rate, click):
 
 # --- The sounds --------------------------------------------------------------------------------
 
-# The speed of the robot during its action, from 0 to 1: a move starts and stops gently; a turn
-# starts at once and settles (the easings of motion.js).
-MOVE = 0.3
-def forward_speed(t):
-    return math.sin(math.pi * min(t / MOVE, 1)) ** 2
-def turn_speed(t):
-    return max(0.0, 1 - t / MOVE) ** 1.5
-
-
-def success_chirps():
-    out = []
-    for index, (a, b) in enumerate([(880, 1320), (990, 1480), (1175, 1760), (1320, 2000)]):
-        place(out, fm(0.06, lambda t, a=a, b=b: a + (b - a) * t / 0.06, 2, 2), 0.075 * index)
-    place(out, fm(0.18, lambda t: 1760 * (1 + 0.03 * math.sin(TAU * 18 * t)), 2, 1.5, curve=3), 0.3)
-    return out
-
-
-def success_coin():
-    out = place([], tone(0.07, hz("B5"), "square", hold=0.05, curve=1), 0, 0.5)
-    place(out, tone(0.35, hz("E6"), "square", curve=4), 0.07, 0.5)
-    return echo(lowpass(out, 5000), 0.09, 0.3, 0.35, 0.3)
-
-
-def success_voice():
-    out = place([], voice(0.18, lambda t: hz("C4") + 40 * t / 0.18, [(0, "u"), (0.6, "a"), (1, "a")]), 0)
-    breath = mul(svf(noise(0.05), 1800, 2), env(0.05, 0.01, 3))
-    place(out, breath, 0.19, 0.4)
-    place(out, voice(0.36, lambda t: hz("E4") + (hz("A4") - hz("E4")) * min(t / 0.2, 1), [(0, "u"), (1, "u")], (6, 0.02)), 0.21)
-    return out
-
-
-def success_kalimba():
-    out = []
-    for index, note in enumerate(["C5", "E5", "G5", "C6"]):
-        place(out, pluck(hz(note), 0.5, 0.997, 0.3), [0, 0.08, 0.16, 0.26][index], 1 if index < 3 else 1.2)
-    return echo(out, 0.12, 0.35, 0.35, 0.3)
-
-
-def success_fireworks():
-    out = []
-    rise = mul(svf(noise(0.35), lambda t: 400 * 15 ** (t / 0.35), 3), [(i / n_of(0.35)) ** 2 for i in range(n_of(0.35))])
-    place(out, rise, 0, 0.6)
-    place(out, tone(0.3, lambda t: 80 * 0.5 ** (t / 0.3), curve=4), 0.35, 1.0)
-    place(out, mul(lowpass(noise(0.25), 1500), env(0.25, 0.002, 6)), 0.35, 0.8)
-    for note in ("C6", "E6", "G6"):
-        place(out, fm(0.7, hz(note), 3.5, 1.2, curve=4), 0.37, 0.25)
-    for _ in range(45):
-        at = 0.4 + 0.7 * random.random() ** 1.6
-        crack = mul(highpass(noise(0.004), 3000), env(0.004, 0.0005, 3))
-        place(out, crack, at, 0.9 * (1.1 - (at - 0.4) / 0.7))
-    return out
-
-
-def success_laser_fanfare():
-    out = []
-    for at, notes in ((0, ("C5", "E5", "G5")), (0.42, ("C6", "E6", "G6"))):
-        for note in notes:
-            f = hz(note)
-            sweep = lambda t, f=f: f * (0.5 + 0.5 * min(t / 0.08, 1)) * (1 + 0.01 * math.sin(TAU * 6 * t))
-            place(out, tone(0.4 if at == 0 else 0.5, sweep, "saw", 0.005, 3, 0.15), at, 0.3)
-    out = lowpass(out, lambda t: 1200 + 5000 * min(t / 0.5, 1))
-    return echo(crush(out, 6, 3), 0.11, 0.3, 0.35, 0.35)
-
-
-def success_glitter():
-    out = []
-    sweep = osc(0.8, lambda t: 400 * 7.5 ** (t / 0.8))
-    place(out, mul(mul(sweep, osc(0.8, 1700)), env(0.8, 0.05, 3)), 0, 0.5)
-    scale = [hz(n) for n in ("C6", "D6", "E6", "G6", "A6", "C7", "D7", "E7")]
-    for index in range(55):
-        at = 0.9 * index / 55 + random.uniform(-0.02, 0.02)
-        place(out, tone(0.03, random.choice(scale[index * len(scale) // 55:]), curve=4), max(at, 0), 0.35)
-    return reverb(out, 0.3, 0.4)
-
-
-def success_supersaw():
-    out = []
-    for note in ("C4", "E4", "G4", "C5"):
-        for detune in (-0.012, -0.008, -0.004, 0, 0.004, 0.008, 0.012):
-            place(out, osc(0.5, hz(note) * (1 + detune), "saw"), 0, 0.08)
-    out = mul(out, env(0.5, 0.004, 1.2, 0.3))
-    out = svf(out, lambda t: 300 + 7700 * min(t / 0.15, 1) - 5000 * max(0.0, min((t - 0.15) / 0.3, 1)), 1.4, "low")
-    place(out, tone(0.08, lambda t: 150 * 0.3 ** (t / 0.08), curve=3), 0, 1.0)
-    return reverb(out, 0.3, 0.5)
-
-
-def failure_voice():
-    out = place([], voice(0.16, lambda t: hz("E4"), [(0, "a"), (1, "u")]), 0)
-    place(out, voice(0.32, lambda t: hz("C#4") - 10 * t / 0.32, [(0, "o"), (1, "o")], (5, 0.015)), 0.2)
-    return out
-
-
-def failure_deflate():
-    out = []
-    at = 0.0
-    for index, (a, b) in enumerate([(660, 600), (520, 470), (400, 350), (300, 200)]):
-        dur = 0.06 + 0.05 * index
-        place(out, fm(dur, lambda t, a=a, b=b, d=dur: a + (b - a) * t / d, 1.5, 1.5, curve=3), at)
-        at += dur + 0.03 * (index + 1)
-    return out
-
-
-def failure_kalimba():
-    out = []
-    for at, note in ((0, "A4"), (0.14, "F4"), (0.3, "D4")):
-        place(out, pluck(hz(note), 0.45, 0.996, 0.35), at)
-    return out
-
-
-def failure_sigh():
-    breath = mul(svf(noise(0.6), lambda t: 900 - 350 * t / 0.6, 4), env(0.6, 0.12, 3))
-    hum = tone(0.6, lambda t: 300 - 100 * t / 0.6, attack=0.1, curve=3)
-    return place(gain(breath, 0.8), hum, 0, 0.25)
-
-
-def failure_power_down():
-    f = lambda t: 520 * (30 / 520) ** (t / 0.8)
-    out = place(osc(0.8, f, "saw"), osc(0.8, lambda t: f(t) / 2, "square"), 0, 0.5)
-    out = mul(lowpass(out, lambda t: 4000 * (200 / 4000) ** (t / 0.8)), env(0.8, 0.005, 1.5))
-    return crush(out, 7, 2)
-
-
-def failure_glitch():
-    phrase = place(tone(0.2, hz("G4"), "square", curve=2), tone(0.3, hz("E4"), "square", curve=2), 0.2)
-    phrase = lowpass(phrase, 3000)
-    slice_len = n_of(0.025)
-    out = []
-    pos = 0
-    while pos < len(phrase):
-        piece = phrase[pos: pos + slice_len]
-        for _ in range(random.choice((1, 1, 2, 3))):
-            out.extend(piece)
-        if random.random() < 0.3:
-            out.extend(varispeed(piece, lambda t: 0.6))
-        pos += slice_len
-    return crush(out, 5, 2)
-
-
-def failure_wobble():
-    lfo = lambda t: 8 - 5 * t / 0.8
-    phase = [0.0]
-    def cutoff(t):
-        phase[0] += lfo(t) / SR
-        return 200 + 1800 * (0.5 + 0.5 * math.sin(TAU * phase[0]))
-    out = osc(0.8, lambda t: 110 * 0.5 ** (t / 0.8), "saw")
-    out = drive(svf(out, cutoff, 6, "low"), 2.5)
-    return mul(out, env(0.8, 0.01, 1.5, 0.2))
-
-
-def failure_tape_stop():
-    phrase = []
-    for at, note in ((0, "C5"), (0.12, "E5"), (0.24, "G5")):
-        place(phrase, tone(0.5, hz(note), "tri", curve=2), at, 0.6)
-        place(phrase, tone(0.5, hz(note) * 2, "saw", curve=4), at, 0.08)
-    return varispeed(phrase, lambda t: 1.0 if t < 0.3 else max(0.0, 1 - (t - 0.3) / 0.5) ** 1.5)
-
+# The two sounds chosen on 2026-11-15 among the ones this script made (the others are in the commits
+# of pull request #45), ported to the Web Audio API in sound.js with the same curves and level.
 
 def bump_spring():
+    """77. Spring: a low tone and its partial that wobble 18 times a second and settle, and a click."""
     out = tone(0.45, lambda t: 180 + 60 * math.exp(-7 * t) * math.sin(TAU * 18 * t), curve=4)
     place(out, tone(0.25, lambda t: 432 + 120 * math.exp(-8 * t) * math.sin(TAU * 18 * t), curve=5), 0, 0.3)
     place(out, mul(highpass(noise(0.005), 2000), env(0.005, 0.0005, 3)), 0, 0.5)
     return out
 
 
-def bump_tin():
-    return place(fm(0.3, 620, 1.41, 6, curve=6, index_curve=10), fm(0.25, 1130, 2.73, 3, curve=7), 0, 0.5)
-
-
-def bump_bonk():
-    knock = svf(mul(noise(0.005), env(0.005, 0.0005, 2)) + [0.0] * n_of(0.2), 900, 25)
-    return place(gain(knock, 0.4), tone(0.06, lambda t: 520 - 190 * t / 0.06, curve=3), 0, 0.6)
-
-
-def bump_squeak():
-    pitch = lambda t: 900 + 400 * math.sin(math.pi * min(t / 0.1, 1)) - 300 * max(0.0, (t - 0.1) / 0.06)
-    return voice(0.16, pitch, [(0, "i"), (1, "u")], (0, 0))
-
-
-def bump_crash():
-    out = tone(0.15, lambda t: 90 * 0.45 ** (t / 0.15), curve=3)
-    place(out, mul(lowpass(noise(0.12), 2000), env(0.12, 0.002, 5)), 0, 0.8)
-    for index in range(6):
-        at = 0.1 + 0.5 * random.random()
-        place(out, fm(0.06, random.uniform(2000, 5000), 1.6, 2, curve=6), at, 0.4 * (1 - index / 8))
-    return out
-
-
-def bump_smash():
-    out = tone(0.3, lambda t: 70 * 0.6 ** (t / 0.3), curve=4)
-    place(out, mul(lowpass(noise(0.25), 3000), env(0.25, 0.002, 5)), 0, 0.9)
-    return crush(drive(out, 8), 4, 6)
-
-
-def bump_zap():
-    jitter = [120.0]
-    def f(t):
-        if int(t * SR) % n_of(0.005) == 0:
-            jitter[0] = 120 * random.uniform(0.4, 1.6)
-        return jitter[0]
-    out = highpass(osc(0.3, f, "saw"), 300)
-    out = mul(out, [1.0 if random.random() < 0.85 else 0.0 for _ in out])
-    return mul(out, env(0.3, 0.002, 3))
-
-
-def bump_gong():
-    out = []
-    for ratio, level, swell in ((1, 1.0, 0.003), (1.48, 0.6, 0.03), (2.19, 0.45, 0.06), (2.83, 0.3, 0.1), (3.6, 0.2, 0.12)):
-        place(out, tone(0.9, 110 * ratio * random.uniform(0.997, 1.003), attack=swell, curve=3), 0, level)
-    return out
-
-
-def move_whirr(speed, base):
-    def s(t):
-        return speed(t)
-    sig = place(osc(MOVE, lambda t: base + 60 * s(t), "tri"), osc(MOVE, lambda t: 2.02 * (base + 60 * s(t))), 0, 0.3)
-    place(sig, lowpass(noise(MOVE), lambda t: 200 + 900 * s(t)), 0, 0.8)
-    return mul(sig, [s(i / SR) ** 0.6 for i in range(n_of(MOVE))])
-
-
-def move_servo(speed, base):
-    sig = lowpass(osc(MOVE, lambda t: base + 260 * speed(t), "square"), 1800)
-    place(sig, osc(MOVE, lambda t: 2 * (base + 260 * speed(t))), 0, 0.2)
-    sig = mul(sig, [0.15 + 0.85 * speed(i / SR) ** 0.5 for i in range(n_of(MOVE))])
-    return mul(sig, env(MOVE, 0.01, 1, 0.2))
-
-
-def move_tracks(speed, alternate):
-    def click(index):
-        f = 2600 if alternate and index % 2 else 2000
-        return gain(svf(mul(noise(0.004), env(0.004, 0.0005, 2)), f, 5), 0.6)
-    sig = clicks(MOVE, lambda t: 40 * speed(t), click)
-    rumble = mul(lowpass(noise(MOVE), 150), [speed(i / SR) for i in range(n_of(MOVE))])
-    return place(sig, rumble, 0, 1.5)
-
-
 def move_blip(notes):
+    """88. Tiny blip: one short note per name, 60 ms apart, that rises a little."""
     out = []
     for index, note in enumerate(notes):
         place(out, tone(0.04, lambda t, f=hz(note): f * (1 + 0.15 * t / 0.04), curve=4), 0.06 * index)
     return out + [0.0] * n_of(0.05)
 
 
-def move_hover(speed, tilt):
-    def f(t):
-        return 110 * (1 + tilt * speed(t))
-    sig = place(osc(MOVE, f), osc(MOVE, lambda t: f(t) * 1.013), 0, 0.8)
-    place(sig, osc(MOVE, lambda t: 2 * f(t), "tri"), 0, 0.15)
-    return mul(sig, env(MOVE, 0.04, 1, 0.15))
-
-
-# The sounds made, by kind: [number, short title, temperature, recipe]. The moves have a sound for
-# `forward()` and one for a turn.
+# The sounds made, by kind: [number, short title, recipe]. A move has a sound for `forward()` and one
+# for a turn.
 SOUNDS = {
-    "success": [
-        (61, "Chirps", "high", success_chirps),
-        (62, "Coin and sparkle", "high", success_coin),
-        (63, "Robot voice: wa-hoo", "high", success_voice),
-        (64, "Kalimba and echo", "high", success_kalimba),
-        (65, "Fireworks", "explosive", success_fireworks),
-        (66, "Laser fanfare", "explosive", success_laser_fanfare),
-        (67, "Glitter spiral", "explosive", success_glitter),
-        (68, "Supersaw stab", "explosive", success_supersaw),
-    ],
-    "failure": [
-        (69, "Robot voice: uh-oh", "high", failure_voice),
-        (70, "Deflating blips", "high", failure_deflate),
-        (71, "Kalimba down", "high", failure_kalimba),
-        (72, "Little sigh", "high", failure_sigh),
-        (73, "Power down", "explosive", failure_power_down),
-        (74, "Glitch stutter", "explosive", failure_glitch),
-        (75, "Wobble droop", "explosive", failure_wobble),
-        (76, "Tape stop", "explosive", failure_tape_stop),
-    ],
     "bump": [
-        (77, "Spring", "high", bump_spring),
-        (78, "Tin clank", "high", bump_tin),
-        (79, "Cartoon bonk", "high", bump_bonk),
-        (80, "Squeak", "high", bump_squeak),
-        (81, "Crash and bolts", "explosive", bump_crash),
-        (82, "Crushed smash", "explosive", bump_smash),
-        (83, "Electric zap", "explosive", bump_zap),
-        (84, "Gong", "explosive", bump_gong),
+        (77, "Spring", bump_spring),
     ],
     "move": [
-        (85, "Soft whirr", "calm", (lambda: move_whirr(forward_speed, 70), lambda: move_whirr(turn_speed, 90))),
-        (86, "Servo", "calm", (lambda: move_servo(forward_speed, 180), lambda: move_servo(turn_speed, 300))),
-        (87, "Tracks", "calm", (lambda: move_tracks(forward_speed, False), lambda: move_tracks(turn_speed, True))),
-        (88, "Tiny blip", "calm", (lambda: move_blip(["E5"]), lambda: move_blip(["G5", "E5"]))),
-        (89, "Hover hum", "calm", (lambda: move_hover(forward_speed, 0.08), lambda: move_hover(turn_speed, 0.15))),
+        (88, "Tiny blip", (lambda: move_blip(["E5"]), lambda: move_blip(["G5", "E5"]))),
     ],
 }
 
@@ -591,7 +330,7 @@ def main():
     lines = []
     for kind, sounds in SOUNDS.items():
         entries = []
-        for number, title, temperature, recipe in sounds:
+        for number, title, recipe in sounds:
             name = f"made-{number}-{slug(title)}"
             random.seed(name)
             if kind == "move":
@@ -601,8 +340,7 @@ def main():
             else:
                 made = write(recipe(), f"{name}.ogg")
                 entry = f'file: "{made["file"]}", mean: {made["mean"]}, length: {made["length"]}'
-            source = "made"
-            entries.append(f'    made{number}: {{ title: "{number}. {title}", source: "{source}", temperature: "{temperature}", {entry} }},')
+            entries.append(f'    made{number}: {{ title: "{number}. {title}, file", {entry} }},')
             print(f"{number} {title}")
         lines.append(f"  {kind}: {{\n" + "\n".join(entries) + "\n  },")
     (HERE / "sounds-made.js").write_text(

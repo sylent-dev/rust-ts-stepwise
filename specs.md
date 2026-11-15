@@ -417,7 +417,7 @@ When the setting **Sounds** is on, a run plays a few sounds, synthesized in the 
 | `turn_left()`, `turn_right()` | The tiny blip twice, G5 then E5. | 0.1 s |
 
 - A run ends with one sound, never two: the bump or the error that stops the program plays instead of the goal not met.
-- The blip of the moves plays up to 2 steps per second, the two slowest speeds; faster, none, where it would become a stream that covers the sounds of the end. At **Instant**, only the sound of the end plays.
+- The blip of the moves plays up to 2 steps per second, the two slowest speeds; faster, none, where it would become a stream that covers the sounds of the end. At **Instant**, only the sound of the end plays. **Step** plays the sound of its action, the blip included, as at the slowest speeds.
 - Painting, erasing, a `pick_up()` or a `drop()` that succeeds, and the lines without action make no sound: their animation shows them, and fewer sounds keep their meaning.
 - No volume setting: the volume of the system. The sounds follow the setting **Sounds** alone, not the request for less motion.
 
