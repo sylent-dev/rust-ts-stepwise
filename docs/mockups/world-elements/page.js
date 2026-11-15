@@ -5,10 +5,10 @@
 const VARIANTS = {
   theme: { label: "Style", options: Object.fromEntries(Object.entries(THEMES).map(([key, theme]) => [key, theme.title])), fallback: Object.keys(THEMES)[0] },
   vision: { label: "Vision", options: { normal: "Normal", protanopia: "Protanopia", deuteranopia: "Deuteranopia", tritanopia: "Tritanopia" }, fallback: "normal" },
-  // Step 11a, the animations (section-motion-moves.js): the easing of a move and of a turn.
-  moveEase: { label: "Move", options: { "in-out": "1. Smooth", linear: "2. Even", out: "3. Quick start", overshoot: "4. Overshoot", "smooth-overshoot": "9. Smooth, then overshoot" }, fallback: "smooth-overshoot" },
-  turnEase: { label: "Turn", options: { "in-out": "5. Smooth", linear: "6. Even", out: "7. Quick start", overshoot: "8. Overshoot", "smooth-overshoot": "10. Smooth, then overshoot" }, fallback: "smooth-overshoot" },
-  overshoot: { label: "Overshoot (%)", range: { min: 0, max: 15, step: 1 }, fallback: "5" },
+  // Step 11a, the animations (section-motion-paint.js): putting a tool down, lifting it, erasing.
+  brushDown: { label: "Tool down", options: { none: "11. Nothing", press: "12. Press", ripple: "13. Ring", both: "14. Press and ring" }, fallback: "both" },
+  brushUp: { label: "Tool up", options: { none: "15. Nothing", lift: "16. Lift" }, fallback: "none" },
+  eraseMove: { label: "Erasing", options: { fade: "17. Fade", pull: "18. Pull back" }, fallback: "pull" },
 };
 
 const params = new URLSearchParams(location.search);
