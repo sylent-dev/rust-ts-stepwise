@@ -74,12 +74,13 @@ const SCENES = {};
 // `erase` a look of the eraser compared, instead of the decided one, and `carry` a look of picking up
 // and dropping, `bump` a look of the bump and `fail` a look of a pick up or a drop that fails
 // and `success` and `failure` a look of the end of a run compared; `motion` is "full", or a level of
-// less motion of LESS_MOTION.
-function motionScene(name, { rate = NORMAL_SPEED, size = 48, code = true, move = "", turn = "", erase = "", carry = "", bump = "", fail = "", success = "", failure = "", motion = "full" } = {}) {
+// less motion of LESS_MOTION; `sound`, an id that a button ▶ names (`data-play-scene`) to play the
+// scene once from its start with its sounds (sound.js), the scene being silent otherwise.
+function motionScene(name, { rate = NORMAL_SPEED, size = 48, code = true, move = "", turn = "", erase = "", carry = "", bump = "", fail = "", success = "", failure = "", motion = "full", sound = "" } = {}) {
   const scene = SCENES[name];
   const layer = `<div class="motion-layer" style="--cell:${size}px"><svg viewBox="0 0 ${scene.rows[0].length * 64} ${scene.rows.length * 64}" aria-hidden="true"></svg><div class="motion-items"></div><div class="motion-robot"></div><svg class="motion-over" viewBox="0 0 ${scene.rows[0].length * 64} ${scene.rows.length * 64}" aria-hidden="true"></svg><div class="motion-flags"></div></div>`;
   const program = code ? `<div class="motion-panel"><ol class="motion-code">${scene.program.map(line => `<li>${line}</li>`).join("")}</ol><div class="motion-status"></div></div>` : "";
-  return `<div class="motion-scene" data-scene="${name}" data-rate="${rate}" data-size="${size}" data-move="${move}" data-turn="${turn}" data-erase="${erase}" data-carry="${carry}" data-bump="${bump}" data-fail="${fail}" data-success="${success}" data-failure="${failure}" data-motion="${motion}"><div class="motion-stage">${appMap(scene.rows, scene.marks, size)}${layer}</div>${program}</div>`;
+  return `<div class="motion-scene"${sound ? ` id="${sound}"` : ""} data-scene="${name}" data-rate="${rate}" data-size="${size}" data-move="${move}" data-turn="${turn}" data-erase="${erase}" data-carry="${carry}" data-bump="${bump}" data-fail="${fail}" data-success="${success}" data-failure="${failure}" data-motion="${motion}"><div class="motion-stage">${appMap(scene.rows, scene.marks, size)}${layer}</div>${program}</div>`;
 }
 
 // The duration of an action at a speed: the one chosen for the normal speed, shortened when a step
@@ -503,7 +504,17 @@ function playScene(root) {
   let world;
   let applied;
   let start;
-  const reset = now => { world = startWorld(scene); applied = 0; start = now; };
+  const reset = now => { world = startWorld(scene); applied = 0; start = now; heard.clear(); };
+  // The sounds of the scene, at their time from its start: a bump when the front of the robot
+  // touches the border of its cell, the end of a run when its last step has ended. They play once,
+  // after a click on the button ▶ of the scene, never as it loops.
+  const cues = [
+    ...scene.trace.flatMap(([, name], index) => name === "bump" ? [[index * period + 0.3 * durations[BUMP_TIME], "bump"]] : []),
+    ...["success", "failure"].includes(scene.end) ? [[steps * period, scene.end]] : [],
+  ];
+  const heard = new Set();
+  let armed = false;
+  root.playWithSound = () => { start = undefined; armed = true; };
 
   const frame = now => {
     if (generation !== motionGeneration || !root.isConnected) return;
@@ -511,7 +522,11 @@ function playScene(root) {
     const elapsed = now - start - LEAD;
     // The step under way, started at its own time, and how far its action has gone.
     const current = elapsed < 0 ? -1 : Math.min(Math.floor(elapsed / period), steps);
-    if (elapsed > steps * period + END_HOLD) { reset(now); requestAnimationFrame(frame); return; }
+    if (elapsed > steps * period + END_HOLD) { armed = false; reset(now); requestAnimationFrame(frame); return; }
+    cues.forEach(([time, kind], index) => {
+      if (armed && elapsed >= time && !heard.has(index)) playSound(kind);
+      if (elapsed >= time) heard.add(index);
+    });
     while (applied < Math.min(current, steps)) {
       ACTIONS[scene.trace[applied][1]]?.commit(world, rule);
       applied += 1;

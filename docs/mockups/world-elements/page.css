@@ -36,3 +36,11 @@ body { margin: 0; background: #2a2d31; color: #e9ecef; font: 14px/1.4 system-ui,
 .page-contents { display: flex; flex-wrap: wrap; gap: 4px 16px; padding: 10px 16px 0; font-size: 13px; }
 .page-contents a { color: #adb5bd; text-decoration: none; }
 .page-contents a:hover { color: #e9ecef; text-decoration: underline; }
+
+/* The sounds compared (sound.js): a button ▶ per sound, its title, its source and its length. */
+.sound-play { padding: 2px 8px; border: 1px solid #3a3f45; border-radius: 4px; background: #24272b; color: #dee2e6; font: inherit; cursor: pointer; }
+.sound-play:hover { border-color: #adb5bd; }
+.sound-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 6px 24px; margin: 0; padding: 0; list-style: none; }
+.sound-list li { display: grid; grid-template-columns: auto 13em 1fr; align-items: baseline; gap: 10px; }
+.sound-list .is-chosen { font-weight: 600; color: #fff; }
+.sound-list small { color: #868e96; }

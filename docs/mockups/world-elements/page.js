@@ -5,6 +5,8 @@
 const VARIANTS = {
   theme: { label: "Style", options: Object.fromEntries(Object.entries(THEMES).map(([key, theme]) => [key, theme.title])), fallback: Object.keys(THEMES)[0] },
   vision: { label: "Vision", options: { normal: "Normal", protanopia: "Protanopia", deuteranopia: "Deuteranopia", tritanopia: "Tritanopia" }, fallback: "normal" },
+  // The sounds of a run, compared (sound.js).
+  ...SOUND_VARIANTS,
 };
 
 const params = new URLSearchParams(location.search);
