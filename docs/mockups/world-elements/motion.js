@@ -72,12 +72,13 @@ const SCENES = {};
 // starts once the sheet is drawn (startScenes).
 // `move` and `turn` choose an easing of EASINGS for this scene alone, instead of the decided ones;
 // `erase` a look of the eraser compared, instead of the decided one, and `carry` a look of picking up
-// and dropping compared, and `bump` a look of the tab Bump, instead of the tab.
-function motionScene(name, { rate = NORMAL_SPEED, size = 48, code = true, move = "", turn = "", erase = "", carry = "", bump = "" } = {}) {
+// and dropping and `bump` a look of the bump compared, and `fail` a look of the tab Failed pick up and
+// drop, instead of the tab.
+function motionScene(name, { rate = NORMAL_SPEED, size = 48, code = true, move = "", turn = "", erase = "", carry = "", bump = "", fail = "" } = {}) {
   const scene = SCENES[name];
   const layer = `<div class="motion-layer" style="--cell:${size}px"><svg viewBox="0 0 ${scene.rows[0].length * 64} ${scene.rows.length * 64}" aria-hidden="true"></svg><div class="motion-items"></div><div class="motion-robot"></div><svg class="motion-over" viewBox="0 0 ${scene.rows[0].length * 64} ${scene.rows.length * 64}" aria-hidden="true"></svg></div>`;
   const program = code ? `<div class="motion-panel"><ol class="motion-code">${scene.program.map(line => `<li>${line}</li>`).join("")}</ol><div class="motion-status"></div></div>` : "";
-  return `<div class="motion-scene" data-scene="${name}" data-rate="${rate}" data-size="${size}" data-move="${move}" data-turn="${turn}" data-erase="${erase}" data-carry="${carry}" data-bump="${bump}"><div class="motion-stage">${appMap(scene.rows, scene.marks, size)}${layer}</div>${program}</div>`;
+  return `<div class="motion-scene" data-scene="${name}" data-rate="${rate}" data-size="${size}" data-move="${move}" data-turn="${turn}" data-erase="${erase}" data-carry="${carry}" data-bump="${bump}" data-fail="${fail}"><div class="motion-stage">${appMap(scene.rows, scene.marks, size)}${layer}</div>${program}</div>`;
 }
 
 // The duration of an action at a speed: the one chosen for the normal speed, shortened when a step
@@ -192,14 +193,44 @@ const ahead = (world, amount) => {
   const [dx, dy] = AHEAD[world.angle];
   return { x: world.x + dx * amount, y: world.y + dy * amount };
 };
+// The shake of an error, from `from` to the end of the action: three wobbles of 8° that die out.
+const shaking = (world, p, from) => {
+  const t = clamp01((p - from) / (1 - from));
+  return { angle: world.angle + (p > from ? 8 * Math.sin(Math.PI * 6 * t) * (1 - t) : 0) };
+};
+// Decided at step 11a: the robot comes back onto its cell shaking its body.
+const BUMP_LOOK = "shake";
 const BUMP_LOOKS = {
   back: (world, p) => ahead(world, touching(p)),
-  shake: (world, p) => {
-    const t = clamp01((p - 0.3) / 0.7);
-    return { ...ahead(world, touching(p)), angle: world.angle + (p > 0.3 ? 8 * Math.sin(Math.PI * 6 * t) * (1 - t) : 0) };
-  },
+  shake: (world, p) => ({ ...ahead(world, touching(p)), ...shaking(world, p, 0.3) }),
   squash: (world, p) => ({ ...ahead(world, touching(p)), squash: p > 0.3 && p < 0.55 ? 1 - 0.16 * Math.sin(Math.PI * (p - 0.3) / 0.25) : 1 }),
   spark: (world, p) => ({ ...ahead(world, touching(p)), spark: p > 0.28 && p < 0.7 ? (p - 0.28) / 0.42 : 0 }),
+};
+
+// The other errors of the robot: `pick_up()` with no item on its cell ("pick-empty") or with an
+// item already in its bay ("pick-full"), `drop()` with nothing to drop ("drop-empty") or on a cell
+// that has an item already ("drop-full"). As the tab Failed pick up and drop says: "shake", the
+// shake of the bump, on its cell; "try", the robot starts the action, steps back, finds what goes
+// wrong (an empty pincer, a full bay that swells, an item that can't go down and goes back), rolls
+// back onto its cell, then shakes. They take 650 ms at the normal speed: nothing waits after them.
+const FAIL_TIME = 650;
+const tried = (world, p) => ({
+  ...backedUp(world, seg(p, 0, 0.2) - seg(p, 0.45, 0.6)),
+  pincer: seg(p, 0.05, 0.2) - seg(p, 0.35, 0.5),
+  ...shaking(world, p, 0.6),
+});
+const FAIL_LOOKS = {
+  shake: { any: (world, p) => shaking(world, p, 0) },
+  try: {
+    "pick-empty": tried,
+    "drop-empty": tried,
+    "pick-full": (world, p) => ({ ...tried(world, p), bayScale: 0.5 * (1 + 0.3 * Math.sin(Math.PI * clamp01((p - 0.18) / 0.22))) }),
+    "drop-full": (world, p) => {
+      const t = seg(p, 0.12, 0.28) - seg(p, 0.3, 0.46);
+      const out = p > 0.12 && p < 0.46;
+      return { ...tried(world, p), bay: !out, flight: out ? { y: lerp(BAY, -12, t), scale: lerp(0.5, 0.85, t) } : null };
+    },
+  },
 };
 
 // The two rules of the eraser compared. "all", the rule of specs.md: a cell erased loses its paint
@@ -264,21 +295,29 @@ const ACTIONS = {
     ease: "linear",
     time: BUMP_TIME,
     commit: () => {},
-    pose: (world, p, look, bumpLook) => BUMP_LOOKS[bumpLook](world, p),
+    pose: (world, p, looks) => BUMP_LOOKS[looks.bump](world, p),
   },
   pick: {
     ease: "linear",
     time: CARRY_TIME,
     commit: world => { world.items.delete(key(world.x, world.y)); world.carrying = true; },
-    pose: (world, p, look) => CARRY_LOOKS[look].pick(world, p),
+    pose: (world, p, looks) => CARRY_LOOKS[looks.carry].pick(world, p),
   },
   drop: {
     ease: "linear",
     time: CARRY_TIME,
     commit: world => { world.items.add(key(world.x, world.y)); world.carrying = false; },
-    pose: (world, p, look) => CARRY_LOOKS[look].drop(world, p),
+    pose: (world, p, looks) => CARRY_LOOKS[looks.carry].drop(world, p),
   },
 };
+for (const kind of ["pick-empty", "pick-full", "drop-empty", "drop-full"]) {
+  ACTIONS[kind] = {
+    ease: "linear",
+    time: FAIL_TIME,
+    commit: () => {},
+    pose: (world, p, looks) => (FAIL_LOOKS[looks.fail][kind] ?? FAIL_LOOKS[looks.fail].any)(world, p),
+  };
+}
 for (const color of Object.keys(PAINT_SHADES)) {
   ACTIONS[`paint:${color}`] = toolDown(world => { world.eraser = false; world.brush = color; world.paint.set(key(world.x, world.y), color); }, () => paintShade(color));
 }
@@ -384,15 +423,18 @@ function playScene(root) {
   const lines = root.querySelectorAll(".motion-code li");
   const status = root.querySelector(".motion-status");
   const period = 1000 / rate;
-  const durations = { move: actionTime(MOVE_TIME, rate), [CARRY_TIME]: actionTime(CARRY_TIME, rate), [BUMP_TIME]: actionTime(BUMP_TIME, rate) };
+  const durations = { move: actionTime(MOVE_TIME, rate), [CARRY_TIME]: actionTime(CARRY_TIME, rate), [BUMP_TIME]: actionTime(BUMP_TIME, rate), [FAIL_TIME]: actionTime(FAIL_TIME, rate) };
   const easings = {
     move: EASINGS[root.dataset.move || MOVE_EASE],
     turn: EASINGS[root.dataset.turn || TURN_EASE],
     cue: EASINGS["in-out"],
   };
   const style = root.dataset.erase || ERASE_STYLE;
-  const look = root.dataset.carry || CARRY_LOOK;
-  const bumpLook = root.dataset.bump || chosen.bump;
+  const looks = {
+    carry: root.dataset.carry || CARRY_LOOK,
+    bump: root.dataset.bump || BUMP_LOOK,
+    fail: root.dataset.fail || chosen.fail,
+  };
   const rule = ERASE_RULES[style];
   const clipId = `motion-clip-${motionClips += 1}`;
   const [width, height] = [scene.rows[0].length * 64, scene.rows.length * 64];
@@ -417,7 +459,7 @@ function playScene(root) {
     const duration = action?.time ? durations[action.time] : durations.move;
     const progress = action?.pose ? clamp01((elapsed - current * period) / duration) : 1;
     const eased = action?.pose ? (easings[action.ease] ?? EASINGS.linear)(progress) : 1;
-    const pose = { x: world.x, y: world.y, angle: world.angle, pincer: 0, floor: true, bay: true, flight: null, dropped: false, ...action?.pose?.(world, eased, look, bumpLook) };
+    const pose = { x: world.x, y: world.y, angle: world.angle, pincer: 0, floor: true, bay: true, flight: null, dropped: false, ...action?.pose?.(world, eased, looks) };
     const ended = current >= steps;
     if (ended && ["success", "failure"].includes(scene.end)) world.lit = scene.end;
 
@@ -471,7 +513,7 @@ function playScene(root) {
     overLayer.innerHTML = over;
     // The pincer slides out from under the front of the robot; the item it holds is drawn over it.
     const pincer = pose.pincer > 0 ? `<img src="${element("pincer")}" alt="" style="transform:translateY(${(1 - pose.pincer) * 14}%)">` : "";
-    const carried = world.carrying && pose.bay || action === ACTIONS.pick && pose.bay ? `<img class="is-carried" src="${element("item")}" alt="">` : "";
+    const carried = world.carrying && pose.bay || action === ACTIONS.pick && pose.bay ? `<img class="is-carried" src="${element("item")}" alt=""${pose.bayScale ? ` style="transform:translateY(11.7%) scale(${pose.bayScale})"` : ""}>` : "";
     const eyes = world.lit ? `<img src="${element(world.lit === "success" ? "eyes-lit" : "eyes-dim")}" alt="">` : "";
     const { flight } = pose;
     const held = flight ? `<img src="${element("item")}" alt="" style="transform:translateY(${flight.y}%) scale(${flight.scale});opacity:${flight.opacity ?? 1};filter:drop-shadow(0 ${2 * (flight.scale - 0.5)}px 2px #0005)">` : "";

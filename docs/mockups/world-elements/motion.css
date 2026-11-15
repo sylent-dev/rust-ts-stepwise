@@ -7,7 +7,7 @@
 .motion-robot img { position: absolute; inset: 0; width: 100%; height: 100%; }
 
 /* The program, its next line highlighted as in the editor, and the status bar under it. */
-.motion-panel { background: #1b1d20; border-radius: 4px; overflow: hidden; }
+.motion-panel { min-width: 210px; background: #1b1d20; border-radius: 4px; overflow: hidden; }
 .motion-code { margin: 0; padding: 8px 0; list-style: none; counter-reset: line; color: #dee2e6; font: 13px/1.6 ui-monospace, monospace; }
 .motion-code li { padding-right: 16px; white-space: pre; counter-increment: line; }
 .motion-code li::before { content: counter(line); display: inline-block; width: 2.4em; margin-right: 12px; text-align: right; color: #6c757d; }
