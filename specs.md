@@ -127,7 +127,7 @@ The robot stands on one cell and faces one of the four directions. It can carry 
 | Move | `turn_left()`, `turn_right()` | Turns a quarter turn on its cell. | Never. |
 | Paint | `start_painting(color)` | Puts the brush down with the color: paints its cell at once, then every cell it moves into and the passage it crosses, over any paint already there. Called while painting, it changes the color. | Its value is no color. |
 | Paint | `stop_painting()` | Lifts the brush: the robot moves on without painting. | Never (nothing happens when the brush is already up). |
-| Paint | `start_erasing()` | Puts the eraser down: removes the paint of its cell at once, then of every cell it moves into, with the painted passages of these cells. | Never (an unpainted cell stays unpainted). |
+| Paint | `start_erasing()` | Puts the eraser down: removes the paint of its cell at once, then of every cell it moves into and of the passage it crosses, as the brush paints them (decided on 2026-11-15). | Never (an unpainted cell stays unpainted). |
 | Paint | `stop_erasing()` | Lifts the eraser. | Never (nothing happens when the eraser is already up). |
 | Carry | `pick_up()` | Picks up the item of its cell. | The robot already carries an item, or there is no item on the cell; when both are true, the error says the first, which explains a `pick_up()` called twice. |
 | Carry | `drop()` | Drops the item it carries on its cell. | The robot carries nothing, or the cell already has an item; when both are true, the error says the first, which explains a `drop()` called twice. |
@@ -269,7 +269,7 @@ The window needs at least 1280 × 720 pixels: below, a message replaces the scre
 | **Pause** / **Resume** | Pauses the program before its next step; resumes it. |
 | **Step** | Runs one step, then pauses: it goes into the functions called (the *step into* of the debuggers; there is no *step over* or *step out*). Available when paused or stopped (from stopped, it starts the program paused on its first step). |
 | **Reset** | Ends the program if it runs or is paused, and puts the map back to its starting state. The editor can be changed again. The code stays as it is: its hover says *"Puts the map back. Your code stays."* It is the only command named **Reset** near the code, so that it is never confused with **Restore starting code…**, which replaces the code. |
-| **Speed** | In the status bar. Five speeds, from one step per second to **Instant**, which runs as many steps as the browser allows without animation. Kept between sessions. |
+| **Speed** | In the status bar. Five speeds, from one step per second to **Instant**, which runs as many steps as the browser allows without animation. Two steps per second at first, the normal speed (decided on 2026-11-15). Kept between sessions. |
 
 - A **step** is one line run: a statement, the condition of a loop checked again, a call entered. The line of the next step is highlighted in the editor. What counts as a line run (decided on 2026-11-12):
   - The line of a loop is run again at each turn, and a last time when the loop ends: the one of a `while` to check its condition, the one of a `repeat` to count its turns. The highlight goes back up at each turn, even around a block of one line.
@@ -278,7 +278,7 @@ The window needs at least 1280 × 720 pixels: below, a message replaces the scre
   - When a function ends, the line of its call is highlighted again, and the next step runs the rest of that line. Each return of a recursion is seen that way, at the price of one more step per call.
 - A program that never ends (an infinite loop) keeps running, visibly, until **Pause** or **Reset**: the robot keeps moving or turning, the highlighted line keeps changing, and the step counter of the status bar keeps rising, even for a loop that doesn't move the robot. The page never freezes, even at **Instant**.
 - A breakpoint pauses the program before it runs that line: once, when the line starts, not when it is highlighted again after a call (decided on 2026-11-13). In a recursion, a breakpoint on the line of the call pauses each time a call reaches that line, never when one comes back to it.
-- The robot's actions are animated at the chosen speed: moving, turning, painting, picking up, dropping, and a bump against a wall that stops the program.
+- The robot's actions are animated at the chosen speed: moving, turning, painting, picking up, dropping, and a bump against a wall that stops the program (see [Animations](#animations)).
 - The robot picks up and drops an item with a pincer that comes out of its front, then goes back in; the item it carries lies in the bay at its back.
 - At the end of a run, the robot shows the result: when every goal is met, its eyes light up in yellow and it hops; when a goal isn't met, its eyes dim, it shakes its head, and the cells of the goals not met get a red flag (see [Levels and progression](#levels-and-progression)).
 - **Sounds**, when the setting is on: a short, soft sound when a run succeeds, another when it fails (never scolding), and one when the robot bumps into a wall; none at each step. The browser plays them only after a click, such as **Run**.
@@ -290,7 +290,7 @@ The window needs at least 1280 × 720 pixels: below, a message replaces the scre
 - **Running**: the first control is **Pause** (⏸), **Step** is greyed, the next line is highlighted, the step counter rises; the console is shown. When the learner types, the code doesn't change and the status bar lights up briefly with *"Reset the program to edit your code."*
 - **Paused on a breakpoint**: the breakpoint and the highlighted line together; the first control is **Resume** (▶); the variables panel opens by itself.
 - **Errors before running**: the words underlined, their message on hover; *"2 errors"* in the status bar; **Run** lists them in the console, each with its line in red (*"Ln 5"*), a click putting the cursor on its place; the map stays at its start.
-- **Error while running**: the line of the error marked in the margin, the map as it was at the error (the robot against the wall), the error in the console, a dot on the tab **Variables**; the status bar says `Error at line 5`.
+- **Error while running**: the line of the error marked in the margin, the map as it was at the error (the robot on its cell, facing the wall), the error in the console, a dot on the tab **Variables**; the status bar says `Error at line 5`.
 - **Goal not met**: a flag on each cell of a goal not met, the eyes of the robot dimmed; the console says which goal (*"The goal isn't met: 7 cells of the square aren't red."*); the tab of the map doesn't turn teal; the status bar says `Ended · goal not met`.
 
 ### Console
@@ -358,7 +358,7 @@ The interface is in English. Every text of the interface, the error messages and
 
 - A grid of cells, at most 16 columns and 12 rows. The coordinates start at the top left cell, `x` growing to the right and `y` downward.
 - A cell is a **wall** or a **floor**. A floor cell may hold one paint (one of the three colors) and one item.
-- The paint also lies on the **passages** between two cells: a passage is painted when the robot moves from one cell to the other with its brush down, and loses its paint when the eraser passes on one of its cells. The map draws the paint as a stroke through the centers of the cells, joining two cells only along a painted passage, so that the stroke follows the path of the robot; it stops, rounded, in the middle of the cells at its ends. A passage has no color of its own: each cell draws its half of it in its own color, so that a stroke whose cell was painted over with another color goes on and changes color at the border of that cell (decided on 2026-11-12, see the section *Two colors meeting on a path* of [`docs/mockups/world-elements.html`](docs/mockups/world-elements.html)). The sensors and the goals only look at the cells.
+- The paint also lies on the **passages** between two cells: a passage is painted when the robot moves from one cell to the other with its brush down, and loses its paint when the robot crosses it with its eraser down: the eraser takes away what it passes over, as the brush paints it, so that the paint ahead of the robot stays until the robot reaches it (decided on 2026-11-15, rather than every passage of a cell erased). The map draws the paint as a stroke through the centers of the cells, joining two cells only along a painted passage, so that the stroke follows the path of the robot; it stops, rounded, in the middle of the cells at its ends. A passage has no color of its own: each cell draws its half of it in its own color, so that a stroke whose cell was painted over with another color goes on and changes color at the border of that cell (decided on 2026-11-12, see the section *Two colors meeting on a path* of [`docs/mockups/world-elements.html`](docs/mockups/world-elements.html)). A cell without paint draws no half, so a stroke along a painted passage toward it ends square at the border of that cell; a cell erased alone keeps its painted passages toward its painted neighbors, and the stroke joins it again if it is painted again. A passage between two cells without paint loses its paint, so that no stroke comes back where nothing showed it. The sensors and the goals only look at the cells.
 - One kind of item in version 1 (its look comes from the sheet of the world elements).
 - The goal cells of a level are marked on the map (where to stand, which color where, where to put the items), so that the learner sees the target before writing code.
 - Outside the grid counts as a wall.
@@ -380,9 +380,30 @@ The sheet of the world elements, [`docs/mockups/world-elements.html`](docs/mocku
 | Goal: item | A slot of the shape of the item, a recess in the floor. | `#c3cad4`, rim `#a9b3c0` |
 | Goal: where to stand | A large square slot, in which the robot fits. | as the item slot |
 | Goal not met | A small red flag planted in the corner of the cell, once a run ends without meeting it. | `#c2255c` (may follow the error color of the design system) |
-| Robot | White, with two tracks, a dark visor with two cyan eyes at its front (its direction), and a bay at its back that holds the item it carries. Its pincer comes out of its front only while it picks up or drops an item. At the end of a run, its eyes light up in yellow when every goal is met, and dim when not. | body `#ffffff`, ink `#222935`, eyes `#3fc3ff`, bay `#d5dbe3`, lit `#ffd23f`, dim `#7d8798` |
+| Robot | White, with two tracks, a dark visor with two cyan eyes at its front (its direction), and a bay at its back that holds the item it carries. Its pincer comes out of its front only while it picks up or drops an item (see [Animations](#animations)). At the end of a run, its eyes light up in yellow when every goal is met, and dim when not. | body `#ffffff`, ink `#222935`, eyes `#3fc3ff`, bay `#d5dbe3`, lit `#ffd23f`, dim `#7d8798` |
 | Logo | The head of the robot with happy eyes and a smile, alone, so that the name stays on the line of the text beside it. It is also the icon of a browser tab. | the robot |
 | Name | `stepwise` in lowercase, in Fredoka 600 (SIL Open Font License), beside the logo: the middle of the head of the robot meets the middle of the lowercase letters, raised by 0.011 em; the name starts 0.18 em after the head, which is 1.25 times the height of the capitals. In a header, its baseline sits 1 px under the one of the menus. | the ink of the page |
+
+### Animations
+
+The robot plays each action of the program at the chosen speed. The reference is the sections *Animations* of [`docs/mockups/world-elements.html`](docs/mockups/world-elements.html) (decided on 2026-11-15). The durations are those of the normal speed, two steps per second, a step every 500 ms, so that the robot rests a moment between two steps; at a faster speed an action is shortened so that it still rests (tuned at every speed in the application, step 14); **Instant** draws none.
+
+- The line highlighted is the one of the next step: it moves on once the action of the step has ended, so that a line stays lit while the robot does what it says. A line without action (a computation, the line of a loop, a sensor) moves on at once.
+
+| Action | Animation | At the normal speed |
+|---|---|---|
+| `forward()` | The robot slides to the next cell, starting and stopping gently, so that it stops clearly in the middle of the cell, where the cells are counted. With the brush down, the stroke comes out from under it; with the eraser down, the paint goes under it and the floor comes out clean behind it. | 300 ms |
+| `turn_left()`, `turn_right()` | A quarter turn that starts at once, goes 5 % past it (4.5°), then settles back: livelier, where nothing is counted. | 300 ms |
+| `start_painting(color)`, `start_erasing()` | The robot covers its cell: a ring grows from under it as it fades, in the color of the paint, or in the gray of the dimmed eyes (`#7d8798`) for the eraser. | 300 ms |
+| `stop_painting()`, `stop_erasing()` | Nothing: the line moves on at once. | none |
+| `pick_up()`, `drop()` | The robot steps back a quarter of a cell, so that the item of its cell shows at its front; its pincer comes out, takes the item over the robot into the bay, a little larger as if lifted, or brings it back from the bay and sets it down in the middle of the cell; the pincer goes back in and the robot rolls back onto its cell. | 400 ms |
+| A bump, `forward()` toward a wall or the edge of the map | The robot goes forward until its front touches the border of its cell, faster and faster, comes back onto its cell shaking its body (three wobbles of 8° that die out), and stays there. | 450 ms |
+| A `pick_up()` or a `drop()` that fails | The robot starts the action and steps back, and shows what goes wrong: its pincer comes out empty (nothing to pick up, nothing to drop), its full bay swells (an item already carried), or the item comes out of the bay and goes back into it (an item already on the cell); it rolls back onto its cell, then shakes as after a bump. | 650 ms |
+| Another error | Nothing on the map: the line of the error is marked and the console says it. | none |
+| End, every goal met | The eyes light up in yellow and the robot hops once: seen from above, it grows a little while its shadow moves away toward the bottom left, the sun being at the top right. The success panel of a level appears after it. | 900 ms |
+| End, a goal not met | The eyes dim and the robot shakes its head, slower and wider than after an error (two wobbles of 12°); then a flag is planted on each goal not met, one after the other, with a small bounce. | 900 ms |
+
+- **Less motion**: for a learner who asked their system for less motion (`prefers-reduced-motion`), the moves and the turns stay, since they are what the program does, but nothing bounces nor shakes: a turn without its overshoot; `pick_up()` and `drop()` without the pincer nor the step back, the item fading into the bay or out of it; the bump without its shake; a `pick_up()` or a `drop()` that fails shown by its error alone; the end of a run with the eyes alone and the flags at once.
 
 ## Local files
 

@@ -27,12 +27,10 @@ Model: the steps whose design lasts, marked *(Fable 5.2)*, run on Fable 5.2; the
 - [x] **7. Checker** (#29, #30, #31)
 - [x] **8. Map and levels** (#32, #33)
 - [x] **9. Interpreter** (#34, #35, #36)
-- [x] **10. WebAssembly bridge** *(Fable 5.2)*: the API used by the interface (check, start, step, state of the map, variables, events) with its TypeScript types, and tests from TypeScript, one of which checks and runs a program at the maximum depth of the tree through the real module, so that the margin of the stack is tested where it matters, and another compares the lines highlighted and the place of an error for a program with accents and an emoji, the bridge being the one place where the positions change.
-  - [x] **10a. Checks** (#37)
-  - [x] **10b. Levels and map** (#38)
-  - [x] **10c. Running** (#39)
-  - [x] **10d. Probe and measures**: the probe of step 4c run by the real machine (a real program on the map of the sandbox, at the five speeds, the line of its next step marked), its fake program removed from the core and the bridge; the size and the speed of the module measured again, `opt-level` 3 kept and `wasm-opt` left out (see [Technical choices](docs/technical-choices.md), WebAssembly size).
-- [ ] **11. Animations and sounds**: a section of the mock-up that decides the style of each action of the robot (`pick_up()` with its pincer, the bump into a wall, the end of a run that succeeds or fails), its duration at the normal speed, and the sounds, synthesized and CC0 compared by ear. The tuning at every speed is left to step 14, in the application.
+- [x] **10. WebAssembly bridge** (#37, #38, #39, #41)
+- [ ] **11. Animations and sounds**: sections of the sheet of the world elements (`docs/mockups/world-elements.html`) that decide the style of each action of the robot, its duration at the normal speed, and the sounds. The tuning at every speed is left to step 14, in the application.
+  - [x] **11a. Animations** (#42): the robot playing each action on a small map: moving, turning, painting and erasing, `pick_up()` and `drop()` with the pincer, the bump into a wall, an action that fails, the end of a run that succeeds or fails; the normal speed, the duration of each action, and the motion for a learner who asked for less; the decisions written in `specs.md`.
+  - [ ] **11b. Sounds**: the sounds of a success, a failure and a bump, synthesized and CC0 compared by ear on the same page; the terms of their source checked and written in `docs/`.
 - [ ] **12. Design system**: the tokens (colors of the two themes, spacing, radii, typography, motion) in `specs.md`, the fonts and their licenses, the tone of the messages; the mock-up updated to use exactly these tokens; an entry in `design-journal.md`.
 - [ ] **13. Application shell**: the pages and their addresses, the header with its menus and the progress, the design tokens and the two themes, the texts from Fluent, the browser storage with its version and the banner when it is refused, the settings, the messages for a window too narrow and a browser too old.
 - [ ] **14. Map view**: the elements of step 1 as Svelte components, the map of a level drawn from the core, the goal marks, the animations of every action, tuned at every speed with the owner.

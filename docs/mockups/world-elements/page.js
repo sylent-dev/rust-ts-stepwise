@@ -16,6 +16,8 @@ const chosen = Object.fromEntries(Object.entries(VARIANTS).map(([key, variant]) 
 
 // Each section script adds itself: [title, function returning its HTML]. The newest goes first.
 const SECTIONS = [];
+// What runs once the sheet is drawn again, such as the players of the animations (motion.js).
+const AFTER_RENDER = [];
 
 function renderTabs() {
   // A group with a single option is decided: it isn't shown.
@@ -35,6 +37,7 @@ function renderSheet() {
     ${SECTIONS.length > 10 ? `<nav class="page-contents" aria-label="Sections">${SECTIONS.map(([title], index) =>
       `<a href="#section-${index + 1}">${index + 1}. ${title}</a>`).join("")}</nav>` : ""}
     ${SECTIONS.map(([title, content], index) => `<section class="page-section" id="section-${index + 1}"><h2>${index + 1}. ${title}</h2>${content()}</section>`).join("")}`;
+  AFTER_RENDER.forEach(hook => hook());
 }
 
 function render() {
