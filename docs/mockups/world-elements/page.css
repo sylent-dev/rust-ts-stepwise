@@ -36,3 +36,8 @@ body { margin: 0; background: #2a2d31; color: #e9ecef; font: 14px/1.4 system-ui,
 .page-contents { display: flex; flex-wrap: wrap; gap: 4px 16px; padding: 10px 16px 0; font-size: 13px; }
 .page-contents a { color: #adb5bd; text-decoration: none; }
 .page-contents a:hover { color: #e9ecef; text-decoration: underline; }
+
+/* The sounds compared (sound.js): a button ▶ per sound, its title, its source and its length. */
+.sound-play { padding: 2px 8px; border: 1px solid #3a3f45; border-radius: 4px; background: #24272b; color: #dee2e6; font: inherit; cursor: pointer; }
+.sound-play:hover { border-color: #adb5bd; }
+.sound-pairs { display: grid; grid-template-columns: repeat(2, max-content); gap: 6px 12px; margin: 0 0 12px; padding: 0; list-style: none; }

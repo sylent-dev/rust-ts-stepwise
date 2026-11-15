@@ -281,7 +281,7 @@ The window needs at least 1280 × 720 pixels: below, a message replaces the scre
 - The robot's actions are animated at the chosen speed: moving, turning, painting, picking up, dropping, and a bump against a wall that stops the program (see [Animations](#animations)).
 - The robot picks up and drops an item with a pincer that comes out of its front, then goes back in; the item it carries lies in the bay at its back.
 - At the end of a run, the robot shows the result: when every goal is met, its eyes light up in yellow and it hops; when a goal isn't met, its eyes dim, it shakes its head, and the cells of the goals not met get a red flag (see [Levels and progression](#levels-and-progression)).
-- **Sounds**, when the setting is on: a short, soft sound when a run succeeds, another when it fails (never scolding), and one when the robot bumps into a wall; none at each step. The browser plays them only after a click, such as **Run**.
+- **Sounds**, when the setting is on: a short, soft sound at the end of a run, one when the robot bumps into a wall, and a tiny blip at each move and turn at the slowest speeds (see [Sounds](#sounds)). The browser plays them only after a click, such as **Run**.
 - There is no **Stop**: **Pause** freezes the program to look at the map and the variables, **Reset** ends it.
 - The shortcuts of the controls work everywhere on the level screen, even when the focus isn't in the editor: **Ctrl+Enter** for **Run**, **Pause** and **Resume**, **F10** for **Step**, **Ctrl+Shift+Enter** for **Reset**, and **F9** sets or removes a breakpoint on the line of the cursor. F5 still reloads the page and F11 stays the full screen of the browser, for the projector of a classroom. **Ctrl+Y** redoes. The commands of the menu **Level**, **Manual**, **Legend of the map**, **Keyboard shortcuts** and **Remove all breakpoints** have no shortcut, so that there are few to learn and a level never changes by mistake.
 
@@ -347,7 +347,7 @@ An open map with a few walls, paints and items, without goal. The code is saved 
 A panel in the middle of the screen, over a veil, opened from the header of the home screen or the gear of the level screen, since they belong to the whole application and not to a level (wireframe: [`docs/wireframes/overlays.excalidraw`](docs/wireframes/overlays.excalidraw)). A change applies at once and is saved, without a **Save** button; Escape, **×** or a click on the veil closes it.
 
 - **Theme**: **Day Desk** (light, by default, so that a whole class sees the same screen) or **Night Desk** (dark). Only the interface changes: the map keeps the same look in both.
-- **Sounds**: **Off** or **On**, without a sentence (off by default, so that a classroom stays quiet).
+- **Sounds**: **Off** or **On**, without a sentence (off by default, so that a classroom stays quiet). Turning it **On** plays the sound of a success once: the learner hears at once that it works, and at what level (decided on 2026-11-15).
 - **Clear all progress**: a gray button, alone at the end of the panel, without a sentence: its name says what it does. While the mouse rests on it (or the keyboard focus), it turns red from the left like a loading bar for 2 seconds, and a click counts only once it is full, so that a passing click can't set off a danger used so rarely. That click clears at once, without a confirmation (so its name has no ellipsis), and the button says *"Progress cleared"*: every level goes back to its first state (as **Restore starting code**, its breakpoints with its code), and the levels done and the levels opened by a code are cleared; the settings stay.
 
 ### Interface language
@@ -404,6 +404,22 @@ The robot plays each action of the program at the chosen speed. The reference is
 | End, a goal not met | The eyes dim and the robot shakes its head, slower and wider than after an error (two wobbles of 12°); then a flag is planted on each goal not met, one after the other, with a small bounce. | 900 ms |
 
 - **Less motion**: for a learner who asked their system for less motion (`prefers-reduced-motion`), the moves and the turns stay, since they are what the program does, but nothing bounces nor shakes: a turn without its overshoot; `pick_up()` and `drop()` without the pincer nor the step back, the item fading into the bay or out of it; the bump without its shake; a `pick_up()` or a `drop()` that fails shown by its error alone; the end of a run with the eyes alone and the flags at once.
+### Sounds
+
+When the setting **Sounds** is on, a run plays a few sounds, synthesized in the browser with the Web Audio API, without a file (decided on 2026-11-15, see [Technical choices](docs/technical-choices.md), Sounds). The reference is the section *Sounds* of [`docs/mockups/world-elements.html`](docs/mockups/world-elements.html): the recipe of each sound is in `docs/mockups/world-elements/sound.js`, and its level is the one heard there at the volume 60, a gain of 0.36 on every sound. The numbers are those of the mock-up.
+
+| When | Sound | Length |
+|---|---|---|
+| A run where every goal is met | **41. Arpeggio**: four soft bell notes that rise (C5, E5, G5, C6, 70 ms apart), as the robot hops. | 0.7 s |
+| A goal not met, or an error that the robot doesn't show (a division by zero, too many calls in progress…) | **48. Soft slide down**: one soft note that slides down from G4 to D4, never scolding; as the robot shakes its head, or as the line of the error is marked. | 0.4 s |
+| A bump into a wall or the edge of the map, or a `pick_up()` or a `drop()` that fails | **90. Spring** (77 ported): a low tone that wobbles 18 times a second and settles, with a click; when the front of the robot touches the border of its cell, or as it starts to shake after an action that fails. | 0.4 s |
+| `forward()` | **91. Tiny blip** (88 ported): one short note, E5, that rises a little, 10 dB quieter than the other sounds, as the move starts. | 0.04 s |
+| `turn_left()`, `turn_right()` | The tiny blip twice, G5 then E5. | 0.1 s |
+
+- A run ends with one sound, never two: the bump or the error that stops the program plays instead of the goal not met.
+- The blip of the moves plays up to 2 steps per second, the two slowest speeds; faster, none, where it would become a stream that covers the sounds of the end. At **Instant**, only the sound of the end plays. **Step** plays the sound of its action, the blip included, as at the slowest speeds.
+- Painting, erasing, a `pick_up()` or a `drop()` that succeeds, and the lines without action make no sound: their animation shows them, and fewer sounds keep their meaning.
+- No volume setting: the volume of the system. The sounds follow the setting **Sounds** alone, not the request for less motion.
 
 ## Local files
 

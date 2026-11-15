@@ -56,7 +56,22 @@ npm init -y && npm install playwright && npx playwright install chromium
 4. When the owner points at something, change only that, and say what changed.
 5. From then on, **the mock-up is the reference** of the interface: say so in `specs.md`; the wireframe only fixed the first layout.
 
-## 4. Finish: the design tokens
+## 4. Sounds
+
+When the interface makes sounds, the owner chooses them by ear on the mock-up, in the same rhythm: one kind of sound at a time (a success, a failure, a bump…), many candidates, a recommendation.
+
+- **Each kind of sound is a group of tabs that plays its sound when a tab is chosen**: the owner hears it at once, without a second click. With many candidates, a tab shows the number of its sound alone, and a list in the section names each one, with a button ▶, its source and its length, the chosen one in bold.
+- **A scene plays its sound in time with its animation**, at the moment that makes it (the contact of a bump, the start of a hop), once, after a click on its button ▶ (*Play with sound*). The scenes that loop stay silent, or the page becomes noise.
+- **The browser plays a sound only after a click**: create the audio context (`AudioContext`) at the first click on the page, and resume it if it is suspended.
+- **Match the loudness of the candidates**: the ear prefers the louder of two sounds. Measure the mean level of each file (`ffmpeg -i <file> -af volumedetect -f null -`) and bring them all to the same level with a gain, then add a **Volume** slider that applies to every sound at once.
+- **Compare several temperatures side by side**: calm sounds, bolder ones (high temperature), wilder ones (explosive temperature). The owner may choose an unexpected sound, and the wild ones show where the limit is.
+- **Mix three sources**: sounds synthesized in the browser with the Web Audio API (no file, no license), files from a CC0 library (Kenney's packs, mirrored on OpenGameArt with direct links), and sounds made by a script. Download only from sources that give a direct link: never work around the download flow of a site.
+- **Make sounds with a reproducible script** rather than by hand: a recipe per sound (oscillators, frequency modulation, filtered noise, a plucked string, formants for a voice, echo, reverb, bit crushing), Python's standard library and ffmpeg to encode them, the noise seeded by the name of the sound, and the encoder made bit-exact (`-fflags +bitexact -flags:a +bitexact -serial_offset 1` for Ogg), so that running it again gives the same files. Live-coding tools (Strudel, TidalCycles, FoxDot, Sardine) are made to play music in loops and most need SuperCollider: too heavy for sound effects of a second.
+- **A sound repeated at each step** (a move, a click) is heard in a scene at a faster speed too before it is decided, and played quieter than the others.
+- **Check the terms of every source** before the owner chooses (the license file of each pack, its page), and write them with their date in a note of `docs/`.
+- **Claude Code can't hear the sounds**: the names of the candidates say what was intended, not what was heard. Check every button in a headless browser instead (no error in the console, every file decoded, the audio context running), and say plainly that the owner's ear decides.
+
+## 5. Finish: the design tokens
 
 - Write the chosen style in `specs.md` (visual style section) as named tokens: colors (bands, text, weak text, accent, warning, error, the colors of the domain), sizes (spacing, radius, heights), typography (fonts, size and weight per role, number formatting), icons and images (source, license, what is bundled in `assets/` with an `assets/NOTICE.md`), shapes and motion.
 - Remove the styles that were not chosen from the page, or keep them in a section that says they were rejected.
