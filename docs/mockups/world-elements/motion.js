@@ -107,11 +107,13 @@ const CARRY_TIME = 400;
 const seg = (p, from, to) => EASINGS["in-out"](clamp01((p - from) / (to - from)));
 const BAY = 11.7;
 const FRONT = -34;
-const BACK_OFF = 0.34;
+// How far the robot steps back, as a share of a cell (slider Step back): the item of its cell then
+// lies that far in front of its center.
+const backOff = () => Number(chosen.backOff) / 100;
 const lifted = t => 1 + 0.15 * Math.sin(Math.PI * t);
 const backedUp = (world, amount) => {
   const [dx, dy] = AHEAD[world.angle];
-  return { x: world.x - dx * BACK_OFF * amount, y: world.y - dy * BACK_OFF * amount };
+  return { x: world.x - dx * backOff() * amount, y: world.y - dy * backOff() * amount };
 };
 // Decided at step 11a: the robot steps back to show the item.
 const CARRY_LOOK = "back";
@@ -162,7 +164,7 @@ const CARRY_LOOKS = {
         pincer: seg(p, 0.05, 0.3) - seg(p, 0.55, 0.8),
         floor: p < 0.4,
         bay: p >= 0.8,
-        flight: p >= 0.4 && p < 0.8 ? { y: lerp(FRONT, BAY, t), scale: lerp(1, 0.5, t) * lifted(t) } : null,
+        flight: p >= 0.4 && p < 0.8 ? { y: lerp(-100 * backOff(), BAY, t), scale: lerp(1, 0.5, t) * lifted(t) } : null,
       };
     },
     drop: (world, p) => {
@@ -171,7 +173,7 @@ const CARRY_LOOKS = {
         ...backedUp(world, seg(p, 0, 0.3) - seg(p, 0.7, 1)),
         pincer: seg(p, 0.05, 0.3) - seg(p, 0.6, 0.85),
         bay: p < 0.25,
-        flight: p >= 0.25 && p < 0.65 ? { y: lerp(BAY, FRONT, t), scale: lerp(0.5, 1, t) * lifted(t) } : null,
+        flight: p >= 0.25 && p < 0.65 ? { y: lerp(BAY, -100 * backOff(), t), scale: lerp(0.5, 1, t) * lifted(t) } : null,
         dropped: p >= 0.65,
       };
     },
