@@ -212,3 +212,61 @@ In pixels, as the whole layout: the zoom of the browser scales them together.
 | `--tracking-label` | `.05em` | The spacing of the letters of a title in capitals. |
 
 - **Figures of one width** (`font-variant-numeric: tabular-nums`) where a number changes in place: the status bar, whose steps count up while a program runs, and the size of the window in the message that asks for a larger one. The code already has them.
+
+## Spacing
+
+One scale of eight steps for every distance, so that a new screen picks a step instead of adding a value of its own. The section *Spacing and radii* of the mock-up draws each step at its real length.
+
+### Names
+
+- `--space-<length>`: a step is named by its length in pixels, where the other tokens name a role. A distance has no role of its own, the same 12 pixels border a band and separate two paragraphs, and the name says at once what is written.
+- A row that goes past its text on both sides takes a step back: `margin: 0 calc(-1 * var(--space-6))`.
+
+### Scale
+
+In pixels, as the whole layout.
+
+| Token | Value | Role |
+|---|---|---|
+| `--space-2` | `2px` | The parts of one control: the menus of the header, the two values of a choice, the squares of the speed; a dense row, in the command menu and the legend; a sentence under its name. |
+| `--space-4` | `4px` | A small row or a small button, above and under its text: a tab, a section of the manual, a shortcut; two tabs side by side. |
+| `--space-6` | `6px` | A button and a row of a menu, above and under their text; an icon and its word; a cross and its corner. |
+| `--space-8` | `8px` | Two neighbors: two buttons, two messages of the console, a title and its sentence; a field and its text; a tip and what it names. |
+| `--space-12` | `12px` | The sides of a band and of its rows: the header, the status bar, a row of a menu, the code after its margin; two paragraphs. |
+| `--space-16` | `16px` | The sides of a panel and of what opens over the screen: the console, the goal, the legend, the level chosen on the home screen, the side of the manual. |
+| `--space-24` | `24px` | The sides of a panel in the middle of the screen: the settings, the shortcuts, a confirmation, the success panel; two groups in a row. |
+| `--space-40` | `40px` | The margins of a page that is read, the manual, and what separates two of its sections. |
+
+- Every padding, margin and gap takes a step, and so does the distance of a floating element from the edge it hangs on: the three controls from the corner of the editor, a cross from its corner, a tip from its button.
+- A panel that starts with a title has one step less above it than on its sides (12 above 16, 16 above 24): the line of the title already brings room over its letters.
+- A small button and a tab have 4 pixels above and under their text and 12 on their sides; a button, 6 and 16; a row of a menu, 6 and 12. The two values of a choice, 4 pixels inside a track of 2, are as tall as a button.
+- The sizes aren't on the scale: the heights of the bands, the widths of the columns and of the panels, and the places that follow them (the bubble of the goal under its button) belong to the layout of each block.
+- The scale replaces the 34 values of the mock-up, each written by hand (decided on 2026-11-16, compared on every window of the mock-up): 170 of the 295 distances moved, most by 1 or 2 pixels, the page of the manual by 10. Left out: 10, 14, 18 and 22 pixels, the most used after 8 and 12, too close to their neighbors for a new screen to tell which to pick.
+
+### Exceptions
+
+The alignments tuned by eye keep their value, written in their block with its reason:
+
+- The header and the name of the manual keep 3 pixels under their content, the height of the bar of the progress, above which the content is centered.
+- A link of the goal has 4.5 pixels above its text and 5.5 under it: the text sits half a pixel high, tuned on the owner's screen.
+- The icon of a note of the console sits 3 pixels lower, on the lowercase letters of its line.
+- The robot of a goal moves 2 pixels to the left in Night Desk, where its dark outline fades into the bubble.
+- *On this page* starts 4 pixels lower than the page of the manual, on the capitals of its title.
+- A stone and the robot of the home screen are placed by their center, and the caret of the editor by its middle: half their size, not a step.
+- What the robot says in the manual keeps distances in `em`, which follow the size of its text.
+
+## Radii
+
+Three radii, each with a role. The section *Spacing and radii* of the mock-up shows each on what it rounds.
+
+| Token | Value | Role |
+|---|---|---|
+| `--radius` | `3px` | Everything of the interface that has corners: a button, a control, a tab, a field, a tip, a label, a row under the pointer. |
+| `--radius-mark` | `2px` | A mark smaller than a letter: a square of the speed, the square of a map under its level, a word found by the search. |
+| `--radius-bubble` | `.7em` | What the robot says: the corners of its bubble follow the size of its text, 12.6 pixels around the title of a goal, 18.9 around a sentence of the manual. |
+
+- The zones have square corners: the blocks, the bands, and the menus, the bubbles and the panels that open over the screen.
+- So does a button that lies against the edges of its zone: a tab of the map, **Legend**, **Let's go**, the way back from the manual.
+- A circle is written `50%`: a stone of the home screen, the number of a level, a breakpoint, a dot.
+- A drawing keeps the corners of its shape: the visor of the robot on the level to play, the stroke of paint of the success panel, rounded as the brush by half its height.
+- `--radius` replaces `--radius-small` and `--control-radius`, two names for the same 3 pixels, left by the comparison of the styles (decided on 2026-11-16). Three values moved, hardly seen: the squares of the speed, from 1 pixel to 2; the bubble of a goal, from 12 pixels to 12.6; the bubble of the manual, from 21.6 to 18.9.

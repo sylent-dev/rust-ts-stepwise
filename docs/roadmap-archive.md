@@ -167,3 +167,7 @@ The sounds of the end of a run, of a bump and of the moves, compared by ear on t
 ### 12a. Colors (#46)
 
 The roles and the names of the color tokens of the two themes, in `docs/design-system.md`; the tokens that the comparison of the styles left with the same neutral value everywhere removed, the colors written in the blocks named; the keyboard focus, a ring in the color of the text of the element, inside its edge, compared in variants on the mock-up; the teal alone for what has passed, without the green. The flag of a goal not met keeps its own color, apart from the red paint. The contrast of the texts is left to the [backlog](backlog.md).
+
+### 12b. Typography and fonts (#47)
+
+A scale of eight text sizes (23 in the mock-up), three weights and five line heights, per role, each compared on every window of the mock-up; figures of one width in the status bar; one variable file per font committed in `web/static/fonts/` beside its license, the complete file of Adobe for Source Code Pro, whose reserved name rules out a subset, after comparing with the npm packages of Fontsource (see [Font sources](font-sources.md)); two scripts in the `html-mockups` skill that compare the captures of a mock-up.

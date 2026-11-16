@@ -23,7 +23,14 @@
   --line-code: 21px; --line-code-small: 20px;
   /* The spacing of the letters of a title in capitals. */
   --tracking-label: .05em;
-  --radius-small: 3px; --control-radius: 3px;
+  /* The spacing: the scale of the distances between two things and inside a box, each step named by
+     its length in pixels. From the smallest: the parts of one control, a small row, a button, two
+     neighbors, a band, a panel, a panel in the middle of the screen, a page that is read. */
+  --space-2: 2px; --space-4: 4px; --space-6: 6px; --space-8: 8px;
+  --space-12: 12px; --space-16: 16px; --space-24: 24px; --space-40: 40px;
+  /* The radii: everything of the interface that has corners; a mark smaller than a letter; what
+     the robot says, whose bubble follows the size of its text. The zones have square corners. */
+  --radius: 3px; --radius-mark: 2px; --radius-bubble: .7em;
 
   /* The shades of the robot (specs.md, Look of the world), where the interface draws its face. */
   --robot-body: #ffffff; --robot-ink: #222935; --robot-eyes: #3fc3ff;

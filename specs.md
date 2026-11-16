@@ -12,7 +12,7 @@ Stepwise teaches the first steps of programming. The learner writes a small prog
 
 ## Design principles
 
-The named tokens that follow from these principles (the colors of the two themes, the fonts with their sizes and weights) are in [docs/design-system.md](docs/design-system.md).
+The named tokens that follow from these principles (the colors of the two themes, the fonts with their sizes and weights, the spacing and the radii) are in [docs/design-system.md](docs/design-system.md).
 
 - **Look**: flat, clean and calm, seen from above, inspired by the clarity of Shapez 2 (no 3D, no perspective). Every element of the map reads at a glance; color is kept for what carries meaning (paints, errors, success, the current line); in the interface, the cyan of the eyes of the robot says what is new, the amber what to do, the teal what has passed.
 - **Identity**: our own robot, friendly and simple, whose smiling head is the logo of Stepwise. Its look comes from the sheet of the world elements (see [Look of the world](#look-of-the-world)).

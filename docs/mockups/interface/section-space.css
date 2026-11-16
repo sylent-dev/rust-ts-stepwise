@@ -1,0 +1,18 @@
+/* The section Spacing and radii: its sentences, on the page, and the boards of its tokens. */
+.space-intro { max-width: 880px; margin: 4px 0 12px; color: #dee2e6; }
+.app-window.space-board { display: block; box-sizing: border-box; width: 1280px; height: auto; padding: 6px 24px; background: var(--surface); }
+.space-row { display: grid; grid-template-columns: 130px 50px 170px 1fr; gap: 24px; align-items: center; padding: 11px 0; }
+.space-row + .space-row { border-top: 1px solid var(--hover); }
+.space-row code { font: var(--weight-code) var(--size-code-small) var(--font-code); }
+.space-row small { color: var(--weak); font-size: var(--size-small); }
+.space-row small b { color: var(--text); font-weight: var(--weight-strong); }
+.space-uses { color: var(--weak); font-size: var(--size-small); }
+/* The step drawn at its real length, between two blocks. */
+.space-sample { display: flex; align-items: center; }
+.space-sample > i { width: 22px; height: 22px; background: var(--chip); border-radius: var(--radius); }
+.space-sample > b { height: 22px; background: var(--accent); }
+.space-board + .space-intro { margin-top: 10px; }
+.space-intro code { font: 600 13px "Source Code Pro", monospace; }
+/* A radius, on what it rounds. */
+.space-sample.is-radius { gap: var(--space-8); }
+.space-bubble { padding: var(--space-8) var(--space-12); background: var(--goal-bubble); border-radius: var(--radius-bubble); font: var(--weight-strong) var(--size-title)/var(--line-title) var(--font-name); white-space: nowrap; }

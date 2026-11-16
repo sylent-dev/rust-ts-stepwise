@@ -1,13 +1,13 @@
 /* The editor: the code with its margin, the three controls, the status bar. */
 .app-editor { display: flex; flex-direction: column; height: 100%; background: var(--surface); }
-.app-code { position: relative; flex: 1; min-height: 0; padding-top: 12px; background: var(--surface); font: var(--weight-code) var(--size-code)/var(--line-code) var(--font-code); font-variant-ligatures: none; color: var(--text); }
+.app-code { position: relative; flex: 1; min-height: 0; padding-top: var(--space-12); background: var(--surface); font: var(--weight-code) var(--size-code)/var(--line-code) var(--font-code); font-variant-ligatures: none; color: var(--text); }
 /* The margin runs along the whole height, behind the lines. */
 .app-code::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 52px; background: var(--surface); }
 .app-line { position: relative; display: flex; height: var(--line-code); }
 .app-margin { flex: none; position: relative; width: 52px; color: var(--gutter-text); }
 .app-number { position: absolute; right: 9px; font-size: .88em; }
 .app-mark { position: absolute; left: 6px; top: 50%; transform: translateY(-50%); display: flex; }
-.app-text { padding-left: 14px; white-space: pre; }
+.app-text { padding-left: var(--space-12); white-space: pre; }
 .app-line.is-next { background: var(--current); }
 .app-line.is-next .app-number { color: var(--text); font-weight: var(--weight-code-strong); }
 .app-line.is-next .app-mark { color: var(--accent-text); }
@@ -24,8 +24,8 @@
 .code-number { color: var(--code-number); }
 .code-value { color: var(--code-number); }
 
-.app-controls { position: absolute; right: 12px; bottom: 12px; display: flex; gap: 8px; }
-.app-window .app-control { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; background: var(--control); color: var(--text); border: 0; border-radius: var(--control-radius); box-shadow: var(--control-shadow); }
+.app-controls { position: absolute; right: var(--space-12); bottom: var(--space-12); display: flex; gap: var(--space-8); }
+.app-window .app-control { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; background: var(--control); color: var(--text); border: 0; border-radius: var(--radius); box-shadow: var(--control-shadow); }
 .app-window .app-control.is-main { background: var(--accent); color: var(--on-accent); }
 .app-window .app-control { position: relative; }
 .app-window .app-control.is-off > svg { opacity: .35; }
@@ -33,14 +33,14 @@
 /* While the learner types, so that they can read the code behind; the mouse brings them back. */
 .app-controls.is-pale { opacity: .3; }
 /* Each control names itself on hover, with its shortcut. */
-.app-tip { display: none; position: absolute; right: 0; bottom: calc(100% + 8px); padding: 6px 10px; background: var(--pop); color: var(--text); border: var(--pop-border); border-radius: var(--radius-small); box-shadow: var(--pop-shadow); font: var(--weight-text) var(--size-text)/var(--line-text) var(--font-text); text-align: left; white-space: nowrap; }
+.app-tip { display: none; position: absolute; right: 0; bottom: calc(100% + var(--space-8)); padding: var(--space-6) var(--space-12); background: var(--pop); color: var(--text); border: var(--pop-border); border-radius: var(--radius); box-shadow: var(--pop-shadow); font: var(--weight-text) var(--size-text)/var(--line-text) var(--font-text); text-align: left; white-space: nowrap; }
 .app-control:hover .app-tip, .app-control.is-hovered .app-tip { display: block; }
 .app-tip b { font-weight: var(--weight-strong); }
-.app-tip kbd { margin-left: 12px; color: var(--weak); font: var(--weight-text) var(--size-small) var(--font-text); }
+.app-tip kbd { margin-left: var(--space-12); color: var(--weak); font: var(--weight-text) var(--size-small) var(--font-text); }
 .app-tip small { display: block; color: var(--weak); font-size: var(--size-small); }
 
 /* The thin line at the 80th column: past the width of the editor on a small window. */
-.app-ruler { position: absolute; top: 0; bottom: 0; left: calc(66px + 80ch); border-left: 1px solid var(--hover); }
+.app-ruler { position: absolute; top: 0; bottom: 0; left: calc(52px + var(--space-12) + 80ch); border-left: 1px solid var(--hover); }
 /* What the checks found in the code, under its letters. */
 .app-text { position: relative; }
 .app-underline { position: absolute; top: calc(var(--line-code) - 4px); height: 4px; pointer-events: none; }
@@ -50,9 +50,9 @@
 .app-underline.is-long { background: radial-gradient(circle at 1.5px 2px, var(--weak) 1.1px, transparent 1.4px) 0 0 / 4px 4px repeat-x; }
 /* The selection, behind the letters of the line. */
 .app-text { isolation: isolate; }
-.app-selection { position: absolute; left: 14px; top: 0; height: var(--line-code); background: var(--select); z-index: -1; }
+.app-selection { position: absolute; left: var(--space-12); top: 0; height: var(--line-code); background: var(--select); z-index: -1; }
 .app-caret { position: absolute; top: 2px; bottom: 2px; width: 2px; margin-left: -1px; background: var(--text); }
-.app-hover-note { top: calc(var(--line-code) + 2px); padding: 6px 10px; font: var(--weight-code) var(--size-code-small)/var(--line-code-small) var(--font-code); white-space: nowrap; }
+.app-hover-note { top: calc(var(--line-code) + 2px); padding: var(--space-6) var(--space-12); font: var(--weight-code) var(--size-code-small)/var(--line-code-small) var(--font-code); white-space: nowrap; }
 .app-hover-note b { font-weight: var(--weight-code-strong); }
 
 /* The boards of the controls, in the corner of an editor at its real size. */
@@ -63,7 +63,7 @@
 .controls-board .app-code::before { display: none; }
 
 /* Its numbers change in place while a program runs: figures of one width, so that the text doesn't shake. */
-.app-status { flex: none; display: flex; align-items: center; gap: 22px; height: 30px; box-sizing: border-box; padding: 0 12px; background: var(--band); color: var(--on-status); font-size: var(--size-small); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.app-status { flex: none; display: flex; align-items: center; gap: var(--space-24); height: 30px; box-sizing: border-box; padding: 0 var(--space-12); background: var(--band); color: var(--on-status); font-size: var(--size-small); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .app-status b { color: var(--accent-text); font-weight: var(--weight-strong); }
 .app-status-errors { color: var(--error); font-weight: var(--weight-strong); }
 /* The bar takes the color of the state of the program, as in a code editor. The flash: the learner
@@ -75,9 +75,9 @@
    isn't an error of the program, and the flags of the map already say it. */
 .app-status.is-passed { background: var(--passed); color: var(--on-passed); }
 .app-status.is-passed b { color: inherit; }
-.app-speed { display: flex; align-items: center; gap: 3px; }
-.app-speed span { margin-right: 5px; }
-.app-speed i { width: 9px; height: 13px; box-sizing: border-box; border: 1px solid currentColor; border-radius: 1px; }
+.app-speed { display: flex; align-items: center; gap: var(--space-2); }
+.app-speed span { margin-right: var(--space-6); }
+.app-speed i { width: 9px; height: 13px; box-sizing: border-box; border: 1px solid currentColor; border-radius: var(--radius-mark); }
 .app-speed i.is-on { background: currentColor; }
 .app-cursor { margin-left: auto; }
 /* The texts of the bar sit half a pixel low, tuned by eye; the squares of the speed stay in place. */

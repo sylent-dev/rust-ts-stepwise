@@ -10,7 +10,7 @@
 
 /* The header: the name, the count in the middle of the window, the three links on the right. */
 .home-count { position: absolute; left: 50%; transform: translateX(-50%); color: var(--weak); }
-.home-links { display: flex; gap: 2px; margin-left: auto; }
+.home-links { display: flex; gap: var(--space-2); margin-left: auto; }
 
 /* The path and the panel keep their size, centered in the window. */
 .home-stage { flex: 1; min-height: 0; display: flex; justify-content: center; background-color: var(--home-ground); background-image: var(--home-tiles); background-size: var(--home-tile-sizes); background-position: center; }
@@ -19,7 +19,7 @@
 .home-path { position: relative; flex: none; width: 900px; margin: auto 0; }
 
 /* A chapter: a light band behind its stones, with its name and its idea. */
-.home-band { position: absolute; box-sizing: border-box; height: 112px; padding: 6px 10px; background: var(--home-band); border-radius: var(--radius-small); }
+.home-band { position: absolute; box-sizing: border-box; height: 112px; padding: var(--space-6) var(--space-8); background: var(--home-band); border-radius: var(--radius); }
 .home-band b { display: block; color: var(--text); font: var(--weight-strong) var(--size-lead)/var(--line-title) var(--font-text); }
 .home-band span { display: block; color: var(--weak); font: var(--weight-text) var(--size-small)/var(--line-title) var(--font-text); }
 
@@ -59,24 +59,24 @@
 @keyframes home-search { 0%, 12%, 100% { transform: none; } 22%, 40% { transform: translateX(-3px); } 50%, 72% { transform: translateX(3px); } 84% { transform: none; } 90% { transform: scaleY(.12); } 96% { transform: none; } }
 
 /* One small square per map, astride the bottom of the stone: green once passed, grey until then. */
-.home-squares { position: absolute; left: 50%; top: 38px; display: flex; gap: 4px; transform: translateX(-50%); }
+.home-squares { position: absolute; left: 50%; top: 38px; display: flex; gap: var(--space-4); transform: translateX(-50%); }
 .app-window .is-play .home-squares { top: 34.5px; }
-.home-squares i { box-sizing: border-box; width: 12px; height: 12px; background: var(--idle); border-radius: 2px; box-shadow: 0 0 0 2px var(--home-rim); }
+.home-squares i { box-sizing: border-box; width: 12px; height: 12px; background: var(--idle); border-radius: var(--radius-mark); box-shadow: 0 0 0 2px var(--home-rim); }
 .home-squares i.is-passed { background: var(--passed); }
 .home-squares i.is-locked { background: var(--home-locked-stone); }
 
 /* Its title, on hover. */
-.home-tip { display: none; position: absolute; left: calc(100% + 8px); top: 50%; padding: 4px 10px; background: var(--pop); color: var(--text); border: var(--pop-border); border-radius: var(--radius-small); box-shadow: var(--pop-shadow); font: var(--weight-control) var(--size-text)/var(--line-title) var(--font-text); white-space: nowrap; transform: translateY(-50%); }
-.home-stone.is-tip-left .home-tip { left: auto; right: calc(100% + 8px); }
+.home-tip { display: none; position: absolute; left: calc(100% + var(--space-8)); top: 50%; padding: var(--space-4) var(--space-8); background: var(--pop); color: var(--text); border: var(--pop-border); border-radius: var(--radius); box-shadow: var(--pop-shadow); font: var(--weight-control) var(--size-text)/var(--line-title) var(--font-text); white-space: nowrap; transform: translateY(-50%); }
+.home-stone.is-tip-left .home-tip { left: auto; right: calc(100% + var(--space-8)); }
 .home-stone:hover .home-tip, .home-stone.is-tip .home-tip { display: block; }
 
 /* The robot, astride the top of the stone of the level chosen: it walks to the stone clicked. */
 .home-robot { position: absolute; z-index: 2; width: 36px; height: 36px; margin: -18px 0 0 -18px; pointer-events: none; transition: left .45s ease-in-out, top .45s ease-in-out; }
 
 /* The level chosen. */
-.home-panel { flex: none; display: flex; flex-direction: column; box-sizing: border-box; width: 360px; height: 640px; padding: 14px 16px 20px; background: var(--surface); box-shadow: var(--map-shadow); }
+.home-panel { flex: none; display: flex; flex-direction: column; box-sizing: border-box; width: 360px; height: 640px; padding: var(--space-16) var(--space-16) var(--space-16); background: var(--surface); box-shadow: var(--map-shadow); }
 .home-chapter { margin: 0; color: var(--weak); font-size: var(--size-small); }
-.home-panel h3 { margin: 2px 0 10px; color: var(--text); font: var(--weight-strong) var(--size-title)/var(--line-title) var(--font-text); letter-spacing: 0; text-transform: none; }
+.home-panel h3 { margin: var(--space-2) 0 var(--space-12); color: var(--text); font: var(--weight-strong) var(--size-title)/var(--line-title) var(--font-text); letter-spacing: 0; text-transform: none; }
 .home-scene { flex: none; display: grid; height: 240px; }
 /* The robot of the level to play waits: it looks to one side, then to the other, and blinks now and then. */
 .home-scene.is-play .app-robot > * { animation: home-look 7s ease-in-out infinite; }
@@ -84,15 +84,15 @@
 .home-eyelids { opacity: 0; }
 .home-scene.is-play .app-robot > .home-eyelids { animation: home-look 7s ease-in-out infinite, home-blink 7s linear infinite; }
 @keyframes home-blink { 0%, 14%, 16.5%, 19%, 21.5%, 62%, 64.5%, 100% { opacity: 0; } 15%, 15.5%, 20%, 20.5%, 63%, 63.5% { opacity: 1; } }
-.home-goal { margin: 14px 0 0; line-height: var(--line-text); }
+.home-goal { margin: var(--space-12) 0 0; line-height: var(--line-text); }
 
 /* The field of a code, on a locked level. */
-.home-code { margin-top: 12px; }
+.home-code { margin-top: var(--space-12); }
 .home-code label { font-weight: var(--weight-strong); }
-.home-code-row { display: flex; gap: 8px; margin-top: 4px; }
+.home-code-row { display: flex; gap: var(--space-8); margin-top: var(--space-4); }
 /* A code is two short words: the field holds 18 characters, and the button takes the rest of the row. */
 .home-code-row .app-chip { flex: 1; }
-.home-code input { flex: none; width: 180px; box-sizing: border-box; height: 32px; padding: 0 10px; background: var(--field); color: var(--text); border: 0; border-radius: var(--radius-small); font: var(--weight-code) var(--size-code) var(--font-code); }
+.home-code input { flex: none; width: 180px; box-sizing: border-box; height: 32px; padding: 0 var(--space-8); background: var(--field); color: var(--text); border: 0; border-radius: var(--radius); font: var(--weight-code) var(--size-code) var(--font-code); }
 /* The field stays flat, even with the focus, which its cursor shows; the code itself takes the color of its state. */
 .home-code input:focus { outline: none; }
 .home-code input.is-wrong { color: var(--error); }
@@ -106,16 +106,16 @@
 .home-code.is-right .home-unlock::after { content: ""; position: absolute; z-index: 2; left: -34px; top: 2px; width: 28px; height: 28px; background: url(../world-elements/daylight/robot.svg) center / contain no-repeat; transform: rotate(90deg); pointer-events: none; }
 .home-code.is-right .home-unlock:hover::before { right: -16px; opacity: 1; transition: right .85s cubic-bezier(.35, .05, .4, 1), opacity 0s; }
 .home-code.is-right .home-unlock:hover::after { left: calc(100% + 4px); transition: left .85s cubic-bezier(.35, .05, .4, 1); }
-.home-code p { margin: 5px 0 0; color: var(--weak); font-size: var(--size-small); }
+.home-code p { margin: var(--space-4) 0 0; color: var(--weak); font-size: var(--size-small); }
 .home-code p.home-code-error { color: var(--error); }
 .home-code p.home-code-ok { color: var(--passed-text); }
 
 /* The maps of the level, then its one button, at the bottom of the panel. */
 .home-bottom { margin-top: auto; }
-.home-maps { display: flex; gap: 8px; }
+.home-maps { display: flex; gap: var(--space-8); }
 /* The tiles speak as the tabs of the map on the level screen: pale teal once passed, full teal when also shown.
    A map shown and not passed is a lighter grey, without border: the amber is kept for the actions. */
-.app-window .home-map { position: relative; width: 74px; height: 26px; box-sizing: border-box; display: grid; place-items: center; padding: 0; background: var(--chip); color: var(--text); border: 0; border-radius: var(--radius-small); font-size: var(--size-text); font-weight: var(--weight-control); }
+.app-window .home-map { position: relative; width: 74px; height: 26px; box-sizing: border-box; display: grid; place-items: center; padding: 0; background: var(--chip); color: var(--text); border: 0; border-radius: var(--radius); font-size: var(--size-text); font-weight: var(--weight-control); }
 .app-window .home-map.is-shown { background: var(--home-tile-shown); font-weight: var(--weight-strong); }
 .app-window .home-map.is-passed { background: var(--passed-soft); color: var(--text); border-color: transparent; }
 .app-window .home-map.is-passed.is-shown { background: var(--passed); color: var(--on-passed); }
@@ -131,10 +131,10 @@
 .home-map[data-map]:hover::before { opacity: 1; transform: translateY(-27px); }
 .home-map[data-map]:hover::after { opacity: 1; transform: translateY(-27px); animation: home-tile-eyes 2.2s .2s ease-in-out infinite; }
 @keyframes home-tile-eyes { 0%, 12%, 100% { background-position: 0 0, 0 0; } 22%, 40% { background-position: -3px 0, -3px 0; } 50%, 72% { background-position: 3px 0, 3px 0; } 84% { background-position: 0 0, 0 0; } }
-.app-window button.home-go { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: 50px; margin-top: 12px; padding: 0; font-size: var(--size-lead); }
+.app-window button.home-go { display: flex; align-items: center; justify-content: center; gap: var(--space-8); width: 100%; height: 50px; margin-top: var(--space-12); padding: 0; font-size: var(--size-lead); }
 /* Play: the button of Let's go (block-goal.css), with the robot that crosses it on hover. */
-.app-window button.home-play { margin-top: 12px; border-radius: var(--control-radius); box-shadow: var(--control-shadow); }
-.app-window button.home-go.is-locked { background: var(--hover); color: var(--weak); border: 0; border-radius: var(--control-radius); cursor: default; }
+.app-window button.home-play { margin-top: var(--space-12); border-radius: var(--radius); box-shadow: var(--control-shadow); }
+.app-window button.home-go.is-locked { background: var(--hover); color: var(--weak); border: 0; border-radius: var(--radius); cursor: default; }
 
 @media (prefers-reduced-motion: reduce) {
   .home-robot { transition: none; }
