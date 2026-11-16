@@ -17,7 +17,7 @@
 .app-commands-details { padding: var(--space-12) var(--space-12) var(--space-12); overflow: hidden; background: var(--band); color: var(--text); }
 .app-commands-name { font: var(--weight-code-strong) var(--size-code) var(--font-code); font-variant-ligatures: none; }
 .app-commands-details p { margin: var(--space-8) 0 var(--space-8); line-height: var(--line-text); }
-.app-commands-example { margin: 0; padding: var(--space-8) var(--space-12); background: var(--surface); color: var(--text); border-radius: var(--radius-small); font: var(--weight-code) var(--size-code-small)/var(--line-code-small) var(--font-code); font-variant-ligatures: none; white-space: pre; }
+.app-commands-example { margin: 0; padding: var(--space-8) var(--space-12); background: var(--surface); color: var(--text); border-radius: var(--radius); font: var(--weight-code) var(--size-code-small)/var(--line-code-small) var(--font-code); font-variant-ligatures: none; white-space: pre; }
 .app-window button.app-commands-more { margin-top: var(--space-12); padding: var(--space-4) var(--space-12); }
 .app-commands-hints { flex: none; display: flex; gap: var(--space-16); align-items: center; height: 28px; padding: 0 var(--space-12); background: var(--band); color: var(--on-status); font-size: var(--size-small); white-space: nowrap; }
 /* The texts of the bar sit one pixel low, tuned by eye. */

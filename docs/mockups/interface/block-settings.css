@@ -8,14 +8,14 @@
 .settings-row.is-end { justify-content: flex-end; }
 /* Gray at rest, as a small button that doesn't call for a click; then the red that fills it from the
    left, the text turning white with it. */
-.app-window .settings-clear { position: relative; padding: var(--space-6) var(--space-16); background: var(--chip); color: var(--text); border: 0; border-radius: var(--radius-small); font-weight: var(--weight-control); cursor: default; }
+.app-window .settings-clear { position: relative; padding: var(--space-6) var(--space-16); background: var(--chip); color: var(--text); border: 0; border-radius: var(--radius); font-weight: var(--weight-control); cursor: default; }
 .settings-clear-fill { position: absolute; inset: 0; display: grid; place-items: center; background: var(--danger); color: var(--on-danger); border-radius: inherit; clip-path: inset(0 100% 0 0); transition: clip-path .2s ease-out; }
 .settings-clear:hover .settings-clear-fill, .settings-clear:focus-visible .settings-clear-fill { clip-path: inset(0 0 0 0); transition: clip-path 2s linear; }
 .app-window .settings-clear.is-ready { cursor: pointer; }
 
 /* Two segments side by side, the one chosen dark (or light at night). */
-.settings-segments { display: flex; flex: none; padding: var(--space-2); background: var(--chip); border-radius: var(--radius-small); }
-.app-window .settings-segments button { padding: var(--space-4) var(--space-12); background: none; border: 0; border-radius: var(--radius-small); color: var(--weak); font-weight: var(--weight-control); white-space: nowrap; }
+.settings-segments { display: flex; flex: none; padding: var(--space-2); background: var(--chip); border-radius: var(--radius); }
+.app-window .settings-segments button { padding: var(--space-4) var(--space-12); background: none; border: 0; border-radius: var(--radius); color: var(--weak); font-weight: var(--weight-control); white-space: nowrap; }
 .app-window .settings-segments button[aria-pressed="true"] { background: var(--chosen); color: var(--on-chosen); }
 
 /* Once cleared: gray again, a check before its words, and nothing more to click. */

@@ -231,13 +231,13 @@ In pixels, as the whole layout.
 | `--space-2` | `2px` | The parts of one control: the menus of the header, the two values of a choice, the squares of the speed; a dense row, in the command menu and the legend; a sentence under its name. |
 | `--space-4` | `4px` | A small row or a small button, above and under its text: a tab, a section of the manual, a shortcut; two tabs side by side. |
 | `--space-6` | `6px` | A button and a row of a menu, above and under their text; an icon and its word; a cross and its corner. |
-| `--space-8` | `8px` | Two neighbors: two buttons, two messages of the console, a title and its sentence; a field and its text; a bubble and what it names. |
+| `--space-8` | `8px` | Two neighbors: two buttons, two messages of the console, a title and its sentence; a field and its text; a tip and what it names. |
 | `--space-12` | `12px` | The sides of a band and of its rows: the header, the status bar, a row of a menu, the code after its margin; two paragraphs. |
 | `--space-16` | `16px` | The sides of a panel and of what opens over the screen: the console, the goal, the legend, the level chosen on the home screen, the side of the manual. |
 | `--space-24` | `24px` | The sides of a panel in the middle of the screen: the settings, the shortcuts, a confirmation, the success panel; two groups in a row. |
 | `--space-40` | `40px` | The margins of a page that is read, the manual, and what separates two of its sections. |
 
-- Every padding, margin and gap takes a step, and so does the distance of a floating element from the edge it hangs on: the three controls from the corner of the editor, a cross from its corner, a bubble from its button.
+- Every padding, margin and gap takes a step, and so does the distance of a floating element from the edge it hangs on: the three controls from the corner of the editor, a cross from its corner, a tip from its button.
 - A panel that starts with a title has one step less above it than on its sides (12 above 16, 16 above 24): the line of the title already brings room over its letters.
 - A small button and a tab have 4 pixels above and under their text and 12 on their sides; a button, 6 and 16; a row of a menu, 6 and 12. The two values of a choice, 4 pixels inside a track of 2, are as tall as a button.
 - The sizes aren't on the scale: the heights of the bands, the widths of the columns and of the panels, and the places that follow them (the bubble of the goal under its button) belong to the layout of each block.

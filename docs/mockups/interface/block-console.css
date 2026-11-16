@@ -3,7 +3,7 @@
 .console-prints div { white-space: pre-wrap; overflow-wrap: anywhere; }
 
 /* An error is one big link to its place in the code. */
-.app-message { margin: 0 calc(-1 * var(--space-6)); padding: var(--space-2) var(--space-6); border-radius: var(--radius-small); cursor: pointer; }
+.app-message { margin: 0 calc(-1 * var(--space-6)); padding: var(--space-2) var(--space-6); border-radius: var(--radius); cursor: pointer; }
 .app-message:hover { background: var(--chosen-soft); }
 
 .console-note { display: flex; align-items: flex-start; gap: var(--space-8); font-weight: var(--weight-code-strong); }

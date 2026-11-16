@@ -8,7 +8,7 @@
 .goal-robot { flex: none; height: 44px; }
 /* On Night Desk, the dark outline of the robot fades into the bubble: the white of its head lines up with the text. */
 :root[data-theme="night-desk"] .goal-robot { margin-left: -2px; }
-.page-section .app-goal h3 { position: relative; margin: 0; padding: var(--space-8) var(--space-12); background: var(--goal-bubble); border-radius: 12px; color: var(--text); font: var(--weight-strong) var(--size-title)/var(--line-title) var(--font-name); text-transform: none; letter-spacing: normal; }
+.page-section .app-goal h3 { position: relative; margin: 0; padding: var(--space-8) var(--space-12); background: var(--goal-bubble); border-radius: var(--radius-bubble); color: var(--text); font: var(--weight-strong) var(--size-title)/var(--line-title) var(--font-name); text-transform: none; letter-spacing: normal; }
 .app-goal h3::before { content: ""; position: absolute; left: -6px; top: 50%; width: 12px; height: 12px; background: var(--goal-bubble); transform: translateY(-50%) rotate(45deg); }
 
 .goal-text { margin: var(--space-12) 0 0; line-height: var(--line-text); }
@@ -16,7 +16,7 @@
 /* The links: a slate background, as the walls, lighter on hover, without a border. */
 .goal-links { display: flex; flex-wrap: wrap; gap: var(--space-8); margin-top: var(--space-16); }
 /* Their text sits half a pixel high, tuned by eye on the owner's screen. */
-.app-window .goal-link { padding: 4.5px var(--space-12) 5.5px; background: var(--goal-link); color: var(--on-goal-link); border: 0; border-radius: var(--radius-small); font-weight: var(--weight-control); white-space: nowrap; }
+.app-window .goal-link { padding: 4.5px var(--space-12) 5.5px; background: var(--goal-link); color: var(--on-goal-link); border: 0; border-radius: var(--radius); font-weight: var(--weight-control); white-space: nowrap; }
 .app-window .goal-link:hover { background: var(--goal-link-hover); }
 
 /* What is new: a dark column, its title in the cyan of the eyes of the robot. */
