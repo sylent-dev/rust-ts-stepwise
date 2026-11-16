@@ -3,8 +3,6 @@
 // One control per open decision; `fallback` is the choice shown by default. Tabs by default; `select`
 // is a list and `range` a slider, both setting the CSS `variable` at once, without redrawing the page.
 const VARIANTS = {
-  // Temporary (step 12c): the radii on their three tokens, or as they were written by hand (radii-hand.css).
-  radii: { label: "Radii", options: { hand: "3 · As they were", tokens: "4 · Three radii" }, fallback: "tokens" },
   theme: { label: "Style", options: Object.fromEntries(Object.entries(INTERFACE_STYLES).map(([key, style]) => [key, style.title])), fallback: Object.keys(INTERFACE_STYLES)[0] },
 };
 

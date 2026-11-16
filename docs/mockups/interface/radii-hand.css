@@ -1,5 +1,0 @@
-/* Temporary (step 12c): the three radii that the tokens change, as they were written by hand.
-   Removed once the radii are decided. */
-:root[data-radii="hand"] .app-speed i { border-radius: 1px; }
-:root[data-radii="hand"] .page-section .app-goal h3 { border-radius: 12px; }
-:root[data-radii="hand"] .manual-bubble { border-radius: .8em; }

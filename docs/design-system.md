@@ -215,7 +215,7 @@ In pixels, as the whole layout: the zoom of the browser scales them together.
 
 ## Spacing
 
-One scale of eight steps for every distance, so that a new screen picks a step instead of adding a value of its own. The section *Spacing* of the mock-up draws each step at its real length.
+One scale of eight steps for every distance, so that a new screen picks a step instead of adding a value of its own. The section *Spacing and radii* of the mock-up draws each step at its real length.
 
 ### Names
 
@@ -254,3 +254,19 @@ The alignments tuned by eye keep their value, written in their block with its re
 - *On this page* starts 4 pixels lower than the page of the manual, on the capitals of its title.
 - A stone and the robot of the home screen are placed by their center, and the caret of the editor by its middle: half their size, not a step.
 - What the robot says in the manual keeps distances in `em`, which follow the size of its text.
+
+## Radii
+
+Three radii, each with a role. The section *Spacing and radii* of the mock-up shows each on what it rounds.
+
+| Token | Value | Role |
+|---|---|---|
+| `--radius` | `3px` | Everything of the interface that has corners: a button, a control, a tab, a field, a tip, a label, a row under the pointer. |
+| `--radius-mark` | `2px` | A mark smaller than a letter: a square of the speed, the square of a map under its level, a word found by the search. |
+| `--radius-bubble` | `.7em` | What the robot says: the corners of its bubble follow the size of its text, 12.6 pixels around the title of a goal, 18.9 around a sentence of the manual. |
+
+- The zones have square corners: the blocks, the bands, and the menus, the bubbles and the panels that open over the screen.
+- So does a button that lies against the edges of its zone: a tab of the map, **Legend**, **Let's go**, the way back from the manual.
+- A circle is written `50%`: a stone of the home screen, the number of a level, a breakpoint, a dot.
+- A drawing keeps the corners of its shape: the visor of the robot on the level to play, the stroke of paint of the success panel, rounded as the brush by half its height.
+- `--radius` replaces `--radius-small` and `--control-radius`, two names for the same 3 pixels, left by the comparison of the styles (decided on 2026-11-16). Three values moved, hardly seen: the squares of the speed, from 1 pixel to 2; the bubble of a goal, from 12 pixels to 12.6; the bubble of the manual, from 21.6 to 18.9.
