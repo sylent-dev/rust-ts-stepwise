@@ -12,6 +12,8 @@ Stepwise teaches the first steps of programming. The learner writes a small prog
 
 ## Design principles
 
+The named tokens that follow from these principles (the colors of the two themes first) are in [docs/design-system.md](docs/design-system.md).
+
 - **Look**: flat, clean and calm, seen from above, inspired by the clarity of Shapez 2 (no 3D, no perspective). Every element of the map reads at a glance; color is kept for what carries meaning (paints, errors, success, the current line); in the interface, the cyan of the eyes of the robot says what is new, the amber what to do, the teal what has passed.
 - **Identity**: our own robot, friendly and simple, whose smiling head is the logo of Stepwise. Its look comes from the sheet of the world elements (see [Look of the world](#look-of-the-world)).
 - **The robot shows what the program does**: every action is animated, the line being run is highlighted, and nothing happens without the learner seeing it.
@@ -379,7 +381,7 @@ The sheet of the world elements, [`docs/mockups/world-elements.html`](docs/mocku
 | Goal: paint | The stroke to paint, in its color at 35 % opacity; a cell painted with the right color hides it. | the paint |
 | Goal: item | A slot of the shape of the item, a recess in the floor. | `#c3cad4`, rim `#a9b3c0` |
 | Goal: where to stand | A large square slot, in which the robot fits. | as the item slot |
-| Goal not met | A small red flag planted in the corner of the cell, once a run ends without meeting it. | `#c2255c` (may follow the error color of the design system) |
+| Goal not met | A small red flag planted in the corner of the cell, once a run ends without meeting it. | `#c2255c`, a color of its own, apart from the red of the paint and the same in both themes (decided on 2026-11-16) |
 | Robot | White, with two tracks, a dark visor with two cyan eyes at its front (its direction), and a bay at its back that holds the item it carries. Its pincer comes out of its front only while it picks up or drops an item (see [Animations](#animations)). At the end of a run, its eyes light up in yellow when every goal is met, and dim when not. | body `#ffffff`, ink `#222935`, eyes `#3fc3ff`, bay `#d5dbe3`, lit `#ffd23f`, dim `#7d8798` |
 | Logo | The head of the robot with happy eyes and a smile, alone, so that the name stays on the line of the text beside it. It is also the icon of a browser tab. | the robot |
 | Name | `stepwise` in lowercase, in Fredoka 600 (SIL Open Font License), beside the logo: the middle of the head of the robot meets the middle of the lowercase letters, raised by 0.011 em; the name starts 0.18 em after the head, which is 1.25 times the height of the capitals. In a header, its baseline sits 1 px under the one of the menus. | the ink of the page |
