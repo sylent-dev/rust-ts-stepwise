@@ -36,8 +36,8 @@
 .app-tip { display: none; position: absolute; right: 0; bottom: calc(100% + 8px); padding: 6px 10px; background: var(--pop); color: var(--text); border: var(--pop-border); border-radius: var(--radius-small); box-shadow: var(--pop-shadow); font: 400 var(--size-text)/1.4 var(--font-text); text-align: left; white-space: nowrap; }
 .app-control:hover .app-tip, .app-control.is-hovered .app-tip { display: block; }
 .app-tip b { font-weight: var(--strong-weight); }
-.app-tip kbd { margin-left: 12px; color: var(--weak); font: 400 12px var(--font-text); }
-.app-tip small { display: block; color: var(--weak); font-size: 12.5px; }
+.app-tip kbd { margin-left: 12px; color: var(--weak); font: 400 var(--size-small) var(--font-text); }
+.app-tip small { display: block; color: var(--weak); font-size: var(--size-small); }
 
 /* The thin line at the 80th column: past the width of the editor on a small window. */
 .app-ruler { position: absolute; top: 0; bottom: 0; left: calc(66px + 80ch); border-left: 1px solid var(--hover); }
@@ -52,7 +52,7 @@
 .app-text { isolation: isolate; }
 .app-selection { position: absolute; left: 14px; top: 0; height: var(--line-code); background: var(--select); z-index: -1; }
 .app-caret { position: absolute; top: 2px; bottom: 2px; width: 2px; margin-left: -1px; background: var(--text); }
-.app-hover-note { top: calc(var(--line-code) + 2px); padding: 6px 10px; font: var(--code-weight) 13px/20px var(--font-code); white-space: nowrap; }
+.app-hover-note { top: calc(var(--line-code) + 2px); padding: 6px 10px; font: var(--code-weight) var(--size-code-small)/20px var(--font-code); white-space: nowrap; }
 .app-hover-note b { font-weight: var(--code-strong-weight); }
 
 /* The boards of the controls, in the corner of an editor at its real size. */
@@ -62,7 +62,7 @@
 .controls-board .app-code { height: 100%; padding: 0; }
 .controls-board .app-code::before { display: none; }
 
-.app-status { flex: none; display: flex; align-items: center; gap: 22px; height: 30px; box-sizing: border-box; padding: 0 12px; background: var(--band); color: var(--on-status); font-size: 12.5px; white-space: nowrap; }
+.app-status { flex: none; display: flex; align-items: center; gap: 22px; height: 30px; box-sizing: border-box; padding: 0 12px; background: var(--band); color: var(--on-status); font-size: var(--size-small); white-space: nowrap; }
 .app-status b { color: var(--accent-text); font-weight: var(--strong-weight); }
 .app-status-errors { color: var(--error); font-weight: var(--strong-weight); }
 /* The bar takes the color of the state of the program, as in a code editor. The flash: the learner

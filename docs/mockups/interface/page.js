@@ -4,6 +4,8 @@
 // is a list and `range` a slider, both setting the CSS `variable` at once, without redrawing the page.
 const VARIANTS = {
   theme: { label: "Style", options: Object.fromEntries(Object.entries(INTERFACE_STYLES).map(([key, style]) => [key, style.title])), fallback: Object.keys(INTERFACE_STYLES)[0] },
+  // Open at step 12b: the text sizes written one by one, against a scale (section-type-compare.css).
+  sizes: { label: "Text sizes", options: { hand: "1 · By hand, 23 sizes", ten: "2 · Scale of 10", eight: "3 · Scale of 8" }, fallback: "eight" },
 };
 
 const params = new URLSearchParams(location.search);
