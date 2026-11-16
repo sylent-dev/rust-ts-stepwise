@@ -3,9 +3,9 @@
 .app-window .app-place.is-open { background: var(--band-hover); }
 .app-window .app-place.is-sandbox { flex-direction: row; gap: 7px; }
 .app-place.is-sandbox i { display: flex; color: var(--weak); }
-.app-place small { color: var(--weak); font-size: 10.5px; font-weight: 600; line-height: 13px; letter-spacing: .05em; text-transform: uppercase; }
-.app-place b { font: var(--title-weight) 14px/18px var(--font-title); }
+.app-place small { color: var(--weak); font-size: var(--size-label); font-weight: var(--weight-strong); line-height: 13px; letter-spacing: var(--tracking-label); text-transform: uppercase; }
+.app-place b { font: var(--weight-strong) var(--size-lead)/18px var(--font-text); }
 
 /* The number of the level, in an amber circle on the crossing of the header and the two columns, over the
    bubble of the goal; 3 px lower, so that it clears the title, which stays centered in the header. */
-.app-window .app-level-mark { position: absolute; z-index: 3; left: var(--crossing, 640px); top: 52px; display: grid; place-items: center; width: 28px; height: 28px; padding: 0; transform: translate(-50%, -50%); background: var(--accent); color: var(--on-accent); border: 0; border-radius: 50%; font: 600 13px var(--font-name); }
+.app-window .app-level-mark { position: absolute; z-index: 3; left: var(--crossing, 640px); top: 52px; display: grid; place-items: center; width: 28px; height: 28px; padding: 0; transform: translate(-50%, -50%); background: var(--accent); color: var(--on-accent); border: 0; border-radius: 50%; font: var(--weight-strong) var(--size-text) var(--font-name); }

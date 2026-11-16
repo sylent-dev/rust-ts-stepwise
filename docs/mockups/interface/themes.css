@@ -3,13 +3,26 @@
 
 /* What the two themes share. */
 :root {
-  /* The fonts, the sizes and the radii: named at steps 12b and 12c. */
+  /* The typography: three fonts, each with one role, then their weights, sizes and line heights. */
   --font-name: "Fredoka", sans-serif; /* The personality: the name, what the robot says, Let's go. */
   --font-text: "Manrope", sans-serif; /* The interface: everything that is read or clicked. */
-  --font-title: "Manrope", sans-serif;
   --font-code: "Source Code Pro", monospace; /* The code: the editor, the console, the variables. */
-  --code-weight: 600; --code-strong-weight: 800; --title-weight: 600; --strong-weight: 600;
-  --size-text: 13.5px; --size-code: 14px; --line-code: 21px;
+  /* The weights: what is read, what is clicked, what stands out (a title, a main button, what is
+     chosen); the code is in semi-bold, and in extra-bold where it stands out. */
+  --weight-text: 400; --weight-control: 500; --weight-strong: 600;
+  --weight-code: 600; --weight-code-strong: 800;
+  /* The scale of the text sizes, from the smallest: a title of a group in capitals, what comes second,
+     the text of the interface, what is read at length or names a zone, a title, a great moment. */
+  --size-label: 11px; --size-small: 12.5px; --size-text: 13.5px; --size-lead: 15px;
+  --size-title: 18px; --size-display: 27px;
+  /* The code: the editor, and the denser panels that list it. */
+  --size-code: 14px; --size-code-small: 13px;
+  /* The line heights: a title, the text of the interface, what is read at length; the code has whole
+     pixels, so that the marks of its lines (the next step, an error, a call) fall on the pixels. */
+  --line-title: 1.25; --line-text: 1.4; --line-reading: 1.6;
+  --line-code: 21px; --line-code-small: 20px;
+  /* The spacing of the letters of a title in capitals. */
+  --tracking-label: .05em;
   --radius-small: 3px; --control-radius: 3px;
 
   /* The shades of the robot (specs.md, Look of the world), where the interface draws its face. */

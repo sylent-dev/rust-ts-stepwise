@@ -7,11 +7,12 @@ Implementation steps of the features described in [specs.md](specs.md). Each ste
 Read only by the steps that need them:
 
 - [Technical choices](docs/technical-choices.md): the libraries, the services and the main designs, with their reasons.
-- [Design system](docs/design-system.md): the tokens of the interface, the colors of the two themes first.
+- [Design system](docs/design-system.md): the tokens of the interface, the colors of the two themes and the typography first.
 - [Roadmap archive](docs/roadmap-archive.md): the detail of the steps done, moved there once their pull request is merged.
 - [Backlog](docs/backlog.md): the ideas, polish and edge cases found along the way, until the owner makes them a step.
 - [GitHub Pages usage](docs/github-pages-usage.md): the limits and rules of the host of the website.
 - [Sound sources](docs/sound-sources.md): the sources of the sounds compared at step 11b and their terms.
+- [Font sources](docs/font-sources.md): the files of the three fonts, where they come from and their licenses.
 
 ## Steps
 
@@ -32,8 +33,8 @@ Model: each step to come names its model. Fable 5.2 runs the steps whose design 
 - [x] **10. WebAssembly bridge** (#37, #38, #39, #41)
 - [x] **11. Animations and sounds** (#42, #45)
 - [ ] **12. Design system** *(Fable 5.2)*: the tokens (colors of the two themes, spacing, radii, typography, motion) in `docs/design-system.md`, linked from `specs.md`, which keeps the principles (decided on 2026-11-16, `specs.md` being long already); the fonts and their licenses, the tone of the messages; the mock-up updated to use exactly these tokens; an entry in `design-journal.md`.
-  - [x] **12a. Colors** (#46): the roles and the names of the color tokens of the two themes; the tokens that the comparison of the styles left with the same neutral value everywhere removed, the colors written in the blocks named; the keyboard focus, a ring in the color of the text of the element, inside its edge, compared in variants on the mock-up; the teal alone for what has passed, without the green. The flag of a goal not met keeps its own color, apart from the red paint. The contrast of the texts is left to the [backlog](docs/backlog.md).
-  - [ ] **12b. Typography and fonts**: a scale of about eight text sizes (23 in the mock-up) and the weights, per role; the files of the three fonts and their licenses, after comparing the npm packages of Fontsource with files committed in `web/static/`.
+  - [x] **12a. Colors** (#46)
+  - [x] **12b. Typography and fonts** (#47): a scale of eight text sizes (23 in the mock-up), three weights and five line heights, per role, each compared on every window of the mock-up; figures of one width in the status bar; one variable file per font committed in `web/static/fonts/` beside its license, the complete file of Adobe for Source Code Pro, whose reserved name rules out a subset, after comparing with the npm packages of Fontsource (see [Font sources](docs/font-sources.md)); two scripts in the `html-mockups` skill that compare the captures of a mock-up.
   - [ ] **12c. Spacing, radii, motion and tone**: a spacing scale, the alignments tuned by eye staying named exceptions; the radii; the durations and the curves; the writing rules of the messages (capitals, final period, ellipsis, code in a message); the entry in `design-journal.md`.
 - [ ] **13. Application shell** *(Fable 5.2)*: the pages and their addresses, the header with its menus and the progress, the design tokens and the two themes, the texts from Fluent, the browser storage with its version and the banner when it is refused, the settings, the messages for a window too narrow and a browser too old.
 - [ ] **14. Map view** *(Opus 5.5)*: the elements of step 1 as Svelte components, the map of a level drawn from the core, the goal marks, the animations of every action, tuned at every speed with the owner.

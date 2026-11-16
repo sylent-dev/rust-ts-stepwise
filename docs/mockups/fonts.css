@@ -1,0 +1,6 @@
+/* The three fonts of the interface: the files of the application, in web/static/fonts/, each beside
+   its license (docs/font-sources.md). A file holds every weight of its font. The page waits for them
+   (font-display: block), so that it and its screenshots never show another font. */
+@font-face { font-family: "Fredoka"; src: url("../../web/static/fonts/fredoka/fredoka-latin.woff2") format("woff2"); font-weight: 300 700; font-display: block; }
+@font-face { font-family: "Manrope"; src: url("../../web/static/fonts/manrope/manrope-latin.woff2") format("woff2"); font-weight: 200 800; font-display: block; }
+@font-face { font-family: "Source Code Pro"; src: url("../../web/static/fonts/source-code-pro/source-code-pro.woff2") format("woff2"); font-weight: 200 900; font-display: block; }

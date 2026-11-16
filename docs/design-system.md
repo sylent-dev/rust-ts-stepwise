@@ -135,3 +135,80 @@ Two themes, chosen in the settings: **Day Desk**, light, by default, and **Night
 ### Contrast
 
 The contrast between a text and its zone hasn't been checked against a rule: see the [backlog](backlog.md) (set aside on 2026-11-16).
+
+## Typography
+
+Three fonts, each with one role, and a few sizes, weights and line heights, each with a role too, so that a new screen picks one of them instead of adding its own. The section *Typography* of the mock-up shows each token with its samples. The files of the fonts and their licenses are in [Font sources](font-sources.md).
+
+### Names
+
+- The kind of value first, then its role: `--font-<role>`, `--size-<role>`, `--weight-<role>`, `--line-<role>`.
+- A size names what the text is (a label, a title), never its place in the scale: `--size-title`, not `--size-5`.
+- A text takes its four values from the tokens: `font: var(--weight-strong) var(--size-title)/var(--line-title) var(--font-text)`.
+
+### Fonts
+
+| Token | Font | Role |
+|---|---|---|
+| `--font-name` | Fredoka | The personality, kept rare so that it keeps its effect: the name, what the robot says, **Let's go**, the great moments. Always in `--weight-strong`. |
+| `--font-text` | Manrope | The interface: everything that is read or clicked. |
+| `--font-code` | Source Code Pro | The code: the editor, the console, the variables panel, the command menu, the examples of the manual. Never with ligatures (`font-variant-ligatures: none`). |
+
+- Each is followed by its generic family (`sans-serif`, `monospace`), for the characters its file doesn't have.
+- One file per font, with every weight, in `web/static/fonts/`. The page preloads the three files and waits for them (`font-display: block`): a text never shows in another font first, which would move the code of the editor and the name beside the logo.
+- Code is never set in Manrope, which draws `->` and `--` as one sign.
+- An arrow or a check mark is an icon, never a character: the files don't have them.
+
+### Sizes
+
+In pixels, as the whole layout: the zoom of the browser scales them together.
+
+| Token | Value | Role |
+|---|---|---|
+| `--size-label` | `11px` | The title of a group, in capitals: the chapter above the name of a level, *New*, a group of shortcuts or of results. |
+| `--size-small` | `12.5px` | What comes second: the status bar, a shortcut beside its command, a sentence under a name. |
+| `--size-text` | `13.5px` | The text of the interface: the menus, the tabs, the buttons, the sentences. |
+| `--size-lead` | `15px` | What is read at length (the manual, a message in place of the screen), what names a zone (the level, a chapter), a large button. |
+| `--size-title` | `18px` | The title of a panel or of a goal, a question, **Let's go**, the level chosen on the home screen, a section of the manual, the words used by a level done. |
+| `--size-display` | `27px` | The title of a page, a great moment. |
+| `--size-code` | `14px` | The code: the editor, the list of the command menu, the examples of the manual. |
+| `--size-code-small` | `13px` | The code in the denser panels: the console, the variables, an example of the command menu. |
+
+- The name `stepwise` isn't on the scale: its size goes with the logo (see [Look of the world](../specs.md#look-of-the-world)), 21 pixels in the header.
+- Two sizes follow the text around them: the numbers of the lines of the editor, at 0.88 em of its code, and a piece of code within a sentence, at 0.92 em, so that its letters are as tall as those of Manrope.
+- The scale replaces the 23 sizes of the mock-up, each text sized on its own (decided on 2026-11-16, compared on every window of the mock-up). Rejected: a scale of 10 that kept 16.5 and 21 pixels beside 18, three titles too close to tell apart.
+
+### Weights
+
+| Token | Value | Role |
+|---|---|---|
+| `--weight-text` | `400` | What is read: a sentence, a shortcut, the status bar. |
+| `--weight-control` | `500` | What is clicked: a menu, a tab, a small button; the link of the manual where the reader is. |
+| `--weight-strong` | `600` | What stands out: a title, a title in capitals, a main button, what is chosen or shown, a word of a sentence. The only weight of Fredoka. |
+| `--weight-code` | `600` | The code. |
+| `--weight-code-strong` | `800` | The code that stands out: the name of a command, the number of the line of the next step, a value that has just changed, the call in progress. |
+
+- Rejected (decided on 2026-11-16): a bold (700) for two titles in capitals and the sections of the manual, an extra-bold (800) for the number of the level to play, a medium (500) for the one sentence of the robot in the manual, each hardly told from the semi-bold.
+
+### Line heights
+
+| Token | Value | Role |
+|---|---|---|
+| `--line-title` | `1.25` | A title, a name that may take two lines, a row of the legend. |
+| `--line-text` | `1.4` | The text of the interface. |
+| `--line-reading` | `1.6` | What is read at length: the manual, a message in place of the screen. |
+| `--line-code` | `21px` | The code of the editor, of the command menu and of the examples of the manual. |
+| `--line-code-small` | `20px` | The code of the denser panels. |
+
+- The code has whole pixels, so that the marks of its lines (the next step, an error, a value that has just changed) fall on the pixels.
+- A text of one line centered in its box has a line height of `1`: the name, a menu, the number of a level.
+- Two blocks keep heights of their own, part of their layout: the place of the level in the header (13 and 18 pixels) and the rows of the calls in progress (22 pixels).
+- They replace a dozen values written one text at a time (decided on 2026-11-16): a text moved by 1 to 4 pixels.
+
+### Other rules
+
+| Token | Value | Role |
+|---|---|---|
+| `--tracking-label` | `.05em` | The spacing of the letters of a title in capitals. |
+
+- **Figures of one width** (`font-variant-numeric: tabular-nums`) where a number changes in place: the status bar, whose steps count up while a program runs, and the size of the window in the message that asks for a larger one. The code already has them.
