@@ -77,3 +77,8 @@ When the interface makes sounds, the owner chooses them by ear on the mock-up, i
 - Remove the styles that were not chosen from the page, or keep them in a section that says they were rejected.
 - If the project has a `design-journal.md` (or the template it came from), add an entry: the context, the choices kept, the ones rejected, and why.
 - The application then implements exactly these tokens, in one module, so that changing a color or a size happens in one place.
+
+Naming the values that the blocks wrote one by one (colors, sizes, weights, spacing) must not move the page by itself. Check it on every window, not on a few screenshots:
+
+- **Capture every window before and after** (`node scripts/capture-windows.cjs <url> <folder>`, one PNG per window, pinned on whole pixels), then compare the two folders (`python3 scripts/compare-captures.py <before> <after> [marks]`): it lists the windows that differ, their pixels and the box around them. A renaming alone leaves every window the same.
+- **A scale that merges values does move texts**: the owner compares it on the page. Give the tokens their new values, and keep the old ones in a temporary style sheet under an attribute of the page (`:root[data-sizes="hand"] .app-status { font-size: 12.5px; }`, generated from the blocks by a script), switched by a group of tabs of `VARIANTS`. Check that this tab equals the captures made before, then look at what the other tab changes, most changed windows first, and tell the owner where to look. Remove the style sheet and the tabs once decided.
