@@ -1,31 +1,31 @@
 /* The editor: the code with its margin, the three controls, the status bar. */
-.app-editor { display: flex; flex-direction: column; height: 100%; background: var(--editor); }
-.app-code { position: relative; flex: 1; min-height: 0; padding-top: 12px; background-color: var(--editor); background-image: var(--editor-rules); background-position: 0 12px; font: var(--code-weight) var(--size-code)/var(--line-code) var(--font-code); font-variant-ligatures: none; color: var(--code-text); }
+.app-editor { display: flex; flex-direction: column; height: 100%; background: var(--surface); }
+.app-code { position: relative; flex: 1; min-height: 0; padding-top: 12px; background: var(--surface); font: var(--code-weight) var(--size-code)/var(--line-code) var(--font-code); font-variant-ligatures: none; color: var(--text); }
 /* The margin runs along the whole height, behind the lines. */
-.app-code::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 52px; background: var(--gutter); border-right: var(--gutter-line); }
+.app-code::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 52px; background: var(--surface); }
 .app-line { position: relative; display: flex; height: var(--line-code); }
 .app-margin { flex: none; position: relative; width: 52px; color: var(--gutter-text); }
 .app-number { position: absolute; right: 9px; font-size: .88em; }
 .app-mark { position: absolute; left: 6px; top: 50%; transform: translateY(-50%); display: flex; }
 .app-text { padding-left: 14px; white-space: pre; }
 .app-line.is-next { background: var(--current); }
-.app-line.is-next .app-number { color: var(--code-text); font-weight: var(--code-strong-weight); }
-.app-line.is-next .app-mark { color: var(--current-mark); }
+.app-line.is-next .app-number { color: var(--text); font-weight: var(--code-strong-weight); }
+.app-line.is-next .app-mark { color: var(--accent-text); }
 .app-line.is-error { background: var(--error-soft); }
 .app-line.is-error .app-number, .app-line.is-error .app-mark { color: var(--error); font-weight: var(--code-strong-weight); }
 /* A breakpoint on the next line: the dot and the arrow side by side, before the numbers of two digits. */
 .app-mark.has-both { left: 3px; align-items: center; }
 .app-breakpoint { width: 11px; height: 11px; border-radius: 50%; background: var(--breakpoint); }
 
-.code-comment { color: var(--code-comment); font-style: var(--code-comment-style); }
-.code-keyword { color: var(--code-keyword); font-weight: var(--code-keyword-weight); }
+.code-comment { color: var(--code-comment); }
+.code-keyword { color: var(--code-keyword); }
 .code-function { color: var(--code-function); }
 .code-string { color: var(--code-string); }
 .code-number { color: var(--code-number); }
-.code-value { color: var(--code-value); }
+.code-value { color: var(--code-number); }
 
 .app-controls { position: absolute; right: 12px; bottom: 12px; display: flex; gap: 8px; }
-.app-window .app-control { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; background: var(--control); color: var(--on-control); border: var(--control-border); border-radius: var(--control-radius); box-shadow: var(--control-shadow); }
+.app-window .app-control { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; background: var(--control); color: var(--text); border: 0; border-radius: var(--control-radius); box-shadow: var(--control-shadow); }
 .app-window .app-control.is-main { background: var(--accent); color: var(--on-accent); }
 .app-window .app-control { position: relative; }
 .app-window .app-control.is-off > svg { opacity: .35; }
@@ -46,13 +46,13 @@
 .app-underline { position: absolute; top: calc(var(--line-code) - 4px); height: 4px; pointer-events: none; }
 .app-underline.is-error { background: var(--error); -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='4'%3E%3Cpath d='M0 3 Q1.5 0 3 2 T6 3' fill='none' stroke='black' stroke-width='1.3'/%3E%3C/svg%3E") repeat-x; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='4'%3E%3Cpath d='M0 3 Q1.5 0 3 2 T6 3' fill='none' stroke='black' stroke-width='1.3'/%3E%3C/svg%3E") repeat-x; }
 /* Ctrl held: the name under the mouse, a link. */
-.app-underline.is-link { top: calc(var(--line-code) - 3px); height: 1.5px; background: var(--code-text); }
+.app-underline.is-link { top: calc(var(--line-code) - 3px); height: 1.5px; background: var(--text); }
 .app-underline.is-long { background: radial-gradient(circle at 1.5px 2px, var(--weak) 1.1px, transparent 1.4px) 0 0 / 4px 4px repeat-x; }
 /* The selection, behind the letters of the line. */
 .app-text { isolation: isolate; }
 .app-selection { position: absolute; left: 14px; top: 0; height: var(--line-code); background: var(--select); z-index: -1; }
-.app-caret { position: absolute; top: 2px; bottom: 2px; width: 2px; margin-left: -1px; background: var(--code-text); }
-.app-hover-note { top: calc(var(--line-code) + 2px); padding: 6px 10px; border-radius: var(--radius-small); font: var(--code-weight) 13px/20px var(--font-code); white-space: nowrap; }
+.app-caret { position: absolute; top: 2px; bottom: 2px; width: 2px; margin-left: -1px; background: var(--text); }
+.app-hover-note { top: calc(var(--line-code) + 2px); padding: 6px 10px; font: var(--code-weight) 13px/20px var(--font-code); white-space: nowrap; }
 .app-hover-note b { font-weight: var(--code-strong-weight); }
 
 /* The boards of the controls, in the corner of an editor at its real size. */
@@ -62,13 +62,13 @@
 .controls-board .app-code { height: 100%; padding: 0; }
 .controls-board .app-code::before { display: none; }
 
-.app-status { flex: none; display: flex; align-items: center; gap: 22px; height: 30px; box-sizing: border-box; padding: 0 12px; background: var(--status); color: var(--on-status); border-top: var(--status-line); font-size: 12.5px; white-space: nowrap; }
-.app-status b { color: var(--status-strong); font-weight: var(--strong-weight); }
+.app-status { flex: none; display: flex; align-items: center; gap: 22px; height: 30px; box-sizing: border-box; padding: 0 12px; background: var(--band); color: var(--on-status); font-size: 12.5px; white-space: nowrap; }
+.app-status b { color: var(--accent-text); font-weight: var(--strong-weight); }
 .app-status-errors { color: var(--error); font-weight: var(--strong-weight); }
 /* The bar takes the color of the state of the program, as in a code editor. The flash: the learner
    tried to type while the program runs. */
-.app-status.is-paused, .app-status.is-flash { background: var(--status-paused); color: var(--on-status-paused); }
-.app-status.is-failed { background: var(--status-failed); color: var(--on-status-failed); }
+.app-status.is-paused, .app-status.is-flash { background: var(--accent); color: var(--on-accent); }
+.app-status.is-failed { background: var(--error); color: var(--on-error); }
 .app-status.is-paused b, .app-status.is-failed b, .app-status.is-flash b { color: inherit; }
 /* A map or the level passed: the teal of the tabs of the maps. A goal not met keeps the neutral bar: it
    isn't an error of the program, and the flags of the map already say it. */

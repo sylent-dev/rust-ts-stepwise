@@ -157,3 +157,7 @@ The probe of step 4c run by the real machine: a real program on the map of the s
 ### 11a. Animations (#42)
 
 The robot playing each action on a small map: moving, turning, painting and erasing, `pick_up()` and `drop()` with the pincer, the bump into a wall, an action that fails, the end of a run that succeeds or fails; the normal speed, the duration of each action, and the motion for a learner who asked for less; the decisions written in `specs.md`.
+
+### 11b. Sounds (#45)
+
+The sounds of the end of a run, of a bump and of the moves, compared by ear on the same page (synthesized in the browser, CC0 files by Kenney, bolder ones made by a Python script); every sound synthesized with the Web Audio API in the application; the terms of the sources in `docs/sound-sources.md`; the decisions written in `specs.md`; a part on sounds in the `html-mockups` skill. The tuning of the animations at every speed is left to step 14, in the application.
