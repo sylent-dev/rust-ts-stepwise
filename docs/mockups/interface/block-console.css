@@ -9,7 +9,7 @@
 .console-note { display: flex; align-items: flex-start; gap: 8px; font-weight: var(--code-strong-weight); }
 .console-note i { flex: none; display: flex; margin-top: 3px; }
 .console-note.is-goal i { color: var(--error); }
-.console-note.is-passed { color: var(--success); }
+.console-note.is-passed { color: var(--passed-text); }
 
 /* The panel scrolls past its height, its last lines in sight. */
 .app-panel { scrollbar-width: thin; overflow: auto; }

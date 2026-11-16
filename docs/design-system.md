@@ -28,7 +28,7 @@ Two themes, chosen in the settings: **Day Desk**, light, by default, and **Night
 | `--accent-hover` | `#ffd25e` | A main button under the pointer. |
 | `--on-accent-weak` | `#3a4250` | A quiet icon on the amber: the magnifier of the search. |
 | `--new` | `#3fc3ff` | The cyan of the eyes of the robot, what is new: the title *New* of a goal, the dot of **Legend**, the label *New* of the legend. |
-| `--passed` | `#5fd0b0` | The teal of the item, what has passed: a level done, a map passed. |
+| `--passed` | `#5fd0b0` | The teal of the item, what has passed: a level done, a map passed, the status bar once a map has passed, the progress under the header. It is the only color of what has passed: a green of its own for the progress and the console was rejected, two greens side by side that didn't go together (decided on 2026-11-16). |
 | `--on-passed` | `#222935` | The text on the teal, the ink of the world. |
 | `--passed-soft` | `--passed` at 28 % over `--band` | The tab of a map that has passed, on the level screen and on the home screen. |
 | `--danger` | `#dc2f34` | The red of the paint: **Clear all progress** as it fills. |
@@ -90,8 +90,7 @@ Two themes, chosen in the settings: **Day Desk**, light, by default, and **Night
 | `--error` | `#bf2f3a` | `#ff7b7b` | An error: its line in the console, its underline, the status bar once a run has failed. |
 | `--on-error` | `#ffffff` | `#171b21` | The text on it. |
 | `--error-soft` | `#fbe5e6` | `#47262c` | The line of an error in the editor. |
-| `--success` | `#14906a` | `#46c98f` | The progress under the header, *Map 1 passed* in the console. |
-| `--passed-text` | `#09795f` | `#5fd0b0` | The teal as a text: a code that opens a level, the level done of the success panel. |
+| `--passed-text` | `#09795f` | `#5fd0b0` | The teal as a text: *Map 1 passed* in the console, a code that opens a level, the level done of the success panel. |
 
 ### Editor and code
 

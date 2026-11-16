@@ -4,8 +4,6 @@
 // is a list and `range` a slider, both setting the CSS `variable` at once, without redrawing the page.
 const VARIANTS = {
   theme: { label: "Style", options: Object.fromEntries(Object.entries(INTERFACE_STYLES).map(([key, style]) => [key, style.title])), fallback: Object.keys(INTERFACE_STYLES)[0] },
-  // Step 12a, section Passed: the whole windows of the section follow it.
-  passed: { label: "Passed", options: { both: "1 · Green and teal, as today", teal: "2 · Teal alone", green: "3 · Green alone" }, fallback: "both" },
 };
 
 const params = new URLSearchParams(location.search);

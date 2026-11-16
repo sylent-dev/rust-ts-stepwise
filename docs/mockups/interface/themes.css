@@ -43,7 +43,7 @@
   --control: #2f3641; --control-shadow: 0 2px 8px #0006; --chip: #2f3641; --on-chosen: #171b21; --chosen-soft: #2f3641; --idle: #4b5564; --progress-track: #2a313b;
   /* The states. */
   --on-accent: #171b21; --accent-soft: #4a3c17; --accent-text: #ffb300; --mark: #4a3c17;
-  --error: #ff7b7b; --on-error: #171b21; --error-soft: #47262c; --success: #46c98f; --passed-text: #5fd0b0;
+  --error: #ff7b7b; --on-error: #171b21; --error-soft: #47262c; --passed-text: #5fd0b0;
   /* The editor and the code. */
   --current: #413a23; --breakpoint: #ff7b7b; --select: #3a5274;
   --code-comment: #8490a0; --code-keyword: #8fb8ff; --code-function: #68d8bb; --code-string: #ffd27a; --code-number: #ffa98a;
@@ -60,7 +60,7 @@
   --text: #1b2028; --weak: #5c6675; --on-status: #4f5968; --gutter-text: #939daa;
   --control: #ffffff; --control-shadow: 0 1px 5px #22293538; --chip: #e3e7ec; --on-chosen: #f6f7f9; --chosen-soft: #d3d9e1; --idle: #c3cad3; --progress-track: #dde2e8;
   --on-accent: #1b2028; --accent-soft: #fff0c7; --accent-text: #8a5a00; --mark: #ffe9ad;
-  --error: #bf2f3a; --on-error: #ffffff; --error-soft: #fbe5e6; --success: #14906a; --passed-text: #09795f;
+  --error: #bf2f3a; --on-error: #ffffff; --error-soft: #fbe5e6; --passed-text: #09795f;
   --current: #ffe9ad; --breakpoint: #cf3a44; --select: #bcd4f5;
   --code-comment: #6e7a8a; --code-keyword: #2d5cc2; --code-function: #09795f; --code-string: #8f5f06; --code-number: #b34c1c;
   --goal-side: #222935; --goal-bubble: #eceff3;
