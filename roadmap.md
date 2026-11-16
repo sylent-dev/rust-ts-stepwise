@@ -29,9 +29,7 @@ Model: each step to come names its model. Fable 5.2 runs the steps whose design 
 - [x] **8. Map and levels** (#32, #33)
 - [x] **9. Interpreter** (#34, #35, #36)
 - [x] **10. WebAssembly bridge** (#37, #38, #39, #41)
-- [x] **11. Animations and sounds** (#42, #45): sections of the sheet of the world elements (`docs/mockups/world-elements.html`) that decide the style of each action of the robot, its duration at the normal speed, and the sounds. The tuning at every speed is left to step 14, in the application.
-  - [x] **11a. Animations** (#42)
-  - [x] **11b. Sounds** (#45): the sounds of the end of a run, of a bump and of the moves, compared by ear on the same page (synthesized in the browser, CC0 files by Kenney, bolder ones made by a Python script); every sound synthesized with the Web Audio API in the application; the terms of the sources in `docs/sound-sources.md`; the decisions written in `specs.md`; a part on sounds in the `html-mockups` skill.
+- [x] **11. Animations and sounds** (#42, #45)
 - [ ] **12. Design system** *(Fable 5.2)*: the tokens (colors of the two themes, spacing, radii, typography, motion) in `specs.md`, the fonts and their licenses, the tone of the messages; the mock-up updated to use exactly these tokens; an entry in `design-journal.md`.
 - [ ] **13. Application shell** *(Fable 5.2)*: the pages and their addresses, the header with its menus and the progress, the design tokens and the two themes, the texts from Fluent, the browser storage with its version and the banner when it is refused, the settings, the messages for a window too narrow and a browser too old.
 - [ ] **14. Map view** *(Opus 5.5)*: the elements of step 1 as Svelte components, the map of a level drawn from the core, the goal marks, the animations of every action, tuned at every speed with the owner.
