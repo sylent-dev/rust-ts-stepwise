@@ -3,7 +3,7 @@
 
 /* What the two themes share. */
 :root {
-  /* The fonts, the sizes and the radii: named at steps 12b and 12c. */
+  /* The typography: three fonts, each with one role, then their weights, sizes and line heights. */
   --font-name: "Fredoka", sans-serif; /* The personality: the name, what the robot says, Let's go. */
   --font-text: "Manrope", sans-serif; /* The interface: everything that is read or clicked. */
   --font-code: "Source Code Pro", monospace; /* The code: the editor, the console, the variables. */
@@ -21,6 +21,8 @@
      pixels, so that the marks of its lines (the next step, an error, a call) fall on the pixels. */
   --line-title: 1.25; --line-text: 1.4; --line-reading: 1.6;
   --line-code: 21px; --line-code-small: 20px;
+  /* The spacing of the letters of a title in capitals. */
+  --tracking-label: .05em;
   --radius-small: 3px; --control-radius: 3px;
 
   /* The shades of the robot (specs.md, Look of the world), where the interface draws its face. */

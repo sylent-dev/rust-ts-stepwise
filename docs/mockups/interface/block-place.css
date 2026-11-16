@@ -3,7 +3,7 @@
 .app-window .app-place.is-open { background: var(--band-hover); }
 .app-window .app-place.is-sandbox { flex-direction: row; gap: 7px; }
 .app-place.is-sandbox i { display: flex; color: var(--weak); }
-.app-place small { color: var(--weak); font-size: var(--size-label); font-weight: var(--weight-strong); line-height: 13px; letter-spacing: .05em; text-transform: uppercase; }
+.app-place small { color: var(--weak); font-size: var(--size-label); font-weight: var(--weight-strong); line-height: 13px; letter-spacing: var(--tracking-label); text-transform: uppercase; }
 .app-place b { font: var(--weight-strong) var(--size-lead)/18px var(--font-text); }
 
 /* The number of the level, in an amber circle on the crossing of the header and the two columns, over the

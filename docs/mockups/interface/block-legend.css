@@ -9,7 +9,7 @@
 .legend-row b { font-weight: var(--weight-strong); }
 .legend-row span { display: block; color: var(--weak); font-size: var(--size-small); }
 /* What this level brings: the dark and the cyan of the column New of the goal. */
-.legend-new { display: inline-block; margin-left: 7px; padding: 1px 6px; background: var(--goal-side); color: var(--new); border-radius: var(--radius-small); font: var(--weight-heavy) var(--size-label)/var(--line-text) var(--font-text); font-style: normal; letter-spacing: .05em; text-transform: uppercase; vertical-align: 1px; }
+.legend-new { display: inline-block; margin-left: 7px; padding: 1px 6px; background: var(--goal-side); color: var(--new); border-radius: var(--radius-small); font: var(--weight-heavy) var(--size-label)/var(--line-text) var(--font-text); font-style: normal; letter-spacing: var(--tracking-label); text-transform: uppercase; vertical-align: 1px; }
 .legend-link { margin-top: 10px; }
 
 /* The button of the legend: open, and its dot while the map has new elements not yet seen. */

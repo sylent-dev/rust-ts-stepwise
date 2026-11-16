@@ -50,7 +50,7 @@ a.manual-name:hover { background: var(--band-hover); }
 
 /* The results of a search, grouped by their place. */
 .manual-count { padding: 0 18px 6px; color: var(--weak); font-size: var(--size-small); }
-.manual-place { padding: 8px 18px 3px; color: var(--weak); font: var(--weight-strong) var(--size-label) var(--font-text); letter-spacing: .05em; text-transform: uppercase; }
+.manual-place { padding: 8px 18px 3px; color: var(--weak); font: var(--weight-strong) var(--size-label) var(--font-text); letter-spacing: var(--tracking-label); text-transform: uppercase; }
 .manual-place i { font-style: normal; opacity: .6; }
 .manual-result { display: block; padding: 3px 18px 3px 28px; cursor: pointer; }
 .manual-result.is-code { font: var(--weight-code) var(--size-code-small)/var(--line-code-small) var(--font-code); font-variant-ligatures: none; }
@@ -65,7 +65,7 @@ a.manual-name:hover { background: var(--band-hover); }
 /* On this page: the categories of the section, the one in view marked. */
 /* 20 px away from the scroll bar of the content, tuned by eye. */
 .manual-toc { padding: 34px 18px 0 20px; }
-.manual-toc b { display: block; margin-bottom: 8px; color: var(--weak); font: var(--weight-strong) var(--size-label) var(--font-text); letter-spacing: .06em; text-transform: uppercase; }
+.manual-toc b { display: block; margin-bottom: 8px; color: var(--weak); font: var(--weight-strong) var(--size-label) var(--font-text); letter-spacing: var(--tracking-label); text-transform: uppercase; }
 .manual-toc a { display: block; padding: 3px 0 3px 12px; color: var(--weak); border-left: 2px solid var(--hover); cursor: pointer; }
 .manual-toc a:hover { color: var(--text); }
 .manual-toc a.is-here { color: var(--text); border-left-color: var(--accent); font-weight: var(--weight-control); }

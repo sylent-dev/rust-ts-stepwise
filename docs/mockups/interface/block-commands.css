@@ -9,7 +9,7 @@
 .app-commands-category.is-pale { opacity: .4; }
 .app-commands-category em { color: var(--weak); font: var(--weight-text) var(--size-small) var(--font-text); }
 .app-commands-list { padding: 5px 0; overflow: hidden; font: var(--weight-code) var(--size-code)/var(--line-code) var(--font-code); font-variant-ligatures: none; }
-.app-commands-title { padding: 5px 12px 1px; color: var(--weak); font: var(--weight-strong) var(--size-label) var(--font-text); letter-spacing: .06em; }
+.app-commands-title { padding: 5px 12px 1px; color: var(--weak); font: var(--weight-strong) var(--size-label) var(--font-text); letter-spacing: var(--tracking-label); }
 .app-commands-row { padding: 2px 12px; white-space: nowrap; }
 .app-commands-row.is-chosen { background: var(--chosen); color: var(--on-chosen); }
 /* Nothing found: the robot and its message in the middle of the whole space. */

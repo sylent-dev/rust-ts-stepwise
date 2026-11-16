@@ -31,14 +31,14 @@ const TYPE_SIZES = [
   ["display", [["name", "strong", "Level 18 done!"], ["text", "strong", "2. Commands"]],
     "The title of a page, a great moment."],
 ].map(([size, samples, uses]) => [`--size-${size}`,
-  samples.map(([font, weight, words]) => typeSample(font, weight, size, words, size === "label" ? "letter-spacing:.05em" : "")).join(""), uses]);
+  samples.map(([font, weight, words]) => typeSample(font, weight, size, words, size === "label" ? "letter-spacing:var(--tracking-label)" : "")).join(""), uses]);
 
 const TYPE_WEIGHTS = [
   ["text", typeSample("text", "text", "text", "Paint a red square of side 3, starting where the robot stands."),
     "What is read: a sentence, a shortcut, the status bar."],
   ["control", typeSample("text", "control", "text", "Level   Edit   Run   Help") + typeSample("text", "control", "text", "Show hint") + typeSample("text", "control", "text", "Map 2"),
     "What is clicked: a menu, a tab, a small button, a link of the manual where the reader is."],
-  ["strong", typeSample("text", "strong", "text", "Paint a square") + typeSample("text", "strong", "label", "ON THIS PAGE", "letter-spacing:.05em") + typeSample("name", "strong", "title", "Let's go"),
+  ["strong", typeSample("text", "strong", "text", "Paint a square") + typeSample("text", "strong", "label", "ON THIS PAGE", "letter-spacing:var(--tracking-label)") + typeSample("name", "strong", "title", "Let's go"),
     "What stands out: a title, a title in capitals, a main button, what is chosen or shown, a word of a sentence. The font of the name has no other weight."],
   ["code", typeSample("code", "code", "code", "sides = sides + 1"),
     "The code."],

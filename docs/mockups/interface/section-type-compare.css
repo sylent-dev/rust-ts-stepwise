@@ -41,3 +41,6 @@
 :root[data-lines="hand"] .app-window { line-height: 1.4; }
 /* The address of a message sets its font after the line height of the sentences: it keeps its own. */
 :root[data-lines="hand"] .app-screen-message .message-address { line-height: normal; }
+/* The spacing of the letters of a title in capitals: three values, one text at a time. */
+:root[data-lines="hand"] .goal-new h4 { letter-spacing: .04em; }
+:root[data-lines="hand"] .app-commands-title, :root[data-lines="hand"] .app-shortcuts-group h4, :root[data-lines="hand"] .manual-toc b { letter-spacing: .06em; }
