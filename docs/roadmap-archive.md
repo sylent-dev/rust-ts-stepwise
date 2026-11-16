@@ -161,3 +161,9 @@ The robot playing each action on a small map: moving, turning, painting and eras
 ### 11b. Sounds (#45)
 
 The sounds of the end of a run, of a bump and of the moves, compared by ear on the same page (synthesized in the browser, CC0 files by Kenney, bolder ones made by a Python script); every sound synthesized with the Web Audio API in the application; the terms of the sources in `docs/sound-sources.md`; the decisions written in `specs.md`; a part on sounds in the `html-mockups` skill. The tuning of the animations at every speed is left to step 14, in the application.
+
+## 12. Design system
+
+### 12a. Colors (#46)
+
+The roles and the names of the color tokens of the two themes, in `docs/design-system.md`; the tokens that the comparison of the styles left with the same neutral value everywhere removed, the colors written in the blocks named; the keyboard focus, a ring in the color of the text of the element, inside its edge, compared in variants on the mock-up; the teal alone for what has passed, without the green. The flag of a goal not met keeps its own color, apart from the red paint. The contrast of the texts is left to the [backlog](backlog.md).
