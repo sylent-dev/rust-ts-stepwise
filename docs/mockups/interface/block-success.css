@@ -44,7 +44,7 @@
 .success-numbers b { color: var(--text); font-weight: var(--weight-strong); }
 
 /* You used: a comment and the words of the editor, across the whole width. */
-.used-code { margin-top: 14px; padding: 10px 24px 12px; background: var(--goal-bubble); font: var(--weight-code) var(--size-title)/1.5 var(--font-code); }
+.used-code { margin-top: 14px; padding: 10px 24px 12px; background: var(--goal-bubble); font: var(--weight-code) var(--size-title)/var(--line-text) var(--font-code); }
 .used-code > span { color: var(--code-comment); }
 .used-code > div { display: flex; flex-wrap: wrap; gap: 0 18px; }
 .used-code i { color: var(--code-function); font-style: normal; }

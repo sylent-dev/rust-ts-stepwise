@@ -20,8 +20,8 @@
 
 /* A chapter: a light band behind its stones, with its name and its idea. */
 .home-band { position: absolute; box-sizing: border-box; height: 112px; padding: 6px 10px; background: var(--home-band); border-radius: var(--radius-small); }
-.home-band b { display: block; color: var(--text); font: var(--weight-strong) var(--size-lead)/1.3 var(--font-text); }
-.home-band span { display: block; color: var(--weak); font: var(--weight-text) var(--size-small)/1.3 var(--font-text); }
+.home-band b { display: block; color: var(--text); font: var(--weight-strong) var(--size-lead)/var(--line-title) var(--font-text); }
+.home-band span { display: block; color: var(--weak); font: var(--weight-text) var(--size-small)/var(--line-title) var(--font-text); }
 
 /* The path: the paint up to the level to play, then its ghost, as a goal mark on the map. */
 .home-line { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
@@ -66,7 +66,7 @@
 .home-squares i.is-locked { background: var(--home-locked-stone); }
 
 /* Its title, on hover. */
-.home-tip { display: none; position: absolute; left: calc(100% + 8px); top: 50%; padding: 4px 10px; background: var(--pop); color: var(--text); border: var(--pop-border); border-radius: var(--radius-small); box-shadow: var(--pop-shadow); font: var(--weight-control) var(--size-text)/1.3 var(--font-text); white-space: nowrap; transform: translateY(-50%); }
+.home-tip { display: none; position: absolute; left: calc(100% + 8px); top: 50%; padding: 4px 10px; background: var(--pop); color: var(--text); border: var(--pop-border); border-radius: var(--radius-small); box-shadow: var(--pop-shadow); font: var(--weight-control) var(--size-text)/var(--line-title) var(--font-text); white-space: nowrap; transform: translateY(-50%); }
 .home-stone.is-tip-left .home-tip { left: auto; right: calc(100% + 8px); }
 .home-stone:hover .home-tip, .home-stone.is-tip .home-tip { display: block; }
 
@@ -76,7 +76,7 @@
 /* The level chosen. */
 .home-panel { flex: none; display: flex; flex-direction: column; box-sizing: border-box; width: 360px; height: 640px; padding: 14px 16px 20px; background: var(--surface); box-shadow: var(--map-shadow); }
 .home-chapter { margin: 0; color: var(--weak); font-size: var(--size-small); }
-.home-panel h3 { margin: 2px 0 10px; color: var(--text); font: var(--weight-strong) var(--size-title)/1.25 var(--font-text); letter-spacing: 0; text-transform: none; }
+.home-panel h3 { margin: 2px 0 10px; color: var(--text); font: var(--weight-strong) var(--size-title)/var(--line-title) var(--font-text); letter-spacing: 0; text-transform: none; }
 .home-scene { flex: none; display: grid; height: 240px; }
 /* The robot of the level to play waits: it looks to one side, then to the other, and blinks now and then. */
 .home-scene.is-play .app-robot > * { animation: home-look 7s ease-in-out infinite; }
@@ -84,7 +84,7 @@
 .home-eyelids { opacity: 0; }
 .home-scene.is-play .app-robot > .home-eyelids { animation: home-look 7s ease-in-out infinite, home-blink 7s linear infinite; }
 @keyframes home-blink { 0%, 14%, 16.5%, 19%, 21.5%, 62%, 64.5%, 100% { opacity: 0; } 15%, 15.5%, 20%, 20.5%, 63%, 63.5% { opacity: 1; } }
-.home-goal { margin: 14px 0 0; line-height: 1.45; }
+.home-goal { margin: 14px 0 0; line-height: var(--line-text); }
 
 /* The field of a code, on a locked level. */
 .home-code { margin-top: 12px; }

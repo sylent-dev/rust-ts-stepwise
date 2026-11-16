@@ -1,7 +1,8 @@
-/* The section Text sizes: its introduction, on the page, and the board of the scale. */
+/* The section Typography: its sentences, on the page, and the boards of its tokens. */
 .type-intro { max-width: 880px; margin: 4px 0 12px; color: #dee2e6; }
+.type-board + .type-intro { margin-top: 10px; }
 .app-window.type-board { display: block; box-sizing: border-box; width: 1280px; height: auto; padding: 6px 24px; background: var(--surface); }
-.type-row { display: grid; grid-template-columns: 170px 60px 1fr 380px; gap: 24px; align-items: baseline; padding: 11px 0; }
+.type-row { display: grid; grid-template-columns: 180px 50px 1fr 380px; gap: 24px; align-items: baseline; padding: 11px 0; }
 .type-row + .type-row { border-top: 1px solid var(--hover); }
 .type-row code { font: var(--weight-code) var(--size-code-small) var(--font-code); }
 .type-row small, .type-uses { color: var(--weak); font-size: var(--size-small); }

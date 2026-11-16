@@ -26,7 +26,7 @@ a.manual-name { color: inherit; text-decoration: none; cursor: pointer; }
 a.manual-name:hover { background: var(--band-hover); }
 .manual-name { flex: none; display: flex; align-items: center; height: 49px; padding: 0 14px 3px; box-sizing: border-box; margin-bottom: 8px; }
 .manual-content { position: relative; overflow: hidden auto; }
-.manual-text { box-sizing: border-box; max-width: 840px; padding: 30px 40px 60px; font-size: var(--size-lead); line-height: 1.6; }
+.manual-text { box-sizing: border-box; max-width: 840px; padding: 30px 40px 60px; font-size: var(--size-lead); line-height: var(--line-reading); }
 
 /* The search field: flat, without border, darker than its column. */
 .manual-search { position: relative; display: flex; align-items: center; height: 34px; margin: 0 14px 10px; padding: 0 8px 0 0; overflow: hidden; background: var(--field); color: var(--weak); border-radius: var(--radius-small); }
@@ -53,7 +53,7 @@ a.manual-name:hover { background: var(--band-hover); }
 .manual-place { padding: 8px 18px 3px; color: var(--weak); font: var(--weight-strong) var(--size-label) var(--font-text); letter-spacing: .05em; text-transform: uppercase; }
 .manual-place i { font-style: normal; opacity: .6; }
 .manual-result { display: block; padding: 3px 18px 3px 28px; cursor: pointer; }
-.manual-result.is-code { font: var(--weight-code) var(--size-code-small)/1.5 var(--font-code); font-variant-ligatures: none; }
+.manual-result.is-code { font: var(--weight-code) var(--size-code-small)/var(--line-code-small) var(--font-code); font-variant-ligatures: none; }
 .manual-result:hover { background: var(--band-hover); }
 .manual-result.is-chosen { background: var(--chosen); color: var(--on-chosen); }
 /* The match in each name: an amber background behind dark letters, readable on every background. */
@@ -75,8 +75,8 @@ a.manual-name:hover { background: var(--band-hover); }
 .app-window .manual-text :is(h1, h2, h3) { color: var(--text); text-transform: none; letter-spacing: normal; }
 .app-window .manual-text .manual-sign { margin: 0; }
 .app-window .manual-text code, .app-window .manual-none code { color: inherit; }
-.manual-text h1 { margin: 0 0 8px; font: var(--weight-strong) var(--size-display)/1.25 var(--font-text); }
-.manual-text h2 { margin: 34px 0 6px; font: var(--weight-heavy) var(--size-title)/1.3 var(--font-text); }
+.manual-text h1 { margin: 0 0 8px; font: var(--weight-strong) var(--size-display)/var(--line-title) var(--font-text); }
+.manual-text h2 { margin: 34px 0 6px; font: var(--weight-heavy) var(--size-title)/var(--line-title) var(--font-text); }
 .manual-text p { margin: 0 0 10px; }
 .manual-text code { font: var(--weight-code) .92em var(--font-code); font-variant-ligatures: none; }
 .manual-lead { color: var(--weak); font-size: var(--size-lead); }
@@ -85,14 +85,14 @@ a.manual-name:hover { background: var(--band-hover); }
    decided in place of a name on a band, a card, a comic strip of the steps and the level screen in small. */
 .manual-entry { display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: 0 18px; margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--hover); }
 .manual-sign { display: flex; flex-direction: column; gap: 2px; margin: 0; }
-.manual-sign code { font: var(--weight-code-strong) var(--size-code)/1.4 var(--font-code); }
+.manual-sign code { font: var(--weight-code-strong) var(--size-code)/var(--line-text) var(--font-code); }
 .manual-entry.is-flash { animation: manual-flash 1.6s ease-out; }
 @keyframes manual-flash { from { background: var(--mark); } }
 
 /* The example: its code, and the small map where it plays. No Copy: the learner types it again. */
 .manual-example { display: flex; margin-top: 12px; }
 .manual-code { display: flex; flex-direction: column; flex: 1; min-width: 0; padding: 10px 0 0; background: var(--band); border-radius: var(--radius-small) 0 0 var(--radius-small); }
-.manual-code pre { margin: 0 0 10px; font: var(--weight-code) var(--size-code)/21px var(--font-code); font-variant-ligatures: none; color: var(--text); }
+.manual-code pre { margin: 0 0 10px; font: var(--weight-code) var(--size-code)/var(--line-code) var(--font-code); font-variant-ligatures: none; color: var(--text); }
 .manual-line { display: block; padding: 0 14px; }
 .manual-line.is-on { background: var(--current); }
 /* The map fills its side of the example, without a frame or a shadow. */
@@ -106,7 +106,7 @@ a.manual-name:hover { background: var(--band-hover); }
 .manual-console { grid-area: console; display: flex; flex-direction: column; gap: 4px; min-height: 66px; box-sizing: border-box; padding: 8px 14px 10px; background: var(--hover); border-radius: 0 0 var(--radius-small) 0; }
 /* The name stays grey, so that it is never read as a line printed by the program. */
 .manual-console b { color: var(--weak); font: var(--weight-heavy) var(--size-text) var(--font-text); }
-.manual-out { color: var(--text); font: var(--weight-code) var(--size-code-small)/20px var(--font-code); font-variant-ligatures: none; }
+.manual-out { color: var(--text); font: var(--weight-code) var(--size-code-small)/var(--line-code-small) var(--font-code); font-variant-ligatures: none; }
 
 /* The drawer, over the map and the panels of the level screen, the code still in view. */
 .manual-drawer { top: 49px; right: 0; bottom: 0; width: 50%; display: flex; flex-direction: column; background: var(--surface); border: 0; border-radius: 0; box-shadow: var(--drawer-shadow); }
@@ -146,7 +146,7 @@ a.manual-name:hover { background: var(--band-hover); }
 /* The robot of the large screen, centered in the room left on the right, its speech bubble above it;
    the size of the head (80 px) and of the words (25 px) tuned by eye; each sentence on one line. */
 .manual-buddy { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: calc(25px * .7); padding: 0 40px; }
-.manual-bubble { position: relative; white-space: nowrap; padding: .7em 1em; background: var(--band); color: var(--text); border-radius: .8em; font: var(--weight-name-soft) var(--size-display)/1.35 var(--font-name); text-align: center; }
+.manual-bubble { position: relative; white-space: nowrap; padding: .7em 1em; background: var(--band); color: var(--text); border-radius: .8em; font: var(--weight-name-soft) var(--size-display)/var(--line-title) var(--font-name); text-align: center; }
 .manual-bubble::after { content: ""; position: absolute; left: calc(50% - 12px); bottom: -11px; border: 12px solid transparent; border-bottom: 0; border-top-color: var(--band); }
 .manual-bubble p { margin: 0; }
 .manual-bubble.is-new { animation: manual-pop .25s cubic-bezier(.3, 1.6, .5, 1); }

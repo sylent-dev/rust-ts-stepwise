@@ -1,7 +1,43 @@
-/* The comparison of the weights, open at step 12b: removed once they are decided.
+/* The comparisons open at step 12b: removed once decided. First the weights.
    1, as they are: besides the three weights of themes.css, a bold for two titles in capitals, a section
    of the manual and the word Console of its examples, an extra-bold for the level to play on the home
    screen, and a medium for the one sentence of the robot in the manual. */
 :root { --weight-heavy: 700; --weight-heaviest: 800; --weight-name-soft: 500; }
 /* 2, three weights: all of them in semi-bold. */
 :root[data-weights="three"] { --weight-heavy: 600; --weight-heaviest: 600; --weight-name-soft: 600; }
+
+/* The comparison of the line heights, open at step 12b: removed once they are decided.
+   3, as they are: the line heights written one by one in the blocks. 4 is the one of themes.css. */
+:root[data-lines="hand"] .app-commands-list { line-height: 1.55; }
+:root[data-lines="hand"] .app-commands-empty { line-height: 1.4; }
+:root[data-lines="hand"] .app-commands-details p { line-height: 1.4; }
+:root[data-lines="hand"] .app-commands-example { line-height: 1.5; }
+:root[data-lines="hand"] .confirm-question { line-height: 1.3; }
+:root[data-lines="hand"] .app-confirm p { line-height: 1.45; }
+:root[data-lines="hand"] .app-tip { line-height: 1.4; }
+:root[data-lines="hand"] .app-hover-note { line-height: 20px; }
+:root[data-lines="hand"] .page-section .app-goal h3 { line-height: 1.2; }
+:root[data-lines="hand"] .goal-text { line-height: 1.45; }
+:root[data-lines="hand"] .home-band b { line-height: 1.3; }
+:root[data-lines="hand"] .home-band span { line-height: 1.3; }
+:root[data-lines="hand"] .home-tip { line-height: 1.3; }
+:root[data-lines="hand"] .home-panel h3 { line-height: 1.25; }
+:root[data-lines="hand"] .home-goal { line-height: 1.45; }
+:root[data-lines="hand"] .legend-row { line-height: 1.25; }
+:root[data-lines="hand"] .legend-new { line-height: 1.4; }
+:root[data-lines="hand"] .manual-text { line-height: 1.6; }
+:root[data-lines="hand"] .manual-result.is-code { line-height: 1.5; }
+:root[data-lines="hand"] .manual-text h1 { line-height: 1.25; }
+:root[data-lines="hand"] .manual-text h2 { line-height: 1.3; }
+:root[data-lines="hand"] .manual-sign code { line-height: 1.4; }
+:root[data-lines="hand"] .manual-code pre { line-height: 21px; }
+:root[data-lines="hand"] .manual-out { line-height: 20px; }
+:root[data-lines="hand"] .manual-bubble { line-height: 1.35; }
+:root[data-lines="hand"] .message-title { line-height: 1.25; }
+:root[data-lines="hand"] .app-screen-message p { line-height: 1.5; }
+:root[data-lines="hand"] .app-panel { line-height: 20px; }
+:root[data-lines="hand"] .settings-row p { line-height: 1.4; }
+:root[data-lines="hand"] .used-code { line-height: 1.5; }
+:root[data-lines="hand"] .app-window { line-height: 1.4; }
+/* The address of a message sets its font after the line height of the sentences: it keeps its own. */
+:root[data-lines="hand"] .app-screen-message .message-address { line-height: normal; }

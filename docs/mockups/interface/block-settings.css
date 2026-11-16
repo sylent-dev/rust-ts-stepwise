@@ -3,7 +3,7 @@
 .settings-row { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 14px 0; border-top: 1px solid var(--hover); }
 .app-shortcuts-head + .settings-row { margin-top: 10px; }
 .settings-row b { font-weight: var(--weight-strong); }
-.settings-row p { margin: 2px 0 0; color: var(--weak); line-height: 1.4; }
+.settings-row p { margin: 2px 0 0; color: var(--weak); line-height: var(--line-text); }
 /* Clear all progress, alone at the end of the panel. */
 .settings-row.is-end { justify-content: flex-end; }
 /* Gray at rest, as a small button that doesn't call for a click; then the red that fills it from the

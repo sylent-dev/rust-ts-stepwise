@@ -4,8 +4,10 @@
 // is a list and `range` a slider, both setting the CSS `variable` at once, without redrawing the page.
 const VARIANTS = {
   theme: { label: "Style", options: Object.fromEntries(Object.entries(INTERFACE_STYLES).map(([key, style]) => [key, style.title])), fallback: Object.keys(INTERFACE_STYLES)[0] },
-  // Open at step 12b: the weights as they are, against three weights (section-type-compare.css).
+  // Open at step 12b: the weights and the line heights as they are, against a few of them, by role
+  // (section-type-compare.css).
   weights: { label: "Weights", options: { five: "1 · As they are", three: "2 · Three weights" }, fallback: "three" },
+  lines: { label: "Line heights", options: { hand: "3 · As they are", roles: "4 · Five line heights" }, fallback: "roles" },
 };
 
 const params = new URLSearchParams(location.search);

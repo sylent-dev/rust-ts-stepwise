@@ -16,7 +16,11 @@
   --size-label: 11px; --size-small: 12.5px; --size-text: 13.5px; --size-lead: 15px;
   --size-title: 18px; --size-display: 27px;
   /* The code: the editor, and the denser panels that list it. */
-  --size-code: 14px; --size-code-small: 13px; --line-code: 21px;
+  --size-code: 14px; --size-code-small: 13px;
+  /* The line heights: a title, the text of the interface, what is read at length; the code has whole
+     pixels, so that the marks of its lines (the next step, an error, a call) fall on the pixels. */
+  --line-title: 1.25; --line-text: 1.4; --line-reading: 1.6;
+  --line-code: 21px; --line-code-small: 20px;
   --radius-small: 3px; --control-radius: 3px;
 
   /* The shades of the robot (specs.md, Look of the world), where the interface draws its face. */
