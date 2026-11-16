@@ -1,15 +1,15 @@
 /* The legend: a bubble under its button, against the right end of the window. It blocks nothing. */
 .app-legend { top: 87px; right: 8px; width: 340px; padding: 14px 16px 16px; border: 0; }
-.legend-head { margin-bottom: 8px; font: 600 var(--size-title) var(--font-title); }
+.legend-head { margin-bottom: 8px; font: var(--weight-strong) var(--size-title) var(--font-text); }
 /* The cross stands at the same distance from the top and the right borders. */
 .app-window .legend-head button { position: absolute; top: 6px; right: 6px; display: grid; place-items: center; width: 26px; height: 26px; padding: 0; background: none; border: 0; color: var(--weak); }
 
 .legend-row { display: flex; align-items: center; gap: 12px; padding: 3px 0; line-height: 1.25; }
 .legend-row .app-cell { flex: none; }
-.legend-row b { font-weight: var(--strong-weight); }
+.legend-row b { font-weight: var(--weight-strong); }
 .legend-row span { display: block; color: var(--weak); font-size: var(--size-small); }
 /* What this level brings: the dark and the cyan of the column New of the goal. */
-.legend-new { display: inline-block; margin-left: 7px; padding: 1px 6px; background: var(--goal-side); color: var(--new); border-radius: var(--radius-small); font: 700 var(--size-label)/1.4 var(--font-text); font-style: normal; letter-spacing: .05em; text-transform: uppercase; vertical-align: 1px; }
+.legend-new { display: inline-block; margin-left: 7px; padding: 1px 6px; background: var(--goal-side); color: var(--new); border-radius: var(--radius-small); font: var(--weight-heavy) var(--size-label)/1.4 var(--font-text); font-style: normal; letter-spacing: .05em; text-transform: uppercase; vertical-align: 1px; }
 .legend-link { margin-top: 10px; }
 
 /* The button of the legend: open, and its dot while the map has new elements not yet seen. */

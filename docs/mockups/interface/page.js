@@ -4,6 +4,8 @@
 // is a list and `range` a slider, both setting the CSS `variable` at once, without redrawing the page.
 const VARIANTS = {
   theme: { label: "Style", options: Object.fromEntries(Object.entries(INTERFACE_STYLES).map(([key, style]) => [key, style.title])), fallback: Object.keys(INTERFACE_STYLES)[0] },
+  // Open at step 12b: the weights as they are, against three weights (section-type-compare.css).
+  weights: { label: "Weights", options: { five: "1 · As they are", three: "2 · Three weights" }, fallback: "three" },
 };
 
 const params = new URLSearchParams(location.search);

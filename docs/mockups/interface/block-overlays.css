@@ -4,7 +4,7 @@
 /* A row selected is a band across the whole width of the menu. */
 .app-menu-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 14px; }
 .app-menu-row.is-hovered, .app-menu-row:hover { background: var(--hover); }
-.app-menu-row kbd { color: var(--weak); font: 400 var(--size-small) var(--font-text); }
+.app-menu-row kbd { color: var(--weak); font: var(--weight-text) var(--size-small) var(--font-text); }
 .app-menu-row i { display: flex; color: var(--weak); }
 .app-menu-row.is-off { color: var(--weak); opacity: .55; }
 .app-menu-row.is-off:hover { background: none; }

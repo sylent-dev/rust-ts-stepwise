@@ -1,0 +1,7 @@
+/* The comparison of the weights, open at step 12b: removed once they are decided.
+   1, as they are: besides the three weights of themes.css, a bold for two titles in capitals, a section
+   of the manual and the word Console of its examples, an extra-bold for the level to play on the home
+   screen, and a medium for the one sentence of the robot in the manual. */
+:root { --weight-heavy: 700; --weight-heaviest: 800; --weight-name-soft: 500; }
+/* 2, three weights: all of them in semi-bold. */
+:root[data-weights="three"] { --weight-heavy: 600; --weight-heaviest: 600; --weight-name-soft: 600; }

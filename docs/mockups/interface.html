@@ -12,8 +12,11 @@
   Serve the repository root, then open http://127.0.0.1:<port>/docs/mockups/interface.html:
     python3 docs/mockups/serve.py 8765
 -->
-<!-- The three fonts of the interface, under the SIL Open Font License, which the application can embed. -->
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Manrope:wght@400;500;600;700&family=Source+Code+Pro:wght@600;800&display=block">
+<!-- The three fonts of the interface, under the SIL Open Font License: the files of the application. -->
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../web/static/fonts/fredoka/fredoka-latin.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../web/static/fonts/manrope/manrope-latin.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../web/static/fonts/source-code-pro/source-code-pro.woff2">
+<link rel="stylesheet" href="fonts.css">
 <link rel="stylesheet" href="world-elements/page.css">
 <link rel="stylesheet" href="world-elements/map.css">
 <link rel="stylesheet" href="interface/themes.css">
@@ -39,6 +42,7 @@
 <link rel="stylesheet" href="interface/section-keys.css">
 <link rel="stylesheet" href="interface/section-focus.css">
 <link rel="stylesheet" href="interface/section-type.css">
+<link rel="stylesheet" href="interface/section-type-compare.css">
 </head>
 <body>
 <p class="page-warning" id="file-warning" hidden>Opened as a file: serve the repository root (see the comment at the top of this page) so that the SVG files load.</p>
