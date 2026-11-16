@@ -1,0 +1,10 @@
+/* What has passed in green and teal, in teal alone or in green alone: open decision of step 12a.
+   Removed once decided, the choice going to themes.css. */
+.passed-is-teal .app-progress i, .passed-is-green .app-progress i { background: var(--passed); }
+.passed-is-teal .console-note.is-passed { color: var(--passed-text); }
+/* The green as a fill is the one of Night Desk in both themes, light enough under the ink. */
+.passed-is-green { --passed: #46c98f; --passed-text: var(--success); --passed-soft: color-mix(in srgb, var(--passed) 28%, var(--band)); }
+
+/* A strip of a window, at its real size, a little room under it before the next one. */
+.passed-strip { width: 1280px; overflow: hidden; }
+.passed-slot { margin-bottom: 12px; }
