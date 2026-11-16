@@ -36,7 +36,7 @@
 @keyframes head-draw { from { stroke-dashoffset: 1; opacity: 0; } 15% { opacity: 1; } }
 
 /* The level and its maps, in the teal of the maps that have passed. */
-.success-level { margin: 14px 24px 0; color: var(--weak); font-size: var(--size-subtitle); }
+.success-level { margin: 14px 24px 0; color: var(--weak); font-size: var(--size-title); }
 .success-level b { color: var(--text); font-weight: var(--strong-weight); }
 .success-level span { color: var(--passed-text); font-weight: var(--strong-weight); }
 /* Facts, never a score: the numbers stay in the size of the text. */
@@ -44,7 +44,7 @@
 .success-numbers b { color: var(--text); font-weight: var(--strong-weight); }
 
 /* You used: a comment and the words of the editor, across the whole width. */
-.used-code { margin-top: 14px; padding: 10px 24px 12px; background: var(--goal-bubble); font: var(--code-weight) var(--size-subtitle)/1.5 var(--font-code); }
+.used-code { margin-top: 14px; padding: 10px 24px 12px; background: var(--goal-bubble); font: var(--code-weight) var(--size-title)/1.5 var(--font-code); }
 .used-code > span { color: var(--code-comment); }
 .used-code > div { display: flex; flex-wrap: wrap; gap: 0 18px; }
 .used-code i { color: var(--code-function); font-style: normal; }

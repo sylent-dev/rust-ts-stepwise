@@ -1,6 +1,6 @@
 /* The legend: a bubble under its button, against the right end of the window. It blocks nothing. */
 .app-legend { top: 87px; right: 8px; width: 340px; padding: 14px 16px 16px; border: 0; }
-.legend-head { margin-bottom: 8px; font: 600 var(--size-subtitle) var(--font-title); }
+.legend-head { margin-bottom: 8px; font: 600 var(--size-title) var(--font-title); }
 /* The cross stands at the same distance from the top and the right borders. */
 .app-window .legend-head button { position: absolute; top: 6px; right: 6px; display: grid; place-items: center; width: 26px; height: 26px; padding: 0; background: none; border: 0; color: var(--weak); }
 

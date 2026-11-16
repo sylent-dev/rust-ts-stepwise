@@ -8,7 +8,7 @@
 .goal-robot { flex: none; height: 44px; }
 /* On Night Desk, the dark outline of the robot fades into the bubble: the white of its head lines up with the text. */
 :root[data-theme="night-desk"] .goal-robot { margin-left: -2px; }
-.page-section .app-goal h3 { position: relative; margin: 0; padding: 8px 14px; background: var(--goal-bubble); border-radius: 12px; color: var(--text); font: 600 var(--size-subtitle)/1.2 var(--font-name); text-transform: none; letter-spacing: normal; }
+.page-section .app-goal h3 { position: relative; margin: 0; padding: 8px 14px; background: var(--goal-bubble); border-radius: 12px; color: var(--text); font: 600 var(--size-title)/1.2 var(--font-name); text-transform: none; letter-spacing: normal; }
 .app-goal h3::before { content: ""; position: absolute; left: -6px; top: 50%; width: 12px; height: 12px; background: var(--goal-bubble); transform: translateY(-50%) rotate(45deg); }
 
 .goal-text { margin: 12px 0 0; line-height: 1.45; }

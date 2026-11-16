@@ -10,9 +10,9 @@
   --font-code: "Source Code Pro", monospace; /* The code: the editor, the console, the variables. */
   --code-weight: 600; --code-strong-weight: 800; --title-weight: 600; --strong-weight: 600;
   /* The scale of the text sizes, from the smallest: a title of a group in capitals, what comes second,
-     the text of the interface, what is read at length or names a zone, three titles, a great moment. */
+     the text of the interface, what is read at length or names a zone, a title, a great moment. */
   --size-label: 11px; --size-small: 12.5px; --size-text: 13.5px; --size-lead: 15px;
-  --size-subtitle: 16.5px; --size-title: 18px; --size-heading: 21px; --size-display: 27px;
+  --size-title: 18px; --size-display: 27px;
   /* The code: the editor, and the denser panels that list it. */
   --size-code: 14px; --size-code-small: 13px; --line-code: 21px;
   --radius-small: 3px; --control-radius: 3px;

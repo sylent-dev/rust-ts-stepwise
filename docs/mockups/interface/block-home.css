@@ -76,7 +76,7 @@
 /* The level chosen. */
 .home-panel { flex: none; display: flex; flex-direction: column; box-sizing: border-box; width: 360px; height: 640px; padding: 14px 16px 20px; background: var(--surface); box-shadow: var(--map-shadow); }
 .home-chapter { margin: 0; color: var(--weak); font-size: var(--size-small); }
-.home-panel h3 { margin: 2px 0 10px; color: var(--text); font: 600 var(--size-heading)/1.25 var(--font-title); letter-spacing: 0; text-transform: none; }
+.home-panel h3 { margin: 2px 0 10px; color: var(--text); font: 600 var(--size-title)/1.25 var(--font-title); letter-spacing: 0; text-transform: none; }
 .home-scene { flex: none; display: grid; height: 240px; }
 /* The robot of the level to play waits: it looks to one side, then to the other, and blinks now and then. */
 .home-scene.is-play .app-robot > * { animation: home-look 7s ease-in-out infinite; }
