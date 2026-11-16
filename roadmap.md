@@ -7,11 +7,12 @@ Implementation steps of the features described in [specs.md](specs.md). Each ste
 Read only by the steps that need them:
 
 - [Technical choices](docs/technical-choices.md): the libraries, the services and the main designs, with their reasons.
-- [Design system](docs/design-system.md): the tokens of the interface, the colors of the two themes first.
+- [Design system](docs/design-system.md): the tokens of the interface, the colors of the two themes and the typography first.
 - [Roadmap archive](docs/roadmap-archive.md): the detail of the steps done, moved there once their pull request is merged.
 - [Backlog](docs/backlog.md): the ideas, polish and edge cases found along the way, until the owner makes them a step.
 - [GitHub Pages usage](docs/github-pages-usage.md): the limits and rules of the host of the website.
 - [Sound sources](docs/sound-sources.md): the sources of the sounds compared at step 11b and their terms.
+- [Font sources](docs/font-sources.md): the files of the three fonts, where they come from and their licenses.
 
 ## Steps
 
