@@ -1,6 +1,6 @@
 // Section: the typography, decided at step 12b. One board per kind of token of themes.css (the sizes,
 // the weights, the line heights), one row per token: its samples in the fonts that use it, and what
-// it is for. Then, while the tabs Weights and Line heights are open, the windows they change the most.
+// it is for.
 
 const typeValue = token => getComputedStyle(document.documentElement).getPropertyValue(token).trim();
 const typeBoard = rows => `<div class="app-window type-board">${rows.map(([token, samples, uses]) => `<div class="type-row">
@@ -69,12 +69,4 @@ SECTIONS.push(["Typography", () => `
   ${typeBoard(TYPE_WEIGHTS)}
   <h3>The line heights</h3>
   ${typeBoard(TYPE_LINES)}
-  <p class="type-intro">A text of one line centered in its box (the name, a menu, the number of a level) has a line height of 1.</p>
-  <h3>To compare with the tabs Weights and Line heights, at the top of the page</h3>
-  <p class="type-intro"><b>Weights</b>: a bold stood for <i>New</i> and a section of the manual (<i>Move</i>), an extra-bold for the number of the level to play; with <b>2</b>, they are in semi-bold like every title. <b>Line heights</b>: a dozen values, one text at a time; with <b>4</b>, five of them, and a text moves by 1 to 4 pixels.</p>
-  <div class="page-row">
-    <div class="page-slot"><span>1280 × 720, the goal: <i>New</i>, the lines of its text</span>${firstVisitWindow()}</div>
-    <div class="page-slot"><span>1280 × 720, the home screen: the number of the level to play, the chapters, the goal of the level chosen</span>${homeWindow()}</div>
-    <div class="page-slot"><span>1280 × 720, the manual: its section <i>Move</i></span>${manualWindow()}</div>
-    <div class="page-slot"><span>1280 × 720, the success panel: the words used</span>${successOver(appSuccess(SUCCESS_SAMPLE))}</div>
-  </div>`]);
+  <p class="type-intro">A text of one line centered in its box (the name, a menu, the number of a level) has a line height of 1.</p>`]);

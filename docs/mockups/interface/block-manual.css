@@ -76,7 +76,7 @@ a.manual-name:hover { background: var(--band-hover); }
 .app-window .manual-text .manual-sign { margin: 0; }
 .app-window .manual-text code, .app-window .manual-none code { color: inherit; }
 .manual-text h1 { margin: 0 0 8px; font: var(--weight-strong) var(--size-display)/var(--line-title) var(--font-text); }
-.manual-text h2 { margin: 34px 0 6px; font: var(--weight-heavy) var(--size-title)/var(--line-title) var(--font-text); }
+.manual-text h2 { margin: 34px 0 6px; font: var(--weight-strong) var(--size-title)/var(--line-title) var(--font-text); }
 .manual-text p { margin: 0 0 10px; }
 .manual-text code { font: var(--weight-code) .92em var(--font-code); font-variant-ligatures: none; }
 .manual-lead { color: var(--weak); font-size: var(--size-lead); }
@@ -105,7 +105,7 @@ a.manual-name:hover { background: var(--band-hover); }
 .has-console .manual-map { grid-area: map; border-radius: 0 var(--radius-small) 0 0; }
 .manual-console { grid-area: console; display: flex; flex-direction: column; gap: 4px; min-height: 66px; box-sizing: border-box; padding: 8px 14px 10px; background: var(--hover); border-radius: 0 0 var(--radius-small) 0; }
 /* The name stays grey, so that it is never read as a line printed by the program. */
-.manual-console b { color: var(--weak); font: var(--weight-heavy) var(--size-text) var(--font-text); }
+.manual-console b { color: var(--weak); font: var(--weight-strong) var(--size-text) var(--font-text); }
 .manual-out { color: var(--text); font: var(--weight-code) var(--size-code-small)/var(--line-code-small) var(--font-code); font-variant-ligatures: none; }
 
 /* The drawer, over the map and the panels of the level screen, the code still in view. */
@@ -146,7 +146,7 @@ a.manual-name:hover { background: var(--band-hover); }
 /* The robot of the large screen, centered in the room left on the right, its speech bubble above it;
    the size of the head (80 px) and of the words (25 px) tuned by eye; each sentence on one line. */
 .manual-buddy { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: calc(25px * .7); padding: 0 40px; }
-.manual-bubble { position: relative; white-space: nowrap; padding: .7em 1em; background: var(--band); color: var(--text); border-radius: .8em; font: var(--weight-name-soft) var(--size-display)/var(--line-title) var(--font-name); text-align: center; }
+.manual-bubble { position: relative; white-space: nowrap; padding: .7em 1em; background: var(--band); color: var(--text); border-radius: .8em; font: var(--weight-strong) var(--size-display)/var(--line-title) var(--font-name); text-align: center; }
 .manual-bubble::after { content: ""; position: absolute; left: calc(50% - 12px); bottom: -11px; border: 12px solid transparent; border-bottom: 0; border-top-color: var(--band); }
 .manual-bubble p { margin: 0; }
 .manual-bubble.is-new { animation: manual-pop .25s cubic-bezier(.3, 1.6, .5, 1); }
