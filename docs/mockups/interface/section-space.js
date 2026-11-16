@@ -13,7 +13,7 @@ const SPACE_STEPS = [
 ];
 
 SECTIONS.push(["Spacing", () => `
-  <p class="space-intro">Every padding, margin and gap of the blocks takes one of these eight steps, where 34 values were written one by one. The tabs <b>Spacing</b> at the top of the page compare the whole mock-up as it was (1) and on the scale (2): a text moves by 1 to 4 pixels. The alignments tuned by eye stay as they were: the text of a link of the goal, an icon on the lowercase letters of the console, the header above the bar of the progress.</p>
+  <p class="space-intro">Every padding, margin and gap of the blocks takes one of these eight steps, where 34 values were written one by one. The tabs <b>Spacing</b> at the top of the page compare the whole mock-up as it was (1) and on the scale (2): most texts move by 1 or 2 pixels, the page of the manual by 10, its margins being 40 on every side. The alignments tuned by eye stay as they were: the text of a link of the goal, an icon on the lowercase letters of the console, the header above the bar of the progress.</p>
   <div class="app-window space-board">${SPACE_STEPS.map(([step, uses]) => `<div class="space-row">
     <code>--space-${step}</code>
     <small><b>${step}px</b></small>
