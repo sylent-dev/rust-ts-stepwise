@@ -3,6 +3,8 @@
 // One control per open decision; `fallback` is the choice shown by default. Tabs by default; `select`
 // is a list and `range` a slider, both setting the CSS `variable` at once, without redrawing the page.
 const VARIANTS = {
+  // Temporary (step 12c): the spacing on the scale, or as it was written by hand (spacing-hand.css).
+  spacing: { label: "Spacing", options: { hand: "1 · As it was, 34 values", scale: "2 · On the scale, 8 steps" }, fallback: "scale" },
   theme: { label: "Style", options: Object.fromEntries(Object.entries(INTERFACE_STYLES).map(([key, style]) => [key, style.title])), fallback: Object.keys(INTERFACE_STYLES)[0] },
 };
 

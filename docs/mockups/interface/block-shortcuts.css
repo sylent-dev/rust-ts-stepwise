@@ -1,11 +1,11 @@
 /* The veil under a panel in the middle of the screen, and the panel of the shortcuts. */
 .app-veil { position: absolute; inset: 0; z-index: 3; display: grid; place-items: center; background: var(--veil); }
-.app-shortcuts { position: relative; width: 640px; box-sizing: border-box; padding: 18px 22px 20px; }
+.app-shortcuts { position: relative; width: 640px; box-sizing: border-box; padding: var(--space-16) var(--space-24) var(--space-24); }
 .app-shortcuts-head { display: flex; justify-content: space-between; align-items: center; font: var(--weight-strong) var(--size-title) var(--font-text); }
 /* The cross stands at the same distance from the top and the right borders. */
-.app-window .app-shortcuts-head button { position: absolute; top: 6px; right: 6px; display: grid; place-items: center; width: 26px; height: 26px; padding: 0; background: none; border: 0; color: var(--weak); }
-.app-shortcuts-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 0 34px; margin-top: 8px; }
+.app-window .app-shortcuts-head button { position: absolute; top: var(--space-6); right: var(--space-6); display: grid; place-items: center; width: 26px; height: 26px; padding: 0; background: none; border: 0; color: var(--weak); }
+.app-shortcuts-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 0 var(--space-40); margin-top: var(--space-8); }
 /* Each title on a gray band, a little wider than its rows, so that the three parts show at once. */
-.app-shortcuts-group h4 { margin: 12px -8px 6px; padding: 4px 8px; background: var(--hover); color: var(--weak); font: var(--weight-strong) var(--size-label) var(--font-text); text-transform: uppercase; letter-spacing: var(--tracking-label); }
-.app-shortcuts-row { display: flex; justify-content: space-between; gap: 14px; padding: 3px 0; }
+.app-shortcuts-group h4 { margin: var(--space-12) calc(-1 * var(--space-8)) var(--space-6); padding: var(--space-4) var(--space-8); background: var(--hover); color: var(--weak); font: var(--weight-strong) var(--size-label) var(--font-text); text-transform: uppercase; letter-spacing: var(--tracking-label); }
+.app-shortcuts-row { display: flex; justify-content: space-between; gap: var(--space-16); padding: var(--space-4) 0; }
 .app-shortcuts-row kbd { color: var(--weak); font: var(--weight-text) var(--size-small) var(--font-text); white-space: nowrap; }

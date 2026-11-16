@@ -1,7 +1,7 @@
 /* The place of the level: in the middle of the header, centered on the height above the thin bar. */
-.app-window .app-place { position: absolute; left: var(--place-left, 50%); top: 4px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; justify-content: center; height: 38px; box-sizing: border-box; padding: 0 12px; background: none; border: 0; border-radius: var(--radius-small); color: var(--text); white-space: nowrap; }
+.app-window .app-place { position: absolute; left: var(--place-left, 50%); top: 4px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; justify-content: center; height: 38px; box-sizing: border-box; padding: 0 var(--space-12); background: none; border: 0; border-radius: var(--radius-small); color: var(--text); white-space: nowrap; }
 .app-window .app-place.is-open { background: var(--band-hover); }
-.app-window .app-place.is-sandbox { flex-direction: row; gap: 7px; }
+.app-window .app-place.is-sandbox { flex-direction: row; gap: var(--space-8); }
 .app-place.is-sandbox i { display: flex; color: var(--weak); }
 .app-place small { color: var(--weak); font-size: var(--size-label); font-weight: var(--weight-strong); line-height: 13px; letter-spacing: var(--tracking-label); text-transform: uppercase; }
 .app-place b { font: var(--weight-strong) var(--size-lead)/18px var(--font-text); }

@@ -13,8 +13,8 @@
 .app-window.is-large { --place-left: var(--crossing); }
 
 /* A small button with a text, and the main button of a bubble. */
-.app-chip { padding: 3px 10px; background: var(--chip); color: var(--text); border: 0; border-radius: var(--radius-small); font-weight: var(--weight-control); white-space: nowrap; }
-.app-window button.app-primary { padding: 6px 16px; background: var(--accent); color: var(--on-accent); border: 0; border-radius: var(--control-radius); box-shadow: var(--control-shadow); font-weight: var(--weight-strong); }
+.app-chip { padding: var(--space-4) var(--space-12); background: var(--chip); color: var(--text); border: 0; border-radius: var(--radius-small); font-weight: var(--weight-control); white-space: nowrap; }
+.app-window button.app-primary { padding: var(--space-6) var(--space-16); background: var(--accent); color: var(--on-accent); border: 0; border-radius: var(--control-radius); box-shadow: var(--control-shadow); font-weight: var(--weight-strong); }
 
 /* The keyboard focus: a ring on what the keys act on, which a click never shows. In the color of the
    text of the element, it stands out on every fill; inside its edge, no zone cuts it. A field and

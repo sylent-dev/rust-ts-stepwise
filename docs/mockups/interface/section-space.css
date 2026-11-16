@@ -1,0 +1,13 @@
+/* The section Spacing: its sentences, on the page, and the board of the steps of the scale. */
+.space-intro { max-width: 880px; margin: 4px 0 12px; color: #dee2e6; }
+.app-window.space-board { display: block; box-sizing: border-box; width: 1280px; height: auto; padding: 6px 24px; background: var(--surface); }
+.space-row { display: grid; grid-template-columns: 120px 50px 120px 1fr; gap: 24px; align-items: center; padding: 11px 0; }
+.space-row + .space-row { border-top: 1px solid var(--hover); }
+.space-row code { font: var(--weight-code) var(--size-code-small) var(--font-code); }
+.space-row small { color: var(--weak); font-size: var(--size-small); }
+.space-row small b { color: var(--text); font-weight: var(--weight-strong); }
+.space-uses { color: var(--weak); font-size: var(--size-small); }
+/* The step drawn at its real length, between two blocks. */
+.space-sample { display: flex; align-items: center; }
+.space-sample i { width: 22px; height: 22px; background: var(--chip); border-radius: var(--radius-small); }
+.space-sample b { height: 22px; background: var(--accent); }
