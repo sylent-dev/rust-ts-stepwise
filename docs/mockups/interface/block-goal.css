@@ -21,7 +21,7 @@
 
 /* What is new: a dark column, its title in the cyan of the eyes of the robot. */
 .goal-new { flex: none; display: flex; flex-direction: column; gap: 6px; width: 132px; box-sizing: border-box; padding: 16px 14px; background: var(--goal-side); color: var(--on-goal-side); }
-.goal-new h4 { margin: 0 0 4px; color: var(--goal-new-title); font: 700 11.5px var(--font-text); letter-spacing: .04em; text-transform: uppercase; }
+.goal-new h4 { margin: 0 0 4px; color: var(--new); font: 700 11.5px var(--font-text); letter-spacing: .04em; text-transform: uppercase; }
 
 .app-window .app-close { position: absolute; top: 11px; right: 10px; display: flex; padding: 3px; background: none; border: 0; color: var(--on-goal-side); }
 .app-window button.goal-go { position: relative; display: block; width: 100%; height: 50px; padding: 0; overflow: hidden; background: var(--accent); color: var(--on-accent); border: 0; font: 600 18px var(--font-name); }
@@ -31,14 +31,14 @@
    right; the paint behind it covers the whole button. Its center and the edge of the paint keep together.
    When the mouse leaves, the paint fades and the robot goes back to the left, unseen. */
 .goal-go::before, .goal-go::after { content: ""; position: absolute; pointer-events: none; }
-.goal-go::before { inset: 0 calc(100% + 26px) 0 0; background: #ffd25e; opacity: 0; transition: opacity .2s, right 0s .2s; }
+.goal-go::before { inset: 0 calc(100% + 26px) 0 0; background: var(--accent-hover); opacity: 0; transition: opacity .2s, right 0s .2s; }
 .goal-go::after { z-index: 2; left: -52px; top: 3px; width: 44px; height: 44px; background: url(../world-elements/daylight/robot.svg) center / contain no-repeat; transform: rotate(90deg); }
 .goal-go:hover::before { right: -26px; opacity: 1; transition: right .85s cubic-bezier(.35, .05, .4, 1), opacity 0s; }
 .goal-go:hover::after { left: calc(100% + 4px); transition: left .85s cubic-bezier(.35, .05, .4, 1); }
 /* Nothing moves for a learner who asked for less motion: the button only lights up. */
 @media (prefers-reduced-motion: reduce) {
   .goal-go::before, .goal-go::after { display: none; }
-  .app-window button.goal-go:hover { background: #ffd25e; }
+  .app-window button.goal-go:hover { background: var(--accent-hover); }
 }
 
 /* The bubble alone, in the flow of the page. */

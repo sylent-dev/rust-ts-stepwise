@@ -4,7 +4,7 @@
 
 /* An error is one big link to its place in the code. */
 .app-message { margin: 0 -6px; padding: 2px 6px; border-radius: var(--radius-small); cursor: pointer; }
-.app-message:hover { background: var(--call-current); }
+.app-message:hover { background: var(--chosen-soft); }
 
 .console-note { display: flex; align-items: flex-start; gap: 8px; font-weight: var(--code-strong-weight); }
 .console-note i { flex: none; display: flex; margin-top: 3px; }

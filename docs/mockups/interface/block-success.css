@@ -52,7 +52,7 @@
 
 /* The two other choices share the bottom of the panel, without a line, in the tone of the header. */
 .success-others { display: flex; background: var(--band); }
-.app-window .success-others button { flex: 1; height: 38px; padding: 0; background: none; border: 0; color: var(--band-text); font-weight: 500; }
+.app-window .success-others button { flex: 1; height: 38px; padding: 0; background: none; border: 0; color: var(--text); font-weight: 500; }
 .app-window .success-others button:hover { background: var(--band-hover); }
 
 /* Nothing moves for a learner who asked for less motion. */

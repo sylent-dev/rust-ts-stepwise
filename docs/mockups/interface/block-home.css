@@ -1,19 +1,15 @@
 /* The home screen: the path of the levels on the left, the level chosen on the right. */
 
-/* The ground under the path: the grid of the map, in the tones of each theme. `rim` is the solid color
-   that detaches a stone and its squares from the path. */
+/* The ground under the path: the grid of the map, in the tones of each theme (themes.css). */
 :root {
-  --home-paint: #ffb300; --home-path: 14px; --home-grid: 40px; --home-lines: 50%;
+  --home-path: 14px; --home-grid: 40px; --home-lines: 50%;
   --home-grid-line: color-mix(in srgb, var(--home-line) var(--home-lines), transparent);
   --home-tiles: linear-gradient(90deg, var(--home-five) 2px, transparent 0), linear-gradient(var(--home-five) 2px, transparent 0), linear-gradient(90deg, var(--home-grid-line) 1px, transparent 0), linear-gradient(var(--home-grid-line) 1px, transparent 0);
   --home-tile-sizes: calc(var(--home-grid) * 5) calc(var(--home-grid) * 5), calc(var(--home-grid) * 5) calc(var(--home-grid) * 5), var(--home-grid) var(--home-grid), var(--home-grid) var(--home-grid);
-  --home-title: var(--text); --home-idea: var(--weak);
 }
-:root[data-theme="day-desk"] { --home-ground: #e1e5ea; --home-line: #cad1da; --home-five: #22293520; --home-band: #ffffff8c; --home-rim: #f1f3f6; --home-field: #e4e8ee; --home-tile-shown: #cdd4dc; --home-locked: #eceff3; --home-locked-stone: #dadee4; }
-:root[data-theme="night-desk"] { --home-ground: #262c35; --home-line: #36404d; --home-five: #ffffff14; --home-band: #1e232bd9; --home-rim: #20252d; --home-field: #14181e; --home-tile-shown: #465060; --home-locked: #2a303a; --home-locked-stone: #363d49; }
 
 /* The header: the name, the count in the middle of the window, the three links on the right. */
-.home-count { position: absolute; left: 50%; transform: translateX(-50%); color: var(--band-weak); }
+.home-count { position: absolute; left: 50%; transform: translateX(-50%); color: var(--weak); }
 .home-links { display: flex; gap: 2px; margin-left: auto; }
 
 /* The path and the panel keep their size, centered in the window. */
@@ -24,20 +20,20 @@
 
 /* A chapter: a light band behind its stones, with its name and its idea. */
 .home-band { position: absolute; box-sizing: border-box; height: 112px; padding: 6px 10px; background: var(--home-band); border-radius: var(--radius-small); }
-.home-band b { display: block; color: var(--home-title); font: 600 14px/1.3 var(--font-title); }
-.home-band span { display: block; color: var(--home-idea); font: 400 11.5px/1.3 var(--font-text); }
+.home-band b { display: block; color: var(--text); font: 600 14px/1.3 var(--font-title); }
+.home-band span { display: block; color: var(--weak); font: 400 11.5px/1.3 var(--font-text); }
 
 /* The path: the paint up to the level to play, then its ghost, as a goal mark on the map. */
 .home-line { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-.home-line path { fill: none; stroke: var(--home-paint); stroke-width: var(--home-path); stroke-linecap: round; }
+.home-line path { fill: none; stroke: var(--accent); stroke-width: var(--home-path); stroke-linecap: round; }
 .home-line path.is-ghost { opacity: .35; }
 
 /* A stone: filled when done, bold when it is the level to play, flat slate when locked. */
 .app-window .home-stone { position: absolute; display: block; box-sizing: border-box; width: 44px; height: 44px; margin: -22px 0 0 -22px; padding: 0; border-radius: 50%; font: 600 15px/1 var(--font-text); }
 .app-window .home-stone.is-done { background: var(--passed); color: var(--on-passed); border: 0; }
-.app-window .home-stone.is-play { background: #ffffff; color: #222935; border: 3.5px solid var(--accent); font-weight: 800; }
-.app-window .home-stone.is-locked { background: var(--home-locked-stone); color: var(--home-idea); border: 0; }
-.app-window .home-stone:focus-visible { outline: 2px solid var(--home-title); outline-offset: 2px; }
+.app-window .home-stone.is-play { background: var(--robot-body); color: var(--robot-ink); border: 3.5px solid var(--accent); font-weight: 800; }
+.app-window .home-stone.is-locked { background: var(--home-locked-stone); color: var(--weak); border: 0; }
+.app-window .home-stone:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
 .app-window .home-stone:hover { z-index: 4; }
 /* The robot stays on top of the stone it stands on; the other stones keep their title over it. */
 .app-window .home-stone[aria-pressed="true"]:hover { z-index: 1; }
@@ -55,8 +51,8 @@
 @keyframes home-thrown { 0%, 12% { transform: none; } 48% { transform: translateY(-40px) rotate(-10deg); } 78% { transform: translateY(5px) rotate(4deg); } 90% { transform: translateY(-5px); } 100% { transform: none; } }
 
 /* On hover, the level to play takes the visor of the robot instead of its number: its eyes search around. */
-.home-stone.is-play .home-disc::before { content: ""; position: absolute; left: calc(50% - 16px); top: calc(50% - 8px); width: 32px; height: 16px; background: #222935; border-radius: 8px; transform: scale(0); transition: transform .22s cubic-bezier(.3, 1.6, .5, 1); }
-.home-stone.is-play .home-disc::after { content: ""; position: absolute; left: calc(50% - 16px); top: calc(50% - 8px); width: 32px; height: 16px; background: radial-gradient(circle at 10px 8px, #3fc3ff 3.4px, transparent 3.9px), radial-gradient(circle at 22px 8px, #3fc3ff 3.4px, transparent 3.9px); opacity: 0; }
+.home-stone.is-play .home-disc::before { content: ""; position: absolute; left: calc(50% - 16px); top: calc(50% - 8px); width: 32px; height: 16px; background: var(--robot-ink); border-radius: 8px; transform: scale(0); transition: transform .22s cubic-bezier(.3, 1.6, .5, 1); }
+.home-stone.is-play .home-disc::after { content: ""; position: absolute; left: calc(50% - 16px); top: calc(50% - 8px); width: 32px; height: 16px; background: radial-gradient(circle at 10px 8px, var(--robot-eyes) 3.4px, transparent 3.9px), radial-gradient(circle at 22px 8px, var(--robot-eyes) 3.4px, transparent 3.9px); opacity: 0; }
 .home-stone.is-play .home-number { transition: opacity .1s; }
 .home-stone.is-play:hover .home-number { opacity: 0; }
 .home-stone.is-play:hover .home-disc::before { transform: none; }
@@ -97,7 +93,7 @@
 .home-code-row { display: flex; gap: 8px; margin-top: 4px; }
 /* A code is two short words: the field holds 18 characters, and the button takes the rest of the row. */
 .home-code-row .app-chip { flex: 1; }
-.home-code input { flex: none; width: 180px; box-sizing: border-box; height: 32px; padding: 0 10px; background: var(--home-field); color: var(--text); border: 0; border-radius: var(--radius-small); font: var(--code-weight) 14px var(--font-code); }
+.home-code input { flex: none; width: 180px; box-sizing: border-box; height: 32px; padding: 0 10px; background: var(--field); color: var(--text); border: 0; border-radius: var(--radius-small); font: var(--code-weight) 14px var(--font-code); }
 /* The field stays flat, even with the focus, which its cursor shows; the code itself takes the color of its state. */
 .home-code input:focus { outline: none; }
 .home-code input.is-wrong { color: var(--error); }
@@ -107,7 +103,7 @@
 .home-code.is-right .home-unlock { position: relative; overflow: hidden; background: var(--accent); color: var(--on-accent); border: 0; font-weight: var(--strong-weight); animation: home-unlock-on .25s cubic-bezier(.3, 1.6, .5, 1); }
 @keyframes home-unlock-on { from { transform: scale(.9); } }
 .home-code.is-right .home-unlock span { position: relative; z-index: 1; }
-.home-code.is-right .home-unlock::before { content: ""; position: absolute; inset: 0 calc(100% + 16px) 0 0; background: #ffd25e; opacity: 0; transition: opacity .2s, right 0s .2s; pointer-events: none; }
+.home-code.is-right .home-unlock::before { content: ""; position: absolute; inset: 0 calc(100% + 16px) 0 0; background: var(--accent-hover); opacity: 0; transition: opacity .2s, right 0s .2s; pointer-events: none; }
 .home-code.is-right .home-unlock::after { content: ""; position: absolute; z-index: 2; left: -34px; top: 2px; width: 28px; height: 28px; background: url(../world-elements/daylight/robot.svg) center / contain no-repeat; transform: rotate(90deg); pointer-events: none; }
 .home-code.is-right .home-unlock:hover::before { right: -16px; opacity: 1; transition: right .85s cubic-bezier(.35, .05, .4, 1), opacity 0s; }
 .home-code.is-right .home-unlock:hover::after { left: calc(100% + 4px); transition: left .85s cubic-bezier(.35, .05, .4, 1); }
@@ -120,7 +116,7 @@
 .home-maps { display: flex; gap: 8px; }
 /* The tiles speak as the tabs of the map on the level screen: pale teal once passed, full teal when also shown.
    A map shown and not passed is a lighter grey, without border: the amber is kept for the actions. */
-.app-window .home-map { position: relative; width: 74px; height: 26px; box-sizing: border-box; display: grid; place-items: center; padding: 0; background: var(--chip); color: var(--on-chip); border: var(--chip-border); border-radius: var(--radius-small); font-size: 13px; font-weight: 500; }
+.app-window .home-map { position: relative; width: 74px; height: 26px; box-sizing: border-box; display: grid; place-items: center; padding: 0; background: var(--chip); color: var(--text); border: 0; border-radius: var(--radius-small); font-size: 13px; font-weight: 500; }
 .app-window .home-map.is-shown { background: var(--home-tile-shown); font-weight: var(--strong-weight); }
 .app-window .home-map.is-passed { background: var(--passed-soft); color: var(--text); border-color: transparent; }
 .app-window .home-map.is-passed.is-shown { background: var(--passed); color: var(--on-passed); }
@@ -132,7 +128,7 @@
 .home-maps { isolation: isolate; }
 .home-map[data-map]::before, .home-map[data-map]::after { content: ""; position: absolute; z-index: -1; pointer-events: none; opacity: 0; transition: transform .22s cubic-bezier(.3, 1.6, .5, 1), opacity .1s; }
 .home-map[data-map]::before { left: calc(50% - 24px); top: 0; width: 48px; height: 29px; background: url(../world-elements/daylight/robot.svg) -21.5px -18.5px / 91px 91px no-repeat; border-radius: 14px 14px 0 0; }
-.home-map[data-map]::after { left: calc(50% - 17.1px); top: 7.2px; width: 34.3px; height: 15.7px; background: radial-gradient(circle at 9.3px 7.9px, #3fc3ff 4px, transparent 4.5px), radial-gradient(circle at 25px 7.9px, #3fc3ff 4px, transparent 4.5px), #222935; border-radius: 7.9px; }
+.home-map[data-map]::after { left: calc(50% - 17.1px); top: 7.2px; width: 34.3px; height: 15.7px; background: radial-gradient(circle at 9.3px 7.9px, var(--robot-eyes) 4px, transparent 4.5px), radial-gradient(circle at 25px 7.9px, var(--robot-eyes) 4px, transparent 4.5px), var(--robot-ink); border-radius: 7.9px; }
 .home-map[data-map]:hover::before { opacity: 1; transform: translateY(-27px); }
 .home-map[data-map]:hover::after { opacity: 1; transform: translateY(-27px); animation: home-tile-eyes 2.2s .2s ease-in-out infinite; }
 @keyframes home-tile-eyes { 0%, 12%, 100% { background-position: 0 0, 0 0; } 22%, 40% { background-position: -3px 0, -3px 0; } 50%, 72% { background-position: 3px 0, 3px 0; } 84% { background-position: 0 0, 0 0; } }
