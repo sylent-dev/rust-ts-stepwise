@@ -1,5 +1,5 @@
-// Section: the keyboard focus, open decision of step 12a. The ring is drawn on several elements of
-// each window at once, to compare them; a real screen shows one. Every window is live: Tab moves
+// Section: the keyboard focus, decided at step 12a. The ring is drawn on several elements of each
+// window at once, on every kind of fill; a real screen shows one. Every window is live: Tab moves
 // the real focus.
 const withFocus = (html, selectors) => {
   const template = document.createElement("template");
@@ -13,7 +13,7 @@ const withFocus = (html, selectors) => {
 };
 
 SECTIONS.push(["Keyboard focus", () => `
-  <p class="focus-intro">The ring that shows what the keys act on, for a learner who uses <b>Tab</b> rather than the mouse; a click never shows it. Each window draws it on several elements at once, to compare: a real screen shows one. Click in a window, then press Tab, to move the real focus.</p>
+  <p class="focus-intro">The ring that shows what the keys act on, for a learner who uses <b>Tab</b> rather than the mouse; a click never shows it. It is 2 pixels wide, in the color of the text of its element, 4 pixels inside its edge: it stands out on every fill, and no zone cuts it. Each window draws it on several elements at once: a real screen shows one. Click in a window, then press Tab, to move the real focus.</p>
   <div class="page-row">
     <div class="page-slot"><span>1280 × 720, the level screen: a menu, the gear, Run, a tab of the map, Legend, a tab of the panels, the number of the level</span>${withFocus(readyWindow(), [".app-menu:nth-child(3)", ".app-gear", ".app-control", ".app-map-tab:nth-child(2)", ".app-chip", ".app-tab:nth-child(2)", ".app-level-mark"])}</div>
     <div class="page-slot"><span>1280 × 720, the goal: Let's go on the amber, a link on its dark side, the cross</span>${withFocus(firstVisitWindow(), [".goal-go", ".goal-link", ".app-goal .app-close"])}</div>

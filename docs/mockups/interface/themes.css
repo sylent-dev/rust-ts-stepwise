@@ -27,6 +27,8 @@
   --chosen: var(--text);
   /* Over the screen: the veil under a panel, the shadow of the drawer, a light shade under the pointer on a colored zone. */
   --veil: #0007; --drawer-shadow: -12px 0 34px #22293530; --shade: #0001;
+  /* The keyboard focus: a ring in the color of the text of the element, inside its edge. */
+  --focus-ring: 2px solid currentColor; --focus-offset: -4px;
   /* The goal: its link to the manual, and the text of its dark side. */
   --goal-link: #5d687a; --goal-link-hover: #6b778a; --on-goal-link: #ffffff; --on-goal-side: #ffffff;
 }

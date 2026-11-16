@@ -4,10 +4,6 @@
 // is a list and `range` a slider, both setting the CSS `variable` at once, without redrawing the page.
 const VARIANTS = {
   theme: { label: "Style", options: Object.fromEntries(Object.entries(INTERFACE_STYLES).map(([key, style]) => [key, style.title])), fallback: Object.keys(INTERFACE_STYLES)[0] },
-  // Step 12a, the keyboard focus (section Keyboard focus): the color of its ring and its place, the
-  // distance between the edge of the element and the ring, which is drawn inside it below 0.
-  focus: { label: "Focus ring", options: { ink: "1 · Text of the page", own: "2 · Text of the element", cyan: "3 · Cyan of the eyes", amber: "4 · Amber" }, fallback: "own" },
-  place: { label: "Its place, from the edge (inside below 0)", range: { min: -6, max: 4, step: 1 }, variable: "--focus-offset", unit: "px", fallback: "-4" },
 };
 
 const params = new URLSearchParams(location.search);

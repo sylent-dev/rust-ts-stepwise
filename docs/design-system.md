@@ -121,6 +121,18 @@ Two themes, chosen in the settings: **Day Desk**, light, by default, and **Night
 | `--home-locked` | `#eceff3` | `#2a303a` | A map of a level that is locked, in its panel. |
 | `--home-locked-stone` | `#dadee4` | `#363d49` | A level that is locked, on the path. |
 
+### Keyboard focus
+
+| Token | Value | Role |
+|---|---|---|
+| `--focus-ring` | `2px solid currentColor` | The ring of the element that holds the focus of the keyboard, shown for the keys only (`:focus-visible`), never after a click. |
+| `--focus-offset` | `-4px` | Its place: 4 pixels inside the edge of the element. |
+
+- In the color of the text of its element, the ring stands out on every fill without a rule per element: dark on the amber of **Let's go**, light on the theme chosen in the settings, white on the dark side of a goal.
+- Inside the edge, no zone cuts it: the zones meet without any line, and many buttons lie against the edge of theirs (the tabs of the map, **Legend**, **Let's go**).
+- A field and the editor show their cursor instead.
+- Rejected (decided on 2026-11-16, section *Keyboard focus* of the mock-up): a ring around the element, 2 pixels away, in the color of the text of the page, cut on the buttons that lie against an edge and lost on the dark side of a goal in Day Desk; the cyan and the amber, weak on the light zones of Day Desk, the amber lost on an amber button, and both already carrying a meaning.
+
 ### Contrast
 
 The contrast between a text and its zone hasn't been checked against a rule: see the [backlog](backlog.md) (set aside on 2026-11-16).
