@@ -1,0 +1,7 @@
+/* The keyboard focus, open decision of step 12a: its color; its place is the slider of page.js, which sets
+   --focus-offset. Removed once decided, the choice going to themes.css. */
+:root[data-focus="ink"] { --focus: var(--text); }
+:root[data-focus="own"] { --focus: currentColor; }
+:root[data-focus="cyan"] { --focus: var(--robot-eyes); }
+:root[data-focus="amber"] { --focus: var(--accent); }
+.focus-intro { max-width: 880px; margin: 4px 0 12px; color: #dee2e6; }

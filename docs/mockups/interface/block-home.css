@@ -33,7 +33,6 @@
 .app-window .home-stone.is-done { background: var(--passed); color: var(--on-passed); border: 0; }
 .app-window .home-stone.is-play { background: var(--robot-body); color: var(--robot-ink); border: 3.5px solid var(--accent); font-weight: 800; }
 .app-window .home-stone.is-locked { background: var(--home-locked-stone); color: var(--weak); border: 0; }
-.app-window .home-stone:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
 .app-window .home-stone:hover { z-index: 4; }
 /* The robot stays on top of the stone it stands on; the other stones keep their title over it. */
 .app-window .home-stone[aria-pressed="true"]:hover { z-index: 1; }
