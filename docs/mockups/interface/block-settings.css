@@ -7,9 +7,9 @@
 /* Clear all progress, alone at the end of the panel. */
 .settings-row.is-end { justify-content: flex-end; }
 /* Gray at rest, as a small button that doesn't call for a click; then the red that fills it from the
-   left, the text turning white with it. */
+   left, the text turning white with it. The two seconds of its wait are its own, at a steady pace. */
 .app-window .settings-clear { position: relative; padding: var(--space-6) var(--space-16); background: var(--chip); color: var(--text); border: 0; border-radius: var(--radius); font-weight: var(--weight-control); cursor: default; }
-.settings-clear-fill { position: absolute; inset: 0; display: grid; place-items: center; background: var(--danger); color: var(--on-danger); border-radius: inherit; clip-path: inset(0 100% 0 0); transition: clip-path .2s ease-out; }
+.settings-clear-fill { position: absolute; inset: 0; display: grid; place-items: center; background: var(--danger); color: var(--on-danger); border-radius: inherit; clip-path: inset(0 100% 0 0); transition: clip-path var(--duration-appear) var(--ease-appear); }
 .settings-clear:hover .settings-clear-fill, .settings-clear:focus-visible .settings-clear-fill { clip-path: inset(0 0 0 0); transition: clip-path 2s linear; }
 .app-window .settings-clear.is-ready { cursor: pointer; }
 

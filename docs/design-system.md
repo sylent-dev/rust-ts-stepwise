@@ -270,3 +270,46 @@ Three radii, each with a role. The section *Spacing and radii* of the mock-up sh
 - A circle is written `50%`: a stone of the home screen, the number of a level, a breakpoint, a dot.
 - A drawing keeps the corners of its shape: the visor of the robot on the level to play, the stroke of paint of the success panel, rounded as the brush by half its height.
 - `--radius` replaces `--radius-small` and `--control-radius`, two names for the same 3 pixels, left by the comparison of the styles (decided on 2026-11-16). Three values moved, hardly seen: the squares of the speed, from 1 pixel to 2; the bubble of a goal, from 12 pixels to 12.6; the bubble of the manual, from 21.6 to 18.9.
+
+## Motion
+
+Little moves in the interface, so that what moves is seen: the robot on the map first (see [Animations](../specs.md#animations)), then a few places where the interface takes after it. Four durations and four curves time them. The section *Motion* of the mock-up plays each of them.
+
+### Names
+
+- `--duration-<role>` and `--ease-<role>`: the kind of value first, then what moves so.
+- What moves takes its two values from the tokens: `transition: transform var(--duration-appear) var(--ease-pop)`.
+
+### Durations
+
+| Token | Value | Role |
+|---|---|---|
+| `--duration-fade` | `100ms` | What gives way under the pointer: the number of the level to play under the face of the robot, the shadow of a level done. |
+| `--duration-appear` | `200ms` | What appears, or goes back to rest: the face of the robot on the level to play, **Unlock** turning amber, a bubble of the manual, the success panel; the paint leaving a main button. |
+| `--duration-stroke` | `850ms` | The robot crossing a main button under the pointer, its paint behind it: **Let's go**, **Unlock**, the way back from the manual. |
+| `--duration-flash` | `1600ms` | What lights up to be noticed, then fades: the place reached in the manual; the status bar when the learner types in an editor that is locked. |
+
+### Curves
+
+| Token | Value | Role |
+|---|---|---|
+| `--ease-appear` | `ease-out` | What arrives or fades: fast at first, then settling. |
+| `--ease-pop` | `cubic-bezier(.3, 1.6, .5, 1)` | What pops: it goes past its size and comes back, as the robot goes past its quarter turn. |
+| `--ease-stroke` | `cubic-bezier(.35, .05, .4, 1)` | The brush: it sets off gently, crosses fast and settles. |
+| `--ease-move` | `ease-in-out` | What goes from a place to another, starting and stopping gently, as the robot moves forward: the robot of the home screen, the head of the success panel. |
+
+- A fill under the pointer changes at once: a row, a button, a tab.
+- The tokens replace a dozen values written one by one (decided on 2026-11-16): 0.2, 0.22 and 0.25 seconds became 200 milliseconds, 0.1 and 0.15 became 100, hardly seen.
+
+### Scenes
+
+A scene tells a small story in several moves. It keeps its durations and its delays, written in its block, and takes its curves from the tokens:
+
+- **The robot of the home screen**: it looks around every 7 seconds, peeks left and right from the level under the pointer every 2.2 seconds, slides to the level chosen in 450 milliseconds, and is tossed by a level done in 850.
+- **The success panel**, in about two seconds: the band painted in one second, its title, the head that drops in 550 milliseconds, on a curve of its own, a fall, then its face drawn.
+- **An example of the manual**: a step every 700 milliseconds; **Run** comes back in 800.
+- **Clear all progress**: the two seconds of its wait, at a steady pace, since its bar measures a time.
+
+### Less motion
+
+For a learner who asked their system for less motion (`prefers-reduced-motion`), nothing moves in the interface: a main button only lights up under the pointer, nothing pops, the robot of the home screen stays still, the success panel is there at once. A change of tone stays, since nothing moves: the flash, the bar of **Clear all progress**. The map has rules of its own (see [Animations](../specs.md#animations)).

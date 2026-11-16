@@ -31,10 +31,10 @@
    right; the paint behind it covers the whole button. Its center and the edge of the paint keep together.
    When the mouse leaves, the paint fades and the robot goes back to the left, unseen. */
 .goal-go::before, .goal-go::after { content: ""; position: absolute; pointer-events: none; }
-.goal-go::before { inset: 0 calc(100% + 26px) 0 0; background: var(--accent-hover); opacity: 0; transition: opacity .2s, right 0s .2s; }
+.goal-go::before { inset: 0 calc(100% + 26px) 0 0; background: var(--accent-hover); opacity: 0; transition: opacity var(--duration-appear) var(--ease-appear), right 0s var(--duration-appear); }
 .goal-go::after { z-index: 2; left: -52px; top: 3px; width: 44px; height: 44px; background: url(../world-elements/daylight/robot.svg) center / contain no-repeat; transform: rotate(90deg); }
-.goal-go:hover::before { right: -26px; opacity: 1; transition: right .85s cubic-bezier(.35, .05, .4, 1), opacity 0s; }
-.goal-go:hover::after { left: calc(100% + 4px); transition: left .85s cubic-bezier(.35, .05, .4, 1); }
+.goal-go:hover::before { right: -26px; opacity: 1; transition: right var(--duration-stroke) var(--ease-stroke), opacity 0s; }
+.goal-go:hover::after { left: calc(100% + 4px); transition: left var(--duration-stroke) var(--ease-stroke); }
 /* Nothing moves for a learner who asked for less motion: the button only lights up. */
 @media (prefers-reduced-motion: reduce) {
   .goal-go::before, .goal-go::after { display: none; }

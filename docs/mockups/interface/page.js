@@ -4,6 +4,8 @@
 // is a list and `range` a slider, both setting the CSS `variable` at once, without redrawing the page.
 const VARIANTS = {
   theme: { label: "Style", options: Object.fromEntries(Object.entries(INTERFACE_STYLES).map(([key, style]) => [key, style.title])), fallback: Object.keys(INTERFACE_STYLES)[0] },
+  // Temporary, until the decision (section Motion): what the learner opens, at once or with a motion.
+  opens: { label: "What opens", options: { once: "1 · At once", covers: "2 · What covers the screen moves", all: "3 · Menus and bubbles move too" }, fallback: "once" },
 };
 
 const params = new URLSearchParams(location.search);
