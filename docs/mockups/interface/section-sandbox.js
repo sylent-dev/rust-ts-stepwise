@@ -29,8 +29,10 @@ function sandboxWorld({ path = [], robot, facing }) {
   return appRowsWorld(rows, { "2,3": { item: true }, "9,5": { item: true }, [robot]: { robot: facing } }, 48, [...SANDBOX_LINKS, ...pathLinks(...path)]);
 }
 
-const sandboxWindow = ({ path, robot, facing, state, steps, console }) => appWindow({
+const sandboxWindow = ({ path, robot, facing, state, steps, console, header, overlay }) => appWindow({
   sandbox: true,
+  header,
+  overlay,
   editor: { lines: SANDBOX_CODE, state, steps, cursor: "Ln 10, Col 21" },
   map: sandboxWorld({ path, robot, facing }),
   panels: { tab: "Console", content: console },
@@ -39,4 +41,5 @@ const sandboxWindow = ({ path, robot, facing, state, steps, console }) => appWin
 SECTIONS.push(["Sandbox", () => `<div class="page-row">
   <div class="page-slot"><span>1280 × 720, ready</span>${sandboxWindow({ robot: "3,3", facing: "east", state: "Ready", steps: 0, console: '<span class="app-weak">Run your program to see what it prints.</span>' })}</div>
   <div class="page-slot"><span>1280 × 720, ended: no goal, so nothing passes or fails</span>${sandboxWindow({ path: SANDBOX_SPIRAL, robot: "6,1", facing: "south", state: "Ended", steps: 55, console: consolePrints("Spiral done") })}</div>
+  <div class="page-slot"><span>1280 × 720, its menu Level: the row Sandbox lit as a row under the pointer, since its screen is already shown; it can't be chosen</span>${sandboxWindow({ robot: "3,3", facing: "east", state: "Ready", steps: 0, console: '<span class="app-weak">Run your program to see what it prints.</span>', header: { menu: "Level" }, overlay: appDropdown(MENU_LEFT.Level, SANDBOX_LEVEL_ROWS, undefined, 46) })}</div>
 </div>`]);

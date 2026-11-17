@@ -4,8 +4,10 @@
 <script lang="ts">
 	import { loadCore } from '#lib/core.ts';
 	import { t } from '#lib/i18n.ts';
+	import { levelMenus } from '#lib/level-menus.ts';
 	import Probe from '#lib/probe.svelte';
 	import Header from '#lib/shell/header.svelte';
+	import MenuBar from '#lib/shell/menu-bar.svelte';
 	import Place from '#lib/shell/place.svelte';
 
 	const core = loadCore();
@@ -16,6 +18,7 @@
 </svelte:head>
 
 <Header>
+	<MenuBar menus={levelMenus('sandbox')} />
 	<Place title={t('sandbox')} icon="diamond" />
 </Header>
 <main>

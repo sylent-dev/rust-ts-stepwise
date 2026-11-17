@@ -1,0 +1,21 @@
+/* The section of the menus with the keyboard: its introduction, on the page. */
+.menu-keys-intro { max-width: 880px; margin: 4px 0 12px; color: #dee2e6; }
+.menu-live > span b { color: #dee2e6; }
+
+/* The live menus: one row lit at a time, the one that holds the focus, under the pointer or chosen
+   with the keys; the row Speed stays lit while its speeds are open. */
+.menu-live .app-menu:hover { background: var(--band-hover); }
+.menu-live .app-menu-row { cursor: default; }
+.menu-live .app-menu-row:hover { background: none; }
+.menu-live .app-menu-row:focus, .menu-live .app-menu-row.is-open { background: var(--hover); }
+.menu-live .app-dropdown:focus { outline: none; }
+
+/* A menu grows from the corner under its name, and goes back the same way, a little faster. Nothing
+   moves for a learner who asked for less motion. */
+@keyframes menu-grow { from { opacity: 0; transform: scale(.85); } }
+.menu-live .app-dropdown { transform-origin: top left; }
+.menu-live .app-dropdown.is-opening { animation: menu-grow var(--duration-fade) var(--ease-appear); }
+.menu-live .app-dropdown.is-closing { pointer-events: none; animation: menu-grow calc(var(--duration-fade) * .6) var(--ease-appear) reverse forwards; }
+@media (prefers-reduced-motion: reduce) {
+  .menu-live .app-dropdown.is-opening, .menu-live .app-dropdown.is-closing { animation: none; }
+}

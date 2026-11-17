@@ -13,9 +13,9 @@ function appWordmark(fontSize) {
 // The header: the name, the menus, the place of the level (block-place.js), the gear of the settings at
 // its right end, the thin bar of the progress. `menu` is the menu open and `goalOpen` the bubble of the goal, `settings` the panel of the settings;
 // `place` is the level, when it isn't the sample one.
-// The sandbox has no goal and no progress.
+// The sandbox has no goal and no progress: its header is 3 pixels shorter, without the bar.
 function appHeader({ menu, goalOpen = false, sandbox = false, place, settings = false } = {}) {
-  return `<header class="app-header">
+  return `<header class="app-header ${sandbox ? "is-barless" : ""}">
     ${appWordmark(21)}
     <nav class="app-menus">${["Level", "Edit", "Run", "Help"].map(item =>
       `<button type="button" class="app-menu ${item === menu ? "is-open" : ""}">${item}</button>`).join("")}</nav>

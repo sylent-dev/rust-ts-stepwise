@@ -3,7 +3,8 @@
 :root {
 	/* The durations: what gives way under the pointer, what appears or goes back to rest, the
 	   robot crossing a main button with its paint, what lights up to be noticed and fades. A fill
-	   under the pointer changes at once, and so does what the learner opens. */
+	   under the pointer changes at once, and so does what the learner opens, except a menu of
+	   the header, which grows as fast as what gives way. */
 	--duration-fade: 100ms;
 	--duration-appear: 200ms;
 	--duration-stroke: 850ms;

@@ -179,3 +179,9 @@ A scale of eight spacing steps (34 values in the mock-up), named by their length
 ### 12d. Motion and tone (#49)
 
 Four durations and four curves of the interface named as tokens, in place of a dozen values written one by one, the scenes of a block keeping their own timing; what the learner opens is there at once, the fades and the slides compared in a live window of the mock-up being rejected; the writing rules of the messages (the voice, the two sentences of an error, the capitals, the punctuation, the code in a message), six errors of the mock-up brought in line with the principle of the rule, never the fix; the typographic apostrophe in the texts; the entry in `design-journal.md`.
+
+## 13. Application shell
+
+### 13a. Tokens and pages (#50)
+
+The tokens and the two themes in the application, the fonts, the base styles (the text, the keyboard focus, the scroll bars); the four pages and their addresses, with one draft level (`paint-a-square`, replaced at step 23) so that the level screen has a level to show; the header with the logo, the name, the links of the home screen and, in its middle, the title of the level or the sandbox; the probe moved to the page of the sandbox.

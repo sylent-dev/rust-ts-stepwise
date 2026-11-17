@@ -27,8 +27,8 @@
 		background: var(--band);
 	}
 
-	/* The manual has no header across the window: the top of its column is a link as high as the
-	   header of the other screens, the name at the same place. */
+	/* The manual has no header across the window: the top of its column is a link as high as a
+	   header with its bar of the progress, the name at the same place. */
 	.name {
 		display: flex;
 		align-items: center;

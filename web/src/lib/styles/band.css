@@ -1,0 +1,24 @@
+/* What is clicked in a band, such as the header: a link or the name of a menu, a text without a
+   box, filled under the pointer and while what it opens is open. It is a class, not a component:
+   a link and a button share this look, and the styles of a component can't leave it. A component
+   that uses it never styles `a` or `button` by its tag: Svelte adds a class to each of its
+   selectors, so its rule would win over this one. */
+.band-item {
+	display: flex;
+	align-items: center;
+	height: 30px;
+	padding: 0 var(--space-12);
+	border: 0;
+	border-radius: var(--radius);
+	background: none;
+	color: var(--text);
+	font-weight: var(--weight-control);
+	line-height: 1;
+	text-decoration: none;
+	white-space: nowrap;
+}
+
+.band-item:hover,
+.band-item[aria-expanded='true'] {
+	background: var(--band-hover);
+}
