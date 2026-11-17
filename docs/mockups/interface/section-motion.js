@@ -8,8 +8,8 @@ const MOTION_DURATIONS = [
     "What gives way under the pointer: the number of the level to play under the face of the robot, the shadow of a level done."],
   ["appear", `<span class="motion-pop"></span>`,
     "What appears, or goes back to rest: the face of the robot on the level to play, <b>Unlock</b> turning amber, a bubble of the manual, the success panel; the paint leaving a main button."],
-  ["stroke", `<span class="motion-stroke"><b>Let's go</b></span>`,
-    "The robot crossing a main button under the pointer, its paint behind it: <b>Let's go</b>, <b>Unlock</b>, the way back from the manual."],
+  ["stroke", `<span class="motion-stroke"><b>Let’s go</b></span>`,
+    "The robot crossing a main button under the pointer, its paint behind it: <b>Let’s go</b>, <b>Unlock</b>, the way back from the manual."],
   ["flash", `<span class="motion-flash">forward()</span>`,
     "What lights up to be noticed, then fades: the place reached in the manual; the status bar when the learner types in an editor that is locked."],
 ];

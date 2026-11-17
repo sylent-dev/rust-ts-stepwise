@@ -15,6 +15,6 @@ function appGoal() {
       </aside>
     </div>
     <button type="button" class="app-close" title="Close">${ICONS.close(15)}</button>
-    <button type="button" class="goal-go"><span>Let's go</span></button>
+    <button type="button" class="goal-go"><span>Let’s go</span></button>
   </div>`;
 }
