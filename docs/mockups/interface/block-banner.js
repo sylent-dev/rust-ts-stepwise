@@ -1,4 +1,6 @@
-// The banner of the storage refused: one line across the whole width, under the header of every screen.
+// The banner of the storage refused: one line across the whole width, under the header of the home
+// screen, of the level screen and of the sandbox. The manual, which has no header and saves nothing,
+// shows none.
 // × hides it until the next visit. Pale amber, without icon: the color says it is a warning.
 const appStorageBanner = () => `<div class="app-banner" role="status">
   <span>Your progress can’t be saved in this browser and will be lost when this tab closes.</span>
