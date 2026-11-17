@@ -7,7 +7,7 @@ Implementation steps of the features described in [specs.md](specs.md). Each ste
 Read only by the steps that need them:
 
 - [Technical choices](docs/technical-choices.md): the libraries, the services and the main designs, with their reasons.
-- [Design system](docs/design-system.md): the tokens of the interface: the colors of the two themes, the typography, the spacing and the radii.
+- [Design system](docs/design-system.md): the tokens of the interface (the colors of the two themes, the typography, the spacing and the radii, the motion) and the writing rules of the messages.
 - [Roadmap archive](docs/roadmap-archive.md): the detail of the steps done, moved there once their pull request is merged.
 - [Backlog](docs/backlog.md): the ideas, polish and edge cases found along the way, until the owner makes them a step.
 - [GitHub Pages usage](docs/github-pages-usage.md): the limits and rules of the host of the website.
@@ -32,11 +32,11 @@ Model: each step to come names its model. Fable 5.2 runs the steps whose design 
 - [x] **9. Interpreter** (#34, #35, #36)
 - [x] **10. WebAssembly bridge** (#37, #38, #39, #41)
 - [x] **11. Animations and sounds** (#42, #45)
-- [ ] **12. Design system** *(Fable 5.2)*: the tokens (colors of the two themes, spacing, radii, typography, motion) in `docs/design-system.md`, linked from `specs.md`, which keeps the principles (decided on 2026-11-16, `specs.md` being long already); the fonts and their licenses, the tone of the messages; the mock-up updated to use exactly these tokens; an entry in `design-journal.md`.
+- [x] **12. Design system** *(Fable 5.2)*: the tokens (colors of the two themes, spacing, radii, typography, motion) in `docs/design-system.md`, linked from `specs.md`, which keeps the principles (decided on 2026-11-16, `specs.md` being long already); the fonts and their licenses, the tone of the messages; the mock-up updated to use exactly these tokens; an entry in `design-journal.md`.
   - [x] **12a. Colors** (#46)
   - [x] **12b. Typography and fonts** (#47)
   - [x] **12c. Spacing and radii** (#48)
-  - [ ] **12d. Motion and tone**: the durations and the curves of the interface, the scenes of a block keeping their own timing; the writing rules of the messages (capitals, final period, ellipsis, code in a message); the entry in `design-journal.md`.
+  - [x] **12d. Motion and tone**: the durations and the curves of the interface, the scenes of a block keeping their own timing; the writing rules of the messages (capitals, final period, ellipsis, code in a message); the entry in `design-journal.md`.
 - [ ] **13. Application shell** *(Fable 5.2)*: the pages and their addresses, the header with its menus and the progress, the design tokens and the two themes, the texts from Fluent, the browser storage with its version and the banner when it is refused, the settings, the messages for a window too narrow and a browser too old.
 - [ ] **14. Map view** *(Opus 5.5)*: the elements of step 1 as Svelte components, the map of a level drawn from the core, the goal marks, the animations of every action, tuned at every speed with the owner.
 - [ ] **15. Quality audit** *(Fable 5.2)*: an audit of the whole code, not of one branch, once the core is complete (steps 9 and 10) and the interface has its first bases (steps 13 and 14), before the steps of the interface copy its patterns: the responsibilities of the modules and the components and their dependencies, no type or component that does everything, SOLID and KISS (and the splits that cost more than they bring), the naming and the conventions of `CLAUDE.md`, what Rust and TypeScript repeat; a report in `outputs/`, the owner choosing what is kept, then those refactorings, one pull request per coherent theme, so that the refactoring before the first release stays small (decided on 2026-11-12).
