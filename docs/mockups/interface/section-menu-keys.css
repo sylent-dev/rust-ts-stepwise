@@ -9,3 +9,22 @@
 .menu-live .app-menu-row:hover { background: none; }
 .menu-live .app-menu-row:focus, .menu-live .app-menu-row.is-open { background: var(--hover); }
 .menu-live .app-dropdown:focus { outline: none; }
+
+/* The opening of a menu, to compare: each one starts from under the name of the menu. The closing
+   plays it backwards, a little faster. Nothing moves for a learner who asked for less motion. */
+@keyframes menu-grow { from { opacity: 0; transform: scale(.85); } }
+@keyframes menu-unroll { from { opacity: 0; transform: scaleY(.6); } }
+@keyframes menu-slide { from { opacity: 0; transform: translateY(-8px); } }
+@keyframes menu-pop { from { opacity: 0; transform: scale(.8); } }
+.menu-live .app-dropdown { transform-origin: top left; }
+:root[data-menu-motion="grow"] .menu-live .app-dropdown.is-opening { animation: menu-grow var(--menu-open) var(--ease-appear); }
+:root[data-menu-motion="unroll"] .menu-live .app-dropdown.is-opening { animation: menu-unroll var(--menu-open) var(--ease-appear); }
+:root[data-menu-motion="slide"] .menu-live .app-dropdown.is-opening { animation: menu-slide var(--menu-open) var(--ease-appear); }
+:root[data-menu-motion="pop"] .menu-live .app-dropdown.is-opening { animation: menu-pop var(--menu-open) var(--ease-pop); }
+.menu-live .app-dropdown.is-closing { pointer-events: none; }
+:root[data-menu-motion="grow"] .menu-live .app-dropdown.is-closing, :root[data-menu-motion="pop"] .menu-live .app-dropdown.is-closing { animation: menu-grow calc(var(--menu-open) * .6) ease-in reverse forwards; }
+:root[data-menu-motion="unroll"] .menu-live .app-dropdown.is-closing { animation: menu-unroll calc(var(--menu-open) * .6) ease-in reverse forwards; }
+:root[data-menu-motion="slide"] .menu-live .app-dropdown.is-closing { animation: menu-slide calc(var(--menu-open) * .6) ease-in reverse forwards; }
+@media (prefers-reduced-motion: reduce) {
+  .menu-live .app-dropdown.is-opening, .menu-live .app-dropdown.is-closing { animation: none !important; }
+}

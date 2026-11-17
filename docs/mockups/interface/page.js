@@ -4,6 +4,11 @@
 // is a list and `range` a slider, both setting the CSS `variable` at once, without redrawing the page.
 const VARIANTS = {
   theme: { label: "Style", options: Object.fromEntries(Object.entries(INTERFACE_STYLES).map(([key, style]) => [key, style.title])), fallback: Object.keys(INTERFACE_STYLES)[0] },
+  // Two decisions of step 13b, each with its section at the top of the page; removed once made.
+  headerBar: { label: "Header without the bar", options: { empty: "10 · As it is", centered: "11 · Centered on its whole height", short: "12 · 3 pixels shorter" }, fallback: "short" },
+  menuMotion: { label: "Opening of a menu", options: { none: "13 · At once", grow: "14 · Grows from its corner", unroll: "15 · Unrolls from the bar", slide: "16 · Slides down", pop: "17 · Pops" }, fallback: "grow" },
+  menuOpen: { label: "Its duration", range: { min: 60, max: 400, step: 20 }, variable: "--menu-open", unit: "ms", fallback: "100" },
+  menuClose: { label: "Closing", options: { none: "18 · At once", back: "19 · The same, backwards" }, fallback: "none" },
 };
 
 const params = new URLSearchParams(location.search);

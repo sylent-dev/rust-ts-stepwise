@@ -1,7 +1,8 @@
 // Section: the menus of the header, live, with their keyboard, decided at step 13b: the menu bar of a
 // code editor. The window is the level screen; its four menus open with the mouse and with the keys.
 // One row is lit at a time, under the pointer or chosen with the keys, and the greyed rows are
-// skipped.
+// skipped. The opening and the closing of a menu follow two controls of the page, an open decision of
+// step 13b: the design system says at once.
 
 // The speed in use, kept while the page stays open.
 let menuLiveSpeed = 2;
@@ -20,20 +21,31 @@ function menuLiveCloseSpeeds(root) {
   root.querySelector(".app-menu-row.is-open")?.classList.remove("is-open");
 }
 
-function menuLiveClose(root) {
+// Closes the menu. `atOnce` when another menu takes its place; otherwise as the control of the page
+// says, and at once for a learner who asked for less motion, for whom no animation plays.
+function menuLiveClose(root, atOnce = false) {
   menuLiveCloseSpeeds(root);
-  root.querySelector("[data-menu-live-menu]")?.remove();
   root.querySelector(".app-menu.is-open")?.classList.remove("is-open");
+  const menu = root.querySelector("[data-menu-live-menu]");
+  if (!menu) return;
+  menu.removeAttribute("data-menu-live-menu");
+  menu.classList.remove("is-opening");
+  menu.classList.add("is-closing");
+  if (atOnce || chosen.menuClose === "none" || getComputedStyle(menu).animationName === "none") menu.remove();
+  else menu.addEventListener("animationend", () => menu.remove(), { once: true });
 }
 
 // Opens the menu of `button`, under it. `focus` is the row that takes the focus: "first", "last" or
 // none, when the mouse opens it.
 function menuLiveOpen(button, focus) {
   const root = menuLiveRoot(button);
-  menuLiveClose(root);
+  // A menu that takes the place of its neighbor is there at once: only the first one opens.
+  const first = !root.querySelector("[data-menu-live-menu]");
+  menuLiveClose(root, true);
   button.classList.add("is-open");
   root.querySelector(".app-window").insertAdjacentHTML("beforeend", menuLiveDropdown(appMenuRows(button.textContent), button.offsetLeft, 49, "menu"));
   const menu = root.querySelector("[data-menu-live-menu]");
+  menu.classList.toggle("is-opening", first);
   if (focus) menuLiveFocus(menuLiveRows(menu).at(focus === "last" ? -1 : 0));
   else menuLiveFocus(button);
 }
@@ -46,6 +58,7 @@ function menuLiveOpenSpeeds(row, focus) {
     row.classList.add("is-open");
     const rows = SPEEDS.map((speed, index) => [speed, index === menuLiveSpeed ? "✓" : ""]);
     root.querySelector(".app-window").insertAdjacentHTML("beforeend", menuLiveDropdown(rows, menu.offsetLeft + menu.offsetWidth, menu.offsetTop + row.offsetTop - 4, "speeds"));
+    root.querySelector("[data-menu-live-speeds]").classList.add("is-opening");
   }
   if (focus) menuLiveFocus(menuLiveRows(root.querySelector("[data-menu-live-speeds]"))[menuLiveSpeed]);
 }
@@ -75,7 +88,8 @@ function menuLiveWindow() {
   return template.innerHTML;
 }
 
-SECTIONS.push(["The menus with the keyboard", () => `
+SECTIONS.push(["The menus, live: their keyboard and their opening", () => `
+  <p class="menu-keys-intro"><b>To decide: the opening of a menu.</b> The design system says <i>at once</i> (<b>13</b>) since step 12d, where a menu fading in over 100 ms was compared and rejected: as in a code editor, nothing waits between a key and its answer. <b>14</b> grows from the corner under its name, <b>15</b> unrolls from the bar, <b>16</b> slides down, <b>17</b> pops past its size and comes back, as the robot. The slider sets how long it takes, and <b>19</b> plays it backwards when the menu closes. In every one, a menu that takes the place of its neighbor is there at once, the rows answer while it opens, and nothing moves for a learner who asked for less motion.</p>
   <p class="menu-keys-intro">Live: the four menus open with the mouse and with the keys, as the menu bar of a code editor. Click the name <b>stepwise</b> in the window, then press <b>Tab</b>: it stops once on the bar, on the menu left last. <b>←</b> <b>→</b> go from a menu to the next, <b>Enter</b>, <b>Space</b> or <b>↓</b> opens it on its first row, <b>↑</b> on its last. In a menu, <b>↑</b> <b>↓</b>, <b>Home</b> and <b>End</b> choose a row and <b>Enter</b> or <b>Space</b> runs it; <b>←</b> <b>→</b> open the menu beside, except <b>→</b> on <b>Speed</b>, which opens its speeds, and <b>←</b>, which leaves them; <b>Esc</b> closes the menu and gives the focus back to its name; <b>Tab</b> closes it and goes on. With the mouse, a click opens a menu and, once one is open, pointing at another name opens it.</p>
   <div class="page-row"><div class="page-slot menu-live" data-menu-live>
     <span>1280 × 720, the level screen. Last command run: <b data-menu-live-last>none yet</b></span>
