@@ -5,7 +5,7 @@ const NAME_FONT = "600 100px Fredoka, sans-serif";
 // font size: the middle of the head sits a little above the middle of the lowercase letters, and the
 // name starts a little after the head.
 const NAME_OFFSET = 0.5 / 44;
-const NAME_GAP = 0.18;
+const NAME_GAP = 0.3;
 
 // The height of a letter of the name, out of its font size.
 function letterHeight(letter) {
@@ -24,7 +24,7 @@ function appWordmark(fontSize, ink) {
 }
 
 SECTIONS.push(["Name", () => `
-  <p>The name, in lowercase, in Fredoka 600 (SIL Open Font License), centered on the head of the robot: the middle of the head meets the middle of the lowercase letters, raised by 0.011 em; the name starts 0.18 em after the head. The head is a quarter taller than the capitals.</p>
+  <p>The name, in lowercase, in Fredoka 600 (SIL Open Font License), centered on the head of the robot: the middle of the head meets the middle of the lowercase letters, raised by 0.011 em; the name starts 0.3 em after the head. The head is a quarter taller than the capitals.</p>
   <div class="page-row">${LOGO_GROUNDS.map(([title, ground, ink]) => `
     <div class="page-slot"><span>${title}</span>
       <div style="background:${ground};padding:20px 24px;border-radius:8px;display:flex;flex-direction:column;gap:14px">

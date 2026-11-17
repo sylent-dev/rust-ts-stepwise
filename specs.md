@@ -385,7 +385,7 @@ The sheet of the world elements, [`docs/mockups/world-elements.html`](docs/mocku
 | Goal not met | A small red flag planted in the corner of the cell, once a run ends without meeting it. | `#c2255c`, a color of its own, apart from the red of the paint and the same in both themes (decided on 2026-11-16) |
 | Robot | White, with two tracks, a dark visor with two cyan eyes at its front (its direction), and a bay at its back that holds the item it carries. Its pincer comes out of its front only while it picks up or drops an item (see [Animations](#animations)). At the end of a run, its eyes light up in yellow when every goal is met, and dim when not. | body `#ffffff`, ink `#222935`, eyes `#3fc3ff`, bay `#d5dbe3`, lit `#ffd23f`, dim `#7d8798` |
 | Logo | The head of the robot with happy eyes and a smile, alone, so that the name stays on the line of the text beside it. It is also the icon of a browser tab. | the robot |
-| Name | `stepwise` in lowercase, in Fredoka 600 (SIL Open Font License), beside the logo: the middle of the head of the robot meets the middle of the lowercase letters, raised by 0.011 em; the name starts 0.18 em after the head, which is 1.25 times the height of the capitals. In a header, its baseline sits 1 px under the one of the menus. | the ink of the page |
+| Name | `stepwise` in lowercase, in Fredoka 600 (SIL Open Font License), beside the logo: the middle of the head of the robot meets the middle of the lowercase letters, raised by 0.011 em; the name starts 0.3 em after the head, which is 1.25 times the height of the capitals. In a header, its baseline sits 1 px under the one of the menus. | the ink of the page |
 
 ### Animations
 
