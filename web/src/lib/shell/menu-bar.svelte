@@ -58,17 +58,21 @@
 
 	/**
 	 * The focus arrives on the name of a menu (`row` is null) or on one of its rows without the
-	 * bar moving it: with Tab from elsewhere, or under a screen reader, which moves it with a
-	 * cursor of its own. The bar follows it, and shows the ring when the browser would: a Tab
-	 * pressed in the address bar is a key that the page never hears.
+	 * bar moving it: under a screen reader, which moves it with a cursor of its own, or when the
+	 * window comes back and the browser gives the focus again to what held it. The bar follows
+	 * it. The ring stays as it was: a browser can't say here whether the focus must show
+	 * (`:focus-visible`), since the bar moves it for the mouse too.
 	 */
-	function arrive(event: FocusEvent, menu: number, row: number | null) {
+	function arrive(menu: number, row: number | null) {
 		if (moving) return;
-		if (event.target instanceof Element && event.target.matches(':focus-visible')) keys = true;
-		if (row !== null) set({ menu, open: true, row });
-		else if (bar.menu !== menu || bar.row !== null) {
-			set(bar.open && bar.menu === menu ? openOn(menu) : closedOn(menu));
-		}
+		if (row === null) {
+			if (bar.menu !== menu || bar.row !== null) {
+				set(bar.open && bar.menu === menu ? openOn(menu) : closedOn(menu));
+			}
+		} else if (bar.open && bar.menu === menu) set({ menu, open: true, row });
+		// A row of a menu that the bar has closed, as when the window comes back: its name takes
+		// the focus, and the menu stays closed.
+		else go(closedOn(menu));
 	}
 
 	/** Moves the bar after the pointer, which a move alone doesn't tell from the keyboard. */
@@ -106,11 +110,15 @@
 		if (!(event.ctrlKey || event.altKey || event.metaKey) && event.key !== 'Shift') keys = true;
 	}
 
-	/** The pointer went down: the ring goes, and so does a menu when the press was elsewhere. */
+	/**
+	 * The pointer went down: the ring goes, and so does a menu when the press was elsewhere. The
+	 * name of the menu takes the focus first, or a press that moves none would leave it on a row
+	 * that disappears; the browser then moves it where the press goes.
+	 */
 	function onwindowpress(event: PointerEvent) {
 		keys = false;
 		if (bar.open && event.target instanceof Node && !root?.contains(event.target)) {
-			set(closedOn(bar.menu));
+			go(closedOn(bar.menu));
 		}
 	}
 </script>
@@ -147,7 +155,7 @@
 					// Once a menu is open, pointing at another name opens that one. A finger only taps.
 					if (event.pointerType === 'mouse' && bar.open && !open) point(openOn(m));
 				}}
-				onfocus={(event) => arrive(event, m, null)}
+				onfocus={() => arrive(m, null)}
 				{onkeydown}
 			>
 				{menu.name}
@@ -177,7 +185,7 @@
 								// The row that the keys lit loses its ring under the pointer.
 								if (keys || bar.row !== r) point({ ...bar, row: r });
 							}}
-							onfocus={(event) => arrive(event, m, r)}
+							onfocus={() => arrive(m, r)}
 							{onkeydown}
 						>
 							{row.label}
@@ -247,6 +255,8 @@
 	}
 
 	.rows[hidden] {
+		/* Written here too: the rule of the browser gives way to any `display` of ours. */
+		display: none;
 		opacity: 0;
 		transform: scale(0.85);
 		pointer-events: none;
