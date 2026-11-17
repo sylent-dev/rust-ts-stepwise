@@ -31,6 +31,15 @@
   /* The radii: everything of the interface that has corners; a mark smaller than a letter; what
      the robot says, whose bubble follows the size of its text. The zones have square corners. */
   --radius: 3px; --radius-mark: 2px; --radius-bubble: .7em;
+  /* The motion: what gives way under the pointer, what appears or goes back to rest, the robot
+     crossing a main button with its paint, what lights up to be noticed and fades. A fill under the
+     pointer changes at once, and so does what the learner opens. */
+  --duration-fade: 100ms; --duration-appear: 200ms; --duration-stroke: 850ms; --duration-flash: 1600ms;
+  /* The curves: what arrives or fades settles gently; what pops goes past its size and comes back,
+     as the turn of the robot; the brush sets off gently, crosses fast and settles; what goes from a
+     place to another starts and stops gently, as the robot moves forward. */
+  --ease-appear: ease-out; --ease-pop: cubic-bezier(.3, 1.6, .5, 1);
+  --ease-stroke: cubic-bezier(.35, .05, .4, 1); --ease-move: ease-in-out;
 
   /* The shades of the robot (specs.md, Look of the world), where the interface draws its face. */
   --robot-body: #ffffff; --robot-ink: #222935; --robot-eyes: #3fc3ff;

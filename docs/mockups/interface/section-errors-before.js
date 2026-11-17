@@ -6,13 +6,13 @@ SECTIONS.push(["Errors before running", () => `<div class="page-row"><div class=
   editor: {
     lines: CODE_WITH_ERRORS,
     underlines: [{ line: 5, col: 9, length: 6 }, { line: 10, col: 5, length: 16 }],
-    hint: { line: 5, col: 9, title: "The name foward doesn't exist.", help: "Did you mean forward?" },
+    hint: { line: 5, col: 9, title: "The name foward doesn’t exist.", help: "A call needs a function, built in or defined above it." },
     state: "Ready", errors: "2 errors", steps: 0, cursor: "Ln 5, Col 9",
   },
   map: appWorld({ robot: "2,1", facing: "east" }),
   panels: { tab: "Console", content: [
-    appConsoleError("Ln 5", "The name foward doesn't exist.", "Did you mean forward?"),
-    appConsoleError("Ln 10", "paint_side takes 1 value, not 2.", "Remove a value from the call."),
+    appConsoleError("Ln 5", "The name foward doesn’t exist.", "A call needs a function, built in or defined above it."),
+    appConsoleError("Ln 10", "paint_side takes 1 value, not 2.", "A call gives one value for each parameter of the function."),
     consoleFix(2),
   ].join("") },
 })}</div></div>`]);

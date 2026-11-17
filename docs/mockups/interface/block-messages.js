@@ -10,8 +10,8 @@ function appMessage(kind, [width, height]) {
   const texts = {
     small: ["Stepwise needs a larger window", `<p>At least 1280 × 720 pixels. This one is <b class="message-size">${width} × ${height}</b>.</p><p>Widen the window, or zoom out with Ctrl and −.</p>`],
     phone: ["Stepwise needs a laptop", "<p>It is made for a large window.</p>"],
-    old: ["Stepwise needs a recent browser", `<p>This browser can't run it. Update it, or open Stepwise in a recent Firefox, Chrome, Edge or Safari.</p>${address}`],
-    offline: ["Stepwise couldn't load", '<p>The connection seems to be lost. Check it, then try again.</p><button type="button" class="app-primary">Try again</button>'],
+    old: ["Stepwise needs a recent browser", `<p>This browser can’t run it. Update it, or open Stepwise in a recent Firefox, Chrome, Edge or Safari.</p>${address}`],
+    offline: ["Stepwise couldn’t load", '<p>The connection seems to be lost. Check it, then try again.</p><button type="button" class="app-primary">Try again</button>'],
   };
   const [title, body] = texts[kind];
   return `<div class="app-screen-message ${kind === "phone" ? "is-phone" : ""}"><img class="message-head" src="world-elements/daylight/logo-disappointed.svg" height="${kind === "phone" ? 64 : 72}" alt=""><div class="message-title">${title}</div>${body}</div>`;

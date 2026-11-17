@@ -1,0 +1,33 @@
+/* The section Motion: its sentences, on the page, and the boards of its tokens. */
+.motion-intro { max-width: 880px; margin: 4px 0 12px; color: #dee2e6; }
+.app-window.motion-board { display: block; box-sizing: border-box; width: 1280px; height: auto; padding: 6px 24px; background: var(--surface); }
+.motion-row { display: grid; grid-template-columns: 150px 190px 240px 1fr; gap: 24px; align-items: center; min-height: 56px; padding: 8px 0; }
+.motion-row + .motion-row { border-top: 1px solid var(--hover); }
+.motion-row code { font: var(--weight-code) var(--size-code-small) var(--font-code); }
+.motion-row small { color: var(--weak); font-size: var(--size-small); }
+.motion-row small b { color: var(--text); font-weight: var(--weight-strong); }
+.motion-uses { color: var(--weak); font-size: var(--size-small); }
+.motion-uses b { color: var(--text); font-weight: var(--weight-strong); }
+.motion-sample { display: flex; align-items: center; gap: var(--space-16); }
+
+/* The samples of the durations, each as what it times: a number that gives way, a face that pops,
+   the paint crossing a main button, a place that lights up and fades. */
+.motion-stone { display: grid; place-items: center; width: 36px; height: 36px; background: var(--accent); color: var(--on-accent); border-radius: 50%; font: var(--weight-strong) var(--size-lead)/1 var(--font-name); }
+.motion-stone b { font-weight: inherit; transition: opacity var(--duration-fade) var(--ease-appear); }
+.motion-board.is-on .motion-stone b { opacity: 0; }
+.motion-pop { width: 32px; height: 16px; background: var(--robot-ink); border-radius: 8px; transform: scale(0); transition: transform var(--duration-appear) var(--ease-pop); }
+.motion-board.is-on .motion-pop { transform: none; }
+.motion-stroke { position: relative; overflow: hidden; padding: var(--space-6) var(--space-16); background: var(--accent); color: var(--on-accent); border-radius: var(--radius); font: var(--weight-strong) var(--size-title)/var(--line-title) var(--font-name); }
+.motion-stroke b { position: relative; font-weight: inherit; }
+.motion-stroke::before { content: ""; position: absolute; inset: 0 100% 0 0; background: var(--accent-hover); opacity: 0; transition: opacity var(--duration-appear) var(--ease-appear), right 0s var(--duration-appear); }
+.motion-board.is-on .motion-stroke::before { right: 0; opacity: 1; transition: right var(--duration-stroke) var(--ease-stroke), opacity 0s; }
+.motion-flash { padding: var(--space-4) var(--space-12); font: var(--weight-code-strong) var(--size-code)/var(--line-code) var(--font-code); }
+.motion-board.is-on .motion-flash { animation: manual-flash var(--duration-flash) var(--ease-appear); }
+
+/* A curve: its drawing, and a dot that crosses its track in one second, with room past the end for
+   the one that goes past it. */
+.motion-graph { flex: none; fill: none; stroke: var(--text); stroke-width: 2; stroke-linecap: round; }
+.motion-graph .motion-axis { stroke: var(--hover); stroke-width: 1; }
+.motion-track { position: relative; flex: 1; height: 12px; margin-right: var(--space-24); background: var(--hover); border-radius: 6px; }
+.motion-track i { position: absolute; left: 0; top: 0; width: 12px; height: 12px; background: var(--accent); border-radius: 50%; transition: left 1s; }
+.motion-board.is-on .motion-track i { left: calc(100% - 12px); }

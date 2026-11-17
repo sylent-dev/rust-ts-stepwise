@@ -6,10 +6,10 @@
 .app-window .manual-back { position: relative; flex: none; width: 100%; height: 49px; padding: 0 var(--space-16); overflow: hidden; background: var(--accent); color: var(--on-accent); border: 0; border-radius: 0; font-weight: var(--weight-strong); }
 .manual-back span { position: relative; z-index: 1; }
 .manual-back::before, .manual-back::after { content: ""; position: absolute; pointer-events: none; }
-.manual-back::before { inset: 0 0 0 calc(100% + 15px); background: var(--accent-hover); opacity: 0; transition: opacity .2s, left 0s .2s; }
+.manual-back::before { inset: 0 0 0 calc(100% + 15px); background: var(--accent-hover); opacity: 0; transition: opacity var(--duration-appear) var(--ease-appear), left 0s var(--duration-appear); }
 .manual-back::after { z-index: 2; right: -36px; top: calc(50% - 15px); width: 30px; height: 30px; background: url(../world-elements/daylight/robot.svg) center / contain no-repeat; transform: rotate(270deg); }
-.manual-back:hover::before { left: -15px; opacity: 1; transition: left .85s cubic-bezier(.35, .05, .4, 1), opacity 0s; }
-.manual-back:hover::after { right: calc(100% + 4px); transition: right .85s cubic-bezier(.35, .05, .4, 1); }
+.manual-back:hover::before { left: -15px; opacity: 1; transition: left var(--duration-stroke) var(--ease-stroke), opacity 0s; }
+.manual-back:hover::after { right: calc(100% + 4px); transition: right var(--duration-stroke) var(--ease-stroke); }
 @media (prefers-reduced-motion: reduce) {
   .manual-back::before, .manual-back::after { display: none; }
   .app-window .manual-back:hover { background: var(--accent-hover); }
@@ -86,7 +86,7 @@ a.manual-name:hover { background: var(--band-hover); }
 .manual-entry { display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: 0 var(--space-16); margin-top: var(--space-24); padding-top: var(--space-16); border-top: 1px solid var(--hover); }
 .manual-sign { display: flex; flex-direction: column; gap: var(--space-2); margin: 0; }
 .manual-sign code { font: var(--weight-code-strong) var(--size-code)/var(--line-text) var(--font-code); }
-.manual-entry.is-flash { animation: manual-flash 1.6s ease-out; }
+.manual-entry.is-flash { animation: manual-flash var(--duration-flash) var(--ease-appear); }
 @keyframes manual-flash { from { background: var(--mark); } }
 
 /* The example: its code, and the small map where it plays. No Copy: the learner types it again. */
@@ -139,7 +139,7 @@ a.manual-name:hover { background: var(--band-hover); }
 .app-window .manual-stop { display: none; background: var(--control); color: var(--text); box-shadow: var(--control-shadow); }
 .manual-example.is-playing .manual-run { display: none; }
 .manual-example.is-playing .manual-stop { display: grid; }
-.manual-example.is-done .manual-run { animation: manual-fade-in .8s ease-out; }
+.manual-example.is-done .manual-run { animation: manual-fade-in .8s var(--ease-appear); }
 @keyframes manual-fade-in { from { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .manual-example.is-done .manual-run { animation: none; } }
 
@@ -149,7 +149,7 @@ a.manual-name:hover { background: var(--band-hover); }
 .manual-bubble { position: relative; white-space: nowrap; padding: .7em 1em; background: var(--band); color: var(--text); border-radius: var(--radius-bubble); font: var(--weight-strong) var(--size-display)/var(--line-title) var(--font-name); text-align: center; }
 .manual-bubble::after { content: ""; position: absolute; left: calc(50% - 12px); bottom: -11px; border: 12px solid transparent; border-bottom: 0; border-top-color: var(--band); }
 .manual-bubble p { margin: 0; }
-.manual-bubble.is-new { animation: manual-pop .25s cubic-bezier(.3, 1.6, .5, 1); }
+.manual-bubble.is-new { animation: manual-pop var(--duration-appear) var(--ease-pop); }
 @keyframes manual-pop { from { transform: scale(.9); } }
 .app-window .manual-buddy-head { padding: 0; background: none; border: 0; cursor: pointer; }
 .manual-buddy-head img { display: block; height: 80px; }

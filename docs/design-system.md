@@ -105,6 +105,9 @@ Two themes, chosen in the settings: **Day Desk**, light, by default, and **Night
 | `--code-string` | `#8f5f06` | `#ffd27a` | A text between quotes. |
 | `--code-number` | `#b34c1c` | `#ffa98a` | A number, `true`, `false`, a color. |
 
+- The three underlines of the editor differ by their shape, and not only by their color: a wave in `--error` under an error, a thin line in `--text` under the name pointed with Ctrl held, dots in `--weak` under the end of a line past 80 characters.
+- The wave stays under an error (decided on 2026-11-17, compared in tabs of the mock-up): an error is what must catch the eye first, the wave is read without its color, and the learner finds it in every code editor. Rejected: squares and dots, read as the dots of a long line but for their color; dashes, which say *more on hover* as on a web page; a straight line, too close to the one of Ctrl; a soft red behind the word, the tone of the line of an error while running.
+
 ### Goal and home screen
 
 | Token | Day Desk | Night Desk | Role |
@@ -270,3 +273,90 @@ Three radii, each with a role. The section *Spacing and radii* of the mock-up sh
 - A circle is written `50%`: a stone of the home screen, the number of a level, a breakpoint, a dot.
 - A drawing keeps the corners of its shape: the visor of the robot on the level to play, the stroke of paint of the success panel, rounded as the brush by half its height.
 - `--radius` replaces `--radius-small` and `--control-radius`, two names for the same 3 pixels, left by the comparison of the styles (decided on 2026-11-16). Three values moved, hardly seen: the squares of the speed, from 1 pixel to 2; the bubble of a goal, from 12 pixels to 12.6; the bubble of the manual, from 21.6 to 18.9.
+
+## Motion
+
+Little moves in the interface, so that what moves is seen: the robot on the map first (see [Animations](../specs.md#animations)), then a few places where the interface takes after it. Four durations and four curves time them. The section *Motion* of the mock-up plays each of them.
+
+### Names
+
+- `--duration-<role>` and `--ease-<role>`: the kind of value first, then what moves so.
+- What moves takes its two values from the tokens: `transition: transform var(--duration-appear) var(--ease-pop)`.
+
+### Durations
+
+| Token | Value | Role |
+|---|---|---|
+| `--duration-fade` | `100ms` | What gives way under the pointer: the number of the level to play under the face of the robot, the shadow of a level done. |
+| `--duration-appear` | `200ms` | What appears, or goes back to rest: the face of the robot on the level to play, **Unlock** turning amber, a bubble of the manual, the success panel; the paint leaving a main button. |
+| `--duration-stroke` | `850ms` | The robot crossing a main button under the pointer, its paint behind it: **Let's go**, **Unlock**, the way back from the manual. |
+| `--duration-flash` | `1600ms` | What lights up to be noticed, then fades: the place reached in the manual; the status bar when the learner types in an editor that is locked. |
+
+### Curves
+
+| Token | Value | Role |
+|---|---|---|
+| `--ease-appear` | `ease-out` | What arrives or fades: fast at first, then settling. |
+| `--ease-pop` | `cubic-bezier(.3, 1.6, .5, 1)` | What pops: it goes past its size and comes back, as the robot goes past its quarter turn. |
+| `--ease-stroke` | `cubic-bezier(.35, .05, .4, 1)` | The brush: it sets off gently, crosses fast and settles. |
+| `--ease-move` | `ease-in-out` | What goes from a place to another, starting and stopping gently, as the robot moves forward: the robot of the home screen, the head of the success panel. |
+
+- What answers the learner is there at once. A fill under the pointer: a row, a button, a tab. What they open or close: a menu, the command menu, the bubble of the goal, a panel over its veil, the drawer of the manual. As in a code editor, nothing waits between a key and its answer, and the command menu and the manual are opened all the time.
+- So what moves is what the learner didn't ask for, or a manner of the robot: the success panel, which comes by itself once the robot has hopped, a place that lights up, the paint across a main button.
+- Rejected (decided on 2026-11-17, compared in a live window of the mock-up): a veil that fades in, its panel rising as the success panel and the drawer of the manual sliding in from the right, in 200 milliseconds; a menu and a bubble fading in as well, in 100.
+- The tokens replace a dozen values written one by one (decided on 2026-11-16): 0.2, 0.22 and 0.25 seconds became 200 milliseconds, 0.1 and 0.15 became 100, hardly seen.
+
+### Scenes
+
+A scene tells a small story in several moves. It keeps its durations and its delays, written in its block, and takes its curves from the tokens:
+
+- **The robot of the home screen**: it looks around every 7 seconds, peeks left and right from the level under the pointer every 2.2 seconds, slides to the level chosen in 450 milliseconds, and is tossed by a level done in 850.
+- **The success panel**, in about two seconds: the band painted in one second, its title, the head that drops in 550 milliseconds, on a curve of its own, a fall, then its face drawn.
+- **An example of the manual**: a step every 700 milliseconds; **Run** comes back in 800.
+- **Clear all progress**: the two seconds of its wait, at a steady pace, since its bar measures a time.
+
+### Less motion
+
+For a learner who asked their system for less motion (`prefers-reduced-motion`), nothing moves in the interface: a main button only lights up under the pointer, nothing pops, the robot of the home screen stays still, the success panel is there at once. A change of tone stays, since nothing moves: the flash, the bar of **Clear all progress**. The map has rules of its own (see [Animations](../specs.md#animations)).
+
+## Messages
+
+The texts of the interface are in English, in the translation files (see [Interface language](../specs.md#interface-language)). Their tone is a principle of [specs.md](../specs.md#design-principles): short, friendly, in the second person, never blaming, an error giving the rule and never the fix. These rules say how a text is written, so that a new one reads as the others.
+
+### Voice
+
+- **You** is the learner: *your code*, *your program*, *your progress*. The robot is *the robot*; it speaks for itself in a bubble only: the title of a goal, a sentence of the manual.
+- When Stepwise is the one that can't, it says so of itself: *"Stepwise couldn’t load"*, *"Stepwise needs a larger window"*. When a program goes wrong, the sentence is about the program, the robot or the name, never about the learner: *"The robot bumped into a wall."*, *"The name `foward` doesn’t exist."*
+- Contractions, as one speaks: *can’t*, *isn’t*, *doesn’t*.
+- No *please*, no *sorry*, no *oops*, and no *invalid* nor *illegal*, which judge without explaining.
+
+### An error
+
+- Two sentences: in extra-bold, what happened in this program, *"`paint_side` takes 1 value, not 2."*; under it, the rule, true of every program, *"A call gives one value for each parameter of the function."*
+- The rule never becomes an order nor a guess: no *"Remove a value from the call."*, no *"Did you mean `forward`?"* (decided on 2026-11-10, see the principle; the mock-up, drawn before, was brought in line on 2026-11-17).
+- An error while the program runs has the same two sentences: *"The robot bumped into a wall."*, *"`forward()` needs a free cell in front of the robot."*
+
+### Capitals
+
+- A capital at the first word and at a name: Stepwise, Day Desk, a key (Ctrl, Esc). A title, a button, a menu and a tab are written as a sentence: **Restore starting code**, **Keyboard shortcuts**, never *Restore Starting Code*.
+- No capital after a colon, nor after the dot that separates two parts of a state: *"The goal isn’t met: 7 cells of the square aren’t red."*, *"Ended · level done"*.
+- The name of a command keeps its capital in a sentence, as on its button, without quotes: *"Paused at line 5 · Reset to edit"*.
+- A title in capitals (*NEW*, the chapter of a level, a group of commands) is written with one capital in the translation file: the style sets its capitals (`text-transform: uppercase`).
+- Code never takes a capital, even at the start of a sentence: *"`forward()` needs a free cell in front of the robot."*
+
+### Punctuation
+
+- A sentence ends with a period, even alone: a message, the sentence under a title, a tip that explains (*"Puts the map back. Your code stays."*).
+- What names has none: a title, a button, a menu, a tab, a label, a state of the status bar, a tip that only names its button (*Close*, *Show the goal*).
+- An exclamation mark for a level done, and nowhere else: *"Level 18 done!"*
+- An ellipsis is one character, `…`, and has one use: at the end of a command that asks a question before it acts, **Restore starting code…** in its menu. The button that answers the question has none, nor **Clear all progress**, which asks nothing. Never for a wait, nor for a sentence left open.
+- ` · ` separates the parts of a state or of a label (*"Running · Reset to edit"*, *"Loop until · while, not, break"*); ` › ` the steps of a path (**Level › Restore starting code…**, *Manual › 2. Commands › Move*).
+- What the learner typed that isn't code, a search or the code of a level, is between typographic quotes: *"No command found with “pizza”."*
+- The apostrophe of a text is the typographic one, `’`, as its quotes: *Let’s go*, *"The goal isn’t met."* The straight one of the keyboard belongs to the code. The translation file holds the typographic one; the other documents, typed at the keyboard, may quote a text with the straight one (decided on 2026-11-17).
+
+### Code in a message
+
+- Code is written as in the editor: a function with its parentheses, `forward()`; a keyword alone, `while`; a name of the learner as they typed it, `sids`. Never translated.
+- It is in the font of the code, at 0.92 em, where the text around it is in Manrope: a goal, the manual, the command menu. In the console and under the pointer in the editor, where every text is in that font already, nothing marks it.
+- A sign alone is between straight quotes, so that it is seen: *"Expected ':' at the end of the `while` line."*
+- A key is named as on the keyboard, the keys held together joined by `+`: **Ctrl+Space**, **Shift+Tab**.

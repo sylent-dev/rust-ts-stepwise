@@ -11,7 +11,7 @@ const COMMAND_IF = { name: "if", text: "Runs its block when the condition is tru
 const COMMAND_SIDES = { name: "sides", text: "A variable of your program.", example: ["sides = sides + 1"] };
 
 const commandMenuMove = options => appCommandMenu({ category: "Move", groups: [[null, ["forward()", "turn_left()", "turn_right()"]]], chosen: "forward()", details: COMMAND_FORWARD, ...options });
-const commandMenuFiltered = options => appCommandMenu({ category: "Paint", counts: { Paint: 2, Sense: 1 }, groups: [["PAINT", ["start_painting(color)", "stop_painting()"]], ["SENSE", ["is_painting()"]]], chosen: "start_painting(color)", details: COMMAND_PAINT, ...options });
+const commandMenuFiltered = options => appCommandMenu({ category: "Paint", counts: { Paint: 2, Sense: 1 }, groups: [["Paint", ["start_painting(color)", "stop_painting()"]], ["Sense", ["is_painting()"]]], chosen: "start_painting(color)", details: COMMAND_PAINT, ...options });
 
 const commandBoards = () => [
   ["Control: the statements", appCommandMenu({ category: "Control", groups: [[null, ["if", "else if", "else", "while", "repeat", "break"]]], chosen: "if", details: COMMAND_IF, left: 0, top: 0 })],

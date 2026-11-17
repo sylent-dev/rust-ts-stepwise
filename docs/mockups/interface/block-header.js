@@ -7,7 +7,7 @@ function appWordmark(fontSize) {
   const letterHeight = letter => context.measureText(letter).actualBoundingBoxAscent / 100;
   const height = letterHeight("S") * fontSize * 1.25;
   const middleOfText = letterHeight("x") * fontSize / 2 + 0.5 / 44 * fontSize;
-  return `<div class="app-name" style="font-size:${fontSize}px"><img src="world-elements/daylight/logo.svg" height="${height.toFixed(1)}" alt="" style="margin-right:${(fontSize * 0.18).toFixed(1)}px;transform:translateY(${(height / 2 - middleOfText).toFixed(2)}px)"><span>stepwise</span></div>`;
+  return `<div class="app-name" style="font-size:${fontSize}px"><img src="world-elements/daylight/logo.svg" height="${height.toFixed(1)}" alt="" style="margin-right:${(fontSize * 0.3).toFixed(1)}px;transform:translateY(${(height / 2 - middleOfText).toFixed(2)}px)"><span>stepwise</span></div>`;
 }
 
 // The header: the name, the menus, the place of the level (block-place.js), the gear of the settings at

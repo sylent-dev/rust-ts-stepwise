@@ -171,3 +171,7 @@ The roles and the names of the color tokens of the two themes, in `docs/design-s
 ### 12b. Typography and fonts (#47)
 
 A scale of eight text sizes (23 in the mock-up), three weights and five line heights, per role, each compared on every window of the mock-up; figures of one width in the status bar; one variable file per font committed in `web/static/fonts/` beside its license, the complete file of Adobe for Source Code Pro, whose reserved name rules out a subset, after comparing with the npm packages of Fontsource (see [Font sources](font-sources.md)); two scripts in the `html-mockups` skill that compare the captures of a mock-up.
+
+### 12c. Spacing and radii (#48)
+
+A scale of eight spacing steps (34 values in the mock-up), named by their length, the alignments tuned by eye staying named exceptions; three radii, one name replacing two for the same 3 pixels; both compared on every window of the mock-up, which shows them in a section of its own.
