@@ -251,7 +251,7 @@ In pixels, as the whole layout.
 
 The alignments tuned by eye keep their value, written in their block with its reason:
 
-- The header and the name of the manual keep 3 pixels under their content, the height of the bar of the progress, above which the content is centered.
+- A header that draws the bar of the progress, and the name of the manual, keep 3 pixels under their content, the height of the bar, above which the content is centered: 49 pixels in all. A header without the bar, as the one of the sandbox, is 46 pixels high (decided on 2026-11-17: with the 3 pixels left empty, the fill of a menu stood 8 pixels under the top of the header and 11 above its bottom).
 - A link of the goal has 4.5 pixels above its text and 5.5 under it: the text sits half a pixel high, tuned on the owner's screen.
 - The icon of a note of the console sits 3 pixels lower, on the lowercase letters of its line.
 - The robot of a goal moves 2 pixels to the left in Night Desk, where its dark outline fades into the bubble.
@@ -288,7 +288,7 @@ Little moves in the interface, so that what moves is seen: the robot on the map 
 
 | Token | Value | Role |
 |---|---|---|
-| `--duration-fade` | `100ms` | What gives way under the pointer: the number of the level to play under the face of the robot, the shadow of a level done. |
+| `--duration-fade` | `100ms` | What gives way under the pointer: the number of the level to play under the face of the robot, the shadow of a level done. A menu of the header that opens. |
 | `--duration-appear` | `200ms` | What appears, or goes back to rest: the face of the robot on the level to play, **Unlock** turning amber, a bubble of the manual, the success panel; the paint leaving a main button. |
 | `--duration-stroke` | `850ms` | The robot crossing a main button under the pointer, its paint behind it: **Let's go**, **Unlock**, the way back from the manual. |
 | `--duration-flash` | `1600ms` | What lights up to be noticed, then fades: the place reached in the manual; the status bar when the learner types in an editor that is locked. |
@@ -302,8 +302,9 @@ Little moves in the interface, so that what moves is seen: the robot on the map 
 | `--ease-stroke` | `cubic-bezier(0.35, 0.05, 0.4, 1)` | The brush: it sets off gently, crosses fast and settles. |
 | `--ease-move` | `ease-in-out` | What goes from a place to another, starting and stopping gently, as the robot moves forward: the robot of the home screen, the head of the success panel. |
 
-- What answers the learner is there at once. A fill under the pointer: a row, a button, a tab. What they open or close: a menu, the command menu, the bubble of the goal, a panel over its veil, the drawer of the manual. As in a code editor, nothing waits between a key and its answer, and the command menu and the manual are opened all the time.
+- What answers the learner is there at once. A fill under the pointer: a row, a button, a tab. What they open or close: the command menu, the bubble of the goal, a panel over its veil, the drawer of the manual. As in a code editor, nothing waits between a key and its answer, and the command menu and the manual are opened all the time.
 - So what moves is what the learner didn't ask for, or a manner of the robot: the success panel, which comes by itself once the robot has hopped, a place that lights up, the paint across a main button.
+- One exception, for now: a menu of the header grows from the corner under its name, from 85% of its size and from nothing to opaque, in `--duration-fade` with `--ease-appear`, and goes back the same way when it closes, in six tenths of that time. The rows answer while it opens; a menu that takes the place of its neighbor, with the arrows or the pointer, is there at once; nothing moves for a learner who asked for less motion (decided on 2026-11-17, in the live window of the menus of the mock-up, the owner finding it friendlier; left with it: a menu that unrolls from the bar, that slides down, or that pops as the robot, whose bounce only shows from 200 milliseconds).
 - Rejected (decided on 2026-11-17, compared in a live window of the mock-up): a veil that fades in, its panel rising as the success panel and the drawer of the manual sliding in from the right, in 200 milliseconds; a menu and a bubble fading in as well, in 100.
 - The tokens replace a dozen values written one by one (decided on 2026-11-16): 0.2, 0.22 and 0.25 seconds became 200 milliseconds, 0.1 and 0.15 became 100, hardly seen.
 

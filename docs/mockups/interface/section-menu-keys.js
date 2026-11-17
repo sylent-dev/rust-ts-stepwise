@@ -1,8 +1,8 @@
 // Section: the menus of the header, live, with their keyboard, decided at step 13b: the menu bar of a
 // code editor. The window is the level screen; its four menus open with the mouse and with the keys.
 // One row is lit at a time, under the pointer or chosen with the keys, and the greyed rows are
-// skipped. The opening and the closing of a menu follow two controls of the page, an open decision of
-// step 13b: the design system says at once.
+// skipped. A menu grows from the corner under its name and goes back the same way, a little faster;
+// a menu that takes the place of its neighbor is there at once.
 
 // The speed in use, kept while the page stays open.
 let menuLiveSpeed = 2;
@@ -21,8 +21,8 @@ function menuLiveCloseSpeeds(root) {
   root.querySelector(".app-menu-row.is-open")?.classList.remove("is-open");
 }
 
-// Closes the menu. `atOnce` when another menu takes its place; otherwise as the control of the page
-// says, and at once for a learner who asked for less motion, for whom no animation plays.
+// Closes the menu: at once when another menu takes its place (`atOnce`), and for a learner who asked
+// for less motion, for whom no animation plays.
 function menuLiveClose(root, atOnce = false) {
   menuLiveCloseSpeeds(root);
   root.querySelector(".app-menu.is-open")?.classList.remove("is-open");
@@ -31,7 +31,7 @@ function menuLiveClose(root, atOnce = false) {
   menu.removeAttribute("data-menu-live-menu");
   menu.classList.remove("is-opening");
   menu.classList.add("is-closing");
-  if (atOnce || chosen.menuClose === "none" || getComputedStyle(menu).animationName === "none") menu.remove();
+  if (atOnce || getComputedStyle(menu).animationName === "none") menu.remove();
   else menu.addEventListener("animationend", () => menu.remove(), { once: true });
 }
 
@@ -89,7 +89,7 @@ function menuLiveWindow() {
 }
 
 SECTIONS.push(["The menus, live: their keyboard and their opening", () => `
-  <p class="menu-keys-intro"><b>To decide: the opening of a menu.</b> The design system says <i>at once</i> (<b>13</b>) since step 12d, where a menu fading in over 100 ms was compared and rejected: as in a code editor, nothing waits between a key and its answer. <b>14</b> grows from the corner under its name, <b>15</b> unrolls from the bar, <b>16</b> slides down, <b>17</b> pops past its size and comes back, as the robot. The slider sets how long it takes, and <b>19</b> plays it backwards when the menu closes. In every one, a menu that takes the place of its neighbor is there at once, the rows answer while it opens, and nothing moves for a learner who asked for less motion.</p>
+  <p class="menu-keys-intro">A menu grows from the corner under its name in 100 milliseconds, and goes back the same way when it closes, a little faster. The rows answer while it opens, a menu that takes the place of its neighbor is there at once, and nothing moves for a learner who asked for less motion. It is the one exception to what the learner opens being there at once (decided at step 13b; a menu that unrolls from the bar, slides down or pops as the robot was compared and left).</p>
   <p class="menu-keys-intro">Live: the four menus open with the mouse and with the keys, as the menu bar of a code editor. Click the name <b>stepwise</b> in the window, then press <b>Tab</b>: it stops once on the bar, on the menu left last. <b>←</b> <b>→</b> go from a menu to the next, <b>Enter</b>, <b>Space</b> or <b>↓</b> opens it on its first row, <b>↑</b> on its last. In a menu, <b>↑</b> <b>↓</b>, <b>Home</b> and <b>End</b> choose a row and <b>Enter</b> or <b>Space</b> runs it; <b>←</b> <b>→</b> open the menu beside, except <b>→</b> on <b>Speed</b>, which opens its speeds, and <b>←</b>, which leaves them; <b>Esc</b> closes the menu and gives the focus back to its name; <b>Tab</b> closes it and goes on. With the mouse, a click opens a menu and, once one is open, pointing at another name opens it.</p>
   <div class="page-row"><div class="page-slot menu-live" data-menu-live>
     <span>1280 × 720, the level screen. Last command run: <b data-menu-live-last>none yet</b></span>
