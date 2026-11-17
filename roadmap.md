@@ -32,12 +32,12 @@ Model: each step to come names its model. Fable 5.2 runs the steps whose design 
 - [x] **9. Interpreter** (#34, #35, #36)
 - [x] **10. WebAssembly bridge** (#37, #38, #39, #41)
 - [x] **11. Animations and sounds** (#42, #45)
-- [x] **12. Design system** *(Fable 5.2)*: the tokens (colors of the two themes, spacing, radii, typography, motion) in `docs/design-system.md`, linked from `specs.md`, which keeps the principles (decided on 2026-11-16, `specs.md` being long already); the fonts and their licenses, the tone of the messages; the mock-up updated to use exactly these tokens; an entry in `design-journal.md`.
-  - [x] **12a. Colors** (#46)
-  - [x] **12b. Typography and fonts** (#47)
-  - [x] **12c. Spacing and radii** (#48)
-  - [x] **12d. Motion and tone**: the durations and the curves of the interface, the scenes of a block keeping their own timing; the writing rules of the messages (capitals, final period, ellipsis, code in a message); the entry in `design-journal.md`.
+- [x] **12. Design system** (#46, #47, #48, #49)
 - [ ] **13. Application shell** *(Fable 5.2)*: the pages and their addresses, the header with its menus and the progress, the design tokens and the two themes, the texts from Fluent, the browser storage with its version and the banner when it is refused, the settings, the messages for a window too narrow and a browser too old.
+  - [ ] **13a. Tokens and pages**: the tokens and the two themes in the application, the fonts, the base styles (the text, the keyboard focus, the scroll bars); the four pages and their addresses; the header with the logo, the name and the links of the home screen; the probe moved to the page of the sandbox.
+  - [ ] **13b. Menus**: the menu of the header, with the mouse and the keyboard; **Level** and **Help** with the commands that exist; the place of the level.
+  - [ ] **13c. Storage and settings**: the browser storage with its version, the saved data that can't be read ignored; the panel of the settings over its veil; the theme saved, applied before the first paint; the banner when the storage is refused.
+  - [ ] **13d. Messages**: the window too small (its size followed live, the phone); the browser too old and the files that can't load, written in the page itself.
 - [ ] **14. Map view** *(Opus 5.5)*: the elements of step 1 as Svelte components, the map of a level drawn from the core, the goal marks, the animations of every action, tuned at every speed with the owner.
 - [ ] **15. Quality audit** *(Fable 5.2)*: an audit of the whole code, not of one branch, once the core is complete (steps 9 and 10) and the interface has its first bases (steps 13 and 14), before the steps of the interface copy its patterns: the responsibilities of the modules and the components and their dependencies, no type or component that does everything, SOLID and KISS (and the splits that cost more than they bring), the naming and the conventions of `CLAUDE.md`, what Rust and TypeScript repeat; a report in `outputs/`, the owner choosing what is kept, then those refactorings, one pull request per coherent theme, so that the refactoring before the first release stays small (decided on 2026-11-12).
 - [ ] **16. Code editor** *(Opus 5.5)*: CodeMirror with our theme, the highlighting, the indentation rules, the errors underlined as the learner types, the line at 80 characters, the code saved per level, **Restore starting code**.

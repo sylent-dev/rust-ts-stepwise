@@ -175,3 +175,7 @@ A scale of eight text sizes (23 in the mock-up), three weights and five line hei
 ### 12c. Spacing and radii (#48)
 
 A scale of eight spacing steps (34 values in the mock-up), named by their length, the alignments tuned by eye staying named exceptions; three radii, one name replacing two for the same 3 pixels; both compared on every window of the mock-up, which shows them in a section of its own.
+
+### 12d. Motion and tone (#49)
+
+Four durations and four curves of the interface named as tokens, in place of a dozen values written one by one, the scenes of a block keeping their own timing; what the learner opens is there at once, the fades and the slides compared in a live window of the mock-up being rejected; the writing rules of the messages (the voice, the two sentences of an error, the capitals, the punctuation, the code in a message), six errors of the mock-up brought in line with the principle of the rule, never the fix; the typographic apostrophe in the texts; the entry in `design-journal.md`.
