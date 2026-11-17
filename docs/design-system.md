@@ -315,3 +315,44 @@ A scene tells a small story in several moves. It keeps its durations and its del
 ### Less motion
 
 For a learner who asked their system for less motion (`prefers-reduced-motion`), nothing moves in the interface: a main button only lights up under the pointer, nothing pops, the robot of the home screen stays still, the success panel is there at once. A change of tone stays, since nothing moves: the flash, the bar of **Clear all progress**. The map has rules of its own (see [Animations](../specs.md#animations)).
+
+## Messages
+
+The texts of the interface are in English, in the translation files (see [Interface language](../specs.md#interface-language)). Their tone is a principle of [specs.md](../specs.md#design-principles): short, friendly, in the second person, never blaming, an error giving the rule and never the fix. These rules say how a text is written, so that a new one reads as the others.
+
+### Voice
+
+- **You** is the learner: *your code*, *your program*, *your progress*. The robot is *the robot*; it speaks for itself in a bubble only: the title of a goal, a sentence of the manual.
+- When Stepwise is the one that can't, it says so of itself: *"Stepwise couldn't load"*, *"Stepwise needs a larger window"*. When a program goes wrong, the sentence is about the program, the robot or the name, never about the learner: *"The robot bumped into a wall."*, *"The name `foward` doesn't exist."*
+- Contractions, as one speaks: *can't*, *isn't*, *doesn't*.
+- No *please*, no *sorry*, no *oops*, and no *invalid* nor *illegal*, which judge without explaining.
+
+### An error
+
+- Two sentences: in extra-bold, what happened in this program, *"`paint_side` takes 1 value, not 2."*; under it, the rule, true of every program, *"A call gives one value for each parameter of the function."*
+- The rule never becomes an order nor a guess: no *"Remove a value from the call."*, no *"Did you mean `forward`?"* (decided on 2026-11-10, see the principle; the mock-up, drawn before, was brought in line on 2026-11-17).
+- An error while the program runs has the same two sentences: *"The robot bumped into a wall."*, *"`forward()` needs a free cell in front of the robot."*
+
+### Capitals
+
+- A capital at the first word and at a name: Stepwise, Day Desk, a key (Ctrl, Esc). A title, a button, a menu and a tab are written as a sentence: **Restore starting code**, **Keyboard shortcuts**, never *Restore Starting Code*.
+- No capital after a colon, nor after the dot that separates two parts of a state: *"The goal isn't met: 7 cells of the square aren't red."*, *"Ended · level done"*.
+- The name of a command keeps its capital in a sentence, as on its button, without quotes: *"Paused at line 5 · Reset to edit"*.
+- A title in capitals (*NEW*, the chapter of a level, a group of commands) is written with one capital in the translation file: the style sets its capitals (`text-transform: uppercase`).
+- Code never takes a capital, even at the start of a sentence: *"`forward()` needs a free cell in front of the robot."*
+
+### Punctuation
+
+- A sentence ends with a period, even alone: a message, the sentence under a title, a tip that explains (*"Puts the map back. Your code stays."*).
+- What names has none: a title, a button, a menu, a tab, a label, a state of the status bar, a tip that only names its button (*Close*, *Show the goal*).
+- An exclamation mark for a level done, and nowhere else: *"Level 18 done!"*
+- An ellipsis is one character, `…`, and has one use: at the end of a command that asks a question before it acts, **Restore starting code…** in its menu. The button that answers the question has none, nor **Clear all progress**, which asks nothing. Never for a wait, nor for a sentence left open.
+- ` · ` separates the parts of a state or of a label (*"Running · Reset to edit"*, *"Loop until · while, not, break"*); ` › ` the steps of a path (**Level › Restore starting code…**, *Manual › 2. Commands › Move*).
+- What the learner typed that isn't code, a search or the code of a level, is between typographic quotes: *"No command found with “pizza”."*
+
+### Code in a message
+
+- Code is written as in the editor: a function with its parentheses, `forward()`; a keyword alone, `while`; a name of the learner as they typed it, `sids`. Never translated.
+- It is in the font of the code, at 0.92 em, where the text around it is in Manrope: a goal, the manual, the command menu. In the console and under the pointer in the editor, where every text is in that font already, nothing marks it.
+- A sign alone is between straight quotes, so that it is seen: *"Expected ':' at the end of the `while` line."*
+- A key is named as on the keyboard, the keys held together joined by `+`: **Ctrl+Space**, **Shift+Tab**.

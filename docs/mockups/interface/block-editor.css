@@ -52,7 +52,8 @@
 .app-text { isolation: isolate; }
 .app-selection { position: absolute; left: var(--space-12); top: 0; height: var(--line-code); background: var(--select); z-index: -1; }
 .app-caret { position: absolute; top: 2px; bottom: 2px; width: 2px; margin-left: -1px; background: var(--text); }
-.app-hover-note { top: calc(var(--line-code) + 2px); padding: var(--space-6) var(--space-12); font: var(--weight-code) var(--size-code-small)/var(--line-code-small) var(--font-code); white-space: nowrap; }
+/* The message of an error under the pointer: on one line, and on several once it is longer than 60 characters. */
+.app-hover-note { top: calc(var(--line-code) + 2px); width: max-content; max-width: 60ch; padding: var(--space-6) var(--space-12); font: var(--weight-code) var(--size-code-small)/var(--line-code-small) var(--font-code); }
 .app-hover-note b { font-weight: var(--weight-code-strong); }
 
 /* The boards of the controls, in the corner of an editor at its real size. */
