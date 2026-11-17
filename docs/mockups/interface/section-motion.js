@@ -39,36 +39,13 @@ const motionGraph = ([x1, y1, x2, y2]) => {
     <path d="M${x(0)} ${y(0)}C${x(x1)} ${y(y1)} ${x(x2)} ${y(y2)} ${x(1)} ${y(1)}"/></svg>`;
 };
 
-// The decision still open: what the learner opens, at once or with a motion (the tabs What opens,
-// at the top of the page). A button puts the window below in its state, and what opens there plays
-// the variant chosen; everything closes at once.
-const MOTION_OPENS = {
-  "A menu": () => readyWindow({ header: { menu: "Level" }, overlay: appMenu("Level") }),
-  "The command menu": () => readyWindow({ editor: { lines: COMMAND_LINES("        "), caret: { line: 5, col: 9 }, cursor: "Ln 5, Col 9" }, overlay: commandMenuMove() }),
-  "The goal": () => readyWindow({ header: { goalOpen: true }, overlay: appGoal() }),
-  "The settings": () => readyWindow({ header: { settings: true }, overlay: appSettings() }),
-  "The keyboard shortcuts": () => readyWindow({ overlay: appShortcutsPanel() }),
-  "A confirmation": () => readyWindow({ overlay: appConfirm({ question: "Restore the starting code<br>of 18. Paint a square?", lost: "Your code will be replaced for good by the starting code of the level, as the first time.", action: "Restore starting code" }) }),
-  "The manual, in its drawer": () => manualDrawerWindow(),
-  "Close": () => readyWindow(),
-};
-
 SECTIONS.push(["Motion", () => `
-  <p class="motion-intro">Four durations and four curves time what moves in the interface; they replace a dozen values written one by one. A fill under the pointer changes at once. The scenes keep a timing of their own: the robot of the home screen, the success panel, the examples of the manual, the two seconds of <b>Clear all progress</b>. For a learner who asked for less motion, nothing moves: only a change of tone stays, the flash and the bar of <b>Clear all progress</b>.</p>
-  <h3>What opens: at once, or with a motion</h3>
-  <p class="motion-intro">Choose a variant with the tabs <b>What opens</b>, at the top of the page, then open each thing below. Everything closes at once in the three variants.</p>
-  <div class="motion-opens">${Object.keys(MOTION_OPENS).map(name => `<button type="button" class="page-replay" data-motion-open="${name}">${name}</button>`).join("")}</div>
-  <div class="page-slot"><span>1280 × 720, live: the level screen, and what the buttons above open</span><div class="motion-live">${readyWindow()}</div></div>
+  <p class="motion-intro">Four durations and four curves time what moves in the interface; they replace a dozen values written one by one. What answers the learner is there at once: a fill under the pointer, and what they open or close, a menu, a bubble, a panel, the drawer of the manual. The scenes keep a timing of their own: the robot of the home screen, the success panel, the examples of the manual, the two seconds of <b>Clear all progress</b>. For a learner who asked for less motion, nothing moves: only a change of tone stays, the flash and the bar of <b>Clear all progress</b>.</p>
   <h3>The durations</h3>
   <div class="app-window motion-board">${MOTION_DURATIONS.map(([name, sample, uses]) => motionRow(`--duration-${name}`, sample, uses)).join("")}</div>
   <h3>The curves, each over one second</h3>
   <div class="app-window motion-board">${MOTION_CURVES.map(([name, points, uses]) =>
     motionRow(`--ease-${name}`, `${motionGraph(points)}<span class="motion-track"><i style="transition-timing-function:var(--ease-${name})"></i></span>`, uses)).join("")}</div>`]);
-
-document.addEventListener("click", event => {
-  const name = event.target.closest?.("[data-motion-open]")?.dataset.motionOpen;
-  if (name) document.querySelector(".motion-live").innerHTML = MOTION_OPENS[name]();
-});
 
 // The samples play in a loop: every board goes from one state to the other.
 setInterval(() => document.querySelectorAll(".motion-board").forEach(board => board.classList.toggle("is-on")), 2000);

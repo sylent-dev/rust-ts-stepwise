@@ -298,7 +298,9 @@ Little moves in the interface, so that what moves is seen: the robot on the map 
 | `--ease-stroke` | `cubic-bezier(.35, .05, .4, 1)` | The brush: it sets off gently, crosses fast and settles. |
 | `--ease-move` | `ease-in-out` | What goes from a place to another, starting and stopping gently, as the robot moves forward: the robot of the home screen, the head of the success panel. |
 
-- A fill under the pointer changes at once: a row, a button, a tab.
+- What answers the learner is there at once. A fill under the pointer: a row, a button, a tab. What they open or close: a menu, the command menu, the bubble of the goal, a panel over its veil, the drawer of the manual. As in a code editor, nothing waits between a key and its answer, and the command menu and the manual are opened all the time.
+- So what moves is what the learner didn't ask for, or a manner of the robot: the success panel, which comes by itself once the robot has hopped, a place that lights up, the paint across a main button.
+- Rejected (decided on 2026-11-17, compared in a live window of the mock-up): a veil that fades in, its panel rising as the success panel and the drawer of the manual sliding in from the right, in 200 milliseconds; a menu and a bubble fading in as well, in 100.
 - The tokens replace a dozen values written one by one (decided on 2026-11-16): 0.2, 0.22 and 0.25 seconds became 200 milliseconds, 0.1 and 0.15 became 100, hardly seen.
 
 ### Scenes

@@ -31,18 +31,3 @@
 .motion-track { position: relative; flex: 1; height: 12px; margin-right: var(--space-24); background: var(--hover); border-radius: 6px; }
 .motion-track i { position: absolute; left: 0; top: 0; width: 12px; height: 12px; background: var(--accent); border-radius: 50%; transition: left 1s; }
 .motion-board.is-on .motion-track i { left: calc(100% - 12px); }
-
-/* The buttons that open something in the live window. */
-.motion-opens { display: flex; flex-wrap: wrap; gap: 6px; }
-
-/* Temporary, until the decision: the variants of What opens, in the live window only. Variant 1
-   opens everything at once. In variants 2 and 3, what covers the screen moves: the veil fades in,
-   its panel rises as the success panel, the drawer of the manual slides in from the right. In
-   variant 3, a menu and a bubble fade in too, coming down a little. */
-:root:not([data-opens="once"]) .motion-live .app-veil { animation: motion-veil var(--duration-appear) var(--ease-appear); }
-:root:not([data-opens="once"]) .motion-live .app-veil > .app-popup { animation: success-rise var(--duration-appear) var(--ease-appear) both; }
-:root:not([data-opens="once"]) .motion-live .manual-drawer { animation: motion-slide var(--duration-appear) var(--ease-appear); }
-:root[data-opens="all"] .motion-live .app-window > .app-popup:not(.manual-drawer) { animation: motion-drop var(--duration-fade) var(--ease-appear); }
-@keyframes motion-veil { from { background: transparent; } }
-@keyframes motion-slide { from { transform: translateX(100%); } }
-@keyframes motion-drop { from { opacity: 0; transform: translateY(-4px); } }
