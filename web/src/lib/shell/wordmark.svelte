@@ -1,24 +1,16 @@
 <!-- The name beside the logo (see Look of the world in specs.md): the head of the robot is 1.25
      times as tall as the capitals, its middle meets the middle of the lowercase letters, raised by
-     0.011 em, and the name starts 0.3 em after it. With `home`, it leads to the home screen. -->
+     0.011 em, and the name starts 0.3 em after it. It only draws: the screen decides whether it
+     is a link. -->
 <script lang="ts">
-	import { resolve } from '$app/paths';
 	import { logo } from '#lib/elements.ts';
 	import { t } from '#lib/i18n.ts';
-
-	let { home = false }: { home?: boolean } = $props();
 </script>
 
-{#snippet name()}
+<span class="wordmark">
 	<img src={logo} alt="" />
 	<span>{t('app-name')}</span>
-{/snippet}
-
-{#if home}
-	<a class="wordmark" href={resolve('/')} title={t('all-levels')}>{@render name()}</a>
-{:else}
-	<div class="wordmark">{@render name()}</div>
-{/if}
+</span>
 
 <style>
 	.wordmark {
@@ -28,11 +20,13 @@
 		--lowercase: 0.51;
 		--head: calc(var(--capital) * 1.25em);
 
+		/* In a band, the baseline of the name sits 1 pixel under the one of the menus, the head of
+		   the robot on the center of the band. */
+		position: relative;
+		top: -2px;
 		display: flex;
 		align-items: baseline;
-		color: inherit;
 		font: var(--weight-strong) 21px / 1 var(--font-name);
-		text-decoration: none;
 		text-transform: lowercase;
 		white-space: nowrap;
 	}

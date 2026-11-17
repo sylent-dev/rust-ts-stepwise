@@ -43,6 +43,7 @@ The ideas, polish and edge cases found along the way that the current step doesn
 - The console of step 17 keeping only its last lines (a few hundred): a `print` in a loop that never ends would otherwise fill the memory of the page, however fast the core is (seen at step 9).
 - The running of step 17: a `step()` that throws (an error of the bridge, not of the program) must stop the loop of the animation frames and say it, rather than leave the program shown as running; the speed kept as its value in steps per second rather than its place in the list, so that the speed saved between sessions survives a change of the list (seen in the review of the probe of step 4c).
 - The five speeds judged with real programs (step 17): a speed counts the steps, the lines run, not the actions of the robot. A program that asks before each move (`while`, `if`, `forward()`) moves the robot once every three steps, so every three seconds at the slowest speed; the fake program of the probe hid it, each of its steps being an action (seen at step 10d, on the probe run by the real machine).
+- The preload of Source Code Pro (step 16, with the editor): the page preloads the three fonts, as the design system asks, but no screen shows code before the editor, and its file is 90 kB of the 144 kB of the fonts. Either only the screens that show code preload it, or it loads with a low priority (seen in the review of step 13a).
 
 ## Content
 

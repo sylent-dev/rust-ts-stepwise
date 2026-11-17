@@ -1,3 +1,4 @@
+import { FluentParser } from '@fluent/syntax';
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import english from '../../locales/en.ftl?raw';
@@ -13,23 +14,27 @@ function folder(...paths: string[]): LevelFiles {
 }
 
 describe('listLevels', () => {
-	const found = listLevels(
-		folder('../../levels/turn-left.toml', '../../levels/sandbox.toml', '../../levels/forward.toml')
-	);
-
 	it('names each level after its file and numbers them from 1, in the order of the names', () => {
+		const found = listLevels(folder('../../levels/turn-left.toml', '../../levels/forward.toml'));
 		expect(found.map(({ number, name }) => [number, name])).toEqual([
 			[1, 'forward'],
 			[2, 'turn-left']
 		]);
 	});
 
-	it('leaves the sandbox out', () => {
-		expect(found.map(({ name }) => name)).not.toContain('sandbox');
+	it('leaves the sandbox out, without a number', () => {
+		const found = listLevels(
+			folder('levels/forward.toml', 'levels/sandbox.toml', 'levels/turn.toml')
+		);
+		expect(found.map(({ number, name }) => [number, name])).toEqual([
+			[1, 'forward'],
+			[2, 'turn']
+		]);
 	});
 
 	it('keeps the way to read the file of each level', async () => {
-		expect(await found[1]?.file()).toBe('../../levels/turn-left.toml');
+		const found = listLevels(folder('levels/turn-left.toml', 'levels/forward.toml'));
+		expect(await found[1]?.file()).toBe('levels/turn-left.toml');
 	});
 });
 
@@ -48,7 +53,7 @@ describe('levelAt', () => {
 	});
 
 	it('gives nothing for a number written another way: a level has one address', () => {
-		for (const number of ['01', '1.0', '1e0', '+1', '-1', ' 1', '1 ', 'one', '']) {
+		for (const number of ['01', '1.0', '1e0', '0x1', '0b1', '+1', '-1', ' 1', '1 ', 'one', '']) {
 			expect(levelAt(found, number), `"${number}"`).toBeUndefined();
 		}
 	});
@@ -56,17 +61,29 @@ describe('levelAt', () => {
 
 describe('the levels of the website', () => {
 	const { bundle } = createBundle('en', english);
+	const each = levels.map((level) => [level.name, level] as const);
 
+	// A wrong path of the folder would list no file, without an error.
 	it('has at least one level', () => {
 		expect(levels.length).toBeGreaterThan(0);
 	});
 
-	it.each(levels.map((level) => [level.name, level] as const))(
-		'%s is read by the core and has its title',
-		async (name, level) => {
-			using read = new Level(await level.file());
-			expect(read.maps().length).toBeGreaterThan(0);
-			expect(bundle.hasMessage(titleMessage(name)), titleMessage(name)).toBe(true);
-		}
-	);
+	// What the folder gives is the text of each file, not its address: the core reads it. The
+	// content of a level file is checked by the tests of the core.
+	it.each(each)('%s reaches the core as the text of its file', async (_name, level) => {
+		using read = new Level(await level.file());
+		expect(read.maps().length).toBeGreaterThan(0);
+	});
+
+	it.each(each)('%s has its title', (name) => {
+		expect(bundle.hasMessage(titleMessage(name)), titleMessage(name)).toBe(true);
+	});
+
+	it('has a level for each title of the translation file', () => {
+		const titled = new FluentParser()
+			.parse(english)
+			.body.flatMap((entry) => (entry.type === 'Message' ? [entry.id.name] : []))
+			.flatMap((id) => /^level-(.+)-title$/.exec(id)?.[1] ?? []);
+		expect(titled.sort()).toEqual(levels.map(({ name }) => name).sort());
+	});
 });

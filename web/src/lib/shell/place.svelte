@@ -1,8 +1,8 @@
 <!-- The place of the screen, in the middle of its header: the title of the level, or the sandbox
-     with its mark. The chapter of a level, its number and the bubble of its goal come with the
+     with its mark. It is the title of the page. The chapter of a level, its number and the bubble of its goal come with the
      list of the levels (step 21). -->
 <script lang="ts">
-	import Icon, { type IconName } from './icon.svelte';
+	import Icon, { type IconName } from '#lib/icon.svelte';
 
 	interface Props {
 		title: string;
@@ -15,7 +15,7 @@
 
 <div class="place">
 	{#if icon}<span class="mark"><Icon name={icon} size={14} /></span>{/if}
-	<b>{title}</b>
+	<h1>{title}</h1>
 </div>
 
 <style>
@@ -37,7 +37,8 @@
 		color: var(--weak);
 	}
 
-	b {
+	h1 {
+		margin: 0;
 		font: var(--weight-strong) var(--size-lead) / 18px var(--font-text);
 	}
 </style>

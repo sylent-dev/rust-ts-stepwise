@@ -1,14 +1,14 @@
 <!-- The header of a screen: one band with the name, then what the screen puts in it (its links or
-     its menus, the place of the level). With `home`, the name leads to the home screen. -->
+     its menus, the place of the level). -->
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import Wordmark from './wordmark.svelte';
 
-	let { home = false, children }: { home?: boolean; children?: Snippet } = $props();
+	let { children }: { children?: Snippet } = $props();
 </script>
 
 <header>
-	<div class="name"><Wordmark {home} /></div>
+	<Wordmark />
 	{@render children?.()}
 </header>
 
@@ -24,12 +24,5 @@
 		height: 49px;
 		padding: 0 var(--space-12) 3px;
 		background: var(--band);
-	}
-
-	/* The baseline of the name sits 1 pixel under the one of the menus, the head of the robot on
-	   the center of the band. */
-	.name {
-		position: relative;
-		top: -2px;
 	}
 </style>

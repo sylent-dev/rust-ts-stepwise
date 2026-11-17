@@ -36,11 +36,11 @@ export function listLevels(files: LevelFiles): LevelEntry[] {
 }
 
 /**
- * The level of an address, `/levels/<number>`. The number is written as the interface writes it,
- * in digits without a leading zero, so that a level has one address.
+ * The level of an address, `/levels/<number>`. The texts are compared, so the number is the one
+ * the interface writes, and nothing else (`01`, `1.0`): a level has one address.
  */
 export function levelAt(levels: readonly LevelEntry[], number: string): LevelEntry | undefined {
-	return /^[1-9][0-9]*$/.test(number) ? levels[Number(number) - 1] : undefined;
+	return levels.find((level) => String(level.number) === number);
 }
 
 /** The name of the message that holds the title of a level: `level-paint-a-square-title`. */

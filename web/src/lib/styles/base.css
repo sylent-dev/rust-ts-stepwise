@@ -2,7 +2,8 @@
    component styles its own block, with the tokens (tokens.css) and nothing else. */
 
 /* The window: a header, then the screen, which takes the height left and scrolls by itself where
-   it has to. The page never scrolls. */
+   it has to. The page never scrolls. The body lays them out: app.html wraps the application in a
+   box without a box of its own (`display: contents`), which must stay so. */
 html,
 body {
 	height: 100%;
@@ -31,7 +32,8 @@ button {
 
 /* The keyboard focus: a ring on what the keys act on, which a click never shows. In the color of
    the text of the element, it stands out on every fill; inside its edge, no zone cuts it. A field
-   and the editor show their cursor instead. */
+   and the editor show their cursor instead: a browser gives this ring to a field even after a
+   click, so the block of each field takes it away. */
 :focus-visible {
 	outline: var(--focus-ring);
 	outline-offset: var(--focus-offset);
