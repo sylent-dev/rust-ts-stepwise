@@ -1,10 +1,6 @@
-/* The three sections of step 13b on the menus: their introductions, on the page. */
-.step-rows-intro, .sandbox-row-intro, .menu-keys-intro { max-width: 880px; margin: 4px 0 12px; color: #dee2e6; }
+/* The two sections of step 13b on the menus: their introductions, on the page. */
+.sandbox-row-intro, .menu-keys-intro { max-width: 880px; margin: 4px 0 12px; color: #dee2e6; }
 .menu-live > span b { color: #dee2e6; }
-
-/* The top of the level screen as step 13b leaves it: nothing under the header yet. */
-.app-window.step-rows-window { height: 420px; }
-.step-rows-screen { flex: 1; }
 
 /* The menu Level of the sandbox, alone: four rows high. */
 .app-window.menu-board.sandbox-row-board { height: 122px; }

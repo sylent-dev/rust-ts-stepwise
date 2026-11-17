@@ -4,8 +4,7 @@
 // is a list and `range` a slider, both setting the CSS `variable` at once, without redrawing the page.
 const VARIANTS = {
   theme: { label: "Style", options: Object.fromEntries(Object.entries(INTERFACE_STYLES).map(([key, style]) => [key, style.title])), fallback: Object.keys(INTERFACE_STYLES)[0] },
-  // Three decisions of step 13b, each with its section at the top of the page; removed once made.
-  rows: { label: "Rows not coded yet", options: { arrive: "1 · With their command", greyed: "2 · All now, greyed" }, fallback: "arrive" },
+  // Two decisions of step 13b, each with its section at the top of the page; removed once made.
   sandboxRow: { label: "Row Sandbox", options: { check: "3 · A check mark", greyed: "4 · Greyed", plain: "5 · A plain row" }, fallback: "check" },
   menuKeys: { label: "Keys of the menus", options: { bar: "6 · One stop, then the arrows", stops: "7 · Each menu a stop" }, fallback: "bar" },
 };
