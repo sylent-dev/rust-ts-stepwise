@@ -3,7 +3,6 @@
 	import { resolve } from '$app/paths';
 	import { t } from '#lib/i18n.ts';
 	import { levels, titleMessage } from '#lib/levels.ts';
-	import BandLink from '#lib/shell/band-link.svelte';
 	import Header from '#lib/shell/header.svelte';
 </script>
 
@@ -13,8 +12,8 @@
 
 <Header>
 	<nav>
-		<BandLink to="sandbox">{t('sandbox')}</BandLink>
-		<BandLink to="manual">{t('manual')}</BandLink>
+		<a class="band-item" href={resolve('/sandbox')}>{t('sandbox')}</a>
+		<a class="band-item" href={resolve('/manual')}>{t('manual')}</a>
 	</nav>
 </Header>
 <main>
@@ -49,7 +48,7 @@
 		list-style: none;
 	}
 
-	a {
+	li a {
 		display: inline-block;
 		padding: var(--space-6) var(--space-12);
 		border-radius: var(--radius);
@@ -59,7 +58,7 @@
 		text-decoration: none;
 	}
 
-	a:hover {
+	li a:hover {
 		background: var(--hover);
 	}
 </style>

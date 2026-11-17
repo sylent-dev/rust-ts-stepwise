@@ -12,6 +12,14 @@ sandbox = Sandbox
 manual = Manual
 all-levels = All levels
 
+## The menus of the level screen and of the sandbox. A row that leads to a screen takes its name
+## above.
+
+# The name of the bar of the menus, for a screen reader.
+menus = Menus
+menu-level = Level
+menu-help = Help
+
 ## The levels. The messages of a level are named after its stable name, the name of its file in
 ## `levels/`: `level-<name>-title`.
 

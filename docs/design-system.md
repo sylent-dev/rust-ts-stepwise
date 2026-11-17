@@ -50,7 +50,7 @@ Two themes, chosen in the settings: **Day Desk**, light, by default, and **Night
 | `--band` | `#eceff3` | `#171b21` | The header, the status bar, the rows of tabs, the sides of the manual and its examples of code. |
 | `--band-hover` | `#dde2e8` | `#2a313b` | A button of a band under the pointer. |
 | `--surface` | `#fafbfc` | `#1e232b` | The editor and the content of a screen. |
-| `--hover` | `#e4e8ed` | `#333b47` | A row under the pointer, on a surface or in what opens over the screen; a thin line between two rows; the track of a scroll bar. |
+| `--hover` | `#e4e8ed` | `#333b47` | A row under the pointer, on a surface or in what opens over the screen; in a menu, the row chosen with the keys and the row of the screen already shown, lit as if already chosen; a thin line between two rows; the track of a scroll bar. |
 | `--map-block` | `#d3d8df` | `#262c35` | The block around the map, darker than the map in Day Desk so that it stands out. |
 | `--map-shadow` | `0 8px 26px #22293540` | `0 10px 34px #0008` | The shadow of the map on its block. |
 | `--field` | `#e4e8ee` | `#14181e` | A field to type in: the search of the manual, the code of a level. |
@@ -133,6 +133,7 @@ Two themes, chosen in the settings: **Day Desk**, light, by default, and **Night
 - In the color of the text of its element, the ring stands out on every fill without a rule per element: dark on the amber of **Let's go**, light on the theme chosen in the settings, white on the dark side of a goal.
 - Inside the edge, no zone cuts it: the zones meet without any line, and many buttons lie against the edge of theirs (the tabs of the map, **Legend**, **Let's go**).
 - A field and the editor show their cursor instead.
+- In a menu of the header, the row chosen with the keys takes the ring; the row under the pointer never does.
 - Rejected (decided on 2026-11-16, section *Keyboard focus* of the mock-up): a ring around the element, 2 pixels away, in the color of the text of the page, cut on the buttons that lie against an edge and lost on the dark side of a goal in Day Desk; the cyan and the amber, weak on the light zones of Day Desk, the amber lost on an amber button, and both already carrying a meaning.
 
 ### Contrast

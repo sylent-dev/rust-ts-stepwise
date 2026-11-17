@@ -14,7 +14,8 @@
 
 <style>
 	/* The content is centered on the height above the last 3 pixels, those of the bar of the
-	   progress (step 21). */
+	   progress (step 21). The menus open against its bottom (menu-bar.svelte): it is the box
+	   they are placed in. */
 	header {
 		position: relative;
 		flex: none;
