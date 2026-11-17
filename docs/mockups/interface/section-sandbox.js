@@ -29,8 +29,10 @@ function sandboxWorld({ path = [], robot, facing }) {
   return appRowsWorld(rows, { "2,3": { item: true }, "9,5": { item: true }, [robot]: { robot: facing } }, 48, [...SANDBOX_LINKS, ...pathLinks(...path)]);
 }
 
-const sandboxWindow = ({ path, robot, facing, state, steps, console }) => appWindow({
+const sandboxWindow = ({ path, robot, facing, state, steps, console, header, overlay }) => appWindow({
   sandbox: true,
+  header,
+  overlay,
   editor: { lines: SANDBOX_CODE, state, steps, cursor: "Ln 10, Col 21" },
   map: sandboxWorld({ path, robot, facing }),
   panels: { tab: "Console", content: console },

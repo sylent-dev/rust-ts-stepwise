@@ -1,0 +1,18 @@
+/* The three sections of step 13b on the menus: their introductions, on the page. */
+.step-rows-intro, .sandbox-row-intro, .menu-keys-intro { max-width: 880px; margin: 4px 0 12px; color: #dee2e6; }
+.menu-live > span b { color: #dee2e6; }
+
+/* The top of the level screen as step 13b leaves it: nothing under the header yet. */
+.app-window.step-rows-window { height: 420px; }
+.step-rows-screen { flex: 1; }
+
+/* The menu Level of the sandbox, alone: four rows high. */
+.app-window.menu-board.sandbox-row-board { height: 122px; }
+
+/* The live menus: one row lit at a time, the one that holds the focus, under the pointer or chosen
+   with the keys; the row Speed stays lit while its speeds are open. */
+.menu-live .app-menu:hover { background: var(--band-hover); }
+.menu-live .app-menu-row { cursor: default; }
+.menu-live .app-menu-row:hover { background: none; }
+.menu-live .app-menu-row:focus, .menu-live .app-menu-row.is-open { background: var(--hover); }
+.menu-live .app-dropdown:focus { outline: none; }
