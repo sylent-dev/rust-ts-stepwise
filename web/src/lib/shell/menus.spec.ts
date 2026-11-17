@@ -4,9 +4,12 @@ import { canChoose, closedOn, openOn, pressKey, type BarState, type Menu } from 
 /** A menu of rows named by their letters: an uppercase one can't be chosen. */
 function menu(name: string, rows: string): Menu {
 	return {
+		id: name.toLowerCase(),
 		name,
 		rows: [...rows].map((label) =>
-			label === label.toUpperCase() ? { label, here: true } : { label, to: 'sandbox' }
+			label === label.toUpperCase()
+				? { id: label, label, here: true }
+				: { id: label, label, to: 'sandbox' }
 		)
 	};
 }
@@ -21,14 +24,15 @@ function press(state: BarState, ...keys: string[]): BarState {
 	return keys.reduce((from, key) => {
 		const outcome = pressKey(from, key, menus);
 		if (!outcome) throw new Error(`the bar ignores ${key}`);
+		if ('runs' in outcome) throw new Error(`${key} runs the row ${outcome.runs}`);
 		return outcome.state;
 	}, state);
 }
 
 describe('canChoose', () => {
 	it('tells a row that leads to a page from the row of the screen already shown', () => {
-		expect(canChoose({ label: 'Sandbox', to: 'sandbox' })).toBe(true);
-		expect(canChoose({ label: 'Sandbox', here: true })).toBe(false);
+		expect(canChoose({ id: 'sandbox', label: 'Sandbox', to: 'sandbox' })).toBe(true);
+		expect(canChoose({ id: 'sandbox', label: 'Sandbox', here: true })).toBe(false);
 	});
 });
 
@@ -54,6 +58,14 @@ describe('pressKey, the bar closed', () => {
 
 	it.each(['Escape', 'Tab', 'Home', 'End', 'a'])('leaves %j to the browser', (key) => {
 		expect(pressKey(closedOn(0), key, menus)).toBeUndefined();
+	});
+
+	it.each(['Enter', ' '])('stays closed while %j is held down and repeats', (key) => {
+		expect(pressKey(closedOn(1), key, menus, true)).toEqual({ state: closedOn(1) });
+	});
+
+	it('still follows an arrow held down', () => {
+		expect(pressKey(closedOn(0), 'ArrowRight', menus, true)).toEqual({ state: closedOn(1) });
 	});
 });
 
@@ -87,9 +99,21 @@ describe('pressKey, a menu open', () => {
 		expect(press(openOn(2), 'ArrowRight')).toEqual(on(0, 0));
 	});
 
-	it.each(['Enter', ' '])('runs the lit row with %j and closes', (key) => {
-		expect(pressKey(on(1, 2), key, menus)).toEqual({ state: closedOn(1), runs: 2 });
+	it.each(['Enter', ' '])('runs the lit row with %j', (key) => {
+		expect(pressKey(on(1, 2), key, menus)).toEqual({ runs: 2 });
 	});
+
+	it.each(['Enter', ' '])('runs nothing while %j is held down and repeats', (key) => {
+		// The press opened the menu on its first row: its repeats must not run that row.
+		expect(pressKey(on(1, 0), key, menus, true)).toEqual({ state: on(1, 0) });
+	});
+
+	it.each(['Enter', ' ', 'ArrowDown', 'ArrowUp', 'Home', 'End'])(
+		'lights nothing and runs nothing with %j in a menu without a row to choose',
+		(key) => {
+			expect(pressKey(openOn(2), key, menus)).toEqual({ state: on(2, null) });
+		}
+	);
 
 	it('closes with Escape and stays on the menu', () => {
 		expect(pressKey(on(1, 2), 'Escape', menus)).toEqual({ state: closedOn(1) });
@@ -104,7 +128,14 @@ describe('pressKey, a menu open', () => {
 	});
 
 	it('walks a whole bar: open, go beside, choose, run', () => {
-		expect(press(closedOn(0), 'ArrowRight', 'ArrowDown', 'ArrowDown')).toEqual(on(1, 2));
-		expect(press(closedOn(0), 'ArrowUp', 'ArrowRight', 'End', 'Escape')).toEqual(closedOn(1));
+		const chosen = press(closedOn(0), 'ArrowUp', 'ArrowRight', 'End');
+		expect(chosen).toEqual(on(1, 2));
+		expect(pressKey(chosen, 'Enter', menus)).toEqual({ runs: 2 });
+	});
+
+	it('walks a whole bar: go beside, open, choose, close', () => {
+		expect(press(closedOn(0), 'ArrowRight', 'ArrowDown', 'ArrowDown', 'Escape')).toEqual(
+			closedOn(1)
+		);
 	});
 });

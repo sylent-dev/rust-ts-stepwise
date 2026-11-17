@@ -4,9 +4,19 @@
 
 import type { Path } from '$app/types';
 
-/** A row that leads to a page. */
-export interface LinkRow {
+/** What every row has. */
+interface Row {
+	/**
+	 * Its name in the code, the same in every language and whatever its text says: `all-levels`.
+	 * It is what the page knows the row by.
+	 */
+	id: string;
+	/** Its text. */
 	label: string;
+}
+
+/** A row that leads to a page. */
+export interface LinkRow extends Row {
 	/** The page, as its address from the root of the website: `sandbox`. */
 	to: Path;
 	/** The tab of the browser that shows the page, when it isn't this one. */
@@ -14,8 +24,7 @@ export interface LinkRow {
 }
 
 /** The row of the screen already shown: lit as if already chosen, it can't be chosen again. */
-export interface HereRow {
-	label: string;
+export interface HereRow extends Row {
 	here: true;
 }
 
@@ -24,6 +33,9 @@ export type MenuRow = LinkRow | HereRow;
 
 /** A menu of the bar: its name, and its rows from top to bottom. */
 export interface Menu {
+	/** Its name in the code, the same in every language: `level`. */
+	id: string;
+	/** Its name on the bar. */
 	name: string;
 	rows: readonly MenuRow[];
 }
@@ -53,15 +65,12 @@ export function openOn(menu: number): BarState {
 	return { menu, open: true, row: null };
 }
 
-/** What a key does on the bar. */
-export interface KeyOutcome {
-	/** Where the bar is after the key. */
-	state: BarState;
-	/** The row of the menu it was on that the key runs, if any. */
-	runs?: number;
-	/** The browser still handles the key: Tab moves the focus on. */
-	passes?: true;
-}
+/** What a key does on the bar: it moves the bar, or it runs a row. */
+export type KeyOutcome =
+	/** Where the bar is after the key. With `passes`, the browser still handles the key: Tab. */
+	| { state: BarState; passes?: true }
+	/** The row that the key runs, in the menu the bar is on. Running it closes the menu. */
+	| { runs: number };
 
 /** The menu `step` menus after this one, the last one before the first. */
 function beside(menus: readonly Menu[], menu: number, step: 1 | -1): number {
@@ -91,18 +100,23 @@ function rowAfter(menu: Menu | undefined, row: number | null, step: 1 | -1): num
 
 /**
  * What a key does on the bar, as the menu bar of a code editor; `undefined` for a key that isn't
- * one of its own. `key` is the `key` of the keyboard event, pressed without Ctrl, Alt nor Meta.
+ * one of its own. `key` is the `key` of the keyboard event, pressed without Ctrl, Alt nor Meta,
+ * and `held` says that the key is kept down and repeats.
  */
 export function pressKey(
 	state: BarState,
 	key: string,
-	menus: readonly Menu[]
+	menus: readonly Menu[],
+	held = false
 ): KeyOutcome | undefined {
 	const menu = menus[state.menu];
 	const openOnRow = (index: number, row: number | null): KeyOutcome => ({
 		state: { menu: index, open: true, row }
 	});
 	const step = key === 'ArrowRight' ? 1 : key === 'ArrowLeft' ? -1 : undefined;
+
+	// Kept down, Enter would open a menu, then run its first row: the bar stays where it is.
+	if (held && (key === 'Enter' || key === ' ')) return { state };
 
 	if (!state.open) {
 		if (step) return { state: closedOn(beside(menus, state.menu, step)) };
@@ -130,7 +144,7 @@ export function pressKey(
 		case ' ':
 			// With no row lit, the keys enter the menu, as they open it from its name.
 			if (state.row === null) return openOnRow(state.menu, edgeRow(menu, 'first'));
-			return { state: closedOn(state.menu), runs: state.row };
+			return { runs: state.row };
 		case 'Escape':
 			return { state: closedOn(state.menu) };
 		case 'Tab':

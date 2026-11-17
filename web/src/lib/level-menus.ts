@@ -14,13 +14,18 @@ const MANUAL_TAB = 'stepwise-manual';
 export function levelMenus(screen: 'level' | 'sandbox'): Menu[] {
 	const sandbox: MenuRow =
 		screen === 'sandbox'
-			? { label: t('sandbox'), here: true }
-			: { label: t('sandbox'), to: 'sandbox' };
+			? { id: 'sandbox', label: t('sandbox'), here: true }
+			: { id: 'sandbox', label: t('sandbox'), to: 'sandbox' };
 	return [
-		{ name: t('menu-level'), rows: [{ label: t('all-levels'), to: '' }, sandbox] },
 		{
+			id: 'level',
+			name: t('menu-level'),
+			rows: [{ id: 'all-levels', label: t('all-levels'), to: '' }, sandbox]
+		},
+		{
+			id: 'help',
 			name: t('menu-help'),
-			rows: [{ label: t('manual'), to: 'manual', tab: MANUAL_TAB }]
+			rows: [{ id: 'manual', label: t('manual'), to: 'manual', tab: MANUAL_TAB }]
 		}
 	];
 }

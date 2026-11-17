@@ -108,7 +108,7 @@ Follow [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.
 
 - The Rust code is a Cargo workspace: `crates/core` (`stepwise-core`), the language and the map, a plain library tested without a browser; `crates/wasm` (`stepwise-wasm`), the bridge that exposes the core to the interface in WebAssembly, which only converts the arguments and the results.
 - The interface is the SvelteKit application of `web/`, in TypeScript strict; its npm commands run from `web/`. `npm run wasm` builds the core and its JavaScript glue into `web/src/lib/wasm/` (ignored by Git); `dev`, `build`, `check` and `test` run it first.
-- The styles of the interface are plain CSS: a Svelte component styles its own block with the design tokens of `web/src/lib/styles/` (see `docs/design-system.md`) and writes no color, text size, spacing, radius or duration of its own; a value tuned by eye is an exception written with its reason. A link is written with `resolve()` (`$app/paths`), since the website is served under a path.
+- The styles of the interface are plain CSS: a Svelte component styles its own block with the design tokens of `web/src/lib/styles/` (see `docs/design-system.md`) and writes no color, text size, spacing, radius or duration of its own; a look that a link and a button share is a class of that folder (`band-item`), which a component never overrides by styling `a` or `button` by its tag; a value tuned by eye is an exception written with its reason. A link is written with `resolve()` (`$app/paths`), since the website is served under a path.
 - Before committing, run and make sure all of these pass:
   - `cargo fmt --all --check`
   - `cargo clippy --workspace --all-targets --all-features -- -D warnings`

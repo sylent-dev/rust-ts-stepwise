@@ -1,8 +1,9 @@
 <!-- The menu bar of a header, as the one of a code editor (see Level screen in specs.md). It
      draws the state of menus.ts, and wires the mouse and the keys to it. One rule keeps the two
      together: the bar moves the focus of the keyboard itself, onto the lit row or else onto the
-     name of its menu, and a menu is open only while the bar holds that focus. So a click
-     elsewhere, or another window, closes the menu. The rows of every menu stay in the page,
+     name of its menu, and a menu is open only while the bar holds that focus. So Tab, or
+     another window, closes the menu; a press of the pointer elsewhere closes it too, since some
+     move no focus (a scroll bar). The rows of every menu stay in the page,
      hidden until their menu opens: a menu grows as it opens and goes back as it closes, by its
      styles alone. -->
 <script lang="ts">
@@ -20,6 +21,9 @@
 
 	let bar: BarState = $state(closedOn(0));
 
+	/** The bar in the page, to tell a press of the pointer in it from one elsewhere. */
+	let root = $state<HTMLElement>();
+
 	/**
 	 * Whether the learner used the keyboard last, rather than the pointer: only then does the ring
 	 * of the focus show. The bar moves the focus for the mouse too, so a browser can't tell.
@@ -35,13 +39,36 @@
 		bar = next;
 	}
 
+	/** Whether the bar is moving the focus itself, rather than the browser or a screen reader. */
+	let moving = false;
+
 	/** Moves the bar, then the focus of the keyboard after it. */
 	function go(next: BarState) {
 		set(next);
 		// The rows of a menu that opens must show before one of them can take the focus.
 		flushSync();
 		const holder = bar.open && bar.row !== null ? rowId(bar.menu, bar.row) : nameId(bar.menu);
-		document.getElementById(holder)?.focus();
+		moving = true;
+		try {
+			document.getElementById(holder)?.focus();
+		} finally {
+			moving = false;
+		}
+	}
+
+	/**
+	 * The focus arrives on the name of a menu (`row` is null) or on one of its rows without the
+	 * bar moving it: with Tab from elsewhere, or under a screen reader, which moves it with a
+	 * cursor of its own. The bar follows it, and shows the ring when the browser would: a Tab
+	 * pressed in the address bar is a key that the page never hears.
+	 */
+	function arrive(event: FocusEvent, menu: number, row: number | null) {
+		if (moving) return;
+		if (event.target instanceof Element && event.target.matches(':focus-visible')) keys = true;
+		if (row !== null) set({ menu, open: true, row });
+		else if (bar.menu !== menu || bar.row !== null) {
+			set(bar.open && bar.menu === menu ? openOn(menu) : closedOn(menu));
+		}
 	}
 
 	/** Moves the bar after the pointer, which a move alone doesn't tell from the keyboard. */
@@ -52,12 +79,16 @@
 
 	function onkeydown(event: KeyboardEvent) {
 		if (event.ctrlKey || event.altKey || event.metaKey) return;
-		const outcome = pressKey(bar, event.key, menus);
+		const outcome = pressKey(bar, event.key, menus, event.repeat);
 		if (!outcome) return;
-		if (!outcome.passes) event.preventDefault();
-		// A row runs by its own click, which also closes its menu, as under the mouse.
-		if (outcome.runs !== undefined) document.getElementById(rowId(bar.menu, outcome.runs))?.click();
-		else go(outcome.state);
+		if ('runs' in outcome) {
+			event.preventDefault();
+			// A row runs by its own click, which also closes its menu, as under the mouse.
+			document.getElementById(rowId(bar.menu, outcome.runs))?.click();
+		} else {
+			if (!outcome.passes) event.preventDefault();
+			go(outcome.state);
+		}
 	}
 
 	/** The focus has left the bar: its menu closes, and the focus stays where it went. */
@@ -66,14 +97,31 @@
 		if (next instanceof Node && event.currentTarget.contains(next)) return;
 		set(closedOn(bar.menu));
 	}
+
+	/**
+	 * A key of the window: the learner is on the keyboard. A modifier alone, or a shortcut, doesn't
+	 * say so.
+	 */
+	function onwindowkey(event: KeyboardEvent) {
+		if (!(event.ctrlKey || event.altKey || event.metaKey) && event.key !== 'Shift') keys = true;
+	}
+
+	/** The pointer went down: the ring goes, and so does a menu when the press was elsewhere. */
+	function onwindowpress(event: PointerEvent) {
+		keys = false;
+		if (bar.open && event.target instanceof Node && !root?.contains(event.target)) {
+			set(closedOn(bar.menu));
+		}
+	}
 </script>
 
-<svelte:window onkeydowncapture={() => (keys = true)} onpointerdowncapture={() => (keys = false)} />
+<svelte:window onkeydowncapture={onwindowkey} onpointerdowncapture={onwindowpress} />
 
 <!-- The mouse never moves the focus in the bar by itself: a browser gives it to a row but not
      always to a button (Safari), and takes it from the bar on a click between two rows. -->
 <!-- svelte-ignore a11y_interactive_supports_focus (the focus is on a name or on a row, never on the bar) -->
 <div
+	bind:this={root}
 	class="menus"
 	class:keys
 	class:swap
@@ -82,7 +130,7 @@
 	{onfocusout}
 	onmousedown={(event) => event.preventDefault()}
 >
-	{#each menus as menu, m (menu.name)}
+	{#each menus as menu, m (menu.id)}
 		{@const open = bar.open && bar.menu === m}
 		<div class="menu" role="none">
 			<button
@@ -99,6 +147,7 @@
 					// Once a menu is open, pointing at another name opens that one. A finger only taps.
 					if (event.pointerType === 'mouse' && bar.open && !open) point(openOn(m));
 				}}
+				onfocus={(event) => arrive(event, m, null)}
 				{onkeydown}
 			>
 				{menu.name}
@@ -114,7 +163,7 @@
 					if (open && bar.row !== null) point(openOn(m));
 				}}
 			>
-				{#each menu.rows as row, r (row.label)}
+				{#each menu.rows as row, r (row.id)}
 					{#if canChoose(row)}
 						<a
 							class="row"
@@ -125,8 +174,10 @@
 							target={row.tab}
 							onclick={() => go(closedOn(m))}
 							onpointermove={() => {
-								if (bar.row !== r) point({ ...bar, row: r });
+								// The row that the keys lit loses its ring under the pointer.
+								if (keys || bar.row !== r) point({ ...bar, row: r });
 							}}
+							onfocus={(event) => arrive(event, m, r)}
 							{onkeydown}
 						>
 							{row.label}
@@ -138,7 +189,7 @@
 							aria-current="page"
 							aria-disabled="true"
 							onpointermove={() => {
-								if (bar.row !== null) point(openOn(m));
+								if (keys || bar.row !== null) point(openOn(m));
 							}}
 						>
 							{row.label}
@@ -221,12 +272,14 @@
 		}
 	}
 
-	/* A row is a band across the whole width of its menu. */
+	/* A row is a band across the whole width of its menu, under the arrow of the pointer, as in
+	   the menu of a code editor: neither the hand of a link nor the cursor of a text. */
 	.row {
 		display: block;
 		padding: var(--space-6) var(--space-12);
 		color: inherit;
 		text-decoration: none;
+		cursor: default;
 	}
 
 	/* One row is lit at a time, the one that holds the focus: under the pointer, or chosen with
