@@ -1,9 +1,33 @@
 <!doctype html>
-<html lang="en">
+<!-- Day Desk, the theme by default, until the settings give the one saved (step 13c). -->
+<html lang="en" data-theme="day-desk">
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="text-scale" content="scale" />
+		<!-- The fonts, asked for at once: the styles that name them (lib/styles/fonts.css) arrive
+		     with the application, and no text shows before its font. -->
+		<link
+			rel="preload"
+			as="font"
+			type="font/woff2"
+			crossorigin
+			href="%sveltekit.assets%/fonts/fredoka/fredoka-latin.woff2"
+		/>
+		<link
+			rel="preload"
+			as="font"
+			type="font/woff2"
+			crossorigin
+			href="%sveltekit.assets%/fonts/manrope/manrope-latin.woff2"
+		/>
+		<link
+			rel="preload"
+			as="font"
+			type="font/woff2"
+			crossorigin
+			href="%sveltekit.assets%/fonts/source-code-pro/source-code-pro.woff2"
+		/>
 		%sveltekit.head%
 	</head>
 	<body data-sveltekit-preload-data="hover">

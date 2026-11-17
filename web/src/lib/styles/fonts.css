@@ -1,0 +1,24 @@
+/* The three fonts of the interface: one file per font, with every weight, in static/fonts/, each
+   beside its license (docs/font-sources.md). The page preloads them (app.html) and waits for them
+   (font-display: block): a text never shows in another font first, which would move the code of
+   the editor and the name beside the logo. */
+@font-face {
+	font-family: 'Fredoka';
+	src: url('/fonts/fredoka/fredoka-latin.woff2') format('woff2');
+	font-weight: 300 700;
+	font-display: block;
+}
+
+@font-face {
+	font-family: 'Manrope';
+	src: url('/fonts/manrope/manrope-latin.woff2') format('woff2');
+	font-weight: 200 800;
+	font-display: block;
+}
+
+@font-face {
+	font-family: 'Source Code Pro';
+	src: url('/fonts/source-code-pro/source-code-pro.woff2') format('woff2');
+	font-weight: 200 900;
+	font-display: block;
+}

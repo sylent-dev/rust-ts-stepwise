@@ -2,8 +2,8 @@
 
 The visual choices of the interface, written once as named tokens, so that the application and its future screens stay consistent. The principles they follow are in [specs.md](../specs.md#design-principles).
 
-- The mock-up, [`docs/mockups/interface.html`](mockups/interface.html), is the reference of the interface. Its file [`docs/mockups/interface/themes.css`](mockups/interface/themes.css) holds exactly these tokens, as CSS variables, and its blocks use nothing else.
-- The application implements them in one module, so that a color changes in one place.
+- The mock-up, [`docs/mockups/interface.html`](mockups/interface.html), is the reference of the interface. Its blocks use nothing else than these tokens.
+- The tokens are CSS variables, written once, in the application: [`web/src/lib/styles/tokens.css`](../web/src/lib/styles/tokens.css) imports one file per kind (`colors.css`, `typography.css`, `spacing.css` with the radii, `motion.css`). The mock-up loads that same file, as it loads the fonts, so that a value changes in one place and the two never drift apart (decided on 2026-11-17).
 - The map isn't part of it: its shades are those of [Look of the world](../specs.md#look-of-the-world), the same in both themes.
 
 ## Colors
@@ -212,7 +212,7 @@ In pixels, as the whole layout: the zoom of the browser scales them together.
 
 | Token | Value | Role |
 |---|---|---|
-| `--tracking-label` | `.05em` | The spacing of the letters of a title in capitals. |
+| `--tracking-label` | `0.05em` | The spacing of the letters of a title in capitals. |
 
 - **Figures of one width** (`font-variant-numeric: tabular-nums`) where a number changes in place: the status bar, whose steps count up while a program runs, and the size of the window in the message that asks for a larger one. The code already has them.
 
@@ -266,7 +266,7 @@ Three radii, each with a role. The section *Spacing and radii* of the mock-up sh
 |---|---|---|
 | `--radius` | `3px` | Everything of the interface that has corners: a button, a control, a tab, a field, a tip, a label, a row under the pointer. |
 | `--radius-mark` | `2px` | A mark smaller than a letter: a square of the speed, the square of a map under its level, a word found by the search. |
-| `--radius-bubble` | `.7em` | What the robot says: the corners of its bubble follow the size of its text, 12.6 pixels around the title of a goal, 18.9 around a sentence of the manual. |
+| `--radius-bubble` | `0.7em` | What the robot says: the corners of its bubble follow the size of its text, 12.6 pixels around the title of a goal, 18.9 around a sentence of the manual. |
 
 - The zones have square corners: the blocks, the bands, and the menus, the bubbles and the panels that open over the screen.
 - So does a button that lies against the edges of its zone: a tab of the map, **Legend**, **Let's go**, the way back from the manual.
@@ -297,8 +297,8 @@ Little moves in the interface, so that what moves is seen: the robot on the map 
 | Token | Value | Role |
 |---|---|---|
 | `--ease-appear` | `ease-out` | What arrives or fades: fast at first, then settling. |
-| `--ease-pop` | `cubic-bezier(.3, 1.6, .5, 1)` | What pops: it goes past its size and comes back, as the robot goes past its quarter turn. |
-| `--ease-stroke` | `cubic-bezier(.35, .05, .4, 1)` | The brush: it sets off gently, crosses fast and settles. |
+| `--ease-pop` | `cubic-bezier(0.3, 1.6, 0.5, 1)` | What pops: it goes past its size and comes back, as the robot goes past its quarter turn. |
+| `--ease-stroke` | `cubic-bezier(0.35, 0.05, 0.4, 1)` | The brush: it sets off gently, crosses fast and settles. |
 | `--ease-move` | `ease-in-out` | What goes from a place to another, starting and stopping gently, as the robot moves forward: the robot of the home screen, the head of the success panel. |
 
 - What answers the learner is there at once. A fill under the pointer: a row, a button, a tab. What they open or close: a menu, the command menu, the bubble of the goal, a panel over its veil, the drawer of the manual. As in a code editor, nothing waits between a key and its answer, and the command menu and the manual are opened all the time.

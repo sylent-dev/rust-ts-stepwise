@@ -1,4 +1,4 @@
-// Section: the spacing and the radii, decided at step 12c. One row per token of themes.css: a step
+// Section: the spacing and the radii, decided at step 12c. One row per token of spacing.css: a step
 // of the scale drawn at its real length between two blocks, a radius on what it rounds, and its role.
 
 const SPACE_STEPS = [

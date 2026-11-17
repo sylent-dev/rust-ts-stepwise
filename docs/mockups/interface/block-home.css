@@ -1,6 +1,6 @@
 /* The home screen: the path of the levels on the left, the level chosen on the right. */
 
-/* The ground under the path: the grid of the map, in the tones of each theme (themes.css). */
+/* The ground under the path: the grid of the map, in the tones of each theme (colors.css of the application). */
 :root {
   --home-path: 14px; --home-grid: 40px; --home-lines: 50%;
   --home-grid-line: color-mix(in srgb, var(--home-line) var(--home-lines), transparent);

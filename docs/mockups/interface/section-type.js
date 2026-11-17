@@ -1,4 +1,4 @@
-// Section: the typography, decided at step 12b. One board per kind of token of themes.css (the sizes,
+// Section: the typography, decided at step 12b. One board per kind of token of typography.css (the sizes,
 // the weights, the line heights), one row per token: its samples in the fonts that use it, and what
 // it is for.
 

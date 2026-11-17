@@ -20,6 +20,9 @@ export default defineConfig({
 			paths: { base }
 		})
 	],
+	// The drawings of the world elements live with their sheet (see src/lib/elements.ts): the
+	// development server only serves the files of `web/` by itself.
+	server: { fs: { allow: ['../docs/mockups/world-elements/daylight'] } },
 	test: {
 		expect: { requireAssertions: true },
 		// Each test starts with the real functions, whatever the spies of the one before.

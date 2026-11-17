@@ -1,0 +1,150 @@
+/* The colors of the two themes, chosen in the settings: Day Desk, light, by default, and Night
+   Desk, dark (docs/design-system.md, Colors). A token names a role, never a shade. */
+
+/* What the two themes share. */
+:root {
+	/* The shades of the robot (specs.md, Look of the world), where the interface draws its face. */
+	--robot-body: #ffffff;
+	--robot-ink: #222935;
+	--robot-eyes: #3fc3ff;
+
+	/* The three colors that carry a meaning: the amber says what to do, the cyan of the eyes of
+	   the robot what is new, the teal of the item what has passed. */
+	--accent: #ffb300;
+	--accent-hover: #ffd25e;
+	--on-accent-weak: #3a4250;
+	--new: var(--robot-eyes);
+	--passed: #5fd0b0;
+	--on-passed: var(--robot-ink);
+	--passed-soft: color-mix(in srgb, var(--passed) 28%, var(--band));
+	/* A danger, the red of the paint: Clear all progress as it fills. */
+	--danger: #dc2f34;
+	--on-danger: #ffffff;
+
+	/* What is chosen in a list is filled with the color of the text. */
+	--chosen: var(--text);
+	/* Over the screen: the veil under a panel, the shadow of the drawer, a light shade under the
+	   pointer on a colored zone. */
+	--veil: #0007;
+	--drawer-shadow: -12px 0 34px #22293530;
+	--shade: #0001;
+	/* The keyboard focus: a ring in the color of the text of the element, inside its edge. */
+	--focus-ring: 2px solid currentColor;
+	--focus-offset: -4px;
+	/* The goal: its link to the manual, and the text of its dark side. */
+	--goal-link: #5d687a;
+	--goal-link-hover: #6b778a;
+	--on-goal-link: #ffffff;
+	--on-goal-side: #ffffff;
+}
+
+:root[data-theme='night-desk'] {
+	/* The zones, which meet without any line, each in its own tone. */
+	--app-bg: #39424f;
+	--band: #171b21;
+	--band-hover: #2a313b;
+	--surface: #1e232b;
+	--hover: #333b47;
+	--map-block: #262c35;
+	--field: #14181e;
+	--pop: #272e38;
+	--pop-border: 1px solid #434d5c;
+	--pop-shadow: 0 14px 40px #0009;
+	--map-shadow: 0 10px 34px #0008;
+	/* The texts. */
+	--text: #e8ecf1;
+	--weak: #98a3b2;
+	--on-status: #a7b1bf;
+	--gutter-text: #677282;
+	/* The controls. */
+	--control: #2f3641;
+	--control-shadow: 0 2px 8px #0006;
+	--chip: #2f3641;
+	--on-chosen: #171b21;
+	--chosen-soft: #2f3641;
+	--idle: #4b5564;
+	--progress-track: #2a313b;
+	/* The states. */
+	--on-accent: #171b21;
+	--accent-soft: #4a3c17;
+	--accent-text: #ffb300;
+	--mark: #4a3c17;
+	--error: #ff7b7b;
+	--on-error: #171b21;
+	--error-soft: #47262c;
+	--passed-text: #5fd0b0;
+	/* The editor and the code. */
+	--current: #413a23;
+	--breakpoint: #ff7b7b;
+	--select: #3a5274;
+	--code-comment: #8490a0;
+	--code-keyword: #8fb8ff;
+	--code-function: #68d8bb;
+	--code-string: #ffd27a;
+	--code-number: #ffa98a;
+	/* The goal. */
+	--goal-side: #12161c;
+	--goal-bubble: #1d222a;
+	/* The home screen: the ground under the path, a grid as the one of the map. `rim` is the solid
+	   color that detaches a stone and its squares from the path. */
+	--home-ground: #262c35;
+	--home-line: #36404d;
+	--home-five: #ffffff14;
+	--home-band: #1e232bd9;
+	--home-rim: #20252d;
+	--home-tile-shown: #465060;
+	--home-locked: #2a303a;
+	--home-locked-stone: #363d49;
+}
+
+/* The same tokens, in the same order, as Night Desk above. */
+:root[data-theme='day-desk'] {
+	--app-bg: #c9d0d9;
+	--band: #eceff3;
+	--band-hover: #dde2e8;
+	--surface: #fafbfc;
+	--hover: #e4e8ed;
+	--map-block: #d3d8df;
+	--field: #e4e8ee;
+	--pop: #ffffff;
+	--pop-border: 1px solid #c3cad3;
+	--pop-shadow: 0 14px 40px #22293540;
+	--map-shadow: 0 8px 26px #22293540;
+	--text: #1b2028;
+	--weak: #5c6675;
+	--on-status: #4f5968;
+	--gutter-text: #939daa;
+	--control: #ffffff;
+	--control-shadow: 0 1px 5px #22293538;
+	--chip: #e3e7ec;
+	--on-chosen: #f6f7f9;
+	--chosen-soft: #d3d9e1;
+	--idle: #c3cad3;
+	--progress-track: #dde2e8;
+	--on-accent: #1b2028;
+	--accent-soft: #fff0c7;
+	--accent-text: #8a5a00;
+	--mark: #ffe9ad;
+	--error: #bf2f3a;
+	--on-error: #ffffff;
+	--error-soft: #fbe5e6;
+	--passed-text: #09795f;
+	--current: #ffe9ad;
+	--breakpoint: #cf3a44;
+	--select: #bcd4f5;
+	--code-comment: #6e7a8a;
+	--code-keyword: #2d5cc2;
+	--code-function: #09795f;
+	--code-string: #8f5f06;
+	--code-number: #b34c1c;
+	--goal-side: #222935;
+	--goal-bubble: #eceff3;
+	--home-ground: #e1e5ea;
+	--home-line: #cad1da;
+	--home-five: #22293520;
+	--home-band: #ffffff8c;
+	--home-rim: #f1f3f6;
+	--home-tile-shown: #cdd4dc;
+	--home-locked: #eceff3;
+	--home-locked-stone: #dadee4;
+}

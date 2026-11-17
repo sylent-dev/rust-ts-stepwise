@@ -160,12 +160,14 @@ The errors that depend on the values (a wall in front, a division by zero, a con
 
 ### Screens
 
-| Screen | Content |
-|---|---|
-| Home | The path through the levels, grouped by chapter, each locked, open or done; the level chosen; the sandbox, the manual and the settings (see [Home screen](#home-screen)). |
-| Level | The code editor with its controls, the map, the console and the variables panel; the goal opens from the header, the legend from a button on the map (see [Level screen](#level-screen)). |
-| Sandbox | The level screen without goal, on an open map. |
-| Manual | The manual of the language. |
+| Screen | Address | Content |
+|---|---|---|
+| Home | `/` | The path through the levels, grouped by chapter, each locked, open or done; the level chosen; the sandbox, the manual and the settings (see [Home screen](#home-screen)). |
+| Level | `/levels/18` | The code editor with its controls, the map, the console and the variables panel; the goal opens from the header, the legend from a button on the map (see [Level screen](#level-screen)). |
+| Sandbox | `/sandbox` | The level screen without goal, on an open map. |
+| Manual | `/manual` | The manual of the language. |
+
+The address of a level holds its number, as the interface writes it (`18. Paint a square`): short to say and to share, and the same in every language of the interface. It counts the levels, so a level added later shifts the addresses with the numbers, and the address always says what the screen says. Nothing saved follows it: the progress, the code and the level codes stay under the stable name of each level (decided on 2026-11-17, rather than the stable name in the address: hardly anyone keeps a link to a level, which only opens for a learner who has unlocked it). The maps of a level share its page.
 
 The layout of each screen is decided with the wireframes, then the mock-up. The wireframes, in [`docs/wireframes/`](docs/wireframes/), only fixed the first layout: once the mock-up is approved, it becomes the reference.
 

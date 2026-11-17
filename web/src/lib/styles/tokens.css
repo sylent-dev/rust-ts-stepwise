@@ -1,0 +1,11 @@
+/* The design tokens of the interface: named values only, as CSS variables. The components use
+   nothing else, and docs/design-system.md gives the role of each token. One file per kind, in
+   the order of that document.
+
+   The application and the mock-up (docs/mockups/interface.html) both load this file, so that a
+   value changes in one place: a browser follows these imports, and Vite merges them into the
+   style sheet of the website. */
+@import './colors.css';
+@import './typography.css';
+@import './spacing.css';
+@import './motion.css';
