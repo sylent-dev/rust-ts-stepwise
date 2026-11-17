@@ -185,3 +185,7 @@ Four durations and four curves of the interface named as tokens, in place of a d
 ### 13a. Tokens and pages (#50)
 
 The tokens and the two themes in the application, the fonts, the base styles (the text, the keyboard focus, the scroll bars); the four pages and their addresses, with one draft level (`paint-a-square`, replaced at step 23) so that the level screen has a level to show; the header with the logo, the name, the links of the home screen and, in its middle, the title of the level or the sandbox; the probe moved to the page of the sandbox.
+
+### 13b. Menus (#51)
+
+The menu of the header, with the mouse and the keyboard; **Level** (**All levels**, **Sandbox**) and **Help** (**Manual**), the commands that exist; the row of the screen already shown, lit; a menu that grows as it opens and goes back as it closes; a header 3 pixels shorter without the bar of the progress; the class that the links and the names of the menus of a band share.
