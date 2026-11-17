@@ -1,6 +1,7 @@
-// Section: the motion of the interface, decided at step 12d. One row per token of themes.css: a
-// duration played at its real length, a curve drawn and played over one second, and its role. Every
-// board switches between two states every two seconds, and its samples follow with their tokens.
+// Section: the motion of the interface, decided at step 12d. One row per token of motion.css, in
+// the styles of the application: a duration played at its real length, a curve drawn and played over
+// one second, and its role. Every board switches between two states every two seconds, and its
+// samples follow with their tokens.
 
 // A duration: its token, its sample, and what it times.
 const MOTION_DURATIONS = [
@@ -14,7 +15,7 @@ const MOTION_DURATIONS = [
     "What lights up to be noticed, then fades: the place reached in the manual; the status bar when the learner types in an editor that is locked."],
 ];
 
-// A curve: its token, its two control points (those of themes.css, to draw it), and what moves so.
+// A curve: its token, its two control points (those of motion.css, to draw it), and what moves so.
 const MOTION_CURVES = [
   ["appear", [0, 0, .58, 1], "What arrives or fades: fast at first, then settling."],
   ["pop", [.3, 1.6, .5, 1], "What pops: it goes past its size and comes back, as the robot goes past its quarter turn."],
