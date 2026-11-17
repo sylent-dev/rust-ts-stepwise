@@ -1,0 +1,43 @@
+<!-- The place of the screen, in the middle of its header: the title of the level, or the sandbox
+     with its mark. The chapter of a level, its number and the bubble of its goal come with the
+     list of the levels (step 21). -->
+<script lang="ts">
+	import Icon, { type IconName } from './icon.svelte';
+
+	interface Props {
+		title: string;
+		/** The mark before the title: the diamond of the sandbox. */
+		icon?: IconName;
+	}
+
+	let { title, icon }: Props = $props();
+</script>
+
+<div class="place">
+	{#if icon}<span class="mark"><Icon name={icon} size={14} /></span>{/if}
+	<b>{title}</b>
+</div>
+
+<style>
+	/* Centered in the header, on the height above the bar of the progress. */
+	.place {
+		position: absolute;
+		left: 50%;
+		top: 4px;
+		transform: translateX(-50%);
+		display: flex;
+		align-items: center;
+		gap: var(--space-8);
+		height: 38px;
+		padding: 0 var(--space-12);
+		white-space: nowrap;
+	}
+
+	.mark {
+		color: var(--weak);
+	}
+
+	b {
+		font: var(--weight-strong) var(--size-lead) / 18px var(--font-text);
+	}
+</style>

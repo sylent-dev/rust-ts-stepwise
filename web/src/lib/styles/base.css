@@ -1,0 +1,66 @@
+/* What every screen shares: the window, its text, the keyboard focus and the scroll bars. A
+   component styles its own block, with the tokens (tokens.css) and nothing else. */
+
+/* The window: a header, then the screen, which takes the height left and scrolls by itself where
+   it has to. The page never scrolls. */
+html,
+body {
+	height: 100%;
+}
+
+body {
+	display: flex;
+	flex-direction: column;
+	margin: 0;
+	overflow: hidden;
+	background: var(--app-bg);
+	color: var(--text);
+	font: var(--weight-text) var(--size-text) / var(--line-text) var(--font-text);
+}
+
+main {
+	flex: 1;
+	min-height: 0;
+}
+
+button {
+	font: inherit;
+	color: inherit;
+	cursor: pointer;
+}
+
+/* The keyboard focus: a ring on what the keys act on, which a click never shows. In the color of
+   the text of the element, it stands out on every fill; inside its edge, no zone cuts it. A field
+   and the editor show their cursor instead. */
+:focus-visible {
+	outline: var(--focus-ring);
+	outline-offset: var(--focus-offset);
+}
+
+/* The scroll bars: very thin, a square amber thumb on a grey track. Chrome and Safari draw them
+   6 pixels wide, without arrows; Firefox, which only knows the standard properties, as thin as it
+   can (about 8 pixels). Chrome ignores its own rules as soon as the standard ones are set: they
+   only go to Firefox. */
+::-webkit-scrollbar {
+	width: 6px;
+	height: 6px;
+}
+
+::-webkit-scrollbar-track {
+	background: var(--hover);
+}
+
+::-webkit-scrollbar-thumb {
+	background: var(--accent);
+}
+
+::-webkit-scrollbar-button {
+	display: none;
+}
+
+@supports not selector(::-webkit-scrollbar) {
+	html {
+		scrollbar-color: var(--accent) var(--hover);
+		scrollbar-width: thin;
+	}
+}

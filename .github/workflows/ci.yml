@@ -48,6 +48,8 @@ jobs:
             web:
               - *rust
               - 'web/**'
+              # The drawings of the world elements, used as they are by the interface.
+              - 'docs/mockups/world-elements/daylight/**'
 
   check:
     name: Rust

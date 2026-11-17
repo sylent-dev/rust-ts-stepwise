@@ -44,6 +44,6 @@ describe('formatMessage', () => {
 
 describe('t', () => {
 	it('formats the messages of the interface in English', () => {
-		expect(t('core-version', { version: '1.2.3' })).toBe('Core 1.2.3, computed in Rust.');
+		expect(t('page-title', { page: 'Sandbox' })).toBe('Sandbox · Stepwise');
 	});
 });
