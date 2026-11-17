@@ -4,6 +4,8 @@
 // is a list and `range` a slider, both setting the CSS `variable` at once, without redrawing the page.
 const VARIANTS = {
   theme: { label: "Style", options: Object.fromEntries(Object.entries(INTERFACE_STYLES).map(([key, style]) => [key, style.title])), fallback: Object.keys(INTERFACE_STYLES)[0] },
+  // Step 13c, to decide: the banner of the storage refused on the manual (section-banner-manual.js).
+  manualBanner: { label: "Banner on the manual", options: { none: "1 · None", top: "2 · Across the top", content: "3 · Above the content" }, fallback: "none" },
 };
 
 const params = new URLSearchParams(location.search);
