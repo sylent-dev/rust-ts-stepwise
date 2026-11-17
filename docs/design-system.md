@@ -105,6 +105,9 @@ Two themes, chosen in the settings: **Day Desk**, light, by default, and **Night
 | `--code-string` | `#8f5f06` | `#ffd27a` | A text between quotes. |
 | `--code-number` | `#b34c1c` | `#ffa98a` | A number, `true`, `false`, a color. |
 
+- The three underlines of the editor differ by their shape, and not only by their color: a wave in `--error` under an error, a thin line in `--text` under the name pointed with Ctrl held, dots in `--weak` under the end of a line past 80 characters.
+- The wave stays under an error (decided on 2026-11-17, compared in tabs of the mock-up): an error is what must catch the eye first, the wave is read without its color, and the learner finds it in every code editor. Rejected: squares and dots, read as the dots of a long line but for their color; dashes, which say *more on hover* as on a web page; a straight line, too close to the one of Ctrl; a soft red behind the word, the tone of the line of an error while running.
+
 ### Goal and home screen
 
 | Token | Day Desk | Night Desk | Role |
