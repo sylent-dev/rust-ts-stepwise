@@ -1,11 +1,7 @@
-// Section: the menus of the header, live, to decide their keyboard at step 13b: specs.md says
-// nothing of it. The window is the level screen; its four menus open with the mouse and with the
-// keys of the variant chosen. One row is lit at a time, under the pointer or chosen with the keys,
-// and the greyed rows are skipped.
-const MENU_KEYS = {
-  bar: "<b>6</b>, as the menu bar of a code editor: <b>Tab</b> stops once on the bar, on the menu left last. <b>←</b> <b>→</b> go from a menu to the next, <b>Enter</b>, <b>Space</b> or <b>↓</b> opens it on its first row, <b>↑</b> on its last. In a menu, <b>↑</b> <b>↓</b>, <b>Home</b> and <b>End</b> choose a row and <b>Enter</b> or <b>Space</b> runs it; <b>←</b> <b>→</b> open the menu beside, except <b>→</b> on <b>Speed</b>, which opens its speeds, and <b>←</b>, which leaves them; <b>Esc</b> closes the menu and gives the focus back to its name; <b>Tab</b> closes it and goes on.",
-  stops: "<b>7</b>, as the links of a web page: <b>Tab</b> stops on each menu, <b>Level</b>, <b>Edit</b>, <b>Run</b> then <b>Help</b>, and <b>Enter</b>, <b>Space</b> or <b>↓</b> opens it. In a menu, the same keys as <b>6</b>, without <b>←</b> <b>→</b> from a menu to the next: <b>Esc</b>, then <b>Tab</b>.",
-};
+// Section: the menus of the header, live, with their keyboard, decided at step 13b: the menu bar of a
+// code editor. The window is the level screen; its four menus open with the mouse and with the keys.
+// One row is lit at a time, under the pointer or chosen with the keys, and the greyed rows are
+// skipped.
 
 // The speed in use, kept while the page stays open.
 let menuLiveSpeed = 2;
@@ -71,16 +67,16 @@ function menuLiveBeside(button, step) {
   return names[(names.indexOf(button) + step + names.length) % names.length];
 }
 
-// The level screen with its menus live. With one stop on the bar, only the menu left last takes Tab.
+// The level screen with its menus live. The bar is one stop of Tab: only the menu left last takes it.
 function menuLiveWindow() {
   const template = document.createElement("template");
   template.innerHTML = readyWindow();
-  if (chosen.menuKeys === "bar") template.content.querySelectorAll(".app-menu").forEach((button, index) => { button.tabIndex = index ? -1 : 0; });
+  template.content.querySelectorAll(".app-menu").forEach((button, index) => { button.tabIndex = index ? -1 : 0; });
   return template.innerHTML;
 }
 
 SECTIONS.push(["The menus with the keyboard", () => `
-  <p class="menu-keys-intro">Live: the four menus open with the mouse and with the keys. Click the name <b>stepwise</b> in the window, then press <b>Tab</b>. ${MENU_KEYS[chosen.menuKeys]} With the mouse, a click opens a menu and, once one is open, pointing at another name opens it.</p>
+  <p class="menu-keys-intro">Live: the four menus open with the mouse and with the keys, as the menu bar of a code editor. Click the name <b>stepwise</b> in the window, then press <b>Tab</b>: it stops once on the bar, on the menu left last. <b>←</b> <b>→</b> go from a menu to the next, <b>Enter</b>, <b>Space</b> or <b>↓</b> opens it on its first row, <b>↑</b> on its last. In a menu, <b>↑</b> <b>↓</b>, <b>Home</b> and <b>End</b> choose a row and <b>Enter</b> or <b>Space</b> runs it; <b>←</b> <b>→</b> open the menu beside, except <b>→</b> on <b>Speed</b>, which opens its speeds, and <b>←</b>, which leaves them; <b>Esc</b> closes the menu and gives the focus back to its name; <b>Tab</b> closes it and goes on. With the mouse, a click opens a menu and, once one is open, pointing at another name opens it.</p>
   <div class="page-row"><div class="page-slot menu-live" data-menu-live>
     <span>1280 × 720, the level screen. Last command run: <b data-menu-live-last>none yet</b></span>
     ${menuLiveWindow()}
@@ -88,7 +84,7 @@ SECTIONS.push(["The menus with the keyboard", () => `
 
 document.addEventListener("focusin", event => {
   const root = menuLiveRoot(event.target);
-  if (!root || chosen.menuKeys !== "bar" || !event.target.matches(".app-menu")) return;
+  if (!root || !event.target.matches(".app-menu")) return;
   for (const button of event.target.parentElement.children) button.tabIndex = button === event.target ? 0 : -1;
 });
 
@@ -96,7 +92,7 @@ document.addEventListener("keydown", event => {
   const root = menuLiveRoot(event.target);
   if (!root || event.ctrlKey || event.altKey || event.metaKey) return;
   const { target, key } = event;
-  const beside = chosen.menuKeys === "bar" && { ArrowLeft: -1, ArrowRight: 1 }[key];
+  const beside = { ArrowLeft: -1, ArrowRight: 1 }[key];
   const open = root.querySelector(".app-menu.is-open");
   const menu = target.closest(".app-dropdown");
   let handled = true;
