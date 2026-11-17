@@ -8,4 +8,7 @@
 .app-menu-row i { display: flex; color: var(--weak); }
 .app-menu-row.is-off { color: var(--weak); opacity: .55; }
 .app-menu-row.is-off:hover { background: none; }
+/* The row of the screen already shown, Sandbox in the sandbox: lit as a row under the pointer, as if
+   already chosen; it can't be chosen again. */
+.app-menu-row.is-here { background: var(--hover); }
 .app-menu-line { margin: var(--space-4) 0; border-top: 1px solid var(--hover); }

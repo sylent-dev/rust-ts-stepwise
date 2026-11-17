@@ -345,7 +345,7 @@ Wireframe: [`docs/wireframes/manual.excalidraw`](docs/wireframes/manual.excalidr
 
 ### Sandbox
 
-An open map with a few walls, paints and items, without goal. The code is saved like a level's; **Run**, the console and the variables panel work the same way. Wireframe: the frame *Sandbox* of [`docs/wireframes/level-screen.excalidraw`](docs/wireframes/level-screen.excalidraw). It is the level screen without what belongs to a goal: in the middle of the header, *"◇ Sandbox"*, which isn't a button; no tabs of maps, no progress bar; no goal marks on the map; the menu **Level** keeps **All levels**, **Sandbox** (the current screen) and **Restore starting code…**. Editing the map of the sandbox, and a level editor, come later (see the [backlog](docs/backlog.md)).
+An open map with a few walls, paints and items, without goal. The code is saved like a level's; **Run**, the console and the variables panel work the same way. Wireframe: the frame *Sandbox* of [`docs/wireframes/level-screen.excalidraw`](docs/wireframes/level-screen.excalidraw). It is the level screen without what belongs to a goal: in the middle of the header, *"◇ Sandbox"*, which isn't a button; no tabs of maps, no progress bar; no goal marks on the map; the menu **Level** keeps **All levels**, **Sandbox** and **Restore starting code…**; its row **Sandbox**, the screen already shown, is lit as a row under the pointer, as if already chosen, and can't be chosen again. Editing the map of the sandbox, and a level editor, come later (see the [backlog](docs/backlog.md)).
 
 ### Settings
 

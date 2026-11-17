@@ -1,17 +1,6 @@
-/* The two sections of step 13b on the menus: their introductions, on the page. */
-.sandbox-row-intro, .menu-keys-intro { max-width: 880px; margin: 4px 0 12px; color: #dee2e6; }
+/* The section of the menus with the keyboard: its introduction, on the page. */
+.menu-keys-intro { max-width: 880px; margin: 4px 0 12px; color: #dee2e6; }
 .menu-live > span b { color: #dee2e6; }
-
-/* The menu Level of the sandbox, alone: four rows high; a second one under it, the pointer on its
-   first row. */
-.app-window.menu-board.sandbox-row-board { height: 122px; }
-.sandbox-row-board + .sandbox-row-board { margin-top: 12px; }
-
-/* Two ways to fill the row of the screen already shown, to compare: the fill of a row under the
-   pointer, or the tone and the weight of the section open in the manual. Neither answers the
-   pointer. */
-.app-menu-row.is-lit, .app-menu-row.is-lit:hover { background: var(--hover); }
-.app-menu-row.is-shown, .app-menu-row.is-shown:hover { background: var(--chosen-soft); font-weight: var(--weight-strong); }
 
 /* The live menus: one row lit at a time, the one that holds the focus, under the pointer or chosen
    with the keys; the row Speed stays lit while its speeds are open. */

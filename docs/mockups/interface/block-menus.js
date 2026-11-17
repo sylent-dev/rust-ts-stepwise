@@ -16,6 +16,10 @@ function appMenuRows(name, run = "ready") {
   }[name];
 }
 
+// The menu Level of the sandbox: what belongs to a goal is gone, and the row of the sandbox, the
+// screen already shown, is lit and can't be chosen.
+const SANDBOX_LEVEL_ROWS = [["All levels"], ["Sandbox", "", false, "is-here"], null, ["Restore starting code…"]];
+
 const appMenu = (name, { run, hovered } = {}) => appDropdown(MENU_LEFT[name], appMenuRows(name, run), hovered);
 
 // The speeds, beside the row Speed of the menu Run; `current` is the index of the speed in use.
