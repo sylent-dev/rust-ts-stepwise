@@ -3,7 +3,8 @@
      together: the bar moves the focus of the keyboard itself, onto the lit row or else onto the
      name of its menu, and a menu is open only while the bar holds that focus. So a click
      elsewhere, or another window, closes the menu. The rows of every menu stay in the page,
-     hidden until their menu opens. -->
+     hidden until their menu opens: a menu grows as it opens and goes back as it closes, by its
+     styles alone. -->
 <script lang="ts">
 	import { flushSync } from 'svelte';
 	import { resolve } from '$app/paths';
@@ -25,9 +26,18 @@
 	 */
 	let keys = $state(false);
 
+	/** Whether the menu shown took the place of its neighbor: it is then there at once. */
+	let swap = $state(false);
+
+	/** Puts the bar in a state. */
+	function set(next: BarState) {
+		swap = bar.open && next.open && bar.menu !== next.menu;
+		bar = next;
+	}
+
 	/** Moves the bar, then the focus of the keyboard after it. */
 	function go(next: BarState) {
-		bar = next;
+		set(next);
 		// The rows of a menu that opens must show before one of them can take the focus.
 		flushSync();
 		const holder = bar.open && bar.row !== null ? rowId(bar.menu, bar.row) : nameId(bar.menu);
@@ -54,7 +64,7 @@
 	function onfocusout(event: FocusEvent & { currentTarget: HTMLElement }) {
 		const next = event.relatedTarget;
 		if (next instanceof Node && event.currentTarget.contains(next)) return;
-		bar = closedOn(bar.menu);
+		set(closedOn(bar.menu));
 	}
 </script>
 
@@ -66,6 +76,7 @@
 <div
 	class="menus"
 	class:keys
+	class:swap
 	role="menubar"
 	aria-label={t('menus')}
 	{onfocusout}
@@ -170,6 +181,44 @@
 		padding: var(--space-4) 0;
 		background: var(--pop);
 		box-shadow: var(--pop-shadow);
+	}
+
+	/* A menu grows from the corner under its name, from 85% of its size, and goes back the same
+	   way when it closes, a little faster: the one thing the learner opens that isn't there at
+	   once (see Motion in docs/design-system.md). Its rows answer while it grows, not while it
+	   goes. A browser that doesn't know these rules shows and hides it at once. */
+	.rows {
+		transform-origin: top left;
+		transition:
+			opacity var(--duration-fade) var(--ease-appear),
+			transform var(--duration-fade) var(--ease-appear),
+			display var(--duration-fade) allow-discrete;
+	}
+
+	.rows[hidden] {
+		opacity: 0;
+		transform: scale(0.85);
+		pointer-events: none;
+		transition-duration: calc(var(--duration-fade) * 0.6);
+	}
+
+	@starting-style {
+		.rows:not([hidden]) {
+			opacity: 0;
+			transform: scale(0.85);
+		}
+	}
+
+	/* A menu that takes the place of its neighbor is there at once, and nothing moves for a
+	   learner who asked for less motion. */
+	.menus.swap .rows {
+		transition: none;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.rows {
+			transition: none;
+		}
 	}
 
 	/* A row is a band across the whole width of its menu. */

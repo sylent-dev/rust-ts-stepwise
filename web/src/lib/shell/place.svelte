@@ -19,7 +19,7 @@
 </div>
 
 <style>
-	/* Centered in the header, on the height above the bar of the progress. */
+	/* Centered in the header, on its height without the bar of the progress. */
 	.place {
 		position: absolute;
 		left: 50%;
