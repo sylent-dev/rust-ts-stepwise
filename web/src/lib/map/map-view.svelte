@@ -1,12 +1,12 @@
 <!-- The map: a world drawn from the core, with the goals of its level marked on it, each cell
-     `cell` pixels wide (see Map and Look of the world in specs.md). The drawings of the world
+     `side` pixels wide (see Map and Look of the world in specs.md). The drawings of the world
      elements are stacked in their cells; the map draws the rest from the cells: the lines every
      five cells, the paint strokes and the shadows of the walls. -->
 <script lang="ts">
 	import type { Goals, World } from '#lib/core.ts';
 	import { t } from '#lib/i18n.ts';
 	import Element from './element.svelte';
-	import { CELL, paintAt, placedCells } from './geometry.ts';
+	import { CELL, paintAt, placedCells, placedFloors } from './geometry.ts';
 	import { fiveLines, wallFaces, wallShadow } from './ground.ts';
 	import PaintStroke from './paint-stroke.svelte';
 	import Robot from './robot.svelte';
@@ -16,15 +16,14 @@
 		/** The goals of a map of a level; the sandbox has none. */
 		goals?: Goals;
 		/** The side of a cell, in pixels. */
-		cell: number;
+		side: number;
 	}
 
-	let { world, goals, cell }: Props = $props();
+	let { world, goals, side }: Props = $props();
 
-	const cells = $derived(placedCells(world));
-	const floors = $derived(cells.filter(({ cell }) => cell.type === 'floor'));
+	const floors = $derived(placedFloors(world));
 	const walls = $derived(
-		cells
+		placedCells(world)
 			.filter(({ cell }) => cell.type === 'wall')
 			.map(({ x, y }) => ({ x, y, ...wallFaces(world, { x, y }) }))
 	);
@@ -35,8 +34,8 @@
 </script>
 
 <svg
-	width={world.width * cell}
-	height={world.height * cell}
+	width={world.width * side}
+	height={world.height * side}
 	viewBox="0 0 {world.width * CELL} {world.height * CELL}"
 	role="img"
 	aria-label={t('map')}
@@ -71,7 +70,7 @@
 	</g>
 
 	{#each floors as { x, y, cell } (`${x},${y}`)}
-		{#if cell.type === 'floor' && cell.paint}
+		{#if cell.paint}
 			<PaintStroke {x} {y} color={cell.paint.color} passages={cell.paint.passages} />
 		{/if}
 	{/each}
@@ -101,7 +100,7 @@
 	</g>
 
 	{#each floors as { x, y, cell } (`${x},${y}`)}
-		{#if cell.type === 'floor' && cell.item}
+		{#if cell.item}
 			<Element name="item" {x} {y} />
 		{/if}
 	{/each}

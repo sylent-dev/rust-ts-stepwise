@@ -16,17 +16,17 @@
 <StorageBanner />
 
 <style>
-	/* A header without the bar of the progress is 46 pixels high, its content centered. The bar
-	   (step 21) gives 3 pixels more, under the content, to the screens that draw it; the sandbox
-	   never does. The menus open against the bottom of the header (menu-bar.svelte): it is the
-	   box they are placed in. */
+	/* A header without the bar of the progress is 46 pixels high (styles/layout.css), its content
+	   centered. The bar (step 21) gives 3 pixels more, under the content, to the screens that draw
+	   it; the sandbox never does. The menus open against the bottom of the header
+	   (menu-bar.svelte): it is the box they are placed in. */
 	header {
 		position: relative;
 		flex: none;
 		display: flex;
 		align-items: center;
 		box-sizing: border-box;
-		height: 46px;
+		height: var(--header-height);
 		padding: 0 var(--space-12);
 		background: var(--band);
 	}

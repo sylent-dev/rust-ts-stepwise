@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cellAt, isFloor, paintAt, placedCells } from './geometry.ts';
+import { cellAt, isFloor, paintAt, placedCells, placedFloors } from './geometry.ts';
 import { worldOf } from './test-support.ts';
 
 describe('placedCells', () => {
@@ -16,6 +16,16 @@ describe('placedCells', () => {
 			[1, 1, 'floor'],
 			[0, 2, 'floor'],
 			[1, 2, 'floor']
+		]);
+	});
+});
+
+describe('placedFloors', () => {
+	it('keeps the floor cells alone, with their places', () => {
+		const places = placedFloors(worldOf(['.#', '#o'])).map(({ x, y, cell }) => [x, y, cell.item]);
+		expect(places).toEqual([
+			[0, 0, false],
+			[1, 1, true]
 		]);
 	});
 });

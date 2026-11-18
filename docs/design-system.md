@@ -3,7 +3,7 @@
 The visual choices of the interface, written once as named tokens, so that the application and its future screens stay consistent. The principles they follow are in [specs.md](../specs.md#design-principles).
 
 - The mock-up, [`docs/mockups/interface.html`](mockups/interface.html), is the reference of the interface. Its blocks use nothing else than these tokens.
-- The tokens are CSS variables, written once, in the application: [`web/src/lib/styles/tokens.css`](../web/src/lib/styles/tokens.css) imports one file per kind (`colors.css`, `typography.css`, `spacing.css` with the radii, `motion.css`). The mock-up loads that same file, as it loads the fonts, so that a value changes in one place and the two never drift apart (decided on 2026-11-17).
+- The tokens are CSS variables, written once, in the application: [`web/src/lib/styles/tokens.css`](../web/src/lib/styles/tokens.css) imports one file per kind (`colors.css`, `typography.css`, `spacing.css` with the radii, `layout.css`, `motion.css`). The mock-up loads that same file, as it loads the fonts, so that a value changes in one place and the two never drift apart (decided on 2026-11-17).
 - The map isn't part of it: its shades are those of [Look of the world](../specs.md#look-of-the-world), the same in both themes. Most of them are in the drawings of the world elements; the few that the map draws itself, and the robot where the interface draws its face, are tokens shared by both themes.
 
 ## Colors
@@ -24,14 +24,14 @@ Two themes, chosen in the settings: **Day Desk**, light, by default, and **Night
 
 | Token | Value | Role |
 |---|---|---|
-| `--accent` | `#ffb300` | The amber of the yellow paint, what to do: the main button of a screen (**Let's go**, **Play**), **Run**, the path of the home screen, the state *Paused*; and where the learner is on a page (the line of *On this page*, the thumb of a scroll bar). |
+| `--accent` | `--paint-yellow` | The amber of the yellow paint, what to do: the main button of a screen (**Let's go**, **Play**), **Run**, the path of the home screen, the state *Paused*; and where the learner is on a page (the line of *On this page*, the thumb of a scroll bar). |
 | `--accent-hover` | `#ffd25e` | A main button under the pointer. |
 | `--on-accent-weak` | `#3a4250` | A quiet icon on the amber: the magnifier of the search. |
 | `--new` | `#3fc3ff` | The cyan of the eyes of the robot, what is new: the title *New* of a goal, the dot of **Legend**, the label *New* of the legend. |
 | `--passed` | `#5fd0b0` | The teal of the item, what has passed: a level done, a map passed, the status bar once a map has passed, the progress under the header. It is the only color of what has passed: a green of its own for the progress and the console was rejected, two greens side by side that didn't go together (decided on 2026-11-16). |
 | `--on-passed` | `#222935` | The text on the teal, the ink of the world. |
 | `--passed-soft` | `--passed` at 28 % over `--band` | The tab of a map that has passed, on the level screen and on the home screen. |
-| `--danger` | `#dc2f34` | The red of the paint: **Clear all progress** as it fills. |
+| `--danger` | `--paint-red` | The red of the paint: **Clear all progress** as it fills. |
 | `--on-danger` | `#ffffff` | The text on it. |
 | `--chosen` | `--text` | What is chosen in a list is filled with the color of the text: the theme in the settings, a command, a result of the search. |
 | `--veil` | `#0007` | The veil over the screen under a panel. |
@@ -275,6 +275,14 @@ Three radii, each with a role. The section *Spacing and radii* of the mock-up sh
 - A circle is written `50%`: a stone of the home screen, the number of a level, a breakpoint, a dot.
 - A drawing keeps the corners of its shape: the visor of the robot on the level to play, the stroke of paint of the success panel, rounded as the brush by half its height.
 - `--radius` replaces `--radius-small` and `--control-radius`, two names for the same 3 pixels, left by the comparison of the styles (decided on 2026-11-16). Three values moved, hardly seen: the squares of the speed, from 1 pixel to 2; the bubble of a goal, from 12 pixels to 12.6; the bubble of the manual, from 21.6 to 18.9.
+
+## Layout
+
+The sizes of the layout are written in the block that they size, as the mock-up does; one that several blocks share becomes a token (decided on 2026-11-18, step 14a).
+
+| Token | Value | Role |
+|---|---|---|
+| `--header-height` | `46px` | The header of a screen, without the bar of the progress, which gives 3 pixels more to the screens that draw it (step 21). The level screen gives its map the height of the window under the header, less the panels, so that the banner of a browser that refuses to save takes its height from the panels and the map keeps its size. |
 
 ## Motion
 

@@ -3,7 +3,7 @@
 // Look of the world in specs.md). Everything is in the units of the drawings (geometry.ts).
 
 import type { Point, World } from '#lib/core.ts';
-import { CELL, isFloor, placedCells } from './geometry.ts';
+import { CELL, isFloor, placedFloors } from './geometry.ts';
 
 /** A rectangle on the map, in the units of the drawings. */
 export interface Rect {
@@ -31,21 +31,19 @@ const LINE_WIDTH = 4.5;
  */
 export function fiveLines(world: World): Rect[] {
 	const half = LINE_WIDTH / 2;
-	return placedCells(world)
-		.filter(({ cell }) => cell.type === 'floor')
-		.flatMap(({ x, y }) => {
-			const left = x * CELL;
-			const top = y * CELL;
-			const fromBottom = world.height - 1 - y;
-			const rects: Rect[] = [];
-			if (x > 0 && x % 5 === 0) rects.push({ x: left, y: top, width: half, height: CELL });
-			if (x % 5 === 4) rects.push({ x: left + CELL - half, y: top, width: half, height: CELL });
-			if (fromBottom > 0 && fromBottom % 5 === 0) {
-				rects.push({ x: left, y: top + CELL - half, width: CELL, height: half });
-			}
-			if (fromBottom % 5 === 4) rects.push({ x: left, y: top, width: CELL, height: half });
-			return rects;
-		});
+	return placedFloors(world).flatMap(({ x, y }) => {
+		const left = x * CELL;
+		const top = y * CELL;
+		const fromBottom = world.height - 1 - y;
+		const rects: Rect[] = [];
+		if (x > 0 && x % 5 === 0) rects.push({ x: left, y: top, width: half, height: CELL });
+		if (x % 5 === 4) rects.push({ x: left + CELL - half, y: top, width: half, height: CELL });
+		if (fromBottom > 0 && fromBottom % 5 === 0) {
+			rects.push({ x: left, y: top + CELL - half, width: CELL, height: half });
+		}
+		if (fromBottom % 5 === 4) rects.push({ x: left, y: top, width: CELL, height: half });
+		return rects;
+	});
 }
 
 /**

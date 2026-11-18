@@ -2,7 +2,8 @@
      (step 17) replace it, the column of the code holds the probe of step 4: a program run by the
      core on the map of the sandbox, shown on the map of the screen. -->
 <script lang="ts">
-	import { loadCore, type World } from '#lib/core.ts';
+	import type { World } from '#lib/core.ts';
+	import { coreReady } from '#lib/core-ready.svelte.ts';
 	import { t } from '#lib/i18n.ts';
 	import { levelMenus } from '#lib/level-menus.ts';
 	import LevelScreen from '#lib/level-screen/level-screen.svelte';
@@ -12,12 +13,9 @@
 	import Header from '#lib/shell/header.svelte';
 	import MenuBar from '#lib/shell/menu-bar.svelte';
 	import Place from '#lib/shell/place.svelte';
-	import { loadFailed } from '#lib/startup.ts';
 
-	// The probe needs the core. A core that can't load: the page itself says so, in place of
-	// the screen.
-	let ready = $state(false);
-	loadCore().then(() => (ready = true), loadFailed);
+	// The probe needs the core.
+	const core = coreReady();
 
 	/** The world of the program of the probe, as its last step left it. */
 	let world = $state.raw<World>();
@@ -36,7 +34,7 @@
 		</Header>
 	{/snippet}
 	{#snippet code()}
-		{#if ready}
+		{#if core.ready}
 			<Probe bind:world />
 		{/if}
 	{/snippet}

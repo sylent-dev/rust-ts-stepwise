@@ -20,7 +20,7 @@
 
 <div class="block" bind:contentRect={room}>
 	{#if world && room}
-		<MapView {world} {goals} cell={cellSide(room, world)} />
+		<MapView {world} {goals} side={cellSide(room, world)} />
 	{/if}
 </div>
 

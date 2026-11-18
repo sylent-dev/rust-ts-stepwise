@@ -1,7 +1,8 @@
 <!-- The level screen. Its map shows the first map of the level, until its tabs (step 21); the
      editor (step 16) and the running (step 17) come next. -->
 <script lang="ts">
-	import { Level, loadCore, type LevelMap } from '#lib/core.ts';
+	import { Level, type LevelMap } from '#lib/core.ts';
+	import { coreReady } from '#lib/core-ready.svelte.ts';
 	import { t } from '#lib/i18n.ts';
 	import { levelMenus } from '#lib/level-menus.ts';
 	import LevelScreen from '#lib/level-screen/level-screen.svelte';
@@ -11,17 +12,14 @@
 	import Header from '#lib/shell/header.svelte';
 	import MenuBar from '#lib/shell/menu-bar.svelte';
 	import Place from '#lib/shell/place.svelte';
-	import { loadFailed } from '#lib/startup.ts';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
 
 	const title = $derived(t(titleMessage(data.name)));
 
-	// The map needs the core. A core that can't load: the page itself says so, in place of the
-	// screen.
-	let ready = $state(false);
-	loadCore().then(() => (ready = true), loadFailed);
+	// The map needs the core.
+	const core = coreReady();
 
 	/**
 	 * The first map of a level, from the text of its file: the core reads it, and is done with
@@ -36,7 +34,7 @@
 		}
 	}
 
-	const shown = $derived(ready ? firstMap(data.text) : undefined);
+	const shown = $derived(core.ready ? firstMap(data.text) : undefined);
 </script>
 
 <svelte:head>

@@ -1,0 +1,6 @@
+/* The sizes of the layout that several blocks share (docs/design-system.md, Layout). */
+:root {
+	/* The header of a screen, without the bar of the progress (step 21). The level screen gives
+	   its map the height of the window under it, less the panels. */
+	--header-height: 46px;
+}

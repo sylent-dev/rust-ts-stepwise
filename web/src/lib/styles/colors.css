@@ -15,7 +15,7 @@
 
 	/* The three colors that carry a meaning: the amber says what to do, the cyan of the eyes of
 	   the robot what is new, the teal of the item what has passed. */
-	--accent: #ffb300;
+	--accent: var(--paint-yellow);
 	--accent-hover: #ffd25e;
 	--on-accent-weak: #3a4250;
 	--new: var(--robot-eyes);
@@ -23,7 +23,7 @@
 	--on-passed: var(--robot-ink);
 	--passed-soft: color-mix(in srgb, var(--passed) 28%, var(--band));
 	/* A danger, the red of the paint: Clear all progress as it fills. */
-	--danger: #dc2f34;
+	--danger: var(--paint-red);
 	--on-danger: #ffffff;
 
 	/* What is chosen in a list is filled with the color of the text. */

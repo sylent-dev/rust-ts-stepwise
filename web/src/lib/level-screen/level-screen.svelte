@@ -37,16 +37,20 @@
 	}
 
 	/* The panels are 216 pixels high, 250 from 1600 pixels wide, where they stand side by side,
-	   as in the mock-up; the map takes the height left. */
+	   as in the mock-up. The map takes the height of the window left under the header, and keeps
+	   it under the banner of a browser that refuses to save: the panels give the banner its
+	   height (see Error handling in specs.md). */
 	main {
+		--panels: 216px;
+		--map-row: calc(100vh - var(--header-height) - var(--panels));
 		display: grid;
 		grid-template-columns: var(--crossing) minmax(0, 1fr);
-		grid-template-rows: minmax(0, 1fr) 216px;
+		grid-template-rows: minmax(0, var(--map-row)) minmax(0, 1fr);
 	}
 
 	@media (min-width: 1600px) {
 		main {
-			grid-template-rows: minmax(0, 1fr) 250px;
+			--panels: 250px;
 		}
 	}
 

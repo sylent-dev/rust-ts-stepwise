@@ -18,9 +18,12 @@ export const STEPS: Readonly<Record<Direction, Point>> = {
 	west: { x: -1, y: 0 }
 };
 
+/** A floor cell, which may hold a paint and an item. */
+export type Floor = Extract<Cell, { type: 'floor' }>;
+
 /** A cell with its place. */
-export interface PlacedCell extends Point {
-	cell: Cell;
+export interface PlacedCell<Kind extends Cell = Cell> extends Point {
+	cell: Kind;
 }
 
 /** The cells of a world with their places, row by row from the top left. */
@@ -30,6 +33,13 @@ export function placedCells(world: World): PlacedCell[] {
 		y: Math.floor(index / world.width),
 		cell
 	}));
+}
+
+/** The floor cells of a world with their places, row by row from the top left. */
+export function placedFloors(world: World): PlacedCell<Floor>[] {
+	return placedCells(world).flatMap(({ x, y, cell }) =>
+		cell.type === 'floor' ? [{ x, y, cell }] : []
+	);
 }
 
 /** The cell at a place, or nothing outside the map, which counts as a wall. */
