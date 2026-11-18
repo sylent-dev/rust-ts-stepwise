@@ -4,7 +4,7 @@ The visual choices of the interface, written once as named tokens, so that the a
 
 - The mock-up, [`docs/mockups/interface.html`](mockups/interface.html), is the reference of the interface. Its blocks use nothing else than these tokens.
 - The tokens are CSS variables, written once, in the application: [`web/src/lib/styles/tokens.css`](../web/src/lib/styles/tokens.css) imports one file per kind (`colors.css`, `typography.css`, `spacing.css` with the radii, `motion.css`). The mock-up loads that same file, as it loads the fonts, so that a value changes in one place and the two never drift apart (decided on 2026-11-17).
-- The map isn't part of it: its shades are those of [Look of the world](../specs.md#look-of-the-world), the same in both themes.
+- The map isn't part of it: its shades are those of [Look of the world](../specs.md#look-of-the-world), the same in both themes. Most of them are in the drawings of the world elements; the few that the map draws itself, and the robot where the interface draws its face, are tokens shared by both themes.
 
 ## Colors
 
@@ -40,7 +40,8 @@ Two themes, chosen in the settings: **Day Desk**, light, by default, and **Night
 | `--goal-link` | `#5d687a` | A link of the goal (**Show hint**, **Read the manual**), the slate of the walls. |
 | `--goal-link-hover` | `#6b778a` | The same under the pointer. |
 | `--on-goal-link`, `--on-goal-side` | `#ffffff` | The text on a link of the goal, and on its dark side. |
-| `--robot-body`, `--robot-ink`, `--robot-eyes` | `#ffffff`, `#222935`, `#3fc3ff` | The shades of the robot, where the interface draws its face: the level to play on the home screen, the map shown. |
+| `--robot-body`, `--robot-ink`, `--robot-eyes` | `#ffffff`, `#222935`, `#3fc3ff` | The shades of the robot, where the interface draws its face: the level to play on the home screen, the map shown. The ink is the one of the whole world: the map draws its lines every five cells and the shadows of its walls with it, at 10 %. |
+| `--paint-red`, `--paint-yellow`, `--paint-blue` | `#dc2f34`, `#ffb300`, `#2459d6` | The three paints, each named as a program names it, which the map draws as strokes. |
 
 ### Zones
 

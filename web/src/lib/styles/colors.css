@@ -7,6 +7,11 @@
 	--robot-body: #ffffff;
 	--robot-ink: #222935;
 	--robot-eyes: #3fc3ff;
+	/* The paints of the world (specs.md, Look of the world), each named as a program names it,
+	   which the map draws as strokes. */
+	--paint-red: #dc2f34;
+	--paint-yellow: #ffb300;
+	--paint-blue: #2459d6;
 
 	/* The three colors that carry a meaning: the amber says what to do, the cyan of the eyes of
 	   the robot what is new, the teal of the item what has passed. */

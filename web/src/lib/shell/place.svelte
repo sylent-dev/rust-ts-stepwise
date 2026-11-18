@@ -1,6 +1,6 @@
-<!-- The place of the screen, in the middle of its header: the title of the level, or the sandbox
-     with its mark. It is the title of the page. The chapter of a level, its number and the bubble of its goal come with the
-     list of the levels (step 21). -->
+<!-- The place of the screen, in its header above the crossing of its two columns: the title of the
+     level, or the sandbox with its mark. It is the title of the page. The chapter of a level, its
+     number and the bubble of its goal come with the list of the levels (step 21). -->
 <script lang="ts">
 	import Icon, { type IconName } from '#lib/icon.svelte';
 
@@ -19,10 +19,12 @@
 </div>
 
 <style>
-	/* Centered in the header, on its height without the bar of the progress. */
+	/* Centered on the crossing of the two columns of its screen (level-screen/level-screen.svelte),
+	   the middle of the window until the code stops growing; on the height of the header without
+	   the bar of the progress. */
 	.place {
 		position: absolute;
-		left: 50%;
+		left: var(--crossing, 50%);
 		top: 4px;
 		transform: translateX(-50%);
 		display: flex;
