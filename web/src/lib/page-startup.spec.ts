@@ -209,11 +209,38 @@ describe('the script that watches the application start', () => {
 		expect(opened.shown).toBe('failed');
 	});
 
+	it('takes the message of a browser too old away when the application starts late', () => {
+		const opened = openPage();
+		opened.error(unreadable);
+		opened.wait();
+		opened.started();
+		expect(opened.shown).toBe('');
+	});
+
+	it('says that a file didn’t come even after it said that the browser is too old', () => {
+		const opened = openPage();
+		opened.error({ name: 'Error', message: 'an extension of the browser' });
+		opened.wait();
+		opened.rejection({ name: 'TypeError', message: MISSING_FILE[0]?.[1] ?? '' });
+		expect(opened.shown).toBe('failed');
+	});
+
 	it('shows the message of a file that couldn’t load when the application asks for it', () => {
 		const opened = openPage();
 		const application = opened.readApplication();
 		opened.started();
 		opened.failed();
+		expect(opened.shown).toBe('failed');
+		expect(application.has('inert')).toBe(true);
+	});
+
+	// The page of an error asks for it before the root layout says that the application runs:
+	// in Svelte, what a component holds is mounted before the component itself.
+	it('keeps the message the application asked for, even before it says that it runs', () => {
+		const opened = openPage();
+		const application = opened.readApplication();
+		opened.failed();
+		opened.started();
 		expect(opened.shown).toBe('failed');
 		expect(application.has('inert')).toBe(true);
 	});

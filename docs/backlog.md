@@ -55,6 +55,7 @@ The ideas, polish and edge cases found along the way that the current step doesn
 - A test of the messages in place of the screen in a real browser, once Playwright is in the project (step 17): the window that shrinks under a panel and the panel that comes back, an address that doesn't exist, JavaScript turned off, a file of the application that doesn't come and **Try again**, a browser without WebAssembly. At step 13d the rule of the sizes and the script of the page have tests, and the whole was tried by a script in a headless Chromium, not kept. To look at then: the focus goes back to the page, not to what opened it, when a panel is closed after the window shrank under it.
 - The message of a browser too old in a browser that tells the page nothing of a failed start (no `unhandledrejection`, as Firefox before 69): the page stays empty. A wait that starts with the page rather than with an error would cover it, at the price of a false alarm on a slow connection (left at step 13d).
 - The icon of the tab in Safari (step 27): it is an SVG file alone; if a version still in use doesn't draw it, add a PNG of 32 pixels beside it.
+- The message of a browser too old in a recent browser where WebAssembly is turned off (the Lockdown Mode of Apple, the safest level of Tor Browser): it tells to update a browser that may be the latest, as it would have for JavaScript turned off before it got a message of its own. A page that reads modules but has no WebAssembly could say so (raised by the code review of step 13d).
 
 ## Content
 

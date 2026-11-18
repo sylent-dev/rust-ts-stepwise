@@ -22,6 +22,20 @@
 
 	const fits = $derived(currentWindow.fit === 'screen');
 
+	/** What had the focus of the keyboard when the screen went away. */
+	let held: Element | null = null;
+
+	// The screen comes back as it was, the focus too. It is read before the page changes: once
+	// the screen is out of reach, the browser has already taken the focus away.
+	$effect.pre(() => {
+		if (!fits) held = document.activeElement;
+	});
+	$effect(() => {
+		if (!fits || !(held instanceof HTMLElement)) return;
+		held.focus({ preventScroll: true });
+		held = null;
+	});
+
 	// The theme of the settings is the one of the page. The script of app.html gave the page the
 	// theme saved before its first paint; from then on, a change applies at once.
 	$effect(() => {

@@ -16,7 +16,7 @@ export interface PageParts {
 	styles: readonly string[];
 }
 
-/** A text as HTML writes it. */
+/** A text as HTML writes it between two tags; the value of an attribute would need its quotes too. */
 function escapeHtml(text: string): string {
 	return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
@@ -30,20 +30,25 @@ function compactCss(css: string): string {
 }
 
 /**
- * Fills what `template` names. A name that nothing answers stops the build: a page never ships
- * with a hole.
+ * Fills what `template` names. A name that nothing answers stops the build, however it is
+ * written: a page never ships with a hole.
  */
 export function fillPage(template: string, parts: PageParts): string {
-	return template.replace(/%stepwise\.([a-z]+)(?:\.([a-z0-9-]+))?%/g, (place, kind, name) => {
+	// Everything that looks like a place is read, then checked: a name badly written is refused
+	// rather than left in the page as a text.
+	return template.replace(/%stepwise\.([^%\s]*)%/g, (place: string, path: string) => {
+		const [kind, name, ...rest] = path.split('.');
 		if (kind === 'styles' && name === undefined) {
 			return `<style>${parts.styles.map(compactCss).join(' ')}</style>`;
 		}
 		const filled =
-			kind === 'text'
-				? parts.text(name)
-				: kind === 'drawing'
-					? parts.drawings[name]?.trim()
-					: undefined;
+			name === undefined || rest.length > 0
+				? undefined
+				: kind === 'text'
+					? parts.text(name)
+					: kind === 'drawing'
+						? parts.drawings[name]?.trim()
+						: undefined;
 		if (filled === undefined) throw new Error(`app.html: nothing to fill ${place} with`);
 		return kind === 'text' ? escapeHtml(filled) : filled;
 	});

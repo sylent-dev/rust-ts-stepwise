@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import page from '../app.html?raw';
-import { hasMessage, t } from './i18n.ts';
+import { t } from './i18n.ts';
 import { fillPage, type PageParts } from './page-fill.ts';
+import { pageParts } from './page-parts.ts';
+import screenMessage from './styles/screen-message.css?raw';
 
 const texts: Record<string, string> = { greeting: 'Hello', order: 'a < b & b > c' };
 
@@ -49,22 +51,35 @@ describe('fillPage', () => {
 		['a drawing that doesn’t exist', '%stepwise.drawing.tail%'],
 		['a kind it doesn’t know', '%stepwise.sound.bump%'],
 		['a kind without a name', '%stepwise.text%'],
-		['styles with a name', '%stepwise.styles.colors%']
+		['styles with a name', '%stepwise.styles.colors%'],
+		['a name with a capital', '%stepwise.text.Greeting%'],
+		['a name with an underscore', '%stepwise.text.gree_ting%'],
+		['a name in two parts', '%stepwise.text.greeting.again%'],
+		['a place without a kind', '%stepwise.%']
 	])('stops for %s', (_, place) => {
 		expect(() => fillPage(`<p>${place}</p>`, parts)).toThrow(place);
 	});
 });
 
 describe('the page', () => {
-	// The build fills the page with the same texts (src/hooks.server.ts), and fails for a hole:
-	// this test says which message is missing before the build does.
-	it('names only messages of the interface', () => {
-		const filled = fillPage(page, {
-			text: (name) => (hasMessage(name) ? t(name) : undefined),
-			drawings: { disappointed: '<svg></svg>' },
-			styles: []
-		});
+	// The build fills the page with the same parts (src/hooks.server.ts), and fails for a hole:
+	// this test says what is missing before the build does.
+	it('is filled whole with what the build hands it', () => {
+		const filled = fillPage(page, pageParts);
 		expect(filled).not.toContain('%stepwise.');
+		expect(filled).toContain(`<title>${t('app-name')}</title>`);
 		expect(filled).toContain(t('page-old-title'));
+		expect(filled).toContain('<svg');
+	});
+
+	// The styles of the application fill the gap on a page that loads: a token missing from the
+	// page would only show where nothing else could load, which no one tries.
+	it('carries every design token that the look of a message uses', () => {
+		const carried = pageParts.styles.join('\n');
+		const used = new Set(
+			[...screenMessage.matchAll(/var\((--[a-z0-9-]+)/g)].map((match) => match[1])
+		);
+		expect(used.size).toBeGreaterThan(0);
+		for (const token of used) expect(carried, token).toContain(`${token}:`);
 	});
 });
