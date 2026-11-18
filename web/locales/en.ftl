@@ -98,12 +98,16 @@ window-phone-text = It is made for a large window.
 level-numbered = { $number }. { $title }
 level-paint-a-square-title = Paint a square
 
+## The level screen and the sandbox.
+
+# The name of the map, for a screen reader.
+map = The map
+
 ## The probe of step 4c, on the real machine since step 10d: a program run on the map of the
-## sandbox at each animation frame, on the page of the sandbox until the map view (step 14) and
-## the running (step 17) replace it.
+## sandbox at each animation frame, in the column of the code of the sandbox until the running
+## (step 17) replaces it.
 
 probe-title = A program run by the core, one step at a time
-probe-map = The robot walking around the map of the sandbox.
 probe-program = The program, the line of its next step marked
 probe-run = Run
 probe-pause = Pause
