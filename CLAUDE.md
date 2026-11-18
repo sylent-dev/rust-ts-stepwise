@@ -102,6 +102,7 @@ Follow [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.
 - Before opening any pull request that changes code or its build (`crates/`, `web/`, tests, `Cargo.toml`, `clippy.toml`, `build.rs`, `rust-toolchain.toml`, `.github/workflows/`), run the `code-reviewer` subagent (`.claude/agents/code-reviewer.md`) on the branch.
 - Run it once per pull request, on the whole branch, to save tokens; a step too large for one review is split into sub-steps in `roadmap.md`.
 - It writes its recommendations, in French, to `outputs/<YYYY-MM-DD>-<branch>-code-review.md`. These notes are ignored by Git.
+- When the pull request touches the animations (the map, the robot, a transition of the interface), also run the `animation-reviewer` subagent (`.claude/agents/animation-reviewer.md`), once, beside `code-reviewer`: it checks what can be measured (an action visible long enough at every speed, the state at rest in both themes, the stacking order, less motion), the taste staying with the owner. It writes to `outputs/<YYYY-MM-DD>-<branch>-animation-review.md`.
 - Summarize the recommendations to the user and apply only the ones they approve, then open the pull request.
 
 ## Development
