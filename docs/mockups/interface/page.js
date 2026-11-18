@@ -4,6 +4,8 @@
 // is a list and `range` a slider, both setting the CSS `variable` at once, without redrawing the page.
 const VARIANTS = {
   theme: { label: "Style", options: Object.fromEntries(Object.entries(INTERFACE_STYLES).map(([key, style]) => [key, style.title])), fallback: Object.keys(INTERFACE_STYLES)[0] },
+  // A decision of step 13d, raised by its code review: its proposals follow the nine already decided.
+  windowfix: { label: "Window too small", options: { one: "10 · One sentence", full: "11 · With the full screen", follows: "12 · Follows the window" }, fallback: "follows" },
 };
 
 const params = new URLSearchParams(location.search);
