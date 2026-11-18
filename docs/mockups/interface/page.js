@@ -4,6 +4,8 @@
 // is a list and `range` a slider, both setting the CSS `variable` at once, without redrawing the page.
 const VARIANTS = {
   theme: { label: "Style", options: Object.fromEntries(Object.entries(INTERFACE_STYLES).map(([key, style]) => [key, style.title])), fallback: Object.keys(INTERFACE_STYLES)[0] },
+  // Step 13c, to decide: how the fill of a choice of the settings slides (section-slide.js).
+  slide: { label: "Slide of a choice", options: { market: "1 · As Rust Exile Market", appear: "2 · Fast, then settling", move: "3 · As the robot moves", none: "4 · At once" }, fallback: "appear" },
 };
 
 const params = new URLSearchParams(location.search);
