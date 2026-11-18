@@ -189,3 +189,7 @@ The tokens and the two themes in the application, the fonts, the base styles (th
 ### 13b. Menus (#51)
 
 The menu of the header, with the mouse and the keyboard; **Level** (**All levels**, **Sandbox**) and **Help** (**Manual**), the commands that exist; the row of the screen already shown, lit; a menu that grows as it opens and goes back as it closes; a header 3 pixels shorter without the bar of the progress; the class that the links and the names of the menus of a band share.
+
+### 13c. Storage and settings (#52)
+
+The browser storage with its version, the saved data that can't be read ignored; the gear of the header, the first icon made of several shapes (left by the review of 13a), and the panel of the settings over its veil, with **Theme** alone until **Sounds** (step 18) and **Clear all progress** (step 21) bring their rows; the theme saved, applied before the first paint and followed by the other tabs already open; the banner when the storage is refused, on every screen but the manual, hidden while the page stays open.

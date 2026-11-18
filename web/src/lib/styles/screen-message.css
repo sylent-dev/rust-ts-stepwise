@@ -1,0 +1,126 @@
+/* A message in place of the screen (specs.md, Error handling): the head of the disappointed
+   robot, a title and its sentences in one centered column, over the whole window. It is a class,
+   not a component: the page itself writes some of these messages (src/app.html), for a browser
+   where the application can't start, and the application writes the others
+   (shell/screen-message.svelte). The page carries this file and the tokens it uses
+   (lib/page-fill.ts), so that its messages show even when nothing else could load. */
+.screen-message {
+	/* The four sides one by one: the browsers that the message of a browser too old is for
+	   don't know `inset`. */
+	position: fixed;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	/* Over the screen and what it raises: the menus of the header are at 2. */
+	z-index: 10;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	margin: 0;
+	padding: var(--space-24);
+	overflow: hidden;
+	background: var(--surface);
+	color: var(--text);
+	font: var(--weight-text) var(--size-text) / var(--line-text) var(--font-text);
+	text-align: center;
+}
+
+/* A message the page holds until it is needed: a `display` hides the attribute otherwise. */
+.screen-message[hidden] {
+	display: none;
+}
+
+/* A message of the page itself says that nothing runs: it goes over one of the application. */
+.screen-message.is-page {
+	z-index: 11;
+}
+
+/* The head of the robot: 72 pixels high, the size of its drawing in the mock-up, whether it is an
+   image or a drawing written in the page. */
+.screen-message-head {
+	flex: none;
+	height: 72px;
+	margin-bottom: var(--space-24);
+}
+
+.screen-message-head > * {
+	display: block;
+	width: auto;
+	height: 100%;
+}
+
+.screen-message h1 {
+	margin: 0 0 var(--space-16);
+	font: var(--weight-strong) var(--size-display) / var(--line-title) var(--font-text);
+}
+
+/* A sentence, on a line short enough to be read at a glance: 460 pixels at most. */
+.screen-message p {
+	max-width: 460px;
+	margin: 0 0 var(--space-6);
+	font-size: var(--size-lead);
+	line-height: var(--line-reading);
+}
+
+/* What changes in a sentence, such as the size of the window: its figures keep their width. */
+.screen-message b {
+	font-weight: var(--weight-strong);
+	font-variant-numeric: tabular-nums;
+}
+
+/* An address to type again, in the font of the code. */
+.screen-message .screen-message-address {
+	margin-top: var(--space-8);
+	font: var(--weight-code) var(--size-title) var(--font-code);
+}
+
+/* What a message offers to do, a button or a link: amber, as the main button of a screen. */
+.screen-message-action {
+	display: inline-block;
+	margin-top: var(--space-16);
+	padding: var(--space-8) var(--space-24);
+	border: 0;
+	border-radius: var(--radius);
+	background: var(--accent);
+	box-shadow: var(--control-shadow);
+	color: var(--on-accent);
+	font: inherit;
+	font-size: var(--size-lead);
+	font-weight: var(--weight-strong);
+	text-decoration: none;
+	cursor: pointer;
+}
+
+.screen-message-action:hover {
+	background: var(--accent-hover);
+}
+
+/* Behind a message, what it is about, in two or three signs (JS, 404), in the font of the name:
+   as tall as two thirds of the window, never wider than it, and hardly there. Its size and its
+   2 % belong to no scale: tuned by eye on the mock-up (docs/design-system.md, Messages). */
+.screen-message-mark {
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	z-index: -1;
+	display: grid;
+	place-items: center;
+	font: var(--weight-strong) min(66vh, 40vw) / 1 var(--font-name);
+	opacity: 0.02;
+	pointer-events: none;
+	user-select: none;
+}
+
+/* On a phone: a smaller head, larger sentences. */
+.screen-message.is-phone .screen-message-head {
+	height: 64px;
+}
+
+.screen-message.is-phone p {
+	font-size: var(--size-title);
+}

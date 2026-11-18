@@ -1,7 +1,8 @@
 import { FluentParser } from '@fluent/syntax';
 import { describe, expect, it, vi } from 'vitest';
 import english from '../../locales/en.ftl?raw';
-import { createBundle, formatMessage, t } from './i18n.ts';
+import { createBundle, formatAround, formatMessage, hasMessage, t, tAround } from './i18n.ts';
+import type { WindowAdvice } from './shell/window-size.ts';
 
 describe('locales/en.ftl', () => {
 	// The parser of the bundle skips a message it can't read without a word: the full parser
@@ -42,8 +43,62 @@ describe('formatMessage', () => {
 	});
 });
 
+describe('formatAround', () => {
+	const { bundle } = createBundle(
+		'en',
+		'size = At least { $least }. This one is { $size }.\nlast = Only { $size }\nplain = Nothing to draw.\n'
+	);
+
+	it('gives the text before a value and the text after it, the other values filled', () => {
+		expect(formatAround(bundle, 'size', 'size', { least: '1280 × 720' })).toEqual([
+			'At least 1280 × 720. This one is ',
+			'.'
+		]);
+	});
+
+	it('gives an empty text after a value that ends the message', () => {
+		expect(formatAround(bundle, 'last', 'size')).toEqual(['Only ', '']);
+	});
+
+	it('gives the whole message before a value that it doesn’t hold', () => {
+		expect(formatAround(bundle, 'plain', 'size')).toEqual(['Nothing to draw.', '']);
+	});
+});
+
 describe('t', () => {
 	it('formats the messages of the interface in English', () => {
 		expect(t('page-title', { page: 'Sandbox' })).toBe('Sandbox · Stepwise');
+	});
+
+	it('formats a message of the interface around one of its values', () => {
+		expect(tAround('window-small-size', 'size', { least: '1280 × 720' })).toEqual([
+			'At least 1280 × 720 pixels. This one is ',
+			'.'
+		]);
+	});
+
+	it.each(['grow', 'zoom'])('names the key that zooms on each computer, %s', (advice) => {
+		expect(t(`window-small-${advice}`, { platform: 'mac' })).toContain('Cmd and −');
+		expect(t(`window-small-${advice}`, { platform: 'other' })).toContain('Ctrl and −');
+		expect(t(`window-small-${advice}`, { platform: 'chromeos' })).toContain('Ctrl and −');
+	});
+
+	it('has a message for each thing to do about a window too small', () => {
+		// Each of them is named here, or the types don't check: one added later can't be left out.
+		const advices: Record<WindowAdvice, true> = { grow: true, 'full-screen': true, zoom: true };
+		for (const advice of Object.keys(advices)) {
+			expect(hasMessage(`window-small-${advice}`)).toBe(true);
+		}
+	});
+
+	it('writes a size without a separator of thousands', () => {
+		expect(t('window-size', { width: '1280', height: '720' })).toBe('1280 × 720');
+	});
+});
+
+describe('hasMessage', () => {
+	it('knows the messages of the interface', () => {
+		expect(hasMessage('app-name')).toBe(true);
+		expect(hasMessage('no-such-message')).toBe(false);
 	});
 });

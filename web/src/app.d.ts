@@ -8,6 +8,19 @@ declare global {
 		// interface PageState {}
 		// interface Platform {}
 	}
+
+	interface Window {
+		/**
+		 * What the script of the page (src/app.html) hands to the application; see
+		 * src/lib/startup.ts, the one module that calls it.
+		 */
+		stepwisePage?: {
+			/** The application runs. */
+			started(): void;
+			/** A file of Stepwise couldn't load. */
+			failed(): void;
+		};
+	}
 }
 
 export {};

@@ -1,26 +1,37 @@
 // The messages that replace the whole screen, under the head of the disappointed robot (as an empty search),
 // without the name: the window too small, the phone, the browser
-// too old, the files that can't load. They follow the theme saved: the two written in the page itself read
+// too old, the files that can't load, JavaScript turned off, an address that doesn't exist. Behind the
+// last two, what they are about, written large and very pale: JS, 404. They follow the theme saved: the two written in the page itself read
 // it with a small script, and stay in Day Desk when JavaScript doesn't run.
 
 
-// `kind` is the message, `size` the window in pixels; the window too small says its own size.
-function appMessage(kind, [width, height]) {
+// `kind` is the message, `size` the window in pixels; the window too small says its own size, then
+// `fix`, what the learner can do about it: only what can work. A window that can still grow on its
+// screen is told to grow; one that already fills it, as on a laptop of 1366 × 768, where the bars of
+// the browser and of the system leave about 1366 × 650 to the page, is told the zoom and the full
+// screen (decided at step 13d).
+const MESSAGE_FIX = "Enlarge the window, or zoom out with Ctrl and −.";
+const MESSAGE_FIX_FILLED = "Zoom out with Ctrl and −, or press F11 for the full screen.";
+function appMessage(kind, [width, height], fix = MESSAGE_FIX) {
   const address = '<p class="message-address">stepwise.sylent.tools</p>';
   const texts = {
-    small: ["Stepwise needs a larger window", `<p>At least 1280 × 720 pixels. This one is <b class="message-size">${width} × ${height}</b>.</p><p>Widen the window, or zoom out with Ctrl and −.</p>`],
+    small: ["Stepwise needs a larger window", `<p>At least 1280 × 720 pixels. This one is <b class="message-size">${width} × ${height}</b>.</p><p>${fix}</p>`],
     phone: ["Stepwise needs a laptop", "<p>It is made for a large window.</p>"],
     old: ["Stepwise needs a recent browser", `<p>This browser can’t run it. Update it, or open Stepwise in a recent Firefox, Chrome, Edge or Safari.</p>${address}`],
     offline: ["Stepwise couldn’t load", '<p>The connection seems to be lost. Check it, then try again.</p><button type="button" class="app-primary">Try again</button>'],
+    script: ["Stepwise needs JavaScript", "<p>It is turned off in this browser.</p><p>Turn it on for this website, then reload the page.</p>"],
+    missing: ["This page doesn’t exist", '<p>Stepwise has no page at this address.</p><button type="button" class="app-primary">All levels</button>'],
   };
   const [title, body] = texts[kind];
-  return `<div class="app-screen-message ${kind === "phone" ? "is-phone" : ""}"><img class="message-head" src="world-elements/daylight/logo-disappointed.svg" height="${kind === "phone" ? 64 : 72}" alt=""><div class="message-title">${title}</div>${body}</div>`;
+  // What the message is about, in two or three signs, very pale behind it.
+  const mark = { script: "JS", missing: "404" }[kind];
+  return `<div class="app-screen-message ${kind === "phone" ? "is-phone" : ""}">${mark ? `<div class="message-mark" aria-hidden="true">${mark}</div>` : ""}<img class="message-head" src="world-elements/daylight/logo-disappointed.svg" height="${kind === "phone" ? 64 : 72}" alt=""><div class="message-title">${title}</div>${body}</div>`;
 }
 
-const messageWindow = (kind, size) => `<div class="app-window" style="width:${size[0]}px;height:${size[1]}px">${appMessage(kind, size)}</div>`;
+const messageWindow = (kind, size, fix) => `<div class="app-window" style="width:${size[0]}px;height:${size[1]}px">${appMessage(kind, size, fix)}</div>`;
 
 // The window too small, live: drag its corner. Below 800 pixels wide it asks for a computer; from
-// 1280 × 720 the level screen comes back as it was.
+// 1280 × 720 the level screen comes back as it was. Every screen gives way to it, the manual too.
 const messageLiveWindow = () => `<div class="message-live" style="width:1024px;height:640px"></div>`;
 function messageFill(box) {
   const width = Math.round(box.clientWidth);

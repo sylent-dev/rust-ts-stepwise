@@ -16,7 +16,9 @@ export default defineConfig({
 				runes: ({ filename }) =>
 					filename.split(/[/\\]/).includes('node_modules') ? undefined : true
 			},
-			adapter: adapter(),
+			// GitHub Pages serves `404.html` for an address that has no page: the application
+			// starts there too, and shows its own message (src/routes/+error.svelte).
+			adapter: adapter({ fallback: '404.html' }),
 			paths: { base }
 		})
 	],
@@ -27,6 +29,9 @@ export default defineConfig({
 		expect: { requireAssertions: true },
 		// Each test starts with the real functions, whatever the spies of the one before.
 		restoreMocks: true,
+		// A style sheet read as a text (`?raw`) keeps its content: Vitest empties the style sheets
+		// by default, and the tests of the page check the design tokens that it carries.
+		css: true,
 		projects: [
 			{
 				extends: './vite.config.ts',

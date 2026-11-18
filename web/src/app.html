@@ -6,6 +6,9 @@
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="text-scale" content="scale" />
+		<!-- The name of the page until the application gives the one of its screen: the messages
+		     that the page writes itself are shown under it. -->
+		<title>%stepwise.text.app-name%</title>
 		<!-- The theme saved in the settings, given to the page before its first paint: Night Desk
 		     never starts with a flash of Day Desk. It reads what lib/settings/saved-settings.ts
 		     saves, and a test keeps the two in step (lib/page-theme.spec.ts). It is written in the
@@ -24,6 +27,8 @@
 				}
 			})();
 		</script>
+		<!-- The icon of the tab: the head of the logo, drawn a second time for 16 pixels. -->
+		<link rel="icon" type="image/svg+xml" href="%sveltekit.assets%/favicon.svg" />
 		<!-- The fonts, asked for at once: the styles that name them (lib/styles/fonts.css) arrive
 		     with the application, and no text shows before its font. -->
 		<link
@@ -47,9 +52,135 @@
 			crossorigin
 			href="%sveltekit.assets%/fonts/source-code-pro/source-code-pro.woff2"
 		/>
-		%sveltekit.head%
+		<!-- The design tokens and the look of a message in place of the screen, written here when
+		     the website is built (src/hooks.server.ts): the messages below show even when the
+		     styles of the application couldn't load. -->
+		%stepwise.styles% %sveltekit.head%
 	</head>
 	<body data-sveltekit-preload-data="hover">
-		<div style="display: contents">%sveltekit.body%</div>
+		<!-- The messages of a browser where the application can't start (see Error handling in
+		     specs.md), written in the page itself. Their texts come from the translation file and
+		     the head of the robot from its drawing, both filled when the website is built. -->
+		<noscript>
+			<div class="screen-message is-page">
+				<div class="screen-message-mark" aria-hidden="true">
+					%stepwise.text.page-no-script-mark%
+				</div>
+				<div class="screen-message-head" aria-hidden="true">%stepwise.drawing.disappointed%</div>
+				<h1>%stepwise.text.page-no-script-title%</h1>
+				<p>%stepwise.text.page-no-script-off%</p>
+				<p>%stepwise.text.page-no-script-fix%</p>
+			</div>
+		</noscript>
+		<div class="screen-message is-page" id="page-old" role="alert" hidden>
+			<div class="screen-message-head" aria-hidden="true">%stepwise.drawing.disappointed%</div>
+			<h1>%stepwise.text.page-old-title%</h1>
+			<p>%stepwise.text.page-old-text%</p>
+			<!-- The address of Stepwise, to type again in another browser: the script writes it. -->
+			<p class="screen-message-address" id="page-address"></p>
+		</div>
+		<div class="screen-message is-page" id="page-failed" role="alert" hidden>
+			<div class="screen-message-head" aria-hidden="true">%stepwise.drawing.disappointed%</div>
+			<h1>%stepwise.text.page-failed-title%</h1>
+			<p>%stepwise.text.page-failed-text%</p>
+			<button type="button" class="screen-message-action" id="page-retry">
+				%stepwise.text.page-failed-retry%
+			</button>
+		</div>
+		<!-- The page watches the application start, and shows one of the two messages above when
+		     it can't. The application tells it when it runs, and when a file couldn't load later
+		     (lib/startup.ts). Written in the JavaScript of an old browser, as the script of the
+		     theme, and tried by lib/page-startup.spec.ts. -->
+		<script>
+			(function () {
+				var messages = {
+					old: document.getElementById('page-old'),
+					failed: document.getElementById('page-failed')
+				};
+				// Without WebAssembly, nothing of Stepwise runs: its message stays, whatever
+				// happens next.
+				var able = typeof WebAssembly === 'object';
+				var started = false;
+				// Whether the application asked for a message itself: that one stays, whatever
+				// the application says next.
+				var asked = false;
+				var shown = '';
+				var doubt = 0;
+				var home = document.createElement('a');
+
+				// Shows the message of this name alone, or none. Under a message, the application
+				// is out of reach of the keys: it comes after this script in the page, so it is
+				// looked for here.
+				function show(name) {
+					var application = document.getElementById('page-application');
+					var key;
+					shown = name;
+					for (key in messages) {
+						if (key === name) messages[key].removeAttribute('hidden');
+						else messages[key].setAttribute('hidden', '');
+					}
+					if (!application) return;
+					if (name) application.setAttribute('inert', '');
+					else application.removeAttribute('inert');
+				}
+
+				// Something went wrong in the page before the application ran. A file of the
+				// application that didn't come is told at once: every browser names it as a
+				// module it couldn't load. Anything else may be a browser too old to read the
+				// application, or a stranger to it, such as an extension of the browser: the
+				// page can't tell, so it waits, and says that the browser is too old only when
+				// the application still hasn't started 3 seconds later. That is a guess: a
+				// file that didn't come, a fact, takes its place, never the other way.
+				function stopped(reason) {
+					if (started || shown === 'failed') return;
+					if (reason && reason.name === 'TypeError' && /module/i.test(reason.message)) {
+						clearTimeout(doubt);
+						show('failed');
+					} else if (!shown && !doubt) {
+						doubt = setTimeout(function () {
+							if (!started && !shown) show('old');
+						}, 3000);
+					}
+				}
+
+				window.stepwisePage = {
+					// The application runs: a message that the page showed too soon goes away.
+					started: function () {
+						started = true;
+						clearTimeout(doubt);
+						if (!able) show('old');
+						else if (!asked) show('');
+					},
+					// The application asks for the message of a file that couldn't load, before
+					// or after it says that it runs.
+					failed: function () {
+						asked = true;
+						if (able) show('failed');
+					}
+				};
+
+				// The address of Stepwise, as this page knows it: the folder of its files.
+				home.href = '%sveltekit.assets%/';
+				document.getElementById('page-address').textContent = (home.host + home.pathname).replace(
+					/\/$/,
+					''
+				);
+				document.getElementById('page-retry').onclick = function () {
+					location.reload();
+				};
+
+				if (!able) {
+					show('old');
+					return;
+				}
+				window.addEventListener('error', function (event) {
+					stopped(event.error);
+				});
+				window.addEventListener('unhandledrejection', function (event) {
+					stopped(event.reason);
+				});
+			})();
+		</script>
+		<div style="display: contents" id="page-application">%sveltekit.body%</div>
 	</body>
 </html>

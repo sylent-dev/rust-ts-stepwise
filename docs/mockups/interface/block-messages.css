@@ -1,6 +1,11 @@
 /* A message in place of the screen: the logo, the title and its sentences in one centered column. */
 .app-screen-message { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; padding: var(--space-24); background: var(--surface); text-align: center; }
 .message-head { margin-bottom: var(--space-24); }
+/* Behind a message, what it is about, in the font of the name: as tall as two thirds of the window,
+   which it follows, never wider than it, and hardly there, at 2 % of the color of the text (tuned by
+   eye with the owner on 2026-11-18, from 4 %). */
+.app-screen-message { position: relative; isolation: isolate; container-type: size; }
+.message-mark { position: absolute; inset: 0; z-index: -1; display: grid; place-items: center; overflow: hidden; color: var(--text); font: var(--weight-strong) min(66cqh, 40cqw)/1 var(--font-name); opacity: 0.02; pointer-events: none; user-select: none; }
 .message-title { margin: 0 0 var(--space-16); font: var(--weight-strong) var(--size-display)/var(--line-title) var(--font-text); }
 .app-screen-message p { max-width: 460px; margin: 0 0 var(--space-6); font-size: var(--size-lead); line-height: var(--line-reading); }
 .app-screen-message .message-size { font-weight: var(--weight-strong); font-variant-numeric: tabular-nums; }

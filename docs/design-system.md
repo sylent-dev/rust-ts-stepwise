@@ -326,6 +326,13 @@ For a learner who asked their system for less motion (`prefers-reduced-motion`),
 
 The texts of the interface are in English, in the translation files (see [Interface language](../specs.md#interface-language)). Their tone is a principle of [specs.md](../specs.md#design-principles): short, friendly, in the second person, never blaming, an error giving the rule and never the fix. These rules say how a text is written, so that a new one reads as the others.
 
+### In place of the screen
+
+A message that replaces the screen (see [Error handling](../specs.md#error-handling)) is one centered column on the surface of the page, over the whole window: the look is the class `screen-message` of `web/src/lib/styles/`, shared by the messages that the page writes itself and by those of the application.
+
+- The head of the disappointed robot, 72 pixels high (64 on a phone), 24 pixels above the title; the title in the largest size, 16 pixels above its sentences; a sentence in the size of what is read at length, on a line of 460 pixels at most (on a phone, in the size of a title); what the message offers to do, an amber button or link, 16 pixels under them; an address to type again in the font of the code.
+- Behind the message, what it is about in two or three signs (*JS*, *404*), in the font of the name and in semi-bold: as tall as two thirds of the window, never wider than it (`min(66vh, 40vw)`), at 2 % of the color of the text. Its size and its strength belong to no scale: tuned by eye with the owner on 2026-11-18, the strength with a slider, from 4 %. A message whose subject has no such sign has none.
+
 ### Voice
 
 - **You** is the learner: *your code*, *your program*, *your progress*. The robot is *the robot*; it speaks for itself in a bubble only: the title of a goal, a sentence of the manual.

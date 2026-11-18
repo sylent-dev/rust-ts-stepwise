@@ -10,8 +10,12 @@
 	import Header from '#lib/shell/header.svelte';
 	import MenuBar from '#lib/shell/menu-bar.svelte';
 	import Place from '#lib/shell/place.svelte';
+	import { loadFailed } from '#lib/startup.ts';
 
-	const core = loadCore();
+	// The probe needs the core. A core that can't load: the page itself says so, in place of
+	// the screen.
+	let ready = $state(false);
+	loadCore().then(() => (ready = true), loadFailed);
 </script>
 
 <svelte:head>
@@ -24,11 +28,9 @@
 	<SettingsButton gear />
 </Header>
 <main>
-	{#await core then}
+	{#if ready}
 		<Probe />
-	{:catch}
-		<p role="alert">{t('core-load-failed')}</p>
-	{/await}
+	{/if}
 </main>
 
 <style>
