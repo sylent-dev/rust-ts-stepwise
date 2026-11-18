@@ -13,3 +13,5 @@
 /* The window too small, live: its corner drags. */
 .message-live { position: relative; resize: both; overflow: hidden; min-width: 360px; min-height: 480px; max-width: 1400px; max-height: 800px; box-shadow: 0 8px 30px #0006; }
 .message-live > .app-window { box-shadow: none; }
+/* The manual follows the window, where the level screen keeps its 1280 × 720. */
+.message-live > .manual-window { width: 100% !important; height: 100% !important; }

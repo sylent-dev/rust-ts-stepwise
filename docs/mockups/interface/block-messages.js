@@ -12,6 +12,8 @@ function appMessage(kind, [width, height]) {
     phone: ["Stepwise needs a laptop", "<p>It is made for a large window.</p>"],
     old: ["Stepwise needs a recent browser", `<p>This browser can’t run it. Update it, or open Stepwise in a recent Firefox, Chrome, Edge or Safari.</p>${address}`],
     offline: ["Stepwise couldn’t load", '<p>The connection seems to be lost. Check it, then try again.</p><button type="button" class="app-primary">Try again</button>'],
+    script: ["Stepwise needs JavaScript", "<p>It is turned off in this browser. Turn it on for this website, then reload the page.</p>"],
+    missing: ["This page doesn’t exist", '<p>Stepwise has no page at this address.</p><button type="button" class="app-primary">All levels</button>'],
   };
   const [title, body] = texts[kind];
   return `<div class="app-screen-message ${kind === "phone" ? "is-phone" : ""}"><img class="message-head" src="world-elements/daylight/logo-disappointed.svg" height="${kind === "phone" ? 64 : 72}" alt=""><div class="message-title">${title}</div>${body}</div>`;
@@ -21,15 +23,20 @@ const messageWindow = (kind, size) => `<div class="app-window" style="width:${si
 
 // The window too small, live: drag its corner. Below 800 pixels wide it asks for a computer; from
 // 1280 × 720 the level screen comes back as it was.
-const messageLiveWindow = () => `<div class="message-live" style="width:1024px;height:640px"></div>`;
+// `screen` is the screen behind the message: the level screen, or the manual, which step 13d decides
+// whether it stays in a window too small for the other screens (from 800 pixels wide).
+const messageLiveWindow = (screen = "level") => `<div class="message-live" data-screen="${screen}" style="width:1024px;height:640px"></div>`;
 function messageFill(box) {
   const width = Math.round(box.clientWidth);
   const height = Math.round(box.clientHeight);
-  const kind = width >= 1280 && height >= 720 ? "level" : width < 800 ? "phone" : "small";
+  const manual = box.dataset.screen === "manual";
+  const stays = manual && chosen.manualsmall === "manual" && width >= 800;
+  const kind = stays || (width >= 1280 && height >= 720) ? "screen" : width < 800 ? "phone" : "small";
   if (box.dataset.kind === kind && kind !== "small") return;
   if (box.dataset.kind === "small" && kind === "small") { box.querySelector(".message-size").textContent = `${width} × ${height}`; return; }
   box.dataset.kind = kind;
-  box.innerHTML = kind === "level" ? readyWindow() : `<div class="app-window" style="width:100%;height:100%">${appMessage(kind, [width, height])}</div>`;
+  box.innerHTML = kind !== "screen" ? `<div class="app-window" style="width:100%;height:100%">${appMessage(kind, [width, height])}</div>`
+    : manual ? manualWindow({ back: null }) : readyWindow();
 }
 const messageWatch = new ResizeObserver(entries => entries.forEach(entry => messageFill(entry.target)));
 new MutationObserver(() => document.querySelectorAll(".message-live:not([data-kind])").forEach(box => { messageFill(box); messageWatch.observe(box); }))

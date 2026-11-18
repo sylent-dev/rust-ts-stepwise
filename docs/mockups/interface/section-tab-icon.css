@@ -1,0 +1,25 @@
+/* The icon of the tab: each proposal in the tab of a light and of a dark browser, then alone at 16 and
+   32 pixels, then its pixels enlarged. The colors are those of a browser, not of the interface. */
+.tab-icon-note { margin: 0 0 12px; color: #adb5bd; font-size: 13px; }
+.tab-icon-row { display: flex; align-items: center; gap: 24px; width: fit-content; margin-bottom: 12px; padding: 12px; border: 1px solid transparent; border-radius: 6px; }
+.tab-icon-tones { display: flex; flex-direction: column; gap: 8px; }
+.tab-icon-row.is-chosen { border-color: #868e96; }
+.tab-icon-row > b { flex: none; width: 190px; color: #dee2e6; font-size: 13px; }
+.tab-icon-tone { display: flex; align-items: center; gap: 16px; }
+
+.tab-strip { display: flex; align-items: flex-end; gap: 0; height: 42px; padding: 8px 8px 0; box-sizing: border-box; border-radius: 6px 6px 0 0; font: 400 12px/1 system-ui, sans-serif; }
+.tab-strip.is-light { background: #dee1e6; color: #202124; }
+.tab-strip.is-dark { background: #202124; color: #e8eaed; }
+.tab-strip-tab { display: flex; align-items: center; gap: 8px; width: 190px; height: 34px; padding: 0 10px; box-sizing: border-box; border-radius: 8px 8px 0 0; }
+.tab-strip-tab > span { flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.tab-strip-tab > svg { flex: none; opacity: .6; }
+.tab-strip-tab > i { flex: none; width: 16px; height: 16px; border-radius: 50%; background: #8ab4f8; }
+.tab-strip-tab:not(.is-here) { opacity: .75; }
+.tab-strip.is-light .tab-strip-tab.is-here { background: #ffffff; }
+.tab-strip.is-dark .tab-strip-tab.is-here { background: #35363a; }
+.tab-strip-icon { flex: none; }
+
+.tab-icon-sizes { display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-radius: 6px; }
+.tab-icon-sizes.is-light { background: #ffffff; }
+.tab-icon-sizes.is-dark { background: #35363a; }
+.tab-icon-pixels { width: 96px; height: 96px; image-rendering: pixelated; }
