@@ -11,4 +11,6 @@ SECTIONS.push(["Messages", () => `
     <div class="page-slot"><span>390 × 844, a phone</span>${messageWindow("phone", [390, 844])}</div>
     <div class="page-slot"><span>1280 × 720, a browser too old: written in the page itself, shown even without JavaScript</span>${messageWindow("old", [1280, 720])}</div>
     <div class="page-slot"><span>1280 × 720, the files can't load (offline): Try again reloads the page</span>${messageWindow("offline", [1280, 720])}</div>
+    <div class="page-slot"><span>1280 × 720, JavaScript turned off: written in the page itself, a message of its own rather than the one of a browser too old, which may be the latest; JS behind it, hardly there</span>${messageWindow("script", [1280, 720])}</div>
+    <div class="page-slot"><span>1280 × 720, an address that doesn't exist (mistyped, a level after the last): All levels leads to the home screen; 404 behind it, hardly there</span>${messageWindow("missing", [1280, 720])}</div>
   </div>`]);
