@@ -11,10 +11,10 @@ const settingsSegments = (options, current, data) => `<div class="settings-segme
 
 // Places the fill of a group under its segment chosen, at once.
 function settingsPlaceFill(group) {
-  const pressed = group.querySelector('button[aria-pressed="true"]');
+  const pressed = group.querySelector('button[aria-pressed="true"]').getBoundingClientRect();
   const fill = group.querySelector(".settings-thumb");
-  fill.style.transform = `translateX(${pressed.offsetLeft}px)`;
-  fill.style.width = `${pressed.offsetWidth}px`;
+  fill.style.transform = `translateX(${pressed.left - group.getBoundingClientRect().left}px)`;
+  fill.style.width = `${pressed.width}px`;
 }
 
 // Where the fill of a group stands now, even in the middle of a slide, and the segment it left.
@@ -23,14 +23,16 @@ function settingsFillNow(group) {
   return { left: fill.left - group.getBoundingClientRect().left, width: fill.width, value: group.querySelector('button[aria-pressed="true"]').dataset.value };
 }
 
-// Slides the fill of a group from where it stood to its segment chosen: it starts fast and slows down
-// at its end, and the two texts turn with it. Nothing moves for a learner who asked for less motion.
-// The duration and the curve are those of the page (`--settings-slide-duration`, `--settings-slide-ease`).
+// Slides the fill of a group from where it stood to its segment chosen, in `--duration-appear` with
+// `--ease-appear`: fast at first, then settling, and the two texts turn with it. The setting itself
+// applies at once. Nothing moves for a learner who asked for less motion. Decided on 2026-11-18, as the
+// white pill of the settings of Rust Exile Market; left with it: its own 220 milliseconds and curve,
+// hardly told from these tokens, and a slide that starts and stops gently, as the robot moves.
 function settingsSlide(group, from) {
   settingsPlaceFill(group);
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   const page = getComputedStyle(document.documentElement);
-  const timing = { duration: parseFloat(page.getPropertyValue("--settings-slide-duration")), easing: page.getPropertyValue("--settings-slide-ease").trim() };
+  const timing = { duration: parseFloat(page.getPropertyValue("--duration-appear")), easing: page.getPropertyValue("--ease-appear").trim() };
   const fill = group.querySelector(".settings-thumb");
   const pressed = group.querySelector('button[aria-pressed="true"]');
   const left = group.querySelector(`button[data-value="${from.value}"]`);

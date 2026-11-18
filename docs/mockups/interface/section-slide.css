@@ -1,6 +1,0 @@
-/* The timing of the slide of a choice in the settings, compared at step 13c (section-slide.js): the
-   control *Slide of a choice* of the page chooses it, and block-settings.js reads it. */
-:root[data-slide="market"] { --settings-slide-duration: 220ms; --settings-slide-ease: cubic-bezier(.22, 1, .36, 1); }
-:root[data-slide="appear"] { --settings-slide-duration: var(--duration-appear); --settings-slide-ease: var(--ease-appear); }
-:root[data-slide="move"] { --settings-slide-duration: var(--duration-appear); --settings-slide-ease: var(--ease-move); }
-:root[data-slide="none"] { --settings-slide-duration: 0ms; --settings-slide-ease: linear; }
