@@ -40,7 +40,7 @@ Two themes, chosen in the settings: **Day Desk**, light, by default, and **Night
 | `--goal-link` | `#5d687a` | A link of the goal (**Show hint**, **Read the manual**), the slate of the walls. |
 | `--goal-link-hover` | `#6b778a` | The same under the pointer. |
 | `--on-goal-link`, `--on-goal-side` | `#ffffff` | The text on a link of the goal, and on its dark side. |
-| `--robot-body`, `--robot-ink`, `--robot-eyes` | `#ffffff`, `#222935`, `#3fc3ff` | The shades of the robot, where the interface draws its face: the level to play on the home screen, the map shown. The ink is the one of the whole world: the map draws its lines every five cells and the shadows of its walls with it, at 10 %. |
+| `--robot-body`, `--robot-ink`, `--robot-eyes`, `--robot-eyes-dim` | `#ffffff`, `#222935`, `#3fc3ff`, `#7d8798` | The shades of the robot, where the interface draws its face: the level to play on the home screen, the map shown. The ink is the one of the whole world: the map draws its lines every five cells and the shadows of its walls with it, at 10 %. The gray of the dimmed eyes is also the ring of the eraser put down. |
 | `--paint-red`, `--paint-yellow`, `--paint-blue` | `#dc2f34`, `#ffb300`, `#2459d6` | The three paints, each named as a program names it, which the map draws as strokes. |
 
 ### Zones

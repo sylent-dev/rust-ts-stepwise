@@ -1,6 +1,6 @@
 // How many steps of the program run at each animation frame, at each speed (see
-// docs/technical-choices.md, Execution). Written for the probe of step 4c, which runs a real
-// program since step 10d; the running of step 17 keeps it or rewrites it.
+// docs/technical-choices.md, Execution). Written for the probe of step 4c; played since step 14b
+// by playback.svelte.ts, which the running of step 17 takes over.
 
 /** The five speeds, in steps per second; the last one, **Instant**, runs without animation. */
 export const SPEEDS = [1, 2, 5, 20, Infinity] as const;

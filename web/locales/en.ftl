@@ -103,34 +103,44 @@ level-paint-a-square-title = Paint a square
 # The name of the map, for a screen reader.
 map = The map
 
-## The probe of step 4c, on the real machine since step 10d: a program run on the map of the
-## sandbox at each animation frame, in the column of the code of the sandbox until the running
-## (step 17) replaces it.
+## The bench of the animations (step 14b): short programs played on the map of the screen, in
+## the column of the code until the running (step 17) replaces it.
 
-probe-title = A program run by the core, one step at a time
-probe-program = The program, the line of its next step marked
-probe-run = Run
-probe-pause = Pause
-probe-reset = Reset
-probe-speed = Speed
+bench-title = Bench of the animations
+bench-program = Program
+bench-program-square = Paint the square
+bench-program-paint-erase = Paint, then erase
+bench-program-paint-over = Paint over the yellow
+bench-program-erase-blue = Erase the blue
+bench-program-turns = Turn left, then right
+bench-program-walk = Walk along the walls, forever
+bench-lines = The program, the line of its next step marked
+bench-run = Run
+bench-pause = Pause
+bench-resume = Resume
+bench-step = Step
+bench-reset = Reset
+bench-speed = Speed
 # $rate (Number): the steps run each second at this speed.
-probe-speed-rate =
+bench-speed-rate =
     { $rate ->
         [one] { $rate } step per second
        *[other] { $rate } steps per second
     }
-probe-speed-instant = Instant
+bench-speed-instant = Instant
 # $count (Number): the steps run since the start.
-probe-steps =
+bench-steps =
     { $count ->
         [one] { $count } step
        *[other] { $count } steps
     }
-# $count (Number): the steps run since the start.
-# $rate (Number): the steps run each second at Instant, measured over the last second.
-probe-steps-measured =
-    { $count ->
-        [one] { $count } step
-       *[other] { $count } steps
-    } · { $rate } steps per second measured
-probe-stopped = The program has stopped.
+bench-ended = The program has ended.
+# Until the owner has tuned them by eye: the time of an action at each animated speed.
+bench-tuning = Time of an action at each speed
+# $rate (Number): the steps run each second at this speed.
+# $time (Number): the time an action takes at that speed, in milliseconds.
+bench-tuning-time =
+    { $rate ->
+        [one] { $rate } step per second
+       *[other] { $rate } steps per second
+    }: { $time } ms

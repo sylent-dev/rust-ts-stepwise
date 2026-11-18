@@ -3,10 +3,12 @@
 
 /* What the two themes share. */
 :root {
-	/* The shades of the robot (specs.md, Look of the world), where the interface draws its face. */
+	/* The shades of the robot (specs.md, Look of the world), where the interface draws its face;
+	   its eyes dimmed, also the ring of the eraser put down. */
 	--robot-body: #ffffff;
 	--robot-ink: #222935;
 	--robot-eyes: #3fc3ff;
+	--robot-eyes-dim: #7d8798;
 	/* The paints of the world (specs.md, Look of the world), each named as a program names it,
 	   which the map draws as strokes. */
 	--paint-red: #dc2f34;

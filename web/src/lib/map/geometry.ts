@@ -10,6 +10,9 @@ export const CELL = 64;
 /** The middle of a cell, from its top left corner. */
 export const MIDDLE = CELL / 2;
 
+/** The width of a stroke of paint, 28/64 of a cell. */
+export const STROKE = 28;
+
 /** The neighbor of a cell in each direction, as a column and a row from that cell. */
 export const STEPS: Readonly<Record<Direction, Point>> = {
 	north: { x: 0, y: -1 },
