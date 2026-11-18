@@ -84,8 +84,11 @@ describe('t', () => {
 	});
 
 	it('has a message for each thing to do about a window too small', () => {
-		const advices: WindowAdvice[] = ['grow', 'full-screen', 'zoom'];
-		for (const advice of advices) expect(hasMessage(`window-small-${advice}`)).toBe(true);
+		// Each of them is named here, or the types don't check: one added later can't be left out.
+		const advices: Record<WindowAdvice, true> = { grow: true, 'full-screen': true, zoom: true };
+		for (const advice of Object.keys(advices)) {
+			expect(hasMessage(`window-small-${advice}`)).toBe(true);
+		}
 	});
 
 	it('writes a size without a separator of thousands', () => {
