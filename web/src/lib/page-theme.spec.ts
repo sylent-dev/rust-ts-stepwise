@@ -50,8 +50,8 @@ function themeAfter(storage: Backend | Error): string | undefined {
 }
 
 describe('the script of the page', () => {
-	it('is the only one, and the page is written in the default theme', () => {
-		expect(scripts).toHaveLength(1);
+	it('is the first of the page, which is written in the default theme', () => {
+		expect(scripts[0]).toContain('data-theme');
 		expect(WRITTEN).toBe(
 			loadSettings(
 				openStore(

@@ -2,8 +2,9 @@
    component styles its own block, with the tokens (tokens.css) and nothing else. */
 
 /* The window: a header, then the screen, which takes the height left and scrolls by itself where
-   it has to. The page never scrolls. The body lays them out: app.html wraps the application in a
-   box without a box of its own (`display: contents`), which must stay so. */
+   it has to. The page never scrolls. The body lays them out: app.html and the root layout each
+   wrap the application in a box without a box of its own (`display: contents`), which must stay
+   so. */
 html,
 body {
 	height: 100%;

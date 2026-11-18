@@ -16,7 +16,9 @@ export default defineConfig({
 				runes: ({ filename }) =>
 					filename.split(/[/\\]/).includes('node_modules') ? undefined : true
 			},
-			adapter: adapter(),
+			// GitHub Pages serves `404.html` for an address that has no page: the application
+			// starts there too, and shows its own message (src/routes/+error.svelte).
+			adapter: adapter({ fallback: '404.html' }),
 			paths: { base }
 		})
 	],

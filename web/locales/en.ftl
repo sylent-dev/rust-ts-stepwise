@@ -40,6 +40,44 @@ storage-refused = Your progress can’t be saved in this browser and will be los
 # The tip of the cross that hides the banner.
 storage-refused-hide = Hide until the next visit
 
+## The messages in place of the screen (see Error handling in specs.md). The page writes the
+## first three itself (`src/app.html`), for a browser where the application can't start: they
+## take no value.
+
+page-old-title = Stepwise needs a recent browser
+page-old-text = This browser can’t run it. Update it, or open Stepwise in a recent Firefox, Chrome, Edge or Safari.
+page-failed-title = Stepwise couldn’t load
+page-failed-text = The connection seems to be lost. Check it, then try again.
+page-failed-retry = Try again
+page-no-script-title = Stepwise needs JavaScript
+page-no-script-off = It is turned off in this browser.
+page-no-script-fix = Turn it on for this website, then reload the page.
+# What the message is about, in two or three signs, written large and hardly there behind it.
+page-no-script-mark = JS
+
+# An address that leads to no screen. Its button is `all-levels`.
+missing-title = This page doesn’t exist
+missing-text = Stepwise has no page at this address.
+# What the message is about, as `page-no-script-mark`.
+missing-mark = 404
+
+window-small-title = Stepwise needs a larger window
+# $least (String): the smallest size a screen fits in, as `window-size` writes it.
+# $size (String): the size of the window, as `window-size` writes it; the interface draws it in
+# bold, and it changes as the window does.
+window-small-size = At least { $least } pixels. This one is { $size }.
+# $platform (String): `mac` on a computer of Apple, where the key that zooms is Cmd.
+window-small-zoom =
+    { $platform ->
+        [mac] Widen the window, or zoom out with Cmd and −.
+       *[other] Widen the window, or zoom out with Ctrl and −.
+    }
+# A size in pixels.
+# $width (String), $height (String): written as they are, without a separator of thousands.
+window-size = { $width } × { $height }
+window-phone-title = Stepwise needs a laptop
+window-phone-text = It is made for a large window.
+
 ## The levels. The messages of a level are named after its stable name, the name of its file in
 ## `levels/`: `level-<name>-title`.
 
@@ -48,10 +86,6 @@ storage-refused-hide = Hide until the next visit
 # $title (String): its title.
 level-numbered = { $number }. { $title }
 level-paint-a-square-title = Paint a square
-
-## The core.
-
-core-load-failed = The core of Stepwise could not load.
 
 ## The probe of step 4c, on the real machine since step 10d: a program run on the map of the
 ## sandbox at each animation frame, on the page of the sandbox until the map view (step 14) and

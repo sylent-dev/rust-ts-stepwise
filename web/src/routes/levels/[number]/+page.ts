@@ -6,7 +6,10 @@ import type { EntryGenerator, PageLoad } from './$types';
 export const entries: EntryGenerator = () =>
 	levels.map(({ number }) => ({ number: String(number) }));
 
-/** The level of the address; an address without level is a page that doesn't exist. */
+/**
+ * The level of the address; an address without level is a page that doesn't exist. The page of
+ * an error writes its own texts (`+error.svelte`): the one given here is read by no one.
+ */
 export const load: PageLoad = ({ params }) => {
 	const level = levelAt(levels, params.number);
 	if (!level) error(404, 'Not Found');

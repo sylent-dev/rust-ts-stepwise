@@ -2,11 +2,14 @@
      Escape, × or a click on the veil closes it. It is the `dialog` of the browser, shown as a
      modal: the keys stay in the panel, the screen under the veil can't be clicked, and the focus
      goes back to what opened the panel when it closes. It is there at once, without a motion
-     (see Motion in docs/design-system.md). -->
+     (see Motion in docs/design-system.md). While the message of a window too small takes the
+     place of the screen, the dialog is closed, so that nothing blocks the message; it opens
+     again with the screen, what it holds kept. -->
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import Icon from '#lib/icon.svelte';
 	import { t } from '#lib/i18n.ts';
+	import { currentWindow } from './current-window.svelte.ts';
 
 	interface Props {
 		title: string;
@@ -23,11 +26,14 @@
 
 	let dialog = $state<HTMLDialogElement>();
 
-	// The dialog follows `open`, once what it holds is in the page: the first thing that takes
+	/** Whether the dialog shows: the panel is open, on a screen that shows. */
+	const shown = $derived(open && currentWindow.fit === 'screen');
+
+	// The dialog follows `shown`, once what it holds is in the page: the first thing that takes
 	// the keys, the cross, gets the focus.
 	$effect(() => {
 		if (!dialog) return;
-		if (!open) dialog.close();
+		if (!shown) dialog.close();
 		else if (!dialog.open) dialog.showModal();
 	});
 
@@ -46,10 +52,11 @@
 
 	/**
 	 * The browser says that the dialog has closed, a moment after it did, whatever closed it. A
-	 * panel opened again in that moment stays open.
+	 * panel opened again in that moment stays open, and so does one whose dialog closed with the
+	 * screen, under the message of a window too small.
 	 */
 	function onclose() {
-		if (!dialog?.open) open = false;
+		if (!dialog?.open && shown) open = false;
 	}
 </script>
 

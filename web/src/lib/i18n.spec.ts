@@ -1,7 +1,7 @@
 import { FluentParser } from '@fluent/syntax';
 import { describe, expect, it, vi } from 'vitest';
 import english from '../../locales/en.ftl?raw';
-import { createBundle, formatMessage, t } from './i18n.ts';
+import { createBundle, formatAround, formatMessage, hasMessage, t, tAround } from './i18n.ts';
 
 describe('locales/en.ftl', () => {
 	// The parser of the bundle skips a message it can't read without a word: the full parser
@@ -42,8 +42,53 @@ describe('formatMessage', () => {
 	});
 });
 
+describe('formatAround', () => {
+	const { bundle } = createBundle(
+		'en',
+		'size = At least { $least }. This one is { $size }.\nlast = Only { $size }\nplain = Nothing to draw.\n'
+	);
+
+	it('gives the text before a value and the text after it, the other values filled', () => {
+		expect(formatAround(bundle, 'size', 'size', { least: '1280 × 720' })).toEqual([
+			'At least 1280 × 720. This one is ',
+			'.'
+		]);
+	});
+
+	it('gives an empty text after a value that ends the message', () => {
+		expect(formatAround(bundle, 'last', 'size')).toEqual(['Only ', '']);
+	});
+
+	it('gives the whole message before a value that it doesn’t hold', () => {
+		expect(formatAround(bundle, 'plain', 'size')).toEqual(['Nothing to draw.', '']);
+	});
+});
+
 describe('t', () => {
 	it('formats the messages of the interface in English', () => {
 		expect(t('page-title', { page: 'Sandbox' })).toBe('Sandbox · Stepwise');
+	});
+
+	it('formats a message of the interface around one of its values', () => {
+		expect(tAround('window-small-size', 'size', { least: '1280 × 720' })).toEqual([
+			'At least 1280 × 720 pixels. This one is ',
+			'.'
+		]);
+	});
+
+	it('names the key that zooms on each computer', () => {
+		expect(t('window-small-zoom', { platform: 'mac' })).toContain('Cmd and −');
+		expect(t('window-small-zoom', { platform: 'other' })).toContain('Ctrl and −');
+	});
+
+	it('writes a size without a separator of thousands', () => {
+		expect(t('window-size', { width: '1280', height: '720' })).toBe('1280 × 720');
+	});
+});
+
+describe('hasMessage', () => {
+	it('knows the messages of the interface', () => {
+		expect(hasMessage('app-name')).toBe(true);
+		expect(hasMessage('no-such-message')).toBe(false);
 	});
 });

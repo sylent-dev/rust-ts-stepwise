@@ -26,6 +26,12 @@ Stepwise is served at **`https://stepwise.sylent.tools/`** (decided by the owner
 - Without a custom domain, the website is served at its default address, `https://aunimhsn.github.io/rust-ts-stepwise/`; with one, that address redirects to the domain.
 - The website never hard-codes its path: the workflow `.github/workflows/deploy.yml` reads it from the settings of Pages (`actions/configure-pages`) and gives it to SvelteKit as `paths.base` (the variable `BASE_PATH` of `web/vite.config.ts`); it is empty at the root of a domain and `/rust-ts-stepwise` at the default address. The domain can change later without changing the code, but not without deploying again: the path is fixed when the website is built, so a website built for `/rust-ts-stepwise` doesn't find its pages at the root of a domain. After any change of the domain in **Settings › Pages**, run **Actions › Deploy › Run workflow**.
 
+## Addresses without a page
+
+- For an address that has no file, GitHub Pages serves the file `404.html` of the website (read on 2026-11-18 in [Creating a custom 404 page](https://docs.github.com/en/pages/getting-started-with-github-pages/creating-a-custom-404-page-for-your-github-pages-site): a file named `404.html` or `404.md` in the publishing source). That page describes a website published from a branch: it says nothing of one published by a workflow, as Stepwise, nor of the status of the answer.
+- The build writes that file (the `fallback` of `adapter-static`, see [Technical choices](technical-choices.md)): the application starts there and shows its own message, *"This page doesn't exist"*.
+- To check on the website once step 13d is deployed, since the documentation doesn't cover a workflow: `https://stepwise.sylent.tools/nope` and `https://stepwise.sylent.tools/levels/99` show the message of Stepwise, not the page of GitHub.
+
 ## Publishing
 
 - Every push to `main` (each merged pull request) runs `.github/workflows/deploy.yml`: it builds `web/` with the address above and publishes `web/build` to Pages. It can also be run by hand (**Actions › Deploy › Run workflow**). A pull request that changes this workflow or `.github/actions/` runs its build alone, without publishing.

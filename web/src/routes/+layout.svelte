@@ -1,15 +1,26 @@
-<!-- What every page shares: the design tokens, the fonts, the base styles and the look of what
-     is clicked in a band; and the settings, which the page follows. -->
+<!-- What every page shares: the design tokens, the fonts, the base styles, the look of what is
+     clicked in a band and of a message in place of the screen; the settings, which the page
+     follows; and the message of a window too small, which takes the place of any screen. -->
 <script lang="ts">
 	import '#lib/styles/tokens.css';
 	import '#lib/styles/fonts.css';
 	import '#lib/styles/base.css';
 	import '#lib/styles/band.css';
+	import '#lib/styles/screen-message.css';
+	import { onMount } from 'svelte';
 	import { followSavedSettings, settings } from '#lib/settings/current-settings.svelte.ts';
 	import { SETTINGS_KEY } from '#lib/settings/saved-settings.ts';
+	import { currentWindow } from '#lib/shell/current-window.svelte.ts';
+	import WindowMessage from '#lib/shell/window-message.svelte';
+	import { applicationStarted } from '#lib/startup.ts';
 	import type { LayoutProps } from './$types';
 
 	let { children }: LayoutProps = $props();
+
+	// The page watched the application start (src/app.html): it runs.
+	onMount(applicationStarted);
+
+	const fits = $derived(currentWindow.fit === 'screen');
 
 	// The theme of the settings is the one of the page. The script of app.html gave the page the
 	// theme saved before its first paint; from then on, a change applies at once.
@@ -28,4 +39,23 @@
 
 <svelte:window {onstorage} />
 
-{@render children()}
+<!-- Under the message of a window too small, the screen stays in the page as it was, out of
+     sight and out of reach: it comes back with its state once the window is large enough. -->
+<div class="screen" class:is-away={!fits} inert={!fits}>
+	{@render children()}
+</div>
+{#if !fits}
+	<WindowMessage />
+{/if}
+
+<style>
+	/* The screen has no box of its own: the body lays out what it holds (styles/base.css). Out
+	   of sight, it keeps its layout, and so what it scrolled to. */
+	.screen {
+		display: contents;
+	}
+
+	.is-away {
+		visibility: hidden;
+	}
+</style>
