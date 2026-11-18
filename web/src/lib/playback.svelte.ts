@@ -55,7 +55,10 @@ export class Playback {
 	#run: Run;
 	/** The time of the frame before, for the pace; nothing before the first frame of a run. */
 	#last: number | undefined;
+	/** The share of a step owed, carried from a frame to the next (see `paceFrame`). */
 	#carry = START_CARRY;
+	/** Whether a step due waits for the action under way to end. */
+	#waiting = false;
 	/** When the step under way started: nothing until the frame that draws it first. */
 	#motionStart: number | undefined;
 	#motionTime = 0;
@@ -85,11 +88,15 @@ export class Playback {
 		return this.steps > 0 ? 'paused' : 'ready';
 	}
 
-	/** Runs the program, from its start once it has ended. */
+	/**
+	 * Runs the program, from its start once it has ended: its next step at once, or once the
+	 * action under way has ended, so that a click is answered at the slowest speed too.
+	 */
 	play(): void {
 		if (this.ended) this.reset();
 		this.running = true;
 		this.#last = undefined;
+		this.#carry = START_CARRY;
 	}
 
 	/** Pauses the program before its next step: the action under way still ends. */
@@ -101,7 +108,6 @@ export class Playback {
 	 * Runs one step while the program waits, its action played as at the slowest speed, so that
 	 * it is seen whatever the speed. An action still under way ends at once. Once the program has
 	 * ended, it puts the map back and waits on the first step, as before the program started.
-	 * After it, **Resume** waits a whole step before the next one.
 	 */
 	step(): void {
 		if (this.running) return;
@@ -110,7 +116,6 @@ export class Playback {
 			return;
 		}
 		this.#endMotion();
-		this.#carry = 0;
 		this.#runStep(undefined, this.#timeAt(SLOWEST_SPEED));
 	}
 
@@ -123,6 +128,7 @@ export class Playback {
 		this.running = false;
 		this.motion = undefined;
 		this.#carry = START_CARRY;
+		this.#waiting = false;
 		this.#rest(true);
 	}
 
@@ -156,11 +162,16 @@ export class Playback {
 				if (!paced.step) {
 					this.#carry = paced.carry;
 				} else if (this.motion) {
-					// A step due before the action under way has ended, after a **Step** or a speed
-					// made faster, waits for it: owed whole, it runs at the first frame after it.
+					// A step due before the action under way has ended, after a **Step**, a
+					// **Resume** or a speed made faster, waits for it: owed whole, it runs at the
+					// first frame after it.
 					this.#carry = START_CARRY;
+					this.#waiting = true;
 				} else {
-					this.#carry = paced.carry;
+					// A step that waited starts a whole step anew: the time it waited isn't owed to
+					// the next one.
+					this.#carry = this.#waiting ? 0 : paced.carry;
+					this.#waiting = false;
 					this.#runStep(time, this.#timeAt(this.rate));
 				}
 			} else {

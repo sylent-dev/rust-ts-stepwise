@@ -112,22 +112,37 @@ describe('a program played on the map', () => {
 		expect({ line: playback.line, steps: playback.steps }).toEqual({ line: 2, steps: 1 });
 	});
 
-	it('waits a whole step after a Step, and for its action, before it resumes', () => {
-		using playback = play('forward()\nforward()\n');
-		playback.rate = 20;
+	it('resumes after a Step once its action has ended, a whole step before the next', () => {
+		using playback = play('forward()\nforward()\nforward()\n');
+		playback.rate = 5;
 		playback.step();
 		playback.tick(0);
 		playback.play();
-		// Resume waits a whole step, 50 ms at 20 steps per second, then the end of the action.
+		// The step due at once waits for the end of the action of Step, 300 ms long.
 		playback.tick(100);
-		playback.tick(200);
 		expect({ progress: playback.progress, steps: playback.steps }).toEqual({
-			progress: 200 / 300,
+			progress: 100 / 300,
 			steps: 1
 		});
 		playback.tick(300);
 		expect(playback.steps).toBe(2);
-		expect(playback.world.robot.position).toEqual({ x: 1, y: 0 });
+		// The next one comes a whole step later, 200 ms at 5 steps per second.
+		playback.tick(450);
+		expect(playback.steps).toBe(2);
+		playback.tick(510);
+		expect(playback.steps).toBe(3);
+	});
+
+	it('runs the next step at once on Resume after a pause', () => {
+		using playback = play('let a = 1\nlet b = 2\nlet c = 3\n');
+		playback.rate = 1;
+		playback.play();
+		playback.tick(0);
+		playback.pause();
+		playback.tick(100);
+		playback.play();
+		playback.tick(200);
+		expect(playback.steps).toBe(2);
 	});
 
 	it('waits for the action under way when the speed is made faster', () => {

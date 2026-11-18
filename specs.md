@@ -273,7 +273,7 @@ The window needs at least 1280 × 720 pixels: below, a message replaces the scre
 | Control | What it does |
 |---|---|
 | **Run** | Checks the program, puts the map back to its starting state, then runs the program at the chosen speed. |
-| **Pause** / **Resume** | Pauses the program before its next step; resumes it. |
+| **Pause** / **Resume** | Pauses the program before its next step; resumes it. **Resume** runs the next step at once, or once the action under way has ended, as **Run** does, so that a click is answered at the slowest speed too (decided on 2026-11-18). |
 | **Step** | Runs one step, then pauses: it goes into the functions called (the *step into* of the debuggers; there is no *step over* or *step out*). Available when paused or stopped (from stopped, it starts the program paused on its first step). Its action is played as at the slowest speeds, whatever the speed chosen, **Instant** included, so that the step looked at closely is seen (decided on 2026-11-18). |
 | **Reset** | Ends the program if it runs or is paused, and puts the map back to its starting state. The editor can be changed again. The code stays as it is: its hover says *"Puts the map back. Your code stays."* It is the only command named **Reset** near the code, so that it is never confused with **Restore starting code…**, which replaces the code. |
 | **Speed** | In the status bar. Five speeds, from one step per second to **Instant**, which runs as many steps as the browser allows without animation. Two steps per second at first, the normal speed (decided on 2026-11-15). Kept between sessions. |
