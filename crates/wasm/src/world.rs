@@ -74,8 +74,26 @@ pub enum Cell {
     },
 }
 
-/// The robot: where it stands, where it faces and whether it carries an item. Its brush and
-/// its eraser stay in the core: nothing shows them, the learner follows them in their head.
+/// The tool the robot has down: the brush with its color, or the eraser.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Tsify)]
+#[serde(
+    tag = "type",
+    rename_all = "kebab-case",
+    rename_all_fields = "camelCase"
+)]
+pub enum Tool {
+    /// The brush: the robot paints the cells it moves into, and the passages it crosses.
+    Brush {
+        /// The color of the brush.
+        color: Color,
+    },
+    /// The eraser: the robot removes the paint of the cells it moves into, and of the
+    /// passages it crosses.
+    Eraser,
+}
+
+/// The robot: where it stands, where it faces, whether it carries an item and which tool it
+/// has down.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Tsify)]
 pub struct Robot {
     /// The cell where it stands.
@@ -84,6 +102,10 @@ pub struct Robot {
     pub direction: Direction,
     /// Whether it carries an item.
     pub carrying: bool,
+    /// The tool it has down, if any. The map never draws it, the learner follows it in their
+    /// head: only the animations read it, to lay the stroke of a move or take the paint away.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tool: Option<Tool>,
 }
 
 /// The map and the robot on it.
@@ -130,12 +152,24 @@ impl From<world::Direction> for Direction {
     }
 }
 
+impl From<world::Tool> for Tool {
+    fn from(tool: world::Tool) -> Self {
+        match tool {
+            world::Tool::Brush(color) => Self::Brush {
+                color: color.into(),
+            },
+            world::Tool::Eraser => Self::Eraser,
+        }
+    }
+}
+
 impl From<world::Robot> for Robot {
     fn from(robot: world::Robot) -> Self {
         Self {
             position: robot.position().into(),
             direction: robot.direction().into(),
             carrying: robot.is_carrying(),
+            tool: robot.tool().map(Tool::from),
         }
     }
 }
@@ -183,7 +217,7 @@ mod tests {
     use stepwise_core::{color, world};
 
     use super::Direction::{self, East, North, South, West};
-    use super::{Cell, Color, Paint, Point, Robot, World};
+    use super::{Cell, Color, Paint, Point, Robot, Tool, World};
 
     /// The world of a sandbox file with this map, the body of its `[map]` table.
     #[track_caller]
@@ -245,6 +279,7 @@ robot = { at = [2, 1], facing = "west", carrying = true }
                 position: Point { x: 2, y: 1 },
                 direction: Direction::West,
                 carrying: true,
+                tool: None,
             }
         );
         let robot = World::from(&core_world(
@@ -386,8 +421,13 @@ items = [[1, 0]]
                 position: Point { x: 1, y: 0 },
                 direction: Direction::South,
                 carrying: true,
+                tool: Some(Tool::Brush { color: Color::Blue }),
             }
         );
+        core.start_erasing();
+        assert_eq!(World::from(&core).robot.tool, Some(Tool::Eraser));
+        core.stop_erasing();
+        assert_eq!(World::from(&core).robot.tool, None);
     }
 
     #[test]

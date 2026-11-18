@@ -1,25 +1,39 @@
 <!-- The map: a world drawn from the core, with the goals of its level marked on it, each cell
      `side` pixels wide (see Map and Look of the world in specs.md). The drawings of the world
      elements are stacked in their cells; the map draws the rest from the cells: the lines every
-     five cells, the paint strokes and the shadows of the walls. -->
+     five cells, the paint strokes and the shadows of the walls. While a step runs, the map draws
+     the world as the step found it, its robot moving and its paint changing (see Animations). -->
 <script lang="ts">
 	import type { Goals, World } from '#lib/core.ts';
 	import { t } from '#lib/i18n.ts';
 	import Element from './element.svelte';
 	import { CELL, paintAt, placedCells, placedFloors } from './geometry.ts';
 	import { fiveLines, wallFaces, wallShadow } from './ground.ts';
+	import { poseAt, restingPose, type Motion } from './motion.ts';
+	import MovingPaint from './moving-paint.svelte';
+	import { fadeOut, paintMotion, paintParts } from './paint-motion.ts';
 	import PaintStroke from './paint-stroke.svelte';
 	import Robot from './robot.svelte';
 
 	interface Props {
+		/** The world at rest, or as the step under way found it. */
 		world: World;
 		/** The goals of a map of a level; the sandbox has none. */
 		goals?: Goals;
 		/** The side of a cell, in pixels. */
 		side: number;
+		/** The step under way, if any. */
+		motion?: Motion;
+		/** How far the step under way has gone, from 0 to 1. */
+		progress?: number;
 	}
 
-	let { world, goals, side }: Props = $props();
+	let { world, goals, side, motion, progress = 0 }: Props = $props();
+
+	/** Built once per step, not at each frame of its animation. */
+	const paint = $derived(motion && paintMotion(world, motion.after));
+	const strokes = $derived(paint?.kept ?? paintParts(world));
+	const pose = $derived(motion ? poseAt(world.robot, motion, progress) : restingPose(world.robot));
 
 	const floors = $derived(placedFloors(world));
 	const walls = $derived(
@@ -31,6 +45,7 @@
 	/** The shadows are kept on the floor, by a clip of their own on each map of a page. */
 	const id = $props.id();
 	const floorClip = `${id}-floor`;
+	const aheadClip = `${id}-ahead`;
 </script>
 
 <svg
@@ -69,17 +84,24 @@
 		{/each}
 	</g>
 
-	{#each floors as { x, y, cell } (`${x},${y}`)}
-		{#if cell.paint}
-			<PaintStroke {x} {y} color={cell.paint.color} passages={cell.paint.passages} />
-		{/if}
+	{#each strokes as part (`${part.x},${part.y}`)}
+		<PaintStroke {...part} />
 	{/each}
+	<!-- At the level of the paint, so that a stroke laid looks the same once the step has ended,
+	     under the goal marks. -->
+	{#if motion && paint}
+		<MovingPaint before={world} {motion} {paint} {progress} {pose} clip={aheadClip} />
+	{/if}
 
 	{#if goals}
-		<!-- A cell painted with the right color hides its mark: its paint shows that it is done. -->
+		<!-- A cell painted with the right color hides its mark: its paint shows that it is done. The
+		     mark of a cell that the step under way paints so fades at the end of the step. -->
 		{#each goals.paints as { at, color, passages } (`${at.x},${at.y}`)}
 			{#if paintAt(world, at) !== color}
-				<g class="goal-paint">
+				<g
+					class="goal-paint"
+					style:--met={motion && paintAt(motion.after, at) === color ? fadeOut(progress) : 1}
+				>
 					<PaintStroke x={at.x} y={at.y} {color} {passages} />
 				</g>
 			{/if}
@@ -105,7 +127,7 @@
 		{/if}
 	{/each}
 
-	<Robot robot={world.robot} />
+	<Robot {pose} carrying={world.robot.carrying} />
 </svg>
 
 <style>
@@ -122,8 +144,8 @@
 		opacity: 0.1;
 	}
 
-	/* A cell to paint: the stroke to paint, at 35 %. */
+	/* A cell to paint: the stroke to paint, at 35 %; less as it fades once met. */
 	.goal-paint {
-		opacity: 0.35;
+		opacity: calc(0.35 * var(--met));
 	}
 </style>

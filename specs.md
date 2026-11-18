@@ -273,8 +273,8 @@ The window needs at least 1280 × 720 pixels: below, a message replaces the scre
 | Control | What it does |
 |---|---|
 | **Run** | Checks the program, puts the map back to its starting state, then runs the program at the chosen speed. |
-| **Pause** / **Resume** | Pauses the program before its next step; resumes it. |
-| **Step** | Runs one step, then pauses: it goes into the functions called (the *step into* of the debuggers; there is no *step over* or *step out*). Available when paused or stopped (from stopped, it starts the program paused on its first step). |
+| **Pause** / **Resume** | Pauses the program before its next step; resumes it. **Resume** runs the next step at once, or once the action under way has ended, as **Run** does, so that a click is answered at the slowest speed too (decided on 2026-11-18). |
+| **Step** | Runs one step, then pauses: it goes into the functions called (the *step into* of the debuggers; there is no *step over* or *step out*). Available when paused or stopped (from stopped, it starts the program paused on its first step). Its action is played as at the slowest speeds, whatever the speed chosen, **Instant** included, so that the step looked at closely is seen (decided on 2026-11-18). |
 | **Reset** | Ends the program if it runs or is paused, and puts the map back to its starting state. The editor can be changed again. The code stays as it is: its hover says *"Puts the map back. Your code stays."* It is the only command named **Reset** near the code, so that it is never confused with **Restore starting code…**, which replaces the code. |
 | **Speed** | In the status bar. Five speeds, from one step per second to **Instant**, which runs as many steps as the browser allows without animation. Two steps per second at first, the normal speed (decided on 2026-11-15). Kept between sessions. |
 
@@ -393,7 +393,7 @@ The sheet of the world elements, [`docs/mockups/world-elements.html`](docs/mocku
 
 ### Animations
 
-The robot plays each action of the program at the chosen speed. The reference is the sections *Animations* of [`docs/mockups/world-elements.html`](docs/mockups/world-elements.html) (decided on 2026-11-15). The durations are those of the normal speed, two steps per second, a step every 500 ms, so that the robot rests a moment between two steps; at a faster speed an action is shortened so that it still rests (tuned at every speed in the application, step 14); **Instant** draws none.
+The robot plays each action of the program at the chosen speed. The reference is the sections *Animations* of [`docs/mockups/world-elements.html`](docs/mockups/world-elements.html) (decided on 2026-11-15). The durations are those of the normal speed, two steps per second, a step every 500 ms, so that the robot rests a moment between two steps; at 1 step per second, an action keeps that time; at a faster speed, it takes 80 % of a step so that the robot still rests: 160 ms at 5 steps per second, 40 ms at 20 (tried at every speed on the bench of the application, decided on 2026-11-18); **Instant** draws none.
 
 - The line highlighted is the one of the next step: it moves on once the action of the step has ended, so that a line stays lit while the robot does what it says. A line without action (a computation, the line of a loop, a sensor) moves on at once.
 
@@ -410,6 +410,7 @@ The robot plays each action of the program at the chosen speed. The reference is
 | End, every goal met | The eyes light up in yellow and the robot hops once: seen from above, it grows a little while its shadow moves away toward the bottom left, the sun being at the top right. The success panel of a level appears after it. | 900 ms |
 | End, a goal not met | The eyes dim and the robot shakes its head, slower and wider than after an error (two wobbles of 12°); then a flag is planted on each goal not met, one after the other, with a small bounce. | 900 ms |
 
+- What changes beside the robot fades over the last 30 % of the action, so that its last frame leads to the map at rest without a jump: the paint that the eraser takes away beside its way; the old color of a cell painted over, the new one showing under it, where the mock-up kept the old color to the end; the mark of a goal that the action meets (decided on 2026-11-18).
 - **Less motion**: for a learner who asked their system for less motion (`prefers-reduced-motion`), the moves and the turns stay, since they are what the program does, but nothing bounces nor shakes: a turn without its overshoot; `pick_up()` and `drop()` without the pincer nor the step back, the item fading into the bay or out of it; the bump without its shake; a `pick_up()` or a `drop()` that fails shown by its error alone; the end of a run with the eyes alone and the flags at once.
 ### Sounds
 

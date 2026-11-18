@@ -5,14 +5,20 @@
 	import type { Goals, World } from '#lib/core.ts';
 	import { cellSide } from '#lib/map/fit.ts';
 	import MapView from '#lib/map/map-view.svelte';
+	import type { Motion } from '#lib/map/motion.ts';
 
 	interface Props {
+		/** The world at rest, or as the step under way found it. */
 		world?: World;
 		/** The goals of a map of a level; the sandbox has none. */
 		goals?: Goals;
+		/** The step under way, if any. */
+		motion?: Motion;
+		/** How far the step under way has gone, from 0 to 1. */
+		progress?: number;
 	}
 
-	let { world, goals }: Props = $props();
+	let { world, goals, motion, progress }: Props = $props();
 
 	/** The room the map has, inside the margin of the block. */
 	let room = $state<DOMRectReadOnly>();
@@ -20,7 +26,7 @@
 
 <div class="block" bind:contentRect={room}>
 	{#if world && room}
-		<MapView {world} {goals} side={cellSide(room, world)} />
+		<MapView {world} {goals} side={cellSide(room, world)} {motion} {progress} />
 	{/if}
 </div>
 

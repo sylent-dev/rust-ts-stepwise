@@ -59,6 +59,7 @@ export {
 	type PaintGoal,
 	type Point,
 	type Robot,
+	type Tool,
 	type World
 } from '#lib/wasm/stepwise.js';
 
