@@ -1,7 +1,9 @@
 <!-- The header of a screen: one band with the name, then what the screen puts in it (its links or
-     its menus, the place of the level). -->
+     its menus, the place of the level). Under it, the banner of a browser that refuses to save:
+     on every screen that has a header, so not on the manual. -->
 <script lang="ts">
 	import type { Snippet } from 'svelte';
+	import StorageBanner from './storage-banner.svelte';
 	import Wordmark from './wordmark.svelte';
 
 	let { children }: { children?: Snippet } = $props();
@@ -11,6 +13,7 @@
 	<Wordmark />
 	{@render children?.()}
 </header>
+<StorageBanner />
 
 <style>
 	/* A header without the bar of the progress is 46 pixels high, its content centered. The bar

@@ -430,7 +430,7 @@ When the setting **Sounds** is on, a run plays a few sounds, synthesized in the 
 
 ## Local files
 
-Stepwise has no files of its own on the learner's computer: everything is kept in the browser's `localStorage`, under keys starting with `stepwise.`, with a version number.
+Stepwise has no files of its own on the learner's computer: everything is kept in the browser's `localStorage`, one key per kind of data, starting with `stepwise.` (`stepwise.settings`), each value with the version number of its shape.
 
 | Data | Content |
 |---|---|

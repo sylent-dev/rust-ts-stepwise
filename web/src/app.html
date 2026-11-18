@@ -1,10 +1,29 @@
 <!doctype html>
-<!-- Day Desk, the theme by default, until the settings give the one saved (step 13c). -->
+<!-- Day Desk, the theme by default: the script below gives the page the theme saved, and the
+     page stays in Day Desk without JavaScript. -->
 <html lang="en" data-theme="day-desk">
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="text-scale" content="scale" />
+		<!-- The theme saved in the settings, given to the page before its first paint: Night Desk
+		     never starts with a flash of Day Desk. It reads what lib/settings/saved-settings.ts
+		     saves, and a test keeps the two in step (lib/page-theme.spec.ts). It is written in the
+		     JavaScript of an old browser: the message for a browser too old to run Stepwise is in
+		     this page too, and takes the theme saved (see Error handling in specs.md). -->
+		<script>
+			(function () {
+				try {
+					var saved = JSON.parse(localStorage.getItem('stepwise.settings'));
+					if (saved.version === 1 && (saved.theme === 'day-desk' || saved.theme === 'night-desk')) {
+						document.documentElement.setAttribute('data-theme', saved.theme);
+					}
+				} catch (error) {
+					// Nothing saved, nothing that can be read, or a storage that the browser
+					// blocks: the page keeps Day Desk.
+				}
+			})();
+		</script>
 		<!-- The fonts, asked for at once: the styles that name them (lib/styles/fonts.css) arrive
 		     with the application, and no text shows before its font. -->
 		<link

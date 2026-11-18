@@ -20,6 +20,26 @@ menus = Menus
 menu-level = Level
 menu-help = Help
 
+## The settings: the panel, which a header opens by its name or by a gear.
+
+settings = Settings
+settings-theme = Theme
+settings-theme-note = Only the interface changes: the map keeps its look.
+# The themes, each named after the name the page takes: `theme-<name>`.
+theme-day-desk = Day Desk
+theme-night-desk = Night Desk
+
+## What a panel over the screen shares.
+
+# The tip of the cross that closes a panel.
+close = Close
+
+## The banner of a browser that refuses to save.
+
+storage-refused = Your progress can’t be saved in this browser and will be lost when this tab closes.
+# The tip of the cross that hides the banner.
+storage-refused-hide = Hide until the next visit
+
 ## The levels. The messages of a level are named after its stable name, the name of its file in
 ## `levels/`: `level-<name>-title`.
 
