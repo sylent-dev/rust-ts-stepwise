@@ -4,11 +4,8 @@
      core has loaded. -->
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import { replaceState } from '$app/navigation';
-	import { page } from '$app/state';
 	import type { Run } from '#lib/core.ts';
 	import { t } from '#lib/i18n.ts';
-	import { actionTime } from '#lib/map/motion.ts';
 	import { SPEEDS } from '#lib/pace.ts';
 	import { NORMAL_SPEED, Playback } from '#lib/playback.svelte.ts';
 	import { benchPrograms } from './bench-programs.ts';
@@ -30,31 +27,6 @@
 	const lines = $derived(program?.text.trimEnd().split('\n') ?? []);
 	let rate = $state<number>(NORMAL_SPEED);
 
-	/** The animated speeds, whose time of an action is tuned by eye with the owner. */
-	const ANIMATED_SPEEDS = SPEEDS.filter((speed) => Number.isFinite(speed));
-
-	/** The times tuned, kept in the address (`?time-5=160`), so that the owner sends them back. */
-	const tuned: Record<number, number> = $state(
-		Object.fromEntries(
-			ANIMATED_SPEEDS.flatMap((speed) => {
-				const value = page.url.searchParams.get(`time-${speed}`);
-				return value === null ? [] : [[speed, Number(value)]];
-			})
-		)
-	);
-
-	function timeAt(speed: number): number {
-		return tuned[speed] ?? actionTime(speed);
-	}
-
-	function tune(speed: number, time: number): void {
-		tuned[speed] = time;
-		const url = new URL(page.url.href);
-		url.searchParams.set(`time-${speed}`, String(time));
-		// eslint-disable-next-line svelte/no-navigation-without-resolve -- only the query changes, on the page itself; removed once the times are tuned
-		replaceState(url, page.state);
-	}
-
 	let frame: number | undefined;
 
 	/** Asks for an animation frame, unless one is already asked. */
@@ -73,7 +45,7 @@
 		const begin = start;
 		const run = (): Run => begin(text);
 		const created = untrack(() => {
-			const playback = new Playback(run, { timeAt });
+			const playback = new Playback(run);
 			playback.rate = rate;
 			return playback;
 		});
@@ -156,23 +128,6 @@
 			{t('bench-steps', { count: playback.steps })}
 			{#if playback.ended}· {t('bench-ended')}{/if}
 		</p>
-
-		<fieldset class="tuning">
-			<legend>{t('bench-tuning')}</legend>
-			{#each ANIMATED_SPEEDS as speed (speed)}
-				<label>
-					<span>{t('bench-tuning-time', { rate: speed, time: Math.round(timeAt(speed)) })}</span>
-					<input
-						type="range"
-						min="0"
-						max={1000 / speed}
-						step="5"
-						value={timeAt(speed)}
-						oninput={(event) => tune(speed, event.currentTarget.valueAsNumber)}
-					/>
-				</label>
-			{/each}
-		</fieldset>
 	{/if}
 </section>
 
@@ -223,14 +178,5 @@
 
 	p {
 		margin: 0;
-	}
-
-	.tuning {
-		flex-direction: column;
-	}
-
-	.tuning label {
-		display: flex;
-		flex-direction: column;
 	}
 </style>

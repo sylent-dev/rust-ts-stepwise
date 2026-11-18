@@ -56,6 +56,7 @@ The ideas, polish and edge cases found along the way that the current step doesn
 - The message of a browser too old in a browser that tells the page nothing of a failed start (no `unhandledrejection`, as Firefox before 69): the page stays empty. A wait that starts with the page rather than with an error would cover it, at the price of a false alarm on a slow connection (left at step 13d).
 - The icon of the tab in Safari (step 27): it is an SVG file alone; if a version still in use doesn't draw it, add a PNG of 32 pixels beside it.
 - The message of a browser too old in a recent browser where WebAssembly is turned off (the Lockdown Mode of Apple, the safest level of Tor Browser): it tells to update a browser that may be the latest, as it would have for JavaScript turned off before it got a message of its own. A page that reads modules but has no WebAssembly could say so (raised by the code review of step 13d).
+- A setting for the teacher that takes **Instant** away, or limits the speeds, if learners use it in class to try programs at random without watching the robot: Instant stays as `specs.md` describes it, useful for long programs, the variants of a level and the step counter of an infinite loop (a doubt of the owner, seen at step 14b). With no account, such a setting would live in each browser.
 
 ## Content
 

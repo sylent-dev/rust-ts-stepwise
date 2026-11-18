@@ -135,12 +135,3 @@ bench-steps =
        *[other] { $count } steps
     }
 bench-ended = The program has ended.
-# Until the owner has tuned them by eye: the time of an action at each animated speed.
-bench-tuning = Time of an action at each speed
-# $rate (Number): the steps run each second at this speed.
-# $time (Number): the time an action takes at that speed, in milliseconds.
-bench-tuning-time =
-    { $rate ->
-        [one] { $rate } step per second
-       *[other] { $rate } steps per second
-    }: { $time } ms

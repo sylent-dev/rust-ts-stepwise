@@ -39,7 +39,10 @@ export interface Motion {
 /** The time an action takes at the normal speed, 2 steps per second (decided at step 11a). */
 export const ACTION_TIME = 300;
 
-/** The share of a step that an action takes at most, so that the robot rests between two. */
+/**
+ * The share of a step that an action takes at most, so that the robot rests between two: 160 ms
+ * at 5 steps per second, 40 ms at 20 (tried on the bench, decided on 2026-11-18).
+ */
 const ACTION_SHARE = 0.8;
 
 /**
