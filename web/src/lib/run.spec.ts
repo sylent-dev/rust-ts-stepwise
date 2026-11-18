@@ -14,7 +14,8 @@ import {
 	type ProgramErrorKind,
 	type Run,
 	type RuntimeErrorKind,
-	type StepEvent
+	type StepEvent,
+	type Tool
 } from '#lib/wasm/stepwise.js';
 
 initSync({ module: readFileSync(new URL('./wasm/stepwise_bg.wasm', import.meta.url)) });
@@ -127,6 +128,17 @@ describe('a program run on a map of a level', () => {
 			cells: [empty, empty, empty, { type: 'floor', item: true }],
 			robot: { position: { x: 3, y: 0 }, direction: 'east', carrying: false }
 		});
+	});
+
+	it('gives the tool the robot has down, for the animations', () => {
+		using level = new Level(CORRIDOR);
+		using run = level.start(0, 'start_painting(blue)\nstart_erasing()\nstop_erasing()\n');
+		const tools: (Tool | undefined)[] = [];
+		while (run.line !== undefined) {
+			run.step();
+			tools.push(run.world().robot.tool);
+		}
+		expect(tools).toStrictEqual([{ type: 'brush', color: 'blue' }, { type: 'eraser' }, undefined]);
 	});
 
 	it('gives the goals not met once the program has ended, each with its cell', () => {
