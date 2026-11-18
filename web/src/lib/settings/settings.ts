@@ -14,6 +14,11 @@ export function isTheme(value: unknown): value is Theme {
 	return THEMES.some((theme) => theme === value);
 }
 
+/** The name of the message that holds the name of a theme: `theme-night-desk`. */
+export function themeMessage(theme: Theme): string {
+	return `theme-${theme}`;
+}
+
 /** The settings of the application. */
 export interface Settings {
 	theme: Theme;

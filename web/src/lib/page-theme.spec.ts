@@ -63,7 +63,7 @@ describe('the script of the page', () => {
 	});
 
 	it('is written for an old browser', () => {
-		expect(scripts[0]).not.toMatch(/=>|\b(const|let|class)\b|`|\?\.|\?\?/);
+		expect(scripts[0]).not.toMatch(/=>|\b(const|let|class)\b|`|\?\.|\?\?|\.\.\.|catch\s*\{/);
 	});
 
 	it('keeps the default theme at a first visit', () => {

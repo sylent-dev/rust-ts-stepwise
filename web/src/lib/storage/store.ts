@@ -18,8 +18,11 @@ export interface Store {
 	 * the value stays where it is until the next save replaces it.
 	 */
 	read(name: string, version: number): Saved | undefined;
-	/** Saves fields under a name, with the version of their shape; says whether the browser took them. */
-	write(name: string, version: number, fields: object): boolean;
+	/**
+	 * Saves fields under a name, with the version of their shape. A browser that refuses is
+	 * reported by the store (`onRefused` of `openStore`), never to the caller.
+	 */
+	write(name: string, version: number, fields: object): void;
 }
 
 /** The key of `localStorage` that holds what is saved under a name: `stepwise.settings`. */
@@ -61,14 +64,12 @@ export function openStore(open: () => Backend, onRefused: () => void): Store {
 		},
 		write(name, version, fields) {
 			// Without a storage at all, the refusal was reported when the store opened.
-			if (!backend) return false;
+			if (!backend) return;
 			try {
 				// The version last: no field can take its place.
 				backend.setItem(keyOf(name), JSON.stringify({ ...fields, version }));
-				return true;
 			} catch {
 				onRefused();
-				return false;
 			}
 		}
 	};

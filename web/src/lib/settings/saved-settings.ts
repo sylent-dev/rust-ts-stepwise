@@ -22,7 +22,7 @@ export function loadSettings(store: Store): Settings {
 	return { theme: isTheme(saved?.theme) ? saved.theme : DEFAULT_SETTINGS.theme };
 }
 
-/** Saves the settings in a store; says whether the browser took them. */
-export function saveSettings(store: Store, settings: Settings): boolean {
-	return store.write(NAME, VERSION, settings);
+/** Saves the settings in a store. */
+export function saveSettings(store: Store, settings: Settings): void {
+	store.write(NAME, VERSION, settings);
 }

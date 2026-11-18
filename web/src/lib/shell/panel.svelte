@@ -36,9 +36,11 @@
 
 	/**
 	 * A click on the veil closes the panel. A press that starts in the panel and ends on the veil
-	 * is a click of the veil for the browser: it closes nothing.
+	 * is a click of the veil for the browser: it closes nothing. Nor does the second click of a
+	 * double click on what opened the panel, which lands on the veil that covers it by then.
 	 */
 	function onclick(event: MouseEvent) {
+		if (event.detail > 1) return;
 		if (pressedVeil && event.target === event.currentTarget) open = false;
 	}
 
@@ -116,7 +118,7 @@
 
 	h2 {
 		margin: 0;
-		font: var(--weight-strong) var(--size-title) var(--font-text);
+		font: var(--weight-strong) var(--size-title) / var(--line-title) var(--font-text);
 	}
 
 	/* The cross stands at the same distance from the top and the right borders. */

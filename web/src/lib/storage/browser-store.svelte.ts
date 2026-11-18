@@ -4,11 +4,10 @@
 import { openStore } from './store.ts';
 
 /**
- * Whether the browser refuses to save, and whether the learner hid the banner that says so
- * (shell/storage-banner.svelte). That choice can't be saved either: it holds while the page
- * stays open, from a screen to the next (see Error handling in specs.md).
+ * Whether the browser refuses to save: found when the store opens, or at the first save that
+ * fails. A banner says so (shell/storage-banner.svelte; see Error handling in specs.md).
  */
-export const saving = $state({ refused: false, bannerHidden: false });
+export const saving = $state({ refused: false });
 
 /** What Stepwise keeps in this browser. */
 export const store = openStore(

@@ -41,7 +41,7 @@ describe('a store', () => {
 	it('reads back the fields it saved, under the key of their name', () => {
 		const backend = memory();
 		const { store, onRefused } = open(backend);
-		expect(store.write('settings', 1, { theme: 'night-desk' })).toBe(true);
+		store.write('settings', 1, { theme: 'night-desk' });
 		expect(store.read('settings', 1)).toEqual({ theme: 'night-desk', version: 1 });
 		expect(Object.keys(backend.held)).toEqual(['stepwise.settings']);
 		expect(onRefused).not.toHaveBeenCalled();
@@ -98,7 +98,8 @@ describe('a store whose browser refuses to save', () => {
 		}, onRefused);
 		expect(onRefused).toHaveBeenCalledOnce();
 		expect(store.read('settings', 1)).toBeUndefined();
-		expect(store.write('settings', 1, { theme: 'night-desk' })).toBe(false);
+		store.write('settings', 1, { theme: 'night-desk' });
+		expect(store.read('settings', 1)).toBeUndefined();
 		// Reported once, when it opened: a save says nothing more.
 		expect(onRefused).toHaveBeenCalledOnce();
 	});
@@ -108,7 +109,8 @@ describe('a store whose browser refuses to save', () => {
 		const store = openStore(() => null as unknown as Backend, onRefused);
 		expect(onRefused).toHaveBeenCalledOnce();
 		expect(store.read('settings', 1)).toBeUndefined();
-		expect(store.write('settings', 1, {})).toBe(false);
+		store.write('settings', 1, {});
+		expect(onRefused).toHaveBeenCalledOnce();
 	});
 
 	it('reports a storage already full as it opens, and still reads what it holds', () => {
@@ -126,8 +128,9 @@ describe('a store whose browser refuses to save', () => {
 			throw new DOMException('The quota has been exceeded.', 'QuotaExceededError');
 		};
 		expect(onRefused).not.toHaveBeenCalled();
-		expect(store.write('settings', 1, { theme: 'night-desk' })).toBe(false);
+		store.write('settings', 1, { theme: 'night-desk' });
 		expect(onRefused).toHaveBeenCalledOnce();
+		expect(store.read('settings', 1)).toBeUndefined();
 	});
 
 	it('reads nothing from a storage that throws when it is read', () => {

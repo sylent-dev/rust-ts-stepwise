@@ -7,13 +7,13 @@
 	import Panel from '#lib/shell/panel.svelte';
 	import { chooseTheme, settings } from './current-settings.svelte.ts';
 	import Segments from './segments.svelte';
-	import { THEMES } from './settings.ts';
+	import { themeMessage, THEMES } from './settings.ts';
 
 	let { open = $bindable() }: { open: boolean } = $props();
 
 	const id = $props.id();
 
-	const themes = THEMES.map((theme) => ({ value: theme, label: t(`theme-${theme}`) }));
+	const themes = THEMES.map((theme) => ({ value: theme, label: t(themeMessage(theme)) }));
 </script>
 
 <Panel title={t('settings')} bind:open width={500}>
@@ -21,10 +21,11 @@
 		<div class="row">
 			<div>
 				<b id="{id}-theme">{t('settings-theme')}</b>
-				<p>{t('settings-theme-note')}</p>
+				<p id="{id}-theme-note">{t('settings-theme-note')}</p>
 			</div>
 			<Segments
 				labelledby="{id}-theme"
+				describedby="{id}-theme-note"
 				options={themes}
 				value={settings.theme}
 				onchoose={chooseTheme}

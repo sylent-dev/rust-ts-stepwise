@@ -31,7 +31,7 @@ describe('the settings saved', () => {
 
 	it.each(THEMES)('come back as they were saved, with the theme %s', (theme) => {
 		const { store } = storeWith();
-		expect(saveSettings(store, { theme })).toBe(true);
+		saveSettings(store, { theme });
 		expect(loadSettings(store)).toEqual({ theme });
 	});
 

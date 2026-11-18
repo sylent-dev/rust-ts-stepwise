@@ -6,6 +6,8 @@
 	interface Props {
 		/** The `id` of the text that names the choice. */
 		labelledby: string;
+		/** The `id` of the sentence that says more about the choice, when it has one. */
+		describedby?: string;
 		/** The values, from left to right, each with its text. */
 		options: readonly { value: Value; label: string }[];
 		/** The value chosen. */
@@ -13,13 +15,13 @@
 		onchoose: (value: Value) => void;
 	}
 
-	let { labelledby, options, value, onchoose }: Props = $props();
+	let { labelledby, describedby, options, value, onchoose }: Props = $props();
 
 	/** What makes one group of the radio buttons. */
 	const group = $props.id();
 </script>
 
-<div class="segments" role="radiogroup" aria-labelledby={labelledby}>
+<div class="segments" role="radiogroup" aria-labelledby={labelledby} aria-describedby={describedby}>
 	{#each options as option (option.value)}
 		<label>
 			<input
