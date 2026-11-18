@@ -351,7 +351,7 @@ An open map with a few walls, paints and items, without goal. The code is saved 
 
 ### Settings
 
-A panel in the middle of the screen, over a veil, opened from the header of the home screen or the gear of the level screen, since they belong to the whole application and not to a level (wireframe: [`docs/wireframes/overlays.excalidraw`](docs/wireframes/overlays.excalidraw)). A change applies at once and is saved, without a **Save** button; Escape, **×** or a click on the veil closes it.
+A panel in the middle of the screen, over a veil, opened from the header of the home screen or the gear of the level screen, since they belong to the whole application and not to a level (wireframe: [`docs/wireframes/overlays.excalidraw`](docs/wireframes/overlays.excalidraw)). A change applies at once and is saved, without a **Save** button; Escape, **×** or a click on the veil closes it. It also applies at once in the other tabs where Stepwise is already open, such as the manual in its own tab; when the browser refuses the storage, nothing tells them, and each tab keeps its own settings (decided on 2026-11-18).
 
 - **Theme**: **Day Desk** (light, by default, so that a whole class sees the same screen) or **Night Desk** (dark). Only the interface changes: the map keeps the same look in both.
 - **Sounds**: **Off** or **On**, without a sentence (off by default, so that a classroom stays quiet). Turning it **On** plays the sound of a success once: the learner hears at once that it works, and at what level (decided on 2026-11-15).
