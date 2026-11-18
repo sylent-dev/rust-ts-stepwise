@@ -4,9 +4,52 @@
 
 const SETTINGS_THEMES = { "day-desk": "Day Desk", "night-desk": "Night Desk" };
 
-// Two segments side by side, the one chosen dark (or light at night). `data` marks what they set.
-const settingsSegments = (options, current, data) => `<div class="settings-segments" ${data}>${Object.entries(options).map(([key, label]) =>
+// Two segments side by side, the one chosen dark (or light at night). `data` marks what they set. The
+// fill of the one chosen is an element of its own, placed under it once the page is drawn.
+const settingsSegments = (options, current, data) => `<div class="settings-segments" ${data}><i class="settings-thumb" aria-hidden="true"></i>${Object.entries(options).map(([key, label]) =>
   `<button type="button" data-value="${key}" aria-pressed="${key === current}">${label}</button>`).join("")}</div>`;
+
+// Places the fill of a group under its segment chosen, at once.
+function settingsPlaceFill(group) {
+  const pressed = group.querySelector('button[aria-pressed="true"]').getBoundingClientRect();
+  const fill = group.querySelector(".settings-thumb");
+  fill.style.transform = `translateX(${pressed.left - group.getBoundingClientRect().left}px)`;
+  fill.style.width = `${pressed.width}px`;
+}
+
+// Where the fill of a group stands now, even in the middle of a slide, and the segment it left.
+function settingsFillNow(group) {
+  const fill = group.querySelector(".settings-thumb").getBoundingClientRect();
+  return { left: fill.left - group.getBoundingClientRect().left, width: fill.width, value: group.querySelector('button[aria-pressed="true"]').dataset.value };
+}
+
+// Slides the fill of a group from where it stood to its segment chosen, in `--duration-appear` with
+// `--ease-appear`: fast at first, then settling, and the two texts turn with it. The setting itself
+// applies at once. Nothing moves for a learner who asked for less motion. Decided on 2026-11-18, as the
+// white pill of the settings of Rust Exile Market; left with it: its own 220 milliseconds and curve,
+// hardly told from these tokens, and a slide that starts and stops gently, as the robot moves.
+function settingsSlide(group, from) {
+  settingsPlaceFill(group);
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const page = getComputedStyle(document.documentElement);
+  const timing = { duration: parseFloat(page.getPropertyValue("--duration-appear")), easing: page.getPropertyValue("--ease-appear").trim() };
+  const fill = group.querySelector(".settings-thumb");
+  const pressed = group.querySelector('button[aria-pressed="true"]');
+  const left = group.querySelector(`button[data-value="${from.value}"]`);
+  fill.animate([{ transform: `translateX(${from.left}px)`, width: `${from.width}px` }, { transform: fill.style.transform, width: fill.style.width }], timing);
+  if (!left || left === pressed) return;
+  const chosenColor = getComputedStyle(pressed).color, restColor = getComputedStyle(left).color;
+  pressed.animate([{ color: restColor }, { color: chosenColor }], timing);
+  left.animate([{ color: chosenColor }, { color: restColor }], timing);
+}
+
+// A theme clicked draws the whole page again: the slide it starts waits for the new page.
+let settingsSlideFrom = null;
+new MutationObserver(() => {
+  const from = settingsSlideFrom;
+  settingsSlideFrom = null;
+  document.querySelectorAll(".settings-segments").forEach(group => from && "settingsTheme" in group.dataset ? settingsSlide(group, from) : settingsPlaceFill(group));
+}).observe(document.getElementById("sheet"), { childList: true });
 
 // Clear all progress: alone, gray at rest, since it says what it does and shouldn't call for a click. It
 // turns red from the left as a loading bar while the mouse rests on it (or while it has the focus of the
@@ -24,16 +67,22 @@ function appSettings({ sounds = false } = {}) {
   </div></div>`;
 }
 
-// A theme chosen changes the whole page; Sounds changes in its own window only.
+// A theme chosen changes the whole page; Sounds changes in its own window only. The fill slides to
+// the segment clicked, in every window that shows the setting.
 document.addEventListener("click", event => {
   const button = event.target.closest?.(".settings-segments button");
-  if (!button) return;
+  if (!button || button.getAttribute("aria-pressed") === "true") return;
   const group = button.parentElement;
+  const from = settingsFillNow(group);
   if ("settingsTheme" in group.dataset) {
+    settingsSlideFrom = from;
     chosen.theme = button.dataset.value;
     keepInAddress();
     render();
-  } else group.querySelectorAll("button").forEach(other => other.setAttribute("aria-pressed", other === button));
+  } else {
+    group.querySelectorAll("button").forEach(other => other.setAttribute("aria-pressed", other === button));
+    settingsSlide(group, from);
+  }
 });
 
 // The button of Clear all progress is ready once its bar is full; it empties at once when the mouse leaves.

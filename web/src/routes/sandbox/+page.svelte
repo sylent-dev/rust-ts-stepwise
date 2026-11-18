@@ -6,6 +6,7 @@
 	import { t } from '#lib/i18n.ts';
 	import { levelMenus } from '#lib/level-menus.ts';
 	import Probe from '#lib/probe.svelte';
+	import SettingsButton from '#lib/settings/settings-button.svelte';
 	import Header from '#lib/shell/header.svelte';
 	import MenuBar from '#lib/shell/menu-bar.svelte';
 	import Place from '#lib/shell/place.svelte';
@@ -20,6 +21,7 @@
 <Header>
 	<MenuBar menus={levelMenus('sandbox')} />
 	<Place title={t('sandbox')} icon="diamond" />
+	<SettingsButton gear />
 </Header>
 <main>
 	{#await core then}

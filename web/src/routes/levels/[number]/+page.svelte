@@ -4,6 +4,7 @@
 	import { t } from '#lib/i18n.ts';
 	import { levelMenus } from '#lib/level-menus.ts';
 	import { titleMessage } from '#lib/levels.ts';
+	import SettingsButton from '#lib/settings/settings-button.svelte';
 	import Header from '#lib/shell/header.svelte';
 	import MenuBar from '#lib/shell/menu-bar.svelte';
 	import Place from '#lib/shell/place.svelte';
@@ -21,6 +22,7 @@
 <Header>
 	<MenuBar menus={levelMenus('level')} />
 	<Place {title} />
+	<SettingsButton gear />
 </Header>
 <main></main>
 

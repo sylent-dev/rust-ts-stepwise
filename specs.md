@@ -351,7 +351,7 @@ An open map with a few walls, paints and items, without goal. The code is saved 
 
 ### Settings
 
-A panel in the middle of the screen, over a veil, opened from the header of the home screen or the gear of the level screen, since they belong to the whole application and not to a level (wireframe: [`docs/wireframes/overlays.excalidraw`](docs/wireframes/overlays.excalidraw)). A change applies at once and is saved, without a **Save** button; Escape, **×** or a click on the veil closes it.
+A panel in the middle of the screen, over a veil, opened from the header of the home screen or the gear of the level screen, since they belong to the whole application and not to a level (wireframe: [`docs/wireframes/overlays.excalidraw`](docs/wireframes/overlays.excalidraw)). A change applies at once and is saved, without a **Save** button; Escape, **×** or a click on the veil closes it. A choice between two values, as **Theme** and **Sounds**, is two segments side by side, the one chosen filled with the color of the text: at a change, that fill slides to the other segment and the two texts turn with it, while the setting itself applies at once (decided on 2026-11-18, see [Motion](docs/design-system.md#motion)). It also applies at once in the other tabs where Stepwise is already open, such as the manual in its own tab; when the browser refuses the storage, nothing tells them, and each tab keeps its own settings (decided on 2026-11-18).
 
 - **Theme**: **Day Desk** (light, by default, so that a whole class sees the same screen) or **Night Desk** (dark). Only the interface changes: the map keeps the same look in both.
 - **Sounds**: **Off** or **On**, without a sentence (off by default, so that a classroom stays quiet). Turning it **On** plays the sound of a success once: the learner hears at once that it works, and at what level (decided on 2026-11-15).
@@ -430,13 +430,13 @@ When the setting **Sounds** is on, a run plays a few sounds, synthesized in the 
 
 ## Local files
 
-Stepwise has no files of its own on the learner's computer: everything is kept in the browser's `localStorage`, under keys starting with `stepwise.`, with a version number.
+Stepwise has no files of its own on the learner's computer: everything is kept in the browser's `localStorage`, one key per kind of data, starting with `stepwise.` (`stepwise.settings`), each value with the version number of its shape.
 
 | Data | Content |
 |---|---|
 | Progress | The levels done, the levels opened by a code, and the variants passed with their code. |
 | Code | The code and the breakpoints of each level and of the sandbox. |
-| Settings | The speed, **Sounds**. |
+| Settings | The theme, the speed, **Sounds**. |
 
 The levels and the manual are files of the website, written in the repository.
 
@@ -450,7 +450,7 @@ The messages are drawn in the wireframe [`docs/wireframes/states.excalidraw`](do
 | An error while the program runs | The program stops; the error is shown in the console with its line, the line is marked in the editor, by a mark of its own in the margin (✕ in the wireframe [`docs/wireframes/states.excalidraw`](docs/wireframes/states.excalidraw); its look is decided with the mock-up), distinct from the next line (▶), a breakpoint (●) and the errors underlined before running; the variables panel shows the state at that moment. The code can be changed at once, without **Reset**. |
 | An infinite loop | The program keeps running visibly until **Pause** or **Reset**; the page stays responsive. |
 | A recursion that never ends | Stopped at 200 nested calls with an error. |
-| The browser refuses `localStorage` (private browsing, storage full or blocked) | Stepwise works; a banner of one line across the whole width, under the header of every screen, says *"Your progress can't be saved in this browser and will be lost when this tab closes."* It takes its height from the content (on the level screen, from the editor and the console; the map keeps its size). **×** hides it until the next visit. When the storage fills up during a visit, the banner appears at the first save that fails. Pale amber, the soft tone of the accent, without icon: a warning, not an error. |
+| The browser refuses `localStorage` (blocked by a setting of the browser or by a rule of the school, or full) | Stepwise works; a banner of one line across the whole width, under the header of the home screen, of the level screen and of the sandbox, says *"Your progress can't be saved in this browser and will be lost when this tab closes."* The manual shows none: it has no header, nothing is saved from it, and it opens in a tab of its own, where a banner just hidden on the level would come back (decided on 2026-11-18). It takes its height from the content (on the level screen, from the editor and the console; the map keeps its size). **×** hides it until the next visit, which is the next time the page is loaded: that choice can't be saved either, so the page remembers it only while it stays open, from a screen to the next (decided on 2026-11-18). When the storage fills up during a visit, the banner appears at the first save that fails. Pale amber, the soft tone of the accent, without icon: a warning, not an error. A private window isn't such a case: today's browsers save there and clear everything when the window closes, and a page can't tell that it is in one, so no banner shows and the progress is lost with the window (noted on 2026-11-18). |
 | Saved data that can't be read (damaged, or of an unknown version) | Ignored: the defaults are used, without error; the bad data stays until the next save replaces it. |
 | A level file that isn't valid | The level is shown as unavailable in its chapter; the other levels work. The reason is written to the console of the browser, in English, for the author of the level. The tests check every level file, so this shouldn't reach the website. |
 | The browser can't run WebAssembly (a very old browser) | A message replaces the screen, under the head of the disappointed robot (as an empty search, without the name): *"Stepwise needs a recent browser"*, *"This browser can't run it. Update it, or open Stepwise in a recent Firefox, Chrome, Edge or Safari."* and the address `stepwise.sylent.tools`. It is written in the page itself, not by the application, so that it shows in any browser, even without JavaScript; a small script of the page gives it the theme saved, and it stays in **Day Desk** without JavaScript. |

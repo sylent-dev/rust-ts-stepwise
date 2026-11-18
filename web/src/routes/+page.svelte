@@ -3,6 +3,7 @@
 	import { resolve } from '$app/paths';
 	import { t } from '#lib/i18n.ts';
 	import { levels, titleMessage } from '#lib/levels.ts';
+	import SettingsButton from '#lib/settings/settings-button.svelte';
 	import Header from '#lib/shell/header.svelte';
 </script>
 
@@ -14,6 +15,7 @@
 	<nav>
 		<a class="band-item" href={resolve('/sandbox')}>{t('sandbox')}</a>
 		<a class="band-item" href={resolve('/manual')}>{t('manual')}</a>
+		<SettingsButton />
 	</nav>
 </Header>
 <main>

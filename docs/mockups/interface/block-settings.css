@@ -13,10 +13,13 @@
 .settings-clear:hover .settings-clear-fill, .settings-clear:focus-visible .settings-clear-fill { clip-path: inset(0 0 0 0); transition: clip-path 2s linear; }
 .app-window .settings-clear.is-ready { cursor: pointer; }
 
-/* Two segments side by side, the one chosen dark (or light at night). */
-.settings-segments { display: flex; flex: none; padding: var(--space-2); background: var(--chip); border-radius: var(--radius); }
-.app-window .settings-segments button { padding: var(--space-4) var(--space-12); background: none; border: 0; border-radius: var(--radius); color: var(--weak); font-weight: var(--weight-control); white-space: nowrap; }
-.app-window .settings-segments button[aria-pressed="true"] { background: var(--chosen); color: var(--on-chosen); }
+/* Two segments side by side, the one chosen dark (or light at night). Its fill is one element of the
+   group, placed under the segment chosen: at a click, it slides to the other one, and the two texts
+   turn with it (block-settings.js). */
+.settings-segments { position: relative; display: flex; flex: none; padding: var(--space-2); background: var(--chip); border-radius: var(--radius); }
+.settings-thumb { position: absolute; top: var(--space-2); bottom: var(--space-2); left: 0; background: var(--chosen); border-radius: var(--radius); }
+.app-window .settings-segments button { position: relative; padding: var(--space-4) var(--space-12); background: none; border: 0; border-radius: var(--radius); color: var(--weak); font-weight: var(--weight-control); white-space: nowrap; }
+.app-window .settings-segments button[aria-pressed="true"] { color: var(--on-chosen); }
 
 /* Once cleared: gray again, a check before its words, and nothing more to click. */
 .app-window .settings-clear.is-done { cursor: default; }
