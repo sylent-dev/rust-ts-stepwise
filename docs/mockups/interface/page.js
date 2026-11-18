@@ -6,6 +6,7 @@ const VARIANTS = {
   theme: { label: "Style", options: Object.fromEntries(Object.entries(INTERFACE_STYLES).map(([key, style]) => [key, style.title])), fallback: Object.keys(INTERFACE_STYLES)[0] },
   // The four decisions of step 13d, their proposals numbered once from 1 (sections 1 to 4).
   noscript: { label: "JavaScript off", options: { old: "1 · As an old browser", own: "2 · Its own message" }, fallback: "own" },
+  watermark: { label: "Watermark", range: { min: 1, max: 12, step: 0.5 }, variable: "--message-mark", unit: "%", fallback: "4" },
   missing: { label: "Unknown address", options: { message: "3 · A message", home: "4 · The home screen" }, fallback: "message" },
   manualsmall: { label: "Manual, small window", options: { message: "5 · The message", manual: "6 · The manual stays" }, fallback: "message" },
   tabicon: { label: "Tab icon", options: { logo: "7 · The logo", bold: "8 · Thicker lines", square: "9 · Squarer head" }, fallback: "bold" },

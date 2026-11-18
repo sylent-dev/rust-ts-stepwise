@@ -1,6 +1,7 @@
 // The messages that replace the whole screen, under the head of the disappointed robot (as an empty search),
 // without the name: the window too small, the phone, the browser
-// too old, the files that can't load. They follow the theme saved: the two written in the page itself read
+// too old, the files that can't load, JavaScript turned off, an address that doesn't exist. Behind the
+// last two, what they are about, written large and very pale: JS, 404. They follow the theme saved: the two written in the page itself read
 // it with a small script, and stay in Day Desk when JavaScript doesn't run.
 
 
@@ -12,11 +13,13 @@ function appMessage(kind, [width, height]) {
     phone: ["Stepwise needs a laptop", "<p>It is made for a large window.</p>"],
     old: ["Stepwise needs a recent browser", `<p>This browser can’t run it. Update it, or open Stepwise in a recent Firefox, Chrome, Edge or Safari.</p>${address}`],
     offline: ["Stepwise couldn’t load", '<p>The connection seems to be lost. Check it, then try again.</p><button type="button" class="app-primary">Try again</button>'],
-    script: ["Stepwise needs JavaScript", "<p>It is turned off in this browser. Turn it on for this website, then reload the page.</p>"],
+    script: ["Stepwise needs JavaScript", "<p>It is turned off in this browser.</p><p>Turn it on for this website, then reload the page.</p>"],
     missing: ["This page doesn’t exist", '<p>Stepwise has no page at this address.</p><button type="button" class="app-primary">All levels</button>'],
   };
   const [title, body] = texts[kind];
-  return `<div class="app-screen-message ${kind === "phone" ? "is-phone" : ""}"><img class="message-head" src="world-elements/daylight/logo-disappointed.svg" height="${kind === "phone" ? 64 : 72}" alt=""><div class="message-title">${title}</div>${body}</div>`;
+  // What the message is about, in two or three signs, very pale behind it.
+  const mark = { script: "JS", missing: "404" }[kind];
+  return `<div class="app-screen-message ${kind === "phone" ? "is-phone" : ""}">${mark ? `<div class="message-mark" aria-hidden="true">${mark}</div>` : ""}<img class="message-head" src="world-elements/daylight/logo-disappointed.svg" height="${kind === "phone" ? 64 : 72}" alt=""><div class="message-title">${title}</div>${body}</div>`;
 }
 
 const messageWindow = (kind, size) => `<div class="app-window" style="width:${size[0]}px;height:${size[1]}px">${appMessage(kind, size)}</div>`;
