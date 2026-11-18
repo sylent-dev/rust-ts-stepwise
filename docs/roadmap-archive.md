@@ -197,3 +197,9 @@ The browser storage with its version, the saved data that can't be read ignored;
 ### 13d. Messages (#53)
 
 The window too small on every screen, the manual too (its size followed live, the phone), the screen kept under it; the browser too old, the files that can't load and JavaScript turned off, written in the page itself, which watches the application start; the page of an address that doesn't exist, served by the host as `404.html`; *JS* and *404* hardly there behind their messages; the icon of the tab, the head of the logo drawn for 16 pixels. Left to step 17: a run paused while the window is too small.
+
+## 14. Map view
+
+### 14a. Static map (#54)
+
+The level screen and the sandbox laid out as the mock-up (the code on the left, the map on top on the right, the panels under it, still empty); the map of the level (its first map, until the tabs of step 21) and of the sandbox drawn from the core: the floor, the walls with their rim and their edge, the lines every five cells, the shadows, the paint strokes, the goal marks, the items, the robot facing its direction with the item it carries; the cells sized to fill the block, 64 pixels at most; the probe moved into the column of the code, drawing on that map.
