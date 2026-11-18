@@ -30,7 +30,7 @@ Stepwise is served at **`https://stepwise.sylent.tools/`** (decided by the owner
 
 - For an address that has no file, GitHub Pages serves the file `404.html` of the website (read on 2026-11-18 in [Creating a custom 404 page](https://docs.github.com/en/pages/getting-started-with-github-pages/creating-a-custom-404-page-for-your-github-pages-site): a file named `404.html` or `404.md` in the publishing source). That page describes a website published from a branch: it says nothing of one published by a workflow, as Stepwise, nor of the status of the answer.
 - The build writes that file (the `fallback` of `adapter-static`, see [Technical choices](technical-choices.md)): the application starts there and shows its own message, *"This page doesn't exist"*.
-- To check on the website once step 13d is deployed, since the documentation doesn't cover a workflow: `https://stepwise.sylent.tools/nope` and `https://stepwise.sylent.tools/levels/99` show the message of Stepwise, not the page of GitHub.
+- GitHub Pages does serve the `404.html` of a website published by a workflow, which its documentation doesn't say: checked on 2026-11-18, right after step 13d was deployed, `https://stepwise.sylent.tools/nope` and `https://stepwise.sylent.tools/levels/99` answer with the status 404 and the `404.html` of Stepwise (the page that holds its own messages), `/` and `/levels/1` with 200, and `/favicon.svg` is served as `image/svg+xml`.
 
 ## Publishing
 

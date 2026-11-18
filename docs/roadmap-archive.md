@@ -193,3 +193,7 @@ The menu of the header, with the mouse and the keyboard; **Level** (**All levels
 ### 13c. Storage and settings (#52)
 
 The browser storage with its version, the saved data that can't be read ignored; the gear of the header, the first icon made of several shapes (left by the review of 13a), and the panel of the settings over its veil, with **Theme** alone until **Sounds** (step 18) and **Clear all progress** (step 21) bring their rows; the theme saved, applied before the first paint and followed by the other tabs already open; the banner when the storage is refused, on every screen but the manual, hidden while the page stays open.
+
+### 13d. Messages (#53)
+
+The window too small on every screen, the manual too (its size followed live, the phone), the screen kept under it; the browser too old, the files that can't load and JavaScript turned off, written in the page itself, which watches the application start; the page of an address that doesn't exist, served by the host as `404.html`; *JS* and *404* hardly there behind their messages; the icon of the tab, the head of the logo drawn for 16 pixels. Left to step 17: a run paused while the window is too small.

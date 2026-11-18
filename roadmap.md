@@ -33,11 +33,7 @@ Model: each step to come names its model. Fable 5.2 runs the steps whose design 
 - [x] **10. WebAssembly bridge** (#37, #38, #39, #41)
 - [x] **11. Animations and sounds** (#42, #45)
 - [x] **12. Design system** (#46, #47, #48, #49)
-- [x] **13. Application shell** *(Fable 5.2)*: the pages and their addresses, the header with its menus, the design tokens and the two themes, the texts from Fluent, the browser storage with its version and the banner when it is refused, the settings, the messages for a window too narrow and a browser too old.
-  - [x] **13a. Tokens and pages** (#50)
-  - [x] **13b. Menus** (#51)
-  - [x] **13c. Storage and settings** (#52)
-  - [x] **13d. Messages** (#53): the window too small on every screen, the manual too (its size followed live, the phone), the screen kept under it; the browser too old, the files that can't load and JavaScript turned off, written in the page itself, which watches the application start; the page of an address that doesn't exist, served by the host as `404.html`; *JS* and *404* hardly there behind their messages; the icon of the tab, the head of the logo drawn for 16 pixels. Left to step 17: a run paused while the window is too small.
+- [x] **13. Application shell** (#50, #51, #52, #53)
 - [ ] **14. Map view** *(Opus 5.5)*: the elements of step 1 as Svelte components, the map of a level drawn from the core, the goal marks, the animations of every action, tuned at every speed with the owner.
 - [ ] **15. Quality audit** *(Fable 5.2)*: an audit of the whole code, not of one branch, once the core is complete (steps 9 and 10) and the interface has its first bases (steps 13 and 14), before the steps of the interface copy its patterns: the responsibilities of the modules and the components and their dependencies, no type or component that does everything, SOLID and KISS (and the splits that cost more than they bring), the naming and the conventions of `CLAUDE.md`, what Rust and TypeScript repeat; a report in `outputs/`, the owner choosing what is kept, then those refactorings, one pull request per coherent theme, so that the refactoring before the first release stays small (decided on 2026-11-12).
 - [ ] **16. Code editor** *(Opus 5.5)*: CodeMirror with our theme, the highlighting, the indentation rules, the errors underlined as the learner types, the line at 80 characters, the code saved per level, **Restore starting code**; the menu **Edit** with the commands of the editor.
