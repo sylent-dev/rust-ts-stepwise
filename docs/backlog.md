@@ -50,6 +50,7 @@ The ideas, polish and edge cases found along the way that the current step doesn
 - The menus of the header in Firefox and Safari (step 27): the bar moves the focus itself and says when the ring of the keyboard shows, so that the browsers agree, but only Chromium was tried at step 13b. To try there: Space on the name of a menu; a menu opened under a still pointer; the menu that grows and goes back. And with a real screen reader: the bar following its cursor.
 - The ring of the keyboard on the name of a menu after a Tab pressed in the address bar: the page never hears that key, so the ring only shows at the next one. Asking the browser whether the focus must show (`:focus-visible`) was tried at step 13b and left: it also says yes when the window comes back after a click, since the bar moves the focus itself. To look at again with the three browsers (step 27): the release of the key, which the page may hear.
 - In a menu of the header, a letter that jumps to the next row starting with it, and **Home** and **End** on the bar itself, as some menu bars do: left out at step 13b, the menus being short.
+- A narrow layout of the manual, so that it stays readable in a window smaller than 1280 × 720, down to about 800 pixels wide, where the other screens show their message: as drawn for 1280, the maps of its examples cover their code at 1024. To judge at step 22, with its real content; until then the manual gives way to the message as the other screens (decided on 2026-11-18, step 13d).
 
 ## Content
 

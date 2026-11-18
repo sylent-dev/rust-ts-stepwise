@@ -4,8 +4,7 @@
 // is a list and `range` a slider, both setting the CSS `variable` at once, without redrawing the page.
 const VARIANTS = {
   theme: { label: "Style", options: Object.fromEntries(Object.entries(INTERFACE_STYLES).map(([key, style]) => [key, style.title])), fallback: Object.keys(INTERFACE_STYLES)[0] },
-  // The two decisions of step 13d still open, their proposals numbered from 5 (sections 1 and 2).
-  manualsmall: { label: "Manual, small window", options: { message: "5 · The message", manual: "6 · The manual stays" }, fallback: "message" },
+  // The decision of step 13d still open, its proposals numbered from 7 (section 1).
   tabicon: { label: "Tab icon", options: { logo: "7 · The logo", bold: "8 · Thicker lines", square: "9 · Squarer head" }, fallback: "bold" },
 };
 
