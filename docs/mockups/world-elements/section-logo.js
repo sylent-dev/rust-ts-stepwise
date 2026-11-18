@@ -1,8 +1,8 @@
 // Section: the logo, the smiling head of the robot, at several sizes.
 
-// The logo, and the same head drawn for the tab of a browser.
+// The logo, and the same head drawn for the tab of a browser: the file of the application.
 const logoFile = () => element("logo");
-const logoSmallFile = () => element("logo-small");
+const logoSmallFile = () => "../../web/static/favicon.svg";
 
 const LOGO_GROUNDS = [["On a light page", "#f4f6f8", "#222935"], ["On a dark page", "#1b1d20", "#e9ecef"]];
 

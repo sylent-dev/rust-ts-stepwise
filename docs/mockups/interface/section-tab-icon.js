@@ -1,10 +1,10 @@
 // Section: the icon of the tab of the browser, decided at step 13d: the head of the logo drawn a second
-// time for 16 pixels (world-elements/daylight/logo-small.svg), where the lines of the logo are under one
-// pixel wide. Thicker lines, in a square, with as much room above the head as under it (1 pixel each
+// time for 16 pixels, where the lines of the logo are under one pixel wide: the file of the
+// application, web/static/favicon.svg. Thicker lines, in a square, with as much room above the head as under it (1 pixel each
 // at 16 pixels), so that it sits on the middle of the title of the tab. It is shown in a tab of a light
 // and of a dark browser, then alone at 16 pixels and at 32 (a screen of high density, a bookmark), then
 // with the pixels of both enlarged. It is also the icon of this page.
-const TAB_ICON = "world-elements/daylight/logo-small.svg";
+const TAB_ICON = "../../web/static/favicon.svg";
 const TAB_STRIP_TONES = { light: "#ffffff", dark: "#35363a" };
 
 const tabIconImage = size => `<img class="tab-strip-icon" src="${TAB_ICON}" width="${size}" height="${size}" alt="">`;
