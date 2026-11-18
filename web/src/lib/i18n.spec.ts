@@ -2,6 +2,7 @@ import { FluentParser } from '@fluent/syntax';
 import { describe, expect, it, vi } from 'vitest';
 import english from '../../locales/en.ftl?raw';
 import { createBundle, formatAround, formatMessage, hasMessage, t, tAround } from './i18n.ts';
+import type { WindowAdvice } from './shell/window-size.ts';
 
 describe('locales/en.ftl', () => {
 	// The parser of the bundle skips a message it can't read without a word: the full parser
@@ -76,9 +77,15 @@ describe('t', () => {
 		]);
 	});
 
-	it('names the key that zooms on each computer', () => {
-		expect(t('window-small-zoom', { platform: 'mac' })).toContain('Cmd and −');
-		expect(t('window-small-zoom', { platform: 'other' })).toContain('Ctrl and −');
+	it.each(['grow', 'zoom'])('names the key that zooms on each computer, %s', (advice) => {
+		expect(t(`window-small-${advice}`, { platform: 'mac' })).toContain('Cmd and −');
+		expect(t(`window-small-${advice}`, { platform: 'other' })).toContain('Ctrl and −');
+		expect(t(`window-small-${advice}`, { platform: 'chromeos' })).toContain('Ctrl and −');
+	});
+
+	it('has a message for each thing to do about a window too small', () => {
+		const advices: WindowAdvice[] = ['grow', 'full-screen', 'zoom'];
+		for (const advice of advices) expect(hasMessage(`window-small-${advice}`)).toBe(true);
 	});
 
 	it('writes a size without a separator of thousands', () => {

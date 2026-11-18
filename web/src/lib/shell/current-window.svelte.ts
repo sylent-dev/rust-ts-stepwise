@@ -1,7 +1,12 @@
-// The window of the browser as it is now, followed as it changes: its size, and what it shows.
+// The window of the browser as it is now, followed as it changes: its size, what it shows, and
+// where it stands on its screen.
 
-import { innerHeight, innerWidth } from 'svelte/reactivity/window';
-import { windowFit, type WindowFit } from './window-size.ts';
+import { MediaQuery } from 'svelte/reactivity';
+import { innerHeight, innerWidth, outerHeight, outerWidth } from 'svelte/reactivity/window';
+import { windowFit, type WindowFit, type WindowPlace } from './window-size.ts';
+
+/** Whether the browser shows the page alone, without its bars. */
+const fullScreen = new MediaQuery('(display-mode: fullscreen)');
 
 /**
  * The window of the browser. Its sizes are in pixels of the page: the zoom of the browser counts,
@@ -20,5 +25,15 @@ export const currentWindow = {
 	 */
 	get fit(): WindowFit {
 		return windowFit(this.width, this.height);
+	},
+	/** Where it stands on its screen: whether it can still grow there. */
+	get place(): WindowPlace {
+		return {
+			outerWidth: outerWidth.current ?? 0,
+			outerHeight: outerHeight.current ?? 0,
+			availWidth: screen.availWidth,
+			availHeight: screen.availHeight,
+			fullScreen: fullScreen.current
+		};
 	}
 };

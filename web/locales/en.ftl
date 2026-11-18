@@ -66,11 +66,22 @@ window-small-title = Stepwise needs a larger window
 # $size (String): the size of the window, as `window-size` writes it; the interface draws it in
 # bold, and it changes as the window does.
 window-small-size = At least { $least } pixels. This one is { $size }.
+# What to do about a window too small, and only what can work: `window-small-<advice>`.
 # $platform (String): `mac` on a computer of Apple, where the key that zooms is Cmd.
+# The window can still grow on its screen.
+window-small-grow =
+    { $platform ->
+        [mac] Enlarge the window, or zoom out with Cmd and −.
+       *[other] Enlarge the window, or zoom out with Ctrl and −.
+    }
+# The window already fills its screen, on a computer whose keyboard has the key F11.
+window-small-full-screen = Zoom out with Ctrl and −, or press F11 for the full screen.
+# The window already fills its screen, and no sentence can name the key of the full screen: on a
+# Mac or a Chromebook, or once the page is in full screen.
 window-small-zoom =
     { $platform ->
-        [mac] Widen the window, or zoom out with Cmd and −.
-       *[other] Widen the window, or zoom out with Ctrl and −.
+        [mac] Zoom out with Cmd and −.
+       *[other] Zoom out with Ctrl and −.
     }
 # A size in pixels.
 # $width (String), $height (String): written as they are, without a separator of thousands.

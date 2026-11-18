@@ -6,8 +6,12 @@
 
 
 // `kind` is the message, `size` the window in pixels; the window too small says its own size, then
-// `fix`, what the learner can do about it.
-const MESSAGE_FIX = "Widen the window, or zoom out with Ctrl and −.";
+// `fix`, what the learner can do about it: only what can work. A window that can still grow on its
+// screen is told to grow; one that already fills it, as on a laptop of 1366 × 768, where the bars of
+// the browser and of the system leave about 1366 × 650 to the page, is told the zoom and the full
+// screen (decided at step 13d).
+const MESSAGE_FIX = "Enlarge the window, or zoom out with Ctrl and −.";
+const MESSAGE_FIX_FILLED = "Zoom out with Ctrl and −, or press F11 for the full screen.";
 function appMessage(kind, [width, height], fix = MESSAGE_FIX) {
   const address = '<p class="message-address">stepwise.sylent.tools</p>';
   const texts = {
