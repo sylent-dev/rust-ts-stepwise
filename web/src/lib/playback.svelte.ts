@@ -17,6 +17,12 @@ export const NORMAL_SPEED = 2;
 /** The slowest speed, at which **Step** plays its action, whatever the speed chosen. */
 const SLOWEST_SPEED = SPEEDS[0];
 
+/**
+ * Where the program stands: waiting for its first step, running, paused between two steps, or
+ * stopped at its end or on an error, its last action ended.
+ */
+export type PlaybackStatus = 'ready' | 'running' | 'paused' | 'ended';
+
 export interface PlaybackOptions {
 	/** The time an action takes at a speed, in steps per second: `actionTime` by default. */
 	timeAt?: (rate: number) => number;
@@ -35,7 +41,10 @@ export class Playback {
 	line = $state<number>();
 	/** The number of steps run so far. */
 	steps = $state(0);
-	/** Whether the program runs, rather than waits for **Run** or **Step**. */
+	/**
+	 * Whether the program runs, rather than waits for **Run** or **Step**: until its last action
+	 * has ended.
+	 */
 	running = $state(false);
 	/** The speed, in steps per second; `Infinity` for **Instant**. */
 	rate = $state<number>(NORMAL_SPEED);
@@ -69,6 +78,13 @@ export class Playback {
 		return this.line === undefined;
 	}
 
+	/** Where the program stands, for the controls. */
+	get status(): PlaybackStatus {
+		if (this.running) return 'running';
+		if (this.ended) return 'ended';
+		return this.steps > 0 ? 'paused' : 'ready';
+	}
+
 	/** Runs the program, from its start once it has ended. */
 	play(): void {
 		if (this.ended) this.reset();
@@ -83,20 +99,29 @@ export class Playback {
 
 	/**
 	 * Runs one step while the program waits, its action played as at the slowest speed, so that
-	 * it is seen whatever the speed. An action still under way ends at once.
+	 * it is seen whatever the speed. An action still under way ends at once. Once the program has
+	 * ended, it puts the map back and waits on the first step, as before the program started.
+	 * After it, **Resume** waits a whole step before the next one.
 	 */
 	step(): void {
-		if (this.running || this.ended) return;
+		if (this.running) return;
+		if (this.ended) {
+			this.reset();
+			return;
+		}
 		this.#endMotion();
+		this.#carry = 0;
 		this.#runStep(undefined, this.#timeAt(SLOWEST_SPEED));
 	}
 
 	/** Ends the program and puts the map back to its start, with a new run. */
 	reset(): void {
+		// The new run first: the old one stays whole if it can't start.
+		const run = this.#start();
+		this.#run.free();
+		this.#run = run;
 		this.running = false;
 		this.motion = undefined;
-		this.#run.free();
-		this.#run = this.#start();
 		this.#carry = START_CARRY;
 		this.#rest(true);
 	}
@@ -104,6 +129,10 @@ export class Playback {
 	/** Frees the run, once the page is done with it: nothing may be called afterwards. */
 	free(): void {
 		this.#run.free();
+	}
+
+	[Symbol.dispose](): void {
+		this.free();
 	}
 
 	/**
@@ -120,14 +149,18 @@ export class Playback {
 				this.progress = progress;
 			}
 		}
-		if (this.running) {
+		if (this.running && this.#run.line !== undefined) {
 			if (Number.isFinite(this.rate)) {
 				const elapsed = this.#last === undefined ? 0 : time - this.#last;
 				const paced = paceFrame(this.rate, elapsed, this.#carry);
-				this.#carry = paced.carry;
-				if (paced.step) {
-					// A step due before the action under way has ended: a speed made faster.
-					this.#endMotion();
+				if (!paced.step) {
+					this.#carry = paced.carry;
+				} else if (this.motion) {
+					// A step due before the action under way has ended, after a **Step** or a speed
+					// made faster, waits for it: owed whole, it runs at the first frame after it.
+					this.#carry = START_CARRY;
+				} else {
+					this.#carry = paced.carry;
 					this.#runStep(time, this.#timeAt(this.rate));
 				}
 			} else {
@@ -135,8 +168,9 @@ export class Playback {
 				this.#runInstant();
 			}
 			this.#last = time;
-			if (this.#run.line === undefined) this.running = false;
 		}
+		// The program runs until its last action has ended.
+		if (this.running && this.#run.line === undefined && !this.motion) this.running = false;
 		return this.running || this.motion !== undefined;
 	}
 

@@ -410,6 +410,7 @@ The robot plays each action of the program at the chosen speed. The reference is
 | End, every goal met | The eyes light up in yellow and the robot hops once: seen from above, it grows a little while its shadow moves away toward the bottom left, the sun being at the top right. The success panel of a level appears after it. | 900 ms |
 | End, a goal not met | The eyes dim and the robot shakes its head, slower and wider than after an error (two wobbles of 12°); then a flag is planted on each goal not met, one after the other, with a small bounce. | 900 ms |
 
+- What changes beside the robot fades over the last 30 % of the action, so that its last frame leads to the map at rest without a jump: the paint that the eraser takes away beside its way; the old color of a cell painted over, the new one showing under it, where the mock-up kept the old color to the end; the mark of a goal that the action meets (decided on 2026-11-18).
 - **Less motion**: for a learner who asked their system for less motion (`prefers-reduced-motion`), the moves and the turns stay, since they are what the program does, but nothing bounces nor shakes: a turn without its overshoot; `pick_up()` and `drop()` without the pincer nor the step back, the item fading into the bay or out of it; the bump without its shake; a `pick_up()` or a `drop()` that fails shown by its error alone; the end of a run with the eyes alone and the flags at once.
 ### Sounds
 

@@ -2,7 +2,7 @@
 // deployed must never start a program that has errors, nor show one that stops on an error.
 
 import { readFileSync } from 'node:fs';
-import { describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it } from 'vitest';
 import { hasMessage } from '#lib/i18n.ts';
 import { check, initSync, Level, Sandbox, type Run } from '#lib/wasm/stepwise.js';
 import { benchPrograms } from './bench-programs.ts';
@@ -24,9 +24,16 @@ function finish(run: Run): void {
 	}
 }
 
+const level = new Level(levelFile('paint-a-square'));
+const sandbox = new Sandbox(levelFile('sandbox'));
+afterAll(() => {
+	level.free();
+	sandbox.free();
+});
+
 const MAPS: Record<string, (text: string) => Run> = {
-	'paint-a-square': (text) => new Level(levelFile('paint-a-square')).start(0, text),
-	sandbox: (text) => new Sandbox(levelFile('sandbox')).start(text)
+	'paint-a-square': (text) => level.start(0, text),
+	sandbox: (text) => sandbox.start(text)
 };
 
 describe.each(Object.entries(MAPS))('the programs of the bench on the map of %s', (map, start) => {

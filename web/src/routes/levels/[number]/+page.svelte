@@ -51,8 +51,11 @@
 		</Header>
 	{/snippet}
 	{#snippet code()}
+		<!-- A bench of its own for each level, whose runs start on its map. -->
 		{#if level}
-			<Bench map={data.name} start={(text) => level.start(0, text)} bind:playback />
+			{#key level}
+				<Bench map={data.name} start={(text) => level.start(0, text)} bind:playback />
+			{/key}
 		{/if}
 	{/snippet}
 	{#snippet map()}

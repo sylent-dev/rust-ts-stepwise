@@ -11,7 +11,7 @@
 	import { fiveLines, wallFaces, wallShadow } from './ground.ts';
 	import { poseAt, restingPose, type Motion } from './motion.ts';
 	import MovingPaint from './moving-paint.svelte';
-	import { paintMotion, paintParts } from './paint-motion.ts';
+	import { fadeOut, paintMotion, paintParts } from './paint-motion.ts';
 	import PaintStroke from './paint-stroke.svelte';
 	import Robot from './robot.svelte';
 
@@ -94,10 +94,14 @@
 	{/if}
 
 	{#if goals}
-		<!-- A cell painted with the right color hides its mark: its paint shows that it is done. -->
+		<!-- A cell painted with the right color hides its mark: its paint shows that it is done. The
+		     mark of a cell that the step under way paints so fades at the end of the step. -->
 		{#each goals.paints as { at, color, passages } (`${at.x},${at.y}`)}
 			{#if paintAt(world, at) !== color}
-				<g class="goal-paint">
+				<g
+					class="goal-paint"
+					style:--met={motion && paintAt(motion.after, at) === color ? fadeOut(progress) : 1}
+				>
 					<PaintStroke x={at.x} y={at.y} {color} {passages} />
 				</g>
 			{/if}
@@ -140,8 +144,8 @@
 		opacity: 0.1;
 	}
 
-	/* A cell to paint: the stroke to paint, at 35 %. */
+	/* A cell to paint: the stroke to paint, at 35 %; less as it fades once met. */
 	.goal-paint {
-		opacity: 0.35;
+		opacity: calc(0.35 * var(--met));
 	}
 </style>

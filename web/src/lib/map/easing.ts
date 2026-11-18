@@ -2,11 +2,6 @@
 // and gives the share of the way done (see Animations in specs.md). They are those of the mock-up,
 // `docs/mockups/world-elements/motion.js`.
 
-/** Keeps a share of the time between 0 and 1. */
-export function clamp01(t: number): number {
-	return Math.min(Math.max(t, 0), 1);
-}
-
 /** Starts and stops gently: a move, so that the robot stops clearly in the middle of its cell. */
 export function smooth(t: number): number {
 	return t < 0.5 ? 4 * t ** 3 : 1 - (-2 * t + 2) ** 3 / 2;

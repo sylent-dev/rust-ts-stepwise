@@ -1,6 +1,7 @@
 <!-- The paint that moves while a step runs (see Animations in specs.md): the paint taken away,
-     which goes under the robot and fades beside it, the stroke that the brush lays behind the
-     robot, and the ring of a tool put down. Over the paint that stays, under the goal marks, the
+     which goes under the robot and fades beside it, the new color of a cell painted over, which
+     shows as the old one fades, the stroke that the brush lays behind the robot, and the ring of
+     a tool put down. Over the paint that stays, under the goal marks, the
      shadows of the walls, the items and the robot. -->
 <svelte:options namespace="svg" />
 
@@ -10,7 +11,8 @@
 	import type { Motion, Pose } from './motion.ts';
 	import {
 		aheadOfBack,
-		besideOpacity,
+		FADE_FROM,
+		fadeOut,
 		laidStroke,
 		ringAt,
 		type PaintMotion
@@ -21,7 +23,7 @@
 		/** The world as the step found it. */
 		before: World;
 		motion: Motion;
-		/** What the step keeps of the paint and what it takes away. */
+		/** What the step does to the paint. */
 		paint: PaintMotion;
 		/** How far the step has gone, from 0 to 1. */
 		progress: number;
@@ -44,13 +46,24 @@
 	</clipPath>
 </defs>
 
+<!-- Under the old color, which covers it whole until it fades. -->
+{#if progress >= FADE_FROM}
+	{#each paint.repainted as part (`${part.x},${part.y}`)}
+		<PaintStroke {...part} />
+	{/each}
+{/if}
+<!-- Each group drawn as one, so that two halves never make a darker overlap as they fade. -->
+<g opacity={1 - fadeOut(progress)}>
+	{#each paint.appearing as part (`${part.x},${part.y}`)}
+		<PaintStroke {...part} />
+	{/each}
+</g>
 <g clip-path="url(#{clip})">
 	{#each paint.under as part (`${part.x},${part.y}`)}
 		<PaintStroke {...part} />
 	{/each}
 </g>
-<!-- Drawn as one, so that two halves never make a darker overlap as they fade. -->
-<g opacity={besideOpacity(progress)}>
+<g opacity={fadeOut(progress)}>
 	{#each paint.beside as part (`${part.x},${part.y}`)}
 		<PaintStroke {...part} />
 	{/each}

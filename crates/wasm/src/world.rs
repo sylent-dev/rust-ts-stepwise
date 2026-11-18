@@ -76,7 +76,11 @@ pub enum Cell {
 
 /// The tool the robot has down: the brush with its color, or the eraser.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Tsify)]
-#[serde(tag = "type", rename_all = "kebab-case")]
+#[serde(
+    tag = "type",
+    rename_all = "kebab-case",
+    rename_all_fields = "camelCase"
+)]
 pub enum Tool {
     /// The brush: the robot paints the cells it moves into, and the passages it crosses.
     Brush {

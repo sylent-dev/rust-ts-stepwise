@@ -59,7 +59,7 @@
 
 	function toggle(): void {
 		if (!playback) return;
-		if (playback.running) {
+		if (playback.status === 'running') {
 			playback.pause();
 		} else {
 			playback.play();
@@ -101,13 +101,13 @@
 		<p class="controls">
 			<!-- One button whose label changes, so that it keeps the focus of the keyboard. -->
 			<button type="button" onclick={toggle}>
-				{playback.running
+				{playback.status === 'running'
 					? t('bench-pause')
-					: playback.steps > 0 && !playback.ended
+					: playback.status === 'paused'
 						? t('bench-resume')
 						: t('bench-run')}
 			</button>
-			<button type="button" onclick={step} disabled={playback.running || playback.ended}>
+			<button type="button" onclick={step} disabled={playback.status === 'running'}>
 				{t('bench-step')}
 			</button>
 			<button type="button" onclick={() => playback?.reset()}>{t('bench-reset')}</button>
@@ -124,10 +124,10 @@
 			{/each}
 		</fieldset>
 
-		<p>
-			{t('bench-steps', { count: playback.steps })}
-			{#if playback.ended}· {t('bench-ended')}{/if}
-		</p>
+		<p>{t('bench-steps', { count: playback.steps })}</p>
+		{#if playback.ended}
+			<p role="status">{t('bench-ended')}</p>
+		{/if}
 	{/if}
 </section>
 

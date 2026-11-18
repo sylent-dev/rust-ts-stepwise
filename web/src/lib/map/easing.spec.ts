@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { clamp01, overshoot, smooth } from './easing.ts';
+import { overshoot, smooth } from './easing.ts';
 
 /** The largest value of a curve, sampled every thousandth of its time. */
 function peak(curve: (t: number) => number): number {
@@ -24,9 +24,5 @@ describe('the curves of the animations', () => {
 		expect(peak(overshoot)).toBeCloseTo(1.05, 3);
 		// It leaves at once.
 		expect(overshoot(0.1)).toBeGreaterThan(0.2);
-	});
-
-	it('keep a share of the time between 0 and 1', () => {
-		expect([clamp01(-0.5), clamp01(0.25), clamp01(3)]).toEqual([0, 0.25, 1]);
 	});
 });

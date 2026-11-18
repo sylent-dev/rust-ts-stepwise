@@ -3,8 +3,7 @@
 // the units of the drawings (geometry.ts); the reference is the mock-up,
 // `docs/mockups/world-elements/motion.js`.
 
-import type { Color, Direction, Point, World } from '#lib/core.ts';
-import { smooth } from './easing.ts';
+import type { Color, Direction, Paint, Point, World } from '#lib/core.ts';
 import { CELL, MIDDLE, STEPS, cellAt, placedFloors } from './geometry.ts';
 import type { Rect } from './ground.ts';
 import type { Motion, Pose } from './motion.ts';
@@ -40,6 +39,17 @@ export interface PaintMotion {
 	under: PaintPart[];
 	/** What the step takes away beside the robot, which fades at the end of the step. */
 	beside: PaintPart[];
+	/**
+	 * The new color, beside the robot, of a cell that the brush paints over: it shows under the
+	 * old color as that one fades, so that the floor never shows between the two.
+	 */
+	repainted: PaintPart[];
+	/**
+	 * The paint that comes beside the robot where there was none: the halves of a cell erased
+	 * alone, toward its painted neighbors, once the brush paints it again. It fades in at the end
+	 * of the step.
+	 */
+	appearing: PaintPart[];
 }
 
 function same(a: Point, b: Point): boolean {
@@ -50,11 +60,18 @@ function shows(part: PaintPart): boolean {
 	return part.middle || part.passages.length > 0;
 }
 
+/** The paint of the cell at a place, if it is a painted floor. */
+function paintOf(world: World, at: Point): Paint | undefined {
+	const cell = cellAt(world, at);
+	return cell?.type === 'floor' ? cell.paint : undefined;
+}
+
 /**
- * What the step from `before` to `after` keeps of the paint and what it takes away: what an
- * eraser passes over, or the paint of a cell that a brush paints over with another color, the new
- * paint showing once the step has ended. A cell keeps the part of its paint that `after` gives in
- * the same color.
+ * What the step from `before` to `after` does to the paint: what it keeps, what it takes away
+ * (what an eraser passes over, or the old color of a cell that a brush paints over), and what it
+ * brings beside the robot. The paint that the brush lays along the way of the robot is the
+ * stroke laid (`laidStroke`); under the robot, the new paint shows once the step has ended. A
+ * cell keeps the part of its paint that `after` gives in the same color.
  */
 export function paintMotion(before: World, after: World): PaintMotion {
 	const from = before.robot.position;
@@ -64,12 +81,12 @@ export function paintMotion(before: World, after: World): PaintMotion {
 		const next = { x: at.x + STEPS[side].x, y: at.y + STEPS[side].y };
 		return (same(at, from) && same(next, to)) || (same(at, to) && same(next, from));
 	};
-	const motion: PaintMotion = { kept: [], under: [], beside: [] };
+	const motion: PaintMotion = { kept: [], under: [], beside: [], repainted: [], appearing: [] };
 	for (const { x, y, cell } of placedFloors(before)) {
 		if (!cell.paint) continue;
 		const { color, passages } = cell.paint;
-		const now = cellAt(after, { x, y });
-		const stays = now?.type === 'floor' && now.paint?.color === color ? now.paint : undefined;
+		const now = paintOf(after, { x, y });
+		const stays = now?.color === color ? now : undefined;
 		if (stays) {
 			const kept = passages.filter((side) => stays.passages.includes(side));
 			motion.kept.push({ x, y, color, middle: true, passages: kept });
@@ -93,12 +110,29 @@ export function paintMotion(before: World, after: World): PaintMotion {
 		if (shows(under)) motion.under.push(under);
 		if (shows(beside)) motion.beside.push(beside);
 	}
+	for (const { x, y, cell } of placedFloors(after)) {
+		if (!cell.paint) continue;
+		const { color, passages } = cell.paint;
+		const was = paintOf(before, { x, y });
+		const stayed = was?.color === color ? was : undefined;
+		const coming = {
+			x,
+			y,
+			color,
+			middle: !stayed && !same({ x, y }, to),
+			passages: passages.filter(
+				(side) => !stayed?.passages.includes(side) && !crossed({ x, y }, side)
+			)
+		};
+		if (shows(coming)) (was ? motion.repainted : motion.appearing).push(coming);
+	}
 	return motion;
 }
 
 /**
- * How far behind its middle the paint taken away goes under the robot: inside its back, 18.75
- * units from its middle, where its rounded corners still cover the whole width of a stroke.
+ * How far behind its middle the paint taken away goes under the robot, 14 units: inside its back,
+ * which lies 18.75 units from its middle, where its rounded corners still cover the whole width
+ * of a stroke.
  */
 const CLEAN = 14;
 
@@ -125,11 +159,15 @@ export function aheadOfBack(pose: Pose, direction: Direction): Rect {
 	};
 }
 
-/** The share of the time after which the paint taken away beside the robot starts to fade. */
-const FADE_FROM = 0.7;
+/** The share of the time after which what goes beside the robot starts to fade. */
+export const FADE_FROM = 0.7;
 
-/** The opacity of the paint taken away beside the robot at `t` of the step, from 0 to 1. */
-export function besideOpacity(t: number): number {
+/**
+ * The opacity at `t` of the step, from 0 to 1, of what goes beside the robot: the paint taken
+ * away, the mark of a goal met. It fades over the last 30 % of the step, so that the last frame
+ * of the step leads to the map at rest without a jump.
+ */
+export function fadeOut(t: number): number {
 	return t < FADE_FROM ? 1 : Math.max((1 - t) / (1 - FADE_FROM), 0);
 }
 
@@ -168,8 +206,9 @@ export interface Ring extends Point {
 }
 
 /**
- * The ring of a tool put down at `t` of the step: it grows from under the robot as it fades,
- * since the robot covers the paint of its cell. Nothing for another action.
+ * The ring of a tool put down at `t` of the step: it grows from under the robot as it fades, at
+ * an even pace from the first frame, since the robot covers the paint of its cell. Nothing for
+ * another action.
  */
 export function ringAt(before: World, motion: Motion, t: number): Ring | undefined {
 	const tool = motion.after.robot.tool;
@@ -177,14 +216,13 @@ export function ringAt(before: World, motion: Motion, t: number): Ring | undefin
 		return undefined;
 	}
 	if (!tool) return undefined;
-	const grown = smooth(t);
 	const { x, y } = before.robot.position;
 	return {
 		x: x * CELL + MIDDLE,
 		y: y * CELL + MIDDLE,
 		tool: tool.type === 'brush' ? tool.color : 'eraser',
-		radius: ROBOT_HALF + 16 * grown,
-		width: 5 * (1 - grown) + 1,
-		opacity: 1 - grown
+		radius: ROBOT_HALF + 16 * t,
+		width: 5 * (1 - t) + 1,
+		opacity: 1 - t
 	};
 }

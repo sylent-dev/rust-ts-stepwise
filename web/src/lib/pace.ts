@@ -5,9 +5,6 @@
 /** The five speeds, in steps per second; the last one, **Instant**, runs without animation. */
 export const SPEEDS = [1, 2, 5, 20, Infinity] as const;
 
-/** A speed of `SPEEDS`. */
-export type Speed = (typeof SPEEDS)[number];
-
 /**
  * The share of a step owed at an animated speed, carried from a frame to the next. A run starts
  * with a whole step owed, so that its first step runs at its first frame.
