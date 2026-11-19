@@ -2,8 +2,8 @@
 // steps, played in a loop at a speed. The robot, the items and the paint are drawn over the map, so
 // that they move; the map underneath (map.js) draws the ground and the goal marks.
 
-// The animated speeds of the status bar, in steps per second (web/src/lib/pace.ts); Instant draws
-// no animation.
+// The animated speeds of the status bar, in steps per second (web/src/lib/run/pace.ts); Instant
+// draws no animation.
 const SPEEDS_ANIMATED = [1, 2, 5, 20];
 
 const ANGLES ={ north: 0, east: 90, south: 180, west: 270 };

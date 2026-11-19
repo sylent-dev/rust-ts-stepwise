@@ -42,7 +42,7 @@ Model: each step to come names its model. Fable 5.2 runs the steps whose design 
   - [x] **15c. Errors** (#61)
   - [x] **15d. Level screen** (#62)
   - [x] **15e. Messages** (#63)
-  - [ ] **15f. Layout of the interface**: a rule for `web/src/lib` and the moves it asks, the test helpers shared.
+  - [x] **15f. Layout of the interface**: a rule for `web/src/lib` and the moves it asks, the test helpers shared.
   - [ ] **15g. Stricter TypeScript**: the options beyond `strict` that the code already follows, and ESLint reading the types, so that the compiler holds what the reviews hold today.
   - [ ] **15h. Styles**: the layers named, one component for a button made of an icon, the tables that the compiler checks.
 - [ ] **16. Code editor** *(Fable 5.2 to start, then Opus 5.5)*: CodeMirror with our theme, the highlighting, the indentation rules, the errors underlined as the learner types, the line at 80 characters, the code saved per level, **Restore starting code**; the menu **Edit** with the commands of the editor. It first settles, with Fable 5.2, the command of a screen, where the words of the language come out of the core, where the highlighting comes from and what a cleanup may read of `fromCore` (see [Quality audit](docs/quality-audit.md#to-settle-first-by-step)).

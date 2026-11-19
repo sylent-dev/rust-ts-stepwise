@@ -19,7 +19,7 @@ The reference of the animations of the map is the mock-up, `docs/mockups/world-e
 ## Scope
 
 1. Run `git fetch origin`, then `git diff origin/main...HEAD` and `git log origin/main..HEAD --oneline`. Compare with `origin/main`, not the local `main`.
-2. Review the code of the deliverable that animates something: the map and the robot (`web/src/lib/map/`), what plays a program (`web/src/lib/playback.svelte.ts`, `web/src/lib/pace.ts`), the transitions and keyframes of the components and of `web/src/lib/styles/`. Read the code around a change when needed.
+2. Review the code of the deliverable that animates something: the map and the robot (`web/src/lib/map/`), what plays a program (`web/src/lib/run/`), the transitions and keyframes of the components and of `web/src/lib/styles/`. Read the code around a change when needed.
 3. When `web/` changed, run `npm test` from `web/`.
 4. When the prompt gives the address of a development server, you may open its pages in a headless browser with Playwright, installed in `~/.local/share/mockup-tools` (see `.claude/skills/html-mockups/scripts/screenshot.cjs`), to measure: captures at given times, the frames an action lasts. Never start or stop a server yourself, and delete your captures once looked at.
 
