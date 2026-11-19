@@ -127,6 +127,10 @@
 		<p>{t('bench-steps', { count: playback.steps })}</p>
 		{#if playback.outcome?.type === 'failed'}
 			<p role="status">{t('bench-failed', { line: playback.outcome.error.span.line })}</p>
+		{:else if playback.outcome?.type === 'passed'}
+			<p role="status">{t('bench-passed')}</p>
+		{:else if playback.outcome?.type === 'goals-not-met'}
+			<p role="status">{t('bench-goals-not-met')}</p>
 		{:else if playback.ended}
 			<p role="status">{t('bench-ended')}</p>
 		{/if}

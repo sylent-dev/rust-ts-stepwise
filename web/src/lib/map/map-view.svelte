@@ -2,10 +2,11 @@
      `side` pixels wide (see Map and Look of the world in specs.md). The drawings of the world
      elements are stacked in their cells; the map draws the rest from the cells: the lines every
      five cells, the paint strokes and the shadows of the walls. While a step runs, the map draws
-     the world as the step found it, its robot moving, its paint changing and its items carried
+     the world as the step found it, its robot moving, its paint changing and its items carried;
+     once the run has ended, the eyes of the robot and the flags of the goals not met say how
      (see Animations). -->
 <script lang="ts">
-	import type { Goals, World } from '#lib/core.ts';
+	import type { Goals, Outcome, World } from '#lib/core.ts';
 	import { t } from '#lib/i18n.ts';
 	import { carryAt } from './carry-motion.ts';
 	import Element from './element.svelte';
@@ -16,6 +17,7 @@
 	import { fadeOut, paintMotion, paintParts } from './paint-motion.ts';
 	import PaintStroke from './paint-stroke.svelte';
 	import Robot from './robot.svelte';
+	import { eyesOf, FLAG_FOOT, flagSize, missedCells } from './run-end.ts';
 
 	interface Props {
 		/** The world at rest, or as the step under way found it. */
@@ -28,15 +30,19 @@
 		motion?: Motion;
 		/** How far the step under way has gone, from 0 to 1. */
 		progress?: number;
+		/** How the run ended, once its last action has ended; nothing until then. */
+		outcome?: Outcome;
 	}
 
-	let { world, goals, side, motion, progress = 0 }: Props = $props();
+	let { world, goals, side, motion, progress = 0, outcome }: Props = $props();
 
 	/** Built once per step, not at each frame of its animation. */
 	const paint = $derived(motion && paintMotion(world, motion.after));
 	const strokes = $derived(paint?.kept ?? paintParts(world));
 	const pose = $derived(motion ? poseAt(world.robot, motion, progress) : restingPose(world.robot));
-	const carry = $derived(carryAt(world, motion?.action, progress));
+	const carry = $derived(carryAt(world, motion?.action, progress, motion?.lessMotion));
+	const eyes = $derived(eyesOf(outcome));
+	const flags = $derived(missedCells(outcome));
 	/** Whether the item of a cell shows: the one of the cell of the robot comes and goes with it. */
 	const itemShows = (x: number, y: number, item: boolean): boolean =>
 		x === world.robot.position.x && y === world.robot.position.y ? carry.floor : item;
@@ -142,7 +148,20 @@
 		{/if}
 	{/each}
 
-	<Robot {pose} {carry} />
+	<Robot {pose} {carry} {eyes} />
+
+	<!-- Over the robot, planted from the foot of their pole, one after the other. -->
+	{#each flags as { x, y }, index (`${x},${y}`)}
+		{@const size = flagSize(motion, progress, index, flags.length)}
+		{#if size > 0}
+			<g
+				transform="translate({x * CELL + FLAG_FOOT.x} {y * CELL +
+					FLAG_FOOT.y}) scale({size}) translate({-FLAG_FOOT.x} {-FLAG_FOOT.y})"
+			>
+				<Element name="goalMissed" />
+			</g>
+		{/if}
+	{/each}
 </svg>
 
 <style>

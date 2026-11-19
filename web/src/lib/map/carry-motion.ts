@@ -37,6 +37,8 @@ export interface Carry {
 	pincer: number;
 	/** The size of the item of its bay, as a share of the item on the floor; nothing when empty. */
 	bay?: number;
+	/** How much the item of its bay shows, as it fades in or out, from 0 to 1; whole when absent. */
+	bayOpacity?: number;
 	/** The item its pincer holds, if any. */
 	held?: Held;
 	/** Whether an item lies on its cell, under it. */
@@ -61,8 +63,16 @@ function tried(t: number): number {
  * When the action fails, its pincer comes out empty (nothing to pick up, nothing to drop), its
  * full bay swells (an item already carried), or the item comes out of the bay and goes back into
  * it (an item already on the cell). At rest, and for another action, nothing moves.
+ *
+ * With less motion, the pincer stays in: the item fades into the bay, or out of it, the robot
+ * covering the item of its cell; an action that fails shows nothing.
  */
-export function carryAt(before: World, action: Action | undefined, t: number): Carry {
+export function carryAt(
+	before: World,
+	action: Action | undefined,
+	t: number,
+	lessMotion = false
+): Carry {
 	const { position, carrying } = before.robot;
 	const cell = cellAt(before, position);
 	const rest: Carry = {
@@ -70,6 +80,7 @@ export function carryAt(before: World, action: Action | undefined, t: number): C
 		bay: carrying ? IN_BAY : undefined,
 		floor: cell?.type === 'floor' && cell.item
 	};
+	if (lessMotion) return fadedAt(rest, action, t);
 	switch (action) {
 		case 'picked-up': {
 			const way = smoothBetween(t, 0.4, 0.8);
@@ -114,6 +125,18 @@ export function carryAt(before: World, action: Action | undefined, t: number): C
 				held: out ? { along: lerp(BAY, HELD_BACK, way), size: lerp(IN_BAY, 0.85, way) } : undefined
 			};
 		}
+		default:
+			return rest;
+	}
+}
+
+/** What the robot does with an item with less motion: the item fades into the bay, or out of it. */
+function fadedAt(rest: Carry, action: Action | undefined, t: number): Carry {
+	switch (action) {
+		case 'picked-up':
+			return { pincer: 0, bay: IN_BAY, bayOpacity: t, floor: false };
+		case 'dropped':
+			return { pincer: 0, bay: IN_BAY, bayOpacity: 1 - t, floor: t >= 1 };
 		default:
 			return rest;
 	}

@@ -2,7 +2,7 @@
 
 import { readFileSync } from 'node:fs';
 import { afterAll, describe, expect, it } from 'vitest';
-import { initSync, Sandbox } from '#lib/wasm/stepwise.js';
+import { initSync, Level, Sandbox } from '#lib/wasm/stepwise.js';
 import { Playback, type PlaybackOptions } from './playback.svelte.ts';
 
 initSync({ module: readFileSync(new URL('./wasm/stepwise_bg.wasm', import.meta.url)) });
@@ -19,14 +19,31 @@ robot = { at = [0, 0], facing = "east" }
 const sandbox = new Sandbox(CORRIDOR);
 /** The same corridor, an item on its second cell. */
 const withItem = new Sandbox(`${CORRIDOR}items = [[1, 0]]\n`);
+/** The same corridor in a level, whose goal is to stand on its second cell. */
+const level = new Level(`version = 1
+starting_code = ''
+
+[[maps]]
+terrain = '....'
+robot = { at = [0, 0], facing = "east" }
+
+[maps.goals]
+robot_at = [1, 0]
+`);
 afterAll(() => {
 	sandbox.free();
 	withItem.free();
+	level.free();
 });
 
 /** Plays `program` in the corridor, at the normal speed: 2 steps per second, 300 ms a move. */
 function play(program: string, options?: PlaybackOptions): Playback {
 	return new Playback(() => sandbox.start(program), options);
+}
+
+/** Plays `program` on the map of the level, at the normal speed. */
+function playLevel(program: string, options?: PlaybackOptions): Playback {
+	return new Playback(() => level.start(0, program), options);
 }
 
 /** A clock for **Instant** that moves on a millisecond each time it is read. */
@@ -345,5 +362,136 @@ describe('a program played on the map', () => {
 		expect(playback.outcome).toEqual({ type: 'ended' });
 		playback.reset();
 		expect(playback.outcome).toBeUndefined();
+	});
+
+	it('records whether the learner asked for less motion as each step starts', () => {
+		let less = false;
+		using playback = play('forward()\nforward()\n', { lessMotion: () => less });
+		playback.play();
+		playback.tick(0);
+		expect(playback.motion?.lessMotion).toBe(false);
+		less = true;
+		playback.tick(510);
+		expect(playback.motion?.lessMotion).toBe(true);
+	});
+
+	it('shows a pick_up() that fails by its error alone with less motion', () => {
+		using playback = play('pick_up()\n', { lessMotion: () => true });
+		playback.play();
+		expect(playback.tick(0)).toBe(false);
+		expect({ motion: playback.motion, type: playback.outcome?.type }).toEqual({
+			motion: undefined,
+			type: 'failed'
+		});
+	});
+});
+
+describe('the end of a run', () => {
+	it('plays once the last action has ended, the program ended', () => {
+		using playback = playLevel('forward()\n');
+		playback.play();
+		playback.tick(0);
+		expect(playback.outcome).toBeUndefined();
+		playback.tick(300);
+		expect({
+			action: playback.motion?.action,
+			outcome: playback.outcome,
+			status: playback.status
+		}).toEqual({ action: 'passed', outcome: { type: 'passed' }, status: 'ended' });
+		playback.tick(750);
+		expect(playback.progress).toBe(0.5);
+		expect(playback.tick(1200)).toBe(false);
+		expect({ motion: playback.motion, outcome: playback.outcome }).toEqual({
+			motion: undefined,
+			outcome: { type: 'passed' }
+		});
+	});
+
+	it('plays at once after a last step without action, for a goal not met too', () => {
+		using playback = playLevel('stop_painting()\n');
+		playback.play();
+		playback.tick(0);
+		expect({ action: playback.motion?.action, type: playback.outcome?.type }).toEqual({
+			action: 'goals-not-met',
+			type: 'goals-not-met'
+		});
+		playback.tick(450);
+		expect(playback.progress).toBe(0.5);
+	});
+
+	it('keeps its whole time at 20 steps per second', () => {
+		using playback = playLevel('forward()\n');
+		playback.rate = 20;
+		playback.play();
+		playback.tick(0);
+		playback.tick(40);
+		expect(playback.motion?.action).toBe('passed');
+		playback.tick(490);
+		expect(playback.progress).toBe(0.5);
+	});
+
+	it('shows at once at Instant, and as at the slowest speed after a Step', () => {
+		using instant = playLevel('forward()\n', { now: ticking() });
+		instant.rate = Infinity;
+		instant.play();
+		expect(instant.tick(0)).toBe(false);
+		expect({ motion: instant.motion, type: instant.outcome?.type }).toEqual({
+			motion: undefined,
+			type: 'passed'
+		});
+		using stepped = playLevel('forward()\n');
+		stepped.rate = Infinity;
+		stepped.step();
+		stepped.tick(0);
+		stepped.tick(300);
+		expect(stepped.motion?.action).toBe('passed');
+		stepped.tick(750);
+		expect(stepped.progress).toBe(0.5);
+	});
+
+	it('plays after the last action that a pause let end', () => {
+		using playback = playLevel('forward()\n');
+		playback.play();
+		playback.tick(0);
+		playback.pause();
+		playback.tick(300);
+		expect({ action: playback.motion?.action, status: playback.status }).toEqual({
+			action: 'passed',
+			status: 'ended'
+		});
+	});
+
+	it('takes no time with less motion, the map showing it at once', () => {
+		using playback = playLevel('forward()\n', { lessMotion: () => true });
+		playback.play();
+		playback.tick(0);
+		expect(playback.tick(300)).toBe(false);
+		expect({ motion: playback.motion, type: playback.outcome?.type }).toEqual({
+			motion: undefined,
+			type: 'passed'
+		});
+	});
+
+	it('stops when the map is put back, on Run, Step or Reset', () => {
+		for (const command of ['play', 'step', 'reset'] as const) {
+			using playback = playLevel('forward()\n');
+			playback.play();
+			playback.tick(0);
+			playback.tick(300);
+			playback[command]();
+			expect({ motion: playback.motion, outcome: playback.outcome, line: playback.line }).toEqual({
+				motion: undefined,
+				outcome: undefined,
+				line: 1
+			});
+		}
+	});
+
+	it('plays nothing in the sandbox, which has no goal', () => {
+		using playback = play('forward()\n');
+		playback.play();
+		playback.tick(0);
+		expect(playback.tick(300)).toBe(false);
+		expect(playback.motion).toBeUndefined();
 	});
 });

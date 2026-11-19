@@ -1,11 +1,20 @@
 // A program played on the map (see Running a program and Animations in specs.md): its steps run
 // at the pace of the speed chosen, the action of each one is animated on the map, and the line
 // of the next step is highlighted once that action has ended, so that a line stays lit while the
-// robot does what it says. Written for the bench of step 14b; the running of step 17 takes it
-// over. It knows nothing of the clock: the page calls `tick` at each animation frame.
+// robot does what it says; then the robot shows how the run ended. Written for the bench of step
+// 14b; the running of step 17 takes it over. It knows nothing of the clock: the page calls `tick`
+// at each animation frame.
 
 import type { Outcome, Run, StepEvent, World } from '#lib/core.ts';
-import { actionTime, isAnimated, robotFailure, type Action, type Motion } from '#lib/map/motion.ts';
+import {
+	actionTime,
+	isAnimated,
+	isRunEnd,
+	robotFailure,
+	runEnd,
+	type Action,
+	type Motion
+} from '#lib/map/motion.ts';
 import { paceFrame, runInstant, SPEEDS, START_CARRY } from '#lib/pace.ts';
 
 /** The time an **Instant** frame spends running steps, so that the page still draws. */
@@ -24,18 +33,35 @@ const SLOWEST_SPEED = SPEEDS[0];
 export type PlaybackStatus = 'ready' | 'running' | 'paused' | 'ended';
 
 export interface PlaybackOptions {
-	/** The time an action takes at a speed, in steps per second: `actionTime` by default. */
-	timeAt?: (action: Action, rate: number) => number;
+	/**
+	 * The time an action takes at a speed, in steps per second, with full motion or less of it:
+	 * `actionTime` by default.
+	 */
+	timeAt?: (action: Action, rate: number, lessMotion: boolean) => number;
 	/** The clock that an **Instant** frame reads: `performance.now` by default. */
 	now?: () => number;
+	/**
+	 * Whether the learner asks their system for less motion, read as each step starts: the
+	 * setting of the system by default (`prefers-reduced-motion`).
+	 */
+	lessMotion?: () => boolean;
+}
+
+/** Whether the system asks for less motion, at each call; never where there is no window. */
+function systemLessMotion(): () => boolean {
+	const query = globalThis.matchMedia?.('(prefers-reduced-motion: reduce)');
+	return () => query?.matches ?? false;
 }
 
 export class Playback {
 	/** The world at rest, or as the step under way found it, which the map draws. */
 	world: World;
-	/** The step under way, which the map animates; nothing at rest. */
+	/**
+	 * The step under way, which the map animates, or the end of the run after its last step;
+	 * nothing at rest.
+	 */
 	motion = $state.raw<Motion>();
-	/** How far the step under way has gone, from 0 to 1. */
+	/** How far the step under way, or the end of the run, has gone, from 0 to 1. */
 	progress = $state(0);
 	/** The line highlighted, the one of the next step; nothing once the program has stopped. */
 	line = $state<number>();
@@ -45,15 +71,16 @@ export class Playback {
 	steps = $state(0);
 	/**
 	 * Whether the program runs, rather than waits for **Run** or **Step**: until its last action
-	 * has ended.
+	 * has ended, the end of the run playing afterwards.
 	 */
 	running = $state(false);
 	/** The speed, in steps per second; `Infinity` for **Instant**. */
 	rate = $state<number>(NORMAL_SPEED);
 
 	readonly #start: () => Run;
-	readonly #timeAt: (action: Action, rate: number) => number;
+	readonly #timeAt: (action: Action, rate: number, lessMotion: boolean) => number;
 	readonly #now: () => number;
+	readonly #lessMotion: () => boolean;
 	#run: Run;
 	/** The time of the frame before, for the pace; nothing before the first frame of a run. */
 	#last: number | undefined;
@@ -68,11 +95,16 @@ export class Playback {
 	/** Plays the run that `start` gives, paused before its first step. */
 	constructor(
 		start: () => Run,
-		{ timeAt = actionTime, now = () => performance.now() }: PlaybackOptions = {}
+		{
+			timeAt = actionTime,
+			now = () => performance.now(),
+			lessMotion = systemLessMotion()
+		}: PlaybackOptions = {}
 	) {
 		this.#start = start;
 		this.#timeAt = timeAt;
 		this.#now = now;
+		this.#lessMotion = lessMotion;
 		this.#run = start();
 		this.world = $state.raw(this.#run.world());
 		this.#showLine();
@@ -109,8 +141,8 @@ export class Playback {
 	/**
 	 * Runs one step while the program waits, its action played as at the slowest speed, so that
 	 * it is seen whatever the speed. An action still under way ends at once, and nothing more runs
-	 * when it was the last one. Once the program has ended, it puts the map back and waits on the
-	 * first step, as before the program started.
+	 * when it was the last one: the end of the run plays then. Once the program has ended, it puts
+	 * the map back and waits on the first step, as before the program started.
 	 */
 	step(): void {
 		if (this.running) return;
@@ -157,7 +189,7 @@ export class Playback {
 			this.#motionStart ??= time;
 			const progress = (time - this.#motionStart) / this.#motionTime;
 			if (progress >= 1) {
-				this.#endMotion();
+				this.#endMotion(time);
 			} else {
 				this.progress = progress;
 			}
@@ -186,9 +218,14 @@ export class Playback {
 			}
 			this.#last = time;
 		}
-		// The program runs until its last action has ended.
-		if (this.running && this.#run.line === undefined && !this.motion) this.running = false;
+		// The program runs until its last action has ended; the end of the run plays afterwards.
+		if (this.running && this.#run.line === undefined && !this.#stepUnderWay) this.running = false;
 		return this.running || this.motion !== undefined;
+	}
+
+	/** Whether the action of a step is under way, rather than the end of the run or nothing. */
+	get #stepUnderWay(): boolean {
+		return this.motion !== undefined && !isRunEnd(this.motion.action);
 	}
 
 	/**
@@ -202,15 +239,21 @@ export class Playback {
 		const event = this.#run.step();
 		this.steps = this.#run.steps;
 		const action = this.#actionOf(event);
-		const time = action ? this.#timeAt(action, rate) : 0;
+		const lessMotion = this.#lessMotion();
+		const time = action ? this.#timeAt(action, rate, lessMotion) : 0;
 		if (action && time > 0) {
-			this.motion = { action, after: this.#run.world() };
-			this.#motionStart = start;
-			this.#motionTime = time;
-			this.progress = 0;
+			this.#animate({ action, after: this.#run.world(), lessMotion }, start, time);
 		} else {
-			this.#rest(event !== 'nothing' && event !== 'printed');
+			this.#rest(event !== 'nothing' && event !== 'printed', start);
 		}
+	}
+
+	/** Animates `motion` for `time` milliseconds from `start`, or from the frame that draws it first. */
+	#animate(motion: Motion, start: number | undefined, time: number): void {
+		this.motion = motion;
+		this.#motionStart = start;
+		this.#motionTime = time;
+		this.progress = 0;
 	}
 
 	/**
@@ -233,20 +276,43 @@ export class Playback {
 		this.#rest(true);
 	}
 
-	/** Ends the action under way at once, the map as the step left it. */
-	#endMotion(): void {
-		if (!this.motion) return;
-		this.world = this.motion.after;
+	/**
+	 * Ends the action under way at once, the map as the step left it, then plays the end of the
+	 * run from `time` when it was the last step; ends the end of the run at once too.
+	 */
+	#endMotion(time?: number): void {
+		const motion = this.motion;
+		if (!motion) return;
+		this.world = motion.after;
 		this.motion = undefined;
 		this.progress = 0;
 		this.#showLine();
+		if (!isRunEnd(motion.action)) this.#showEnd(time);
 	}
 
-	/** Shows the run at rest, the world read again when the step may have changed it. */
-	#rest(changed: boolean): void {
+	/**
+	 * Shows the run at rest, the world read again when the step may have changed it, then plays
+	 * the end of the run from `start` when it was the last step.
+	 */
+	#rest(changed: boolean, start?: number): void {
 		if (changed) this.world = this.#run.world();
 		this.#showLine();
 		this.steps = this.#run.steps;
+		this.#showEnd(start);
+	}
+
+	/**
+	 * Once the last action has ended, plays from `start` how the run ended: its whole time while the
+	 * program runs at an animated speed, as at the slowest speed after a **Step** or a pause, and
+	 * nothing at **Instant**, where the map shows the end at once. The map then reads it from
+	 * `outcome`.
+	 */
+	#showEnd(start: number | undefined): void {
+		const end = runEnd(this.outcome);
+		if (!end) return;
+		const lessMotion = this.#lessMotion();
+		const time = this.#timeAt(end, this.running ? this.rate : SLOWEST_SPEED, lessMotion);
+		if (time > 0) this.#animate({ action: end, after: this.world, lessMotion }, start, time);
 	}
 
 	/** Highlights the line of the next step, or tells how the program stopped. */

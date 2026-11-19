@@ -67,4 +67,34 @@ describe('carryAt', () => {
 		expect(at(0.29).held?.along).toBeLessThan(0);
 		expect(at(0.5)).toMatchObject({ bay: IN_BAY, held: undefined, floor: true });
 	});
+
+	describe('with less motion', () => {
+		it('fades the item into the bay, the pincer in', () => {
+			const before = world(false, true);
+			expect(carryAt(before, 'picked-up', 0.25, true)).toEqual({
+				pincer: 0,
+				bay: IN_BAY,
+				bayOpacity: 0.25,
+				floor: false
+			});
+		});
+
+		it('fades the item out of the bay, onto the cell under the robot', () => {
+			const before = world(true, false);
+			expect(carryAt(before, 'dropped', 0.25, true)).toEqual({
+				pincer: 0,
+				bay: IN_BAY,
+				bayOpacity: 0.75,
+				floor: false
+			});
+			expect(carryAt(before, 'dropped', 1, true).floor).toBe(true);
+		});
+
+		it('shows nothing of an action that fails', () => {
+			const before = world(true, true);
+			for (const action of ['already-carrying', 'item-already-here'] as const) {
+				expect(carryAt(before, action, 0.3, true)).toEqual(carryAt(before, undefined, 0.3));
+			}
+		});
+	});
 });

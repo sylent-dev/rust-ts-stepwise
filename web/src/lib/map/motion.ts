@@ -1,6 +1,6 @@
 // The animation of a step on the map (see Animations in specs.md): which actions the map
-// animates, how long they take at each speed, and where the robot stands at each moment. The
-// reference is the mock-up, `docs/mockups/world-elements/motion.js`.
+// animates, how long they take at each speed, and where the robot stands at each moment, with
+// full motion or less of it. The reference is the mock-up, `docs/mockups/world-elements/motion.js`.
 
 import type { Direction, Outcome, Robot, RuntimeErrorKind, StepEvent, World } from '#lib/core.ts';
 import { clamp01, easeOut, overshoot, smooth, smoothBetween } from './easing.ts';
@@ -27,8 +27,17 @@ export type RobotFailure = Extract<
 	'bump' | 'already-carrying' | 'no-item-here' | 'not-carrying' | 'item-already-here'
 >;
 
-/** What the map animates in a step: an action of the robot, or the one it failed. */
-export type Action = AnimatedEvent | RobotFailure;
+/**
+ * The ends of a run that the robot shows, once its last action has ended: every goal met, or a
+ * goal not met. A run of the sandbox, which has no goal, and a run stopped on an error show none.
+ */
+export type RunEnd = Extract<Outcome['type'], 'passed' | 'goals-not-met'>;
+
+/**
+ * What the map animates: the action of a step, the one the robot failed, or the end of the run
+ * after its last step.
+ */
+export type Action = AnimatedEvent | RobotFailure | RunEnd;
 
 /**
  * The time each action of the program that the map animates takes at the normal speed, 2 steps
@@ -59,6 +68,16 @@ const FAILURE_TIMES = {
 } as const satisfies Record<RobotFailure, number>;
 
 /**
+ * The time each end of a run takes, at every animated speed, since no step waits after it: the
+ * eyes and a hop, or the eyes, a shake of the head and the flags, 900 ms. The success panel of a
+ * level appears after it (step 21).
+ */
+const END_TIMES = {
+	passed: 900,
+	'goals-not-met': 900
+} as const satisfies Record<RunEnd, number>;
+
+/**
  * Whether the map animates what a step showed. A line without action, a line printed and a tool
  * lifted show nothing: the highlighted line moves on at once.
  */
@@ -81,13 +100,29 @@ export function robotFailure(outcome: Outcome | undefined): RobotFailure | undef
 	return isFailure(code) ? code : undefined;
 }
 
+/** Whether an action is the end of a run, rather than a step. */
+export function isRunEnd(action: Action): action is RunEnd {
+	return Object.hasOwn(END_TIMES, action);
+}
+
+/** The end of a run that the robot shows; nothing for the sandbox, an error, or a run under way. */
+export function runEnd(outcome: Outcome | undefined): RunEnd | undefined {
+	return outcome?.type === 'passed' || outcome?.type === 'goals-not-met' ? outcome.type : undefined;
+}
+
 /**
- * The step under way on the map: its action, and the world as the step leaves it. The world as
- * the step found it is the one the map draws meanwhile; an error of the robot leaves it as it was.
+ * What the map animates, a step or the end of the run: its action, and the world as it leaves it.
+ * The world as the step found it is the one the map draws meanwhile; an error of the robot and the
+ * end of a run leave it as it was.
  */
 export interface Motion {
 	action: Action;
 	after: World;
+	/**
+	 * Whether the learner asked their system for less motion when it started: nothing bounces nor
+	 * shakes (see Animations in specs.md).
+	 */
+	lessMotion?: boolean;
 }
 
 /**
@@ -99,13 +134,16 @@ const ACTION_SHARE = 0.8;
 /**
  * The time `action` takes at `rate` steps per second: the one of the normal speed, shortened when
  * a step is shorter, so that the robot still rests a moment between two steps. An error of the
- * robot keeps its whole time at every animated speed: it stops the program, so no step waits
- * after it.
- * Nothing at **Instant**, which draws no animation.
+ * robot and the end of a run keep their whole time at every animated speed: no step waits after
+ * them. Nothing at **Instant**, which draws no animation.
+ *
+ * With less motion, a `pick_up()` or a `drop()` that fails is shown by its error alone, and the
+ * end of a run by the eyes and the flags alone: both take no time, the bump keeps its own.
  */
-export function actionTime(action: Action, rate: number): number {
+export function actionTime(action: Action, rate: number, lessMotion = false): number {
 	if (!Number.isFinite(rate)) return 0;
-	if (isFailure(action)) return FAILURE_TIMES[action];
+	if (isRunEnd(action)) return lessMotion ? 0 : END_TIMES[action];
+	if (isFailure(action)) return lessMotion && action !== 'bump' ? 0 : FAILURE_TIMES[action];
 	return Math.min(EVENT_TIMES[action], (ACTION_SHARE * 1000) / rate);
 }
 
@@ -115,6 +153,8 @@ export interface Pose {
 	y: number;
 	/** In degrees, clockwise from the north, which the drawing of the robot faces. */
 	angle: number;
+	/** How high it is in a hop, from 0, on the floor, to 1; on the floor when absent. */
+	lift?: number;
 }
 
 const ANGLES: Readonly<Record<Direction, number>> = { north: 0, east: 90, south: 180, west: 270 };
@@ -157,17 +197,45 @@ function touching(t: number): number {
 	return t < 0.3 ? TOUCH * (t / 0.3) ** 2 : TOUCH * (1 - easeOut(clamp01((t - 0.3) / 0.4)));
 }
 
+/** The share of the end of a run that the hop takes, the robot resting afterwards. */
+const HOP_SHARE = 0.55;
+
+/** The share of the end of a run that the shake of the head takes, the flags coming after it. */
+export const HEAD_SHAKE_SHARE = 0.6;
+
+/** The robot at `t` of the end of a run: up and down once, in the hop, then on the floor. */
+function hopped(pose: Pose, t: number): Pose {
+	if (t >= HOP_SHARE) return pose;
+	return { ...pose, lift: Math.sin((Math.PI * clamp01(t)) / HOP_SHARE) };
+}
+
+/**
+ * The robot that shakes its head at a goal not met: two wobbles of 12°, slower and wider than the
+ * shake of an error, that die out a little.
+ */
+function headShaken(pose: Pose, t: number): Pose {
+	if (t >= HEAD_SHAKE_SHARE) return pose;
+	const u = clamp01(t / HEAD_SHAKE_SHARE);
+	return { ...pose, angle: pose.angle + 12 * Math.sin(Math.PI * 4 * u) * (1 - 0.4 * u) };
+}
+
 /**
  * Where `robot`, as the step found it, stands at `t` of the step, from 0 to 1: it slides to the
  * next cell, starting and stopping gently; it turns a quarter, going 4.5° past it before it
  * settles back; it stays on its cell while it puts a tool down; it steps back a quarter of a cell
  * and rolls back onto its cell to pick up or drop an item. A bump sends it forward until its front
  * touches the border of its cell, then back onto it shaking its body; a `pick_up()` or a `drop()`
- * that fails steps back and rolls back as one that works, then shakes.
+ * that fails steps back and rolls back as one that works, then shakes. At the end of a run, it
+ * hops once when every goal is met, and shakes its head when one isn't.
+ *
+ * With less motion, nothing bounces nor shakes: a turn stops gently without going past its end,
+ * the robot stays on its cell to pick up or drop an item, and a bump only touches the border.
  */
 export function poseAt(robot: Robot, motion: Motion, t: number): Pose {
 	const rest = restingPose(robot);
 	const { direction } = robot;
+	const full = motion.lessMotion !== true;
+	const turned = full ? overshoot(t) : smooth(t);
 	switch (motion.action) {
 		case 'moved': {
 			const to = motion.after.robot.position;
@@ -175,27 +243,35 @@ export function poseAt(robot: Robot, motion: Motion, t: number): Pose {
 			return { ...rest, x: rest.x + (to.x - rest.x) * way, y: rest.y + (to.y - rest.y) * way };
 		}
 		case 'turned-left':
-			return { ...rest, angle: rest.angle - 90 * overshoot(t) };
+			return { ...rest, angle: rest.angle - 90 * turned };
 		case 'turned-right':
-			return { ...rest, angle: rest.angle + 90 * overshoot(t) };
+			return { ...rest, angle: rest.angle + 90 * turned };
 		case 'started-painting':
 		case 'started-erasing':
 			return rest;
 		case 'picked-up':
 		case 'dropped':
+			if (!full) return rest;
 			return ahead(
 				rest,
 				direction,
 				-STEP_BACK * (smoothBetween(t, 0, 0.3) - smoothBetween(t, 0.7, 1))
 			);
-		case 'bump':
-			return shaken(ahead(rest, direction, touching(t)), t, 0.3);
+		case 'bump': {
+			const touched = ahead(rest, direction, touching(t));
+			return full ? shaken(touched, t, 0.3) : touched;
+		}
 		case 'already-carrying':
 		case 'no-item-here':
 		case 'not-carrying':
 		case 'item-already-here': {
+			if (!full) return rest;
 			const back = smoothBetween(t, 0, 0.2) - smoothBetween(t, 0.45, 0.6);
 			return shaken(ahead(rest, direction, -STEP_BACK * back), t, 0.6);
 		}
+		case 'passed':
+			return full ? hopped(rest, t) : rest;
+		case 'goals-not-met':
+			return full ? headShaken(rest, t) : rest;
 	}
 }

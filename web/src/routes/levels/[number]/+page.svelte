@@ -64,6 +64,7 @@
 			{goals}
 			motion={playback?.motion}
 			progress={playback?.progress}
+			outcome={playback?.outcome}
 		/>
 	{/snippet}
 </LevelScreen>
