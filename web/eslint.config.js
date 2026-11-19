@@ -20,7 +20,7 @@ const gitignorePath = path.resolve(import.meta.dirname, '.gitignore');
  */
 function leavesItsFolder(allowed) {
 	return {
-		regex: String.raw`^(?!${allowed}$)(\.\./|\./[^/]+/)`,
+		regex: String.raw`^(?!(?:${allowed})$)(\.\./|\./[^/]+/)`,
 		message:
 			'A relative path names a file of the same folder (`./name.ts`). Write `#lib/<folder>/<file>` for another folder; `src/lib` never imports a route.'
 	};
@@ -47,13 +47,15 @@ const ANY_FOLDER = {
 };
 
 /**
- * Its own folder named by `#lib/`, where a relative path says that a file is a neighbor.
+ * Its own folder named by `#lib/`, where a relative path says that a file is a neighbor. With the
+ * relative paths that stay in their folder, it leaves a sub-folder no way to import its parent: a
+ * folder of `src/lib` is flat.
  * @param {string} folder
  */
 function itsOwnFolder(folder) {
 	return {
 		regex: `^#lib/${folder}/`,
-		message: `A file of \`${folder}/\` names its neighbors by a relative path (\`./name.ts\`).`
+		message: `A file of \`${folder}/\` names its neighbors by a relative path (\`./name.ts\`). A folder of \`src/lib\` holds no sub-folder: a domain that grows becomes two folders.`
 	};
 }
 
@@ -82,6 +84,11 @@ const PAGE_IMPORTS_MORE = otherFolders(
 	'page',
 	['styles'],
 	'`page/` imports `styles/` and the root of `src/lib` alone: `core/` imports it, so it imports neither the core nor a screen.'
+);
+const STYLES_IMPORT_MORE = otherFolders(
+	'styles',
+	[],
+	'`styles/` imports the root of `src/lib` alone: `page/` imports it, so it imports no folder.'
 );
 
 /** The folders of `src/lib`, read from the disk: a new one is held without being listed here. */
@@ -145,14 +152,21 @@ export default defineConfig(
 					message:
 						'Write an address as what follows the root of the website: `resolve(`levels/${number}`)`.'
 				},
-				// The layout is checked on the imports written with `import … from` alone.
+				// The layout is checked on the imports written with `import … from` alone: a file of
+				// the project is imported no other way, a package as one likes. A test that replaces
+				// a module names it by a text (`vi.mock('./core.ts', …)`), not by `import()`.
 				{
 					selector: 'ImportExpression[source.value=/^(#lib|\\.)/]',
 					message:
 						'Import a file of the project with `import … from`: the layout of `src/lib` is checked on those imports alone.'
 				},
 				{
-					selector: 'TSImportType',
+					selector: 'ImportExpression > TemplateLiteral',
+					message:
+						'Import a file of the project with `import … from`, and a package by its name between quotes: the layout of `src/lib` is checked on those imports alone.'
+				},
+				{
+					selector: 'TSImportType[source.value=/^(#lib|\\.)/]',
 					message:
 						'Write `import type … from`: the layout of `src/lib` is checked on those imports alone.'
 				}
@@ -193,5 +207,9 @@ export default defineConfig(
 		files: ['src/lib/page/**'],
 		ignores: ['**/*.spec.ts'],
 		rules: refuse(LEAVES_ITS_FOLDER, GENERATED_MODULE, itsOwnFolder('page'), PAGE_IMPORTS_MORE)
+	},
+	{
+		files: ['src/lib/styles/**'],
+		rules: refuse(LEAVES_ITS_FOLDER, GENERATED_MODULE, itsOwnFolder('styles'), STYLES_IMPORT_MORE)
 	}
 );
