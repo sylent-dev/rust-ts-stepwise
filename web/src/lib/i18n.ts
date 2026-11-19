@@ -82,15 +82,16 @@ for (const error of errors) {
 }
 
 /**
- * The text of a message of the interface, in English for now. Its name is written as it is
- * (`t('settings-title')`) or built by the function of its family (`t(themeMessage(theme))`),
- * never in another way: the test of the names reads the calls.
+ * The text of a message of the interface, in English for now. Its name is written as it is,
+ * between quotes, or built by the function of its family (`themeMessage`), and `t` is always
+ * called, under its own name, never renamed nor given as a value: the test of the names reads the
+ * calls as they are written (messages.spec.ts).
  */
 export function t(id: string, args?: MessageArguments): string {
 	return formatMessage(bundle, id, args);
 }
 
-/** The text of a message of the interface on both sides of its value `value`. */
+/** The text of a message of the interface on both sides of its value `value`; named as for `t`. */
 export function tAround(
 	id: string,
 	value: string,
@@ -101,7 +102,8 @@ export function tAround(
 
 /**
  * The text of a message whose name comes from outside the code, or nothing when the interface has
- * no such message: the page itself names its texts (src/app.html). A name of the code goes to `t`.
+ * no such message: the page itself names its texts (src/app.html), and takes this function as it
+ * is. A name of the code goes to `t`.
  */
 export function findMessage(id: string): string | undefined {
 	return bundle.hasMessage(id) ? formatMessage(bundle, id) : undefined;

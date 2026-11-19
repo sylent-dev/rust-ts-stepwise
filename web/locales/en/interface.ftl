@@ -14,7 +14,7 @@
 ###   where a message is and what it is there, not what its text says, which may change.
 ### - A family is the messages whose names hold a name of the data: the name of a theme, of a
 ###   level, later the code of an error. It has a prefix that no other message uses (`theme-`)
-###   and a function that builds its names (`themeMessage`), which the code calls in place of
+###   and one function that builds its names (`themeMessage`), which the code calls in place of
 ###   writing a name: the test knows each family by its function.
 ### - A message that the code doesn't read is removed. One that only other messages would read
 ###   is a term of Fluent (`-name`).

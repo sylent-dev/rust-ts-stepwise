@@ -55,9 +55,18 @@ export function sandboxIn(files: LevelFiles): () => Promise<string> {
 	return file ?? (() => Promise.reject(new Error(`levels: no file ${SANDBOX}.toml`)));
 }
 
-/** The name of the message that holds the title of a level: `level-paint-a-square-title`. */
-export function titleMessage(name: string): string {
-	return `level-${name}-title`;
+/**
+ * What a level says, each part in a message of its own. The goal and the hint join the title here
+ * with the levels (step 21).
+ */
+export const LEVEL_PARTS = ['title'] as const;
+
+/** A part of what a level says. */
+export type LevelPart = (typeof LEVEL_PARTS)[number];
+
+/** The name of the message that holds a part of a level: `level-paint-a-square-title`. */
+export function levelMessage(name: string, part: LevelPart): string {
+	return `level-${name}-${part}`;
 }
 
 const files = import.meta.glob<string>('../../levels/*.toml', { query: '?raw', import: 'default' });

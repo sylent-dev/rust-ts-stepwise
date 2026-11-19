@@ -2,7 +2,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { t } from '#lib/i18n.ts';
-	import { levels, titleMessage } from '#lib/levels.ts';
+	import { levelMessage, levels } from '#lib/levels.ts';
 	import SettingsButton from '#lib/settings/settings-button.svelte';
 	import Header from '#lib/shell/header.svelte';
 </script>
@@ -23,7 +23,7 @@
 		{#each levels as { number, name } (name)}
 			<li>
 				<a href={resolve('/levels/[number]', { number: String(number) })}>
-					{t('screen-level', { number, title: t(titleMessage(name)) })}
+					{t('screen-level', { number, title: t(levelMessage(name, 'title')) })}
 				</a>
 			</li>
 		{/each}
