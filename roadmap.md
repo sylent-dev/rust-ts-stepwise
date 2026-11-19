@@ -37,8 +37,8 @@ Model: each step to come names its model. Fable 5.2 runs the steps whose design 
 - [x] **13. Application shell** (#50, #51, #52, #53)
 - [x] **14. Map view** (#54, #55, #56, #57)
 - [ ] **15. Quality audit** *(Fable 5.2)*: an audit of the whole code, not of one branch, once the core is complete (steps 9 and 10) and the interface has its first bases (steps 13 and 14), before the steps of the interface copy its patterns; then its refactorings, one pull request per coherent theme, so that the refactoring before the first release stays small (decided on 2026-11-12). The audit was made on 2026-11-19 and the owner kept its seven themes: the brief of each is in [Quality audit](docs/quality-audit.md#refactorings-of-step-15).
-  - [x] **15a. Plan and notes**: the sub-steps below, and what the audit found, kept in `docs/quality-audit.md`.
-  - [ ] **15b. Core**: the errors of the domain of the levels apart from those of their file, a public surface that is what the bridge uses, the names that say two things.
+  - [x] **15a. Plan and notes** (#58)
+  - [x] **15b. Core**: the errors of the domain of the levels apart from those of their file, a public surface that is what the bridge uses, the names that say two things.
   - [ ] **15c. Errors**: their codes and their places settled before their messages: the two depths, the count of values of a call, the place of a name between parentheses.
   - [ ] **15d. Level screen**: wired once for a level and for the sandbox, around what a screen plays on.
   - [ ] **15e. Messages**: a test of every message name, a naming rule, a file per domain.

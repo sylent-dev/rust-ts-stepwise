@@ -4,9 +4,14 @@
 use serde::de::{DeserializeOwned, Error as _};
 use serde::{Deserialize, Deserializer};
 
-use super::{FORMAT_VERSION, LevelError, LevelErrorKind};
+use super::{LevelError, LevelErrorKind};
 use crate::color::Color;
 use crate::world::{Direction, Point};
+
+/// The version of the format of the level files this core reads. It stays 1 until the first
+/// release of the website, the files being deployed with the code that reads them; any change
+/// of the format after it raises the version.
+pub(super) const FORMAT_VERSION: u32 = 1;
 
 /// A file that says the version of its format.
 pub(super) trait Versioned {
@@ -104,8 +109,8 @@ pub(super) struct StrokeFile {
     pub(super) path: Vec<[u8; 2]>,
 }
 
-/// The goals of a map; each is optional.
-#[derive(Deserialize)]
+/// The goals of a map; each is optional, and none is written by default.
+#[derive(Deserialize, Default)]
 #[serde(deny_unknown_fields)]
 pub(super) struct GoalsFile {
     pub(super) robot_at: Option<[u8; 2]>,

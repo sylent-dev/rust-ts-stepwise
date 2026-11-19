@@ -188,17 +188,7 @@ mod programs {
             panic!("an error of the lexer expected");
         };
         assert_eq!(error.kind, LexErrorKind::SingleQuote);
-        assert_eq!(
-            SyntaxError::Lex(error).span(),
-            span(1, 9, 10),
-            "the span of a syntax error is the one of its error"
-        );
-    }
-
-    #[test]
-    fn the_span_of_a_syntax_error_is_the_one_of_the_parser() {
-        let error = parse("let").unwrap_err();
-        assert_eq!(error.span(), span(1, 4, 4));
+        assert_eq!(error.span, span(1, 9, 10));
     }
 
     #[test]

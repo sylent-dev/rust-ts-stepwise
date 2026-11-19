@@ -13,24 +13,13 @@ mod stroke;
 mod tests;
 
 pub use error::{LevelError, LevelErrorKind};
-pub use goals::{GoalNotMet, Goals};
-pub use stroke::Stroke;
+pub use goals::{GoalNotMet, Goals, GoalsError};
+pub use stroke::StrokeError;
 
 use crate::world::World;
 
-/// The version of the format of the level files this core reads. It stays 1 until the first
-/// release of the website, the files being deployed with the code that reads them; any change
-/// of the format after it raises the version.
-pub const FORMAT_VERSION: u32 = 1;
-
 /// The most maps a level has: the same task on different ground.
 pub const MAX_MAPS: usize = 3;
-
-/// A wall, in the terrain of a map.
-pub const WALL: char = '#';
-
-/// A floor cell, in the terrain of a map.
-pub const FLOOR: char = '.';
 
 /// A level: the code it starts with, and its maps, which the same program must all pass.
 #[derive(Debug, Clone, PartialEq, Eq)]

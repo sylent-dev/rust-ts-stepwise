@@ -1,6 +1,6 @@
 [package]
 name = "stepwise-core"
-description = "The language of Stepwise: lexer, parser, checker and step-by-step interpreter."
+description = "The core of Stepwise: its language (lexer, parser, checker, step-by-step interpreter), the world of the robot and the levels."
 readme = "../../README.md"
 version.workspace = true
 edition.workspace = true

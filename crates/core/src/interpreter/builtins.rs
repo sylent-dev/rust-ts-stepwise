@@ -14,7 +14,7 @@ use crate::world::{Side, World};
 /// back no value is the only thing a step shows, which is why a step reports at most one
 /// event.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(super) enum Outcome {
+pub(super) enum Effect {
     /// An action of the robot, or `print`: what the learner sees of it. It gives back no
     /// value.
     Acted(Event),
@@ -35,7 +35,7 @@ pub(super) fn call(
     builtin: Builtin,
     values: &[Value],
     world: &mut World,
-) -> Result<Outcome, RuntimeErrorKind> {
+) -> Result<Effect, RuntimeErrorKind> {
     let expected = builtin.parameter_count();
     if expected.is_some_and(|count| count != values.len()) {
         return Err(RuntimeErrorKind::Internal);
@@ -79,25 +79,25 @@ pub(super) fn call(
             world.drop_item()?;
             acted(Action::Dropped)
         }
-        Builtin::FrontIsClear => Outcome::Sensed(world.is_clear(Side::Front)),
-        Builtin::LeftIsClear => Outcome::Sensed(world.is_clear(Side::Left)),
-        Builtin::RightIsClear => Outcome::Sensed(world.is_clear(Side::Right)),
-        Builtin::HereIs => Outcome::Sensed(world.paint_here() == Some(color(builtin, values)?)),
-        Builtin::FrontIs => Outcome::Sensed(is_painted(world, Side::Front, builtin, values)?),
-        Builtin::LeftIs => Outcome::Sensed(is_painted(world, Side::Left, builtin, values)?),
-        Builtin::RightIs => Outcome::Sensed(is_painted(world, Side::Right, builtin, values)?),
-        Builtin::ItemHere => Outcome::Sensed(world.item_here()),
-        Builtin::ItemInFront => Outcome::Sensed(world.item_in_front()),
-        Builtin::IsCarrying => Outcome::Sensed(world.is_carrying()),
-        Builtin::IsPainting => Outcome::Sensed(world.is_painting()),
-        Builtin::IsErasing => Outcome::Sensed(world.is_erasing()),
-        Builtin::Print => Outcome::Acted(Event::Printed(printed_line(values)?)),
+        Builtin::FrontIsClear => Effect::Sensed(world.is_clear(Side::Front)),
+        Builtin::LeftIsClear => Effect::Sensed(world.is_clear(Side::Left)),
+        Builtin::RightIsClear => Effect::Sensed(world.is_clear(Side::Right)),
+        Builtin::HereIs => Effect::Sensed(world.paint_here() == Some(color(builtin, values)?)),
+        Builtin::FrontIs => Effect::Sensed(is_painted(world, Side::Front, builtin, values)?),
+        Builtin::LeftIs => Effect::Sensed(is_painted(world, Side::Left, builtin, values)?),
+        Builtin::RightIs => Effect::Sensed(is_painted(world, Side::Right, builtin, values)?),
+        Builtin::ItemHere => Effect::Sensed(world.item_here()),
+        Builtin::ItemInFront => Effect::Sensed(world.item_in_front()),
+        Builtin::IsCarrying => Effect::Sensed(world.is_carrying()),
+        Builtin::IsPainting => Effect::Sensed(world.is_painting()),
+        Builtin::IsErasing => Effect::Sensed(world.is_erasing()),
+        Builtin::Print => Effect::Acted(Event::Printed(printed_line(values)?)),
     })
 }
 
 /// What an action of the robot that went well did.
-const fn acted(action: Action) -> Outcome {
-    Outcome::Acted(Event::Robot(action))
+const fn acted(action: Action) -> Effect {
+    Effect::Acted(Event::Robot(action))
 }
 
 /// `front_is(color)`, `left_is(color)` and `right_is(color)`: whether the cell on `side` has

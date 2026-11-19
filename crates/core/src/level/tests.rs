@@ -1,7 +1,7 @@
 //! The tests of the level files: what they hold, what they refuse, and the goals checked on a
 //! world.
 
-use super::{GoalNotMet, Level, LevelError, LevelErrorKind, Sandbox};
+use super::{GoalNotMet, GoalsError, Level, LevelError, LevelErrorKind, Sandbox, StrokeError};
 use crate::color::Color;
 use crate::world::{BuildError, Cell, Direction, Point, World};
 
@@ -27,6 +27,24 @@ fn map_error(map: &str) -> LevelErrorKind {
     let error = Level::from_toml(&source(&[map])).unwrap_err();
     assert_eq!(error.map, Some(1), "{error}");
     error.kind
+}
+
+/// The error of a stroke, of the map or of the goals of a level of one map.
+#[track_caller]
+fn stroke_error(map: &str) -> StrokeError {
+    match map_error(map) {
+        LevelErrorKind::Stroke(error) => error,
+        other => panic!("an error of a stroke, not {other:?}"),
+    }
+}
+
+/// The error of the goals of a level of one map.
+#[track_caller]
+fn goals_error(map: &str) -> GoalsError {
+    match map_error(map) {
+        LevelErrorKind::Goals(error) => error,
+        other => panic!("an error of the goals, not {other:?}"),
+    }
 }
 
 /// The error of a level file, which must be about the file as a whole.
@@ -142,12 +160,11 @@ carrying = false
         let level = Level::from_toml(EXAMPLE).unwrap();
         let goals = level.maps()[0].goals();
         assert_eq!(goals.robot_at(), Some(Point::new(5, 3)));
-        assert_eq!(goals.paints().len(), 1);
-        assert_eq!(goals.paints()[0].color(), Color::Red);
-        assert_eq!(goals.paints()[0].path().len(), 9);
-        assert!(goals.nothing_else_painted());
+        // The square closes on its first cell: nine cells in its path, eight to paint.
+        assert_eq!(goals.paint_cells().len(), 8);
+        assert_eq!(goals.paint_cells()[0], (Point::new(1, 1), Color::Red));
+        assert!(goals.passage(Point::new(1, 1), Direction::South));
         assert_eq!(goals.items_at(), [Point::new(1, 2)]);
-        assert_eq!(goals.carrying(), Some(false));
     }
 
     #[test]
@@ -163,10 +180,8 @@ carrying = false
                 .all(|at| world.map().paint(at).is_none())
         );
         let goals = level.maps()[0].goals();
-        assert_eq!(goals.paints(), []);
-        assert!(!goals.nothing_else_painted());
+        assert_eq!(goals.paint_cells(), []);
         assert_eq!(goals.items_at(), []);
-        assert_eq!(goals.carrying(), None);
     }
 
     #[test]
@@ -235,7 +250,9 @@ items_at = [[5, 0], [3, 0]]
             "paints = [{ color = \"red\", path = [[0, 0], [1, 0], [1, 1], [0, 1], [0, 0]] }]",
         ));
         let goals = level.maps()[0].goals();
-        assert_eq!(goals.paints()[0].path().len(), 5);
+        assert_eq!(goals.paint_cells().len(), 4);
+        // The passage that closes the square, from its last cell back to the first.
+        assert!(goals.passage(Point::new(0, 1), Direction::North));
     }
 
     #[test]
@@ -502,20 +519,20 @@ mod refused {
     #[test]
     fn a_path_is_made_of_cells_next_to_each_other() {
         assert_eq!(
-            map_error(&small(
+            stroke_error(&small(
                 "paints = [{ color = \"red\", path = [[0, 1], [2, 1]] }]\n"
             )),
-            LevelErrorKind::NotNeighbors(Point::new(0, 1), Point::new(2, 1))
+            StrokeError::NotNeighbors(Point::new(0, 1), Point::new(2, 1))
         );
         assert_eq!(
-            map_error(&small(
+            stroke_error(&small(
                 "paints = [{ color = \"red\", path = [[0, 1], [1, 0]] }]\n"
             )),
-            LevelErrorKind::NotNeighbors(Point::new(0, 1), Point::new(1, 0))
+            StrokeError::NotNeighbors(Point::new(0, 1), Point::new(1, 0))
         );
         assert_eq!(
-            map_error(&small("paints = [{ color = \"red\", path = [] }]\n")),
-            LevelErrorKind::EmptyPath
+            stroke_error(&small("paints = [{ color = \"red\", path = [] }]\n")),
+            StrokeError::EmptyPath
         );
     }
 }
@@ -525,13 +542,14 @@ mod goals_refused {
 
     #[test]
     fn a_map_of_a_level_has_a_goal() {
-        assert_eq!(map_error(SMALL), LevelErrorKind::NoGoal);
-        assert_eq!(map_error(&small_with_goals("")), LevelErrorKind::NoGoal);
+        // Without the table of the goals, or with an empty one.
+        assert_eq!(goals_error(SMALL), GoalsError::NoGoal);
+        assert_eq!(goals_error(&small_with_goals("")), GoalsError::NoGoal);
         assert_eq!(
-            map_error(&small_with_goals(
+            goals_error(&small_with_goals(
                 "nothing_else_painted = false\npaints = []"
             )),
-            LevelErrorKind::NoGoal
+            GoalsError::NoGoal
         );
     }
 
@@ -543,8 +561,8 @@ mod goals_refused {
             "nothing_else_painted = true",
         ] {
             assert_eq!(
-                map_error(&small_with_goals(goals)),
-                LevelErrorKind::GoalsMetAtStart,
+                goals_error(&small_with_goals(goals)),
+                GoalsError::MetAtStart,
                 "{goals}"
             );
         }
@@ -552,7 +570,7 @@ mod goals_refused {
             "{SMALL}paints = [{{ color = \"red\", path = [[1, 1]] }}]\n\n[maps.goals]\n\
              paints = [{{ color = \"red\", path = [[1, 1]] }}]\n"
         );
-        assert_eq!(map_error(&painted), LevelErrorKind::GoalsMetAtStart);
+        assert_eq!(goals_error(&painted), GoalsError::MetAtStart);
     }
 
     #[test]
@@ -574,17 +592,17 @@ mod goals_refused {
     fn the_goals_need_no_more_items_than_the_map_has() {
         let goals = "items_at = [[3, 0], [3, 1]]";
         assert_eq!(
-            map_error(&format!(
+            goals_error(&format!(
                 "{SMALL}items = [[1, 0]]\n\n[maps.goals]\n{goals}\n"
             )),
-            LevelErrorKind::NotEnoughItems {
+            GoalsError::NotEnoughItems {
                 needed: 2,
                 available: 1
             }
         );
         assert_eq!(
-            map_error(&small_with_goals("carrying = true")),
-            LevelErrorKind::NotEnoughItems {
+            goals_error(&small_with_goals("carrying = true")),
+            GoalsError::NotEnoughItems {
                 needed: 1,
                 available: 0
             }
@@ -598,43 +616,43 @@ mod goals_refused {
     fn a_goal_lies_on_a_floor_cell_of_the_map() {
         let walled = |goals: &str| small_with_goals(goals).replace("....\n'''", "...#\n'''");
         assert_eq!(
-            map_error(&walled("robot_at = [3, 1]")),
-            LevelErrorKind::Goal(BuildError::OnWall(Point::new(3, 1)))
+            goals_error(&walled("robot_at = [3, 1]")),
+            GoalsError::OnWall(Point::new(3, 1))
         );
         assert_eq!(
-            map_error(&walled("items_at = [[3, 1]]")),
-            LevelErrorKind::Goal(BuildError::OnWall(Point::new(3, 1)))
+            goals_error(&walled("items_at = [[3, 1]]")),
+            GoalsError::OnWall(Point::new(3, 1))
         );
         assert_eq!(
-            map_error(&walled(
+            goals_error(&walled(
                 "paints = [{ color = \"red\", path = [[2, 1], [3, 1]] }]"
             )),
-            LevelErrorKind::Goal(BuildError::OnWall(Point::new(3, 1)))
+            GoalsError::OnWall(Point::new(3, 1))
         );
         assert_eq!(
-            map_error(&small_with_goals("robot_at = [0, 5]")),
-            LevelErrorKind::Goal(BuildError::OutsideMap(Point::new(0, 5)))
+            goals_error(&small_with_goals("robot_at = [0, 5]")),
+            GoalsError::OutsideMap(Point::new(0, 5))
         );
     }
 
     #[test]
     fn the_strokes_of_the_goals_are_checked_as_strokes() {
         assert_eq!(
-            map_error(&small_with_goals(
+            stroke_error(&small_with_goals(
                 "paints = [{ color = \"red\", path = [[0, 0], [1, 1]] }]"
             )),
-            LevelErrorKind::NotNeighbors(Point::new(0, 0), Point::new(1, 1))
+            StrokeError::NotNeighbors(Point::new(0, 0), Point::new(1, 1))
         );
     }
 
     #[test]
     fn a_cell_has_one_color_in_the_goals() {
         assert_eq!(
-            map_error(&small_with_goals(
+            goals_error(&small_with_goals(
                 "paints = [\n    { color = \"red\", path = [[0, 0], [1, 0]] },\n    \
                  { color = \"blue\", path = [[1, 0], [1, 1]] },\n]"
             )),
-            LevelErrorKind::ConflictingPaintGoal(Point::new(1, 0))
+            GoalsError::ConflictingPaint(Point::new(1, 0))
         );
         assert!(
             Level::from_toml(&source(&[&small_with_goals(
@@ -648,10 +666,10 @@ mod goals_refused {
     #[test]
     fn a_cell_is_given_once_for_an_item() {
         assert_eq!(
-            map_error(&format!(
+            goals_error(&format!(
                 "{SMALL}items = [[1, 0], [2, 0]]\n\n[maps.goals]\nitems_at = [[3, 1], [3, 1]]\n"
             )),
-            LevelErrorKind::DuplicateItemGoal(Point::new(3, 1))
+            GoalsError::DuplicateItem(Point::new(3, 1))
         );
     }
 
@@ -811,23 +829,112 @@ mod checking {
             ]
         );
     }
+}
 
+mod sentences {
+    use super::*;
+
+    /// The sentence of each error, as an author of levels reads it in the tests.
     #[test]
-    fn the_cell_of_a_goal_not_met_is_where_its_flag_goes() {
-        let at = Point::new(1, 2);
-        assert_eq!(GoalNotMet::RobotNotAt(at).cell(), Some(at));
-        assert_eq!(
-            GoalNotMet::PaintMissing {
-                at,
-                color: Color::Red
-            }
-            .cell(),
-            Some(at)
-        );
-        assert_eq!(GoalNotMet::PaintedElsewhere(at).cell(), Some(at));
-        assert_eq!(GoalNotMet::ItemMissing(at).cell(), Some(at));
-        assert_eq!(GoalNotMet::NotCarrying.cell(), None);
-        assert_eq!(GoalNotMet::Carrying.cell(), None);
+    fn every_error_says_what_is_wrong() {
+        let (a, b) = (Point::new(0, 1), Point::new(2, 1));
+        let sentences = [
+            (
+                LevelErrorKind::Syntax("as TOML says it".to_owned()),
+                "as TOML says it",
+            ),
+            (
+                LevelErrorKind::Version(2),
+                "the file has version 2, while this core reads version 1",
+            ),
+            (
+                LevelErrorKind::MapCount(4),
+                "the level has 4 maps, while it has from 1 to 3",
+            ),
+            (
+                LevelErrorKind::RowLength {
+                    y: 1,
+                    length: 3,
+                    expected: 4,
+                },
+                "row 1 of the terrain has 3 cells, while the first one has 4",
+            ),
+            (
+                LevelErrorKind::UnknownCharacter {
+                    at: b,
+                    character: 'o',
+                },
+                "[2, 1] in the terrain is 'o', neither a wall `#` nor a floor `.`",
+            ),
+            (LevelErrorKind::DuplicateItem(a), "two items on [0, 1]"),
+            (
+                LevelErrorKind::GoalsInSandbox,
+                "the map of the sandbox has goals",
+            ),
+            (
+                LevelErrorKind::Map(BuildError::Size {
+                    width: 17,
+                    height: 2,
+                }),
+                "the terrain is 17 × 2, while a map has from 1 × 1 to 16 × 12 cells",
+            ),
+            (
+                LevelErrorKind::Map(BuildError::OutsideMap(a)),
+                "[0, 1] is outside the map",
+            ),
+            (
+                LevelErrorKind::Map(BuildError::OnWall(a)),
+                "[0, 1] is a wall",
+            ),
+            (
+                LevelErrorKind::Map(BuildError::NotEmpty(a)),
+                "[0, 1] already has a paint or an item",
+            ),
+            (
+                LevelErrorKind::Map(BuildError::NotNeighbors(a, b)),
+                "[0, 1] and [2, 1] follow each other in a path, while they aren't next to each \
+                 other",
+            ),
+            (
+                LevelErrorKind::Map(BuildError::Unpainted(a)),
+                "[0, 1] has no paint",
+            ),
+            (StrokeError::EmptyPath.into(), "a stroke has an empty path"),
+            (
+                StrokeError::NotNeighbors(a, b).into(),
+                "[0, 1] and [2, 1] follow each other in a path, while they aren't next to each \
+                 other",
+            ),
+            (
+                GoalsError::OutsideMap(a).into(),
+                "a goal: [0, 1] is outside the map",
+            ),
+            (GoalsError::OnWall(a).into(), "a goal: [0, 1] is a wall"),
+            (
+                GoalsError::ConflictingPaint(a).into(),
+                "the goals paint [0, 1] in two different colors",
+            ),
+            (
+                GoalsError::DuplicateItem(a).into(),
+                "the goals want an item on [0, 1] twice",
+            ),
+            (GoalsError::NoGoal.into(), "the map has no goal"),
+            (
+                GoalsError::MetAtStart.into(),
+                "the goals are all met before the program runs",
+            ),
+            (
+                GoalsError::NotEnoughItems {
+                    needed: 2,
+                    available: 1,
+                }
+                .into(),
+                "the goals need 2 items, while the map has 1",
+            ),
+        ];
+        for (kind, sentence) in sentences {
+            assert_eq!(kind.to_string(), sentence, "{kind:?}");
+        }
     }
 }
 

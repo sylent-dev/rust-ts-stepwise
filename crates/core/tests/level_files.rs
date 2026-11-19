@@ -1,13 +1,12 @@
 //! Every level file of the website, read and checked as the core reads it, with its starting
-//! code checked by the lexer, the parser and the checker: a level that starts wrong is a bug
-//! of the level.
+//! code checked as a program is before it runs: a level that starts wrong is a bug of the
+//! level.
 
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use stepwise_core::checker::check;
 use stepwise_core::level::{Level, Sandbox};
-use stepwise_core::parser::parse;
+use stepwise_core::program::{Refused, check};
 
 /// The folder of the level files, `web/levels/`.
 fn levels_folder() -> PathBuf {
@@ -42,12 +41,13 @@ fn is_kebab_case(name: &str) -> bool {
 
 /// The errors of the starting code, empty when it has none.
 fn starting_code_errors(code: &str) -> Vec<String> {
-    match parse(code) {
-        Ok(program) => check(&program)
+    match check(code) {
+        Ok(_) => Vec::new(),
+        Err(Refused::Syntax(error)) => vec![format!("{error:?}")],
+        Err(Refused::Check(errors)) => errors
             .into_iter()
             .map(|error| format!("{error:?}"))
             .collect(),
-        Err(error) => vec![format!("{error:?}")],
     }
 }
 

@@ -153,6 +153,8 @@ One exported function of the bridge, built from `ALL`, decided once for the thre
 - in the core, a tolerant function per line, which never fails and reuses `Cursor`: `classify_line(line: &str) -> Vec<Stretch>`, a stretch being a class (`Keyword`, `Name`, `Number`, `Text`, `Color`, `Comment`, `Symbol`, `Invalid`) and two columns; its cost per line is to measure;
 - in TypeScript, a `StreamLanguage` of CodeMirror fed with the lists above, and a test that compares its tokens with those of `tokenize` on a corpus. The rule of a name (`is_word`, `char::is_alphanumeric`) is then written twice.
 
+Once chosen, close what 15b left public for this choice: `parse` and `checker::check` have no caller outside the core, and `tokenize` only a test of the bridge (`crates/wasm/src/position.rs`); the tree of `ast` stays public only because `parse` and `checker::check` name `Program`. It closes with them, down to its two operators, which the runtime errors carry.
+
 ### Step 17: the edges of `Playback`
 
 The engine is right and tested: one clock for the steps and their animations, `timeAt`, `now` and `lessMotion` injected, 38 tests through the public API and `tick(time)`. Five assumptions come from the bench (`web/src/lib/playback.svelte.ts`):

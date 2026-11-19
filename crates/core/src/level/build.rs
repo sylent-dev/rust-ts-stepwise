@@ -3,10 +3,15 @@
 //! the goals, which check their own rules.
 
 use super::file::{GoalsFile, LevelFile, MapFile, SandboxFile, StrokeFile, point};
-use super::{
-    FLOOR, Goals, Level, LevelError, LevelErrorKind, LevelMap, MAX_MAPS, Sandbox, Stroke, WALL,
-};
+use super::stroke::{Stroke, StrokeError};
+use super::{Goals, Level, LevelError, LevelErrorKind, LevelMap, MAX_MAPS, Sandbox};
 use crate::world::{Map, Point, Robot, World};
+
+/// A wall, in the terrain of a map.
+pub(super) const WALL: char = '#';
+
+/// A floor cell, in the terrain of a map.
+pub(super) const FLOOR: char = '.';
 
 /// A level, its maps numbered from 1 in its errors.
 pub(super) fn level(file: LevelFile) -> Result<Level, LevelError> {
@@ -38,7 +43,9 @@ pub(super) fn sandbox(file: SandboxFile) -> Result<Sandbox, LevelError> {
 
 fn level_map(map: MapFile) -> Result<LevelMap, LevelErrorKind> {
     let world = world(&map)?;
-    let goals = goals(map.goals.ok_or(LevelErrorKind::NoGoal)?, &world)?;
+    // A map without its table of goals has none, as one whose table is empty: the goals say
+    // so themselves.
+    let goals = goals(map.goals.unwrap_or_default(), &world)?;
     Ok(LevelMap { world, goals })
 }
 
@@ -50,25 +57,25 @@ fn world(map: &MapFile) -> Result<World, LevelErrorKind> {
         if grid.has_item(at) {
             return Err(LevelErrorKind::DuplicateItem(at));
         }
-        grid.set_item(at).map_err(LevelErrorKind::Map)?;
+        grid.set_item(at)?;
     }
     for stroke in &map.paints {
         paint(&mut grid, &self::stroke(stroke)?)?;
     }
     let robot = Robot::new(point(map.robot.at), map.robot.facing.into());
     let robot = if map.robot.carrying {
-        robot.carrying()
+        robot.with_item()
     } else {
         robot
     };
-    World::new(grid, robot).map_err(LevelErrorKind::Map)
+    Ok(World::new(grid, robot)?)
 }
 
 /// The map drawn by the rows of the terrain: [`WALL`] a wall, [`FLOOR`] a floor cell.
 fn terrain(terrain: &str) -> Result<Map, LevelErrorKind> {
     let rows: Vec<&str> = terrain.lines().collect();
     let width = rows.first().map_or(0, |row| row.chars().count());
-    let mut map = Map::new(width, rows.len()).map_err(LevelErrorKind::Map)?;
+    let mut map = Map::new(width, rows.len())?;
     // `Map::new` has refused more rows than `MAX_ROWS`, and each row is checked to be `width`
     // long: zipping with the `u8` ranges gives each cell its coordinates without a cast, and
     // drops nothing.
@@ -84,7 +91,7 @@ fn terrain(terrain: &str) -> Result<Map, LevelErrorKind> {
         for (x, character) in (0..map.width()).zip(row.chars()) {
             let at = Point::new(x, y);
             match character {
-                WALL => map.set_wall(at).map_err(LevelErrorKind::Map)?,
+                WALL => map.set_wall(at)?,
                 FLOOR => {}
                 character => return Err(LevelErrorKind::UnknownCharacter { at, character }),
             }
@@ -96,27 +103,26 @@ fn terrain(terrain: &str) -> Result<Map, LevelErrorKind> {
 /// Paints `stroke` on `map`, its cells and its passages, over any paint already there.
 fn paint(map: &mut Map, stroke: &Stroke) -> Result<(), LevelErrorKind> {
     for &at in stroke.path() {
-        map.set_paint(at, stroke.color())
-            .map_err(LevelErrorKind::Map)?;
+        map.set_paint(at, stroke.color())?;
     }
-    for (from, to) in stroke.steps() {
-        map.set_passage(from, to).map_err(LevelErrorKind::Map)?;
+    for (from, to) in stroke.passages() {
+        map.set_passage(from, to)?;
     }
     Ok(())
 }
 
-fn stroke(file: &StrokeFile) -> Result<Stroke, LevelErrorKind> {
+fn stroke(file: &StrokeFile) -> Result<Stroke, StrokeError> {
     Stroke::new(file.color, file.path.iter().copied().map(point).collect())
 }
 
 fn goals(file: GoalsFile, world: &World) -> Result<Goals, LevelErrorKind> {
     let paints = file.paints.iter().map(stroke).collect::<Result<_, _>>()?;
-    Goals::new(
+    Ok(Goals::new(
         file.robot_at.map(point),
         paints,
         file.nothing_else_painted,
         file.items_at.into_iter().map(point).collect(),
         file.carrying,
         world,
-    )
+    )?)
 }
