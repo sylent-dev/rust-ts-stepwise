@@ -6,22 +6,21 @@
 	import { untrack } from 'svelte';
 	import type { Run } from '#lib/core.ts';
 	import { t } from '#lib/i18n.ts';
+	import type { Playground } from '#lib/level-screen/playground.ts';
 	import { SPEEDS } from '#lib/pace.ts';
 	import { NORMAL_SPEED, Playback } from '#lib/playback.svelte.ts';
 	import { benchPrograms } from './bench-programs.ts';
 
 	interface Props {
-		/** The name of the level of the map, or `sandbox`. */
-		map: string;
-		/** Starts a program on the map of the screen. */
-		start: (text: string) => Run;
+		/** What the screen plays on: its name chooses the programs, which start on its map. */
+		playground: Playground;
 		/** The program played, which the map of the screen draws. */
 		playback?: Playback;
 	}
 
-	let { map, start, playback = $bindable() }: Props = $props();
+	let { playground, playback = $bindable() }: Props = $props();
 
-	const programs = $derived(benchPrograms(map));
+	const programs = $derived(benchPrograms(playground.name));
 	let chosen = $state(0);
 	const program = $derived(programs[chosen] ?? programs[0]);
 	const lines = $derived(program?.text.trimEnd().split('\n') ?? []);
@@ -42,8 +41,8 @@
 	// A new playback for each program, freed with its run once another one replaces it.
 	$effect(() => {
 		const text = program?.text ?? '';
-		const begin = start;
-		const run = (): Run => begin(text);
+		const { start } = playground;
+		const run = (): Run => start(text);
 		const created = untrack(() => {
 			const playback = new Playback(run);
 			playback.rate = rate;

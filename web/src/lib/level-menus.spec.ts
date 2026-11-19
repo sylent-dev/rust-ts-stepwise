@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
-import { levelMenus } from './level-menus.ts';
+import { levelMenus, type LevelScreenKind } from './level-menus.ts';
 import { canChoose, type MenuRow } from './shell/menus.ts';
 
 /** The row of a screen, by the name of its menu and its own in the code. */
-function row(screen: 'level' | 'sandbox', menu: string, id: string): MenuRow | undefined {
+function row(screen: LevelScreenKind, menu: string, id: string): MenuRow | undefined {
 	return levelMenus(screen)
 		.find((candidate) => candidate.id === menu)
 		?.rows.find((candidate) => candidate.id === id);
@@ -11,7 +11,7 @@ function row(screen: 'level' | 'sandbox', menu: string, id: string): MenuRow | u
 
 describe('levelMenus', () => {
 	it('gives a level and the sandbox the same menus and the same rows, in the same order', () => {
-		const names = (screen: 'level' | 'sandbox') =>
+		const names = (screen: LevelScreenKind) =>
 			levelMenus(screen).map((menu) => [menu.id, ...menu.rows.map(({ id }) => id)]);
 		expect(names('level')).toEqual([
 			['level', 'all-levels', 'sandbox'],
@@ -31,7 +31,7 @@ describe('levelMenus', () => {
 	});
 
 	it('opens the manual in a tab of its own, the same from every screen', () => {
-		const tab = (screen: 'level' | 'sandbox') => {
+		const tab = (screen: LevelScreenKind) => {
 			const manual = row(screen, 'help', 'manual');
 			return manual && canChoose(manual) ? manual.tab : undefined;
 		};

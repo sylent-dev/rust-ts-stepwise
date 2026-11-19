@@ -10,8 +10,14 @@ import type { Menu, MenuRow } from '#lib/shell/menus.ts';
  */
 const MANUAL_TAB = 'stepwise-manual';
 
-/** The menus of the header of a level, or of the sandbox, the level screen without goal. */
-export function levelMenus(screen: 'level' | 'sandbox'): Menu[] {
+/**
+ * Which level screen it is: the one of a level, or the sandbox, the level screen without goal.
+ * Not the stable name of the sandbox (`SANDBOX` in levels.ts), which happens to read the same.
+ */
+export type LevelScreenKind = 'level' | 'sandbox';
+
+/** The menus of the header of a level, or of the sandbox. */
+export function levelMenus(screen: LevelScreenKind): Menu[] {
 	const sandbox: MenuRow =
 		screen === 'sandbox'
 			? { id: 'sandbox', label: t('sandbox'), here: true }

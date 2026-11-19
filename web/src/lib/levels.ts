@@ -18,6 +18,9 @@ export interface LevelEntry {
 /** The files of a folder of levels as Vite lists them: a way to read each, by its path. */
 export type LevelFiles = Record<string, () => Promise<string>>;
 
+/** The stable name of the sandbox: the name of its file, and of what is saved for it. */
+export const SANDBOX = 'sandbox';
+
 /** The name of a file without its folder nor its extension. */
 function stableName(path: string): string {
 	return path.slice(path.lastIndexOf('/') + 1).replace(/\.toml$/, '');
@@ -30,7 +33,7 @@ function stableName(path: string): string {
 export function listLevels(files: LevelFiles): LevelEntry[] {
 	return Object.entries(files)
 		.map(([path, file]) => ({ name: stableName(path), file }))
-		.filter(({ name }) => name !== 'sandbox')
+		.filter(({ name }) => name !== SANDBOX)
 		.sort((a, b) => (a.name < b.name ? -1 : 1))
 		.map((level, index) => ({ number: index + 1, ...level }));
 }
@@ -43,12 +46,24 @@ export function levelAt(levels: readonly LevelEntry[], number: string): LevelEnt
 	return levels.find((level) => String(level.number) === number);
 }
 
+/**
+ * The way to read the file of the sandbox among `files`, for `new Sandbox(text)`. In a folder
+ * without it, the reading fails, as the one of a file that can't load.
+ */
+export function sandboxIn(files: LevelFiles): () => Promise<string> {
+	const file = Object.entries(files).find(([path]) => stableName(path) === SANDBOX)?.[1];
+	return file ?? (() => Promise.reject(new Error(`levels: no file ${SANDBOX}.toml`)));
+}
+
 /** The name of the message that holds the title of a level: `level-paint-a-square-title`. */
 export function titleMessage(name: string): string {
 	return `level-${name}-title`;
 }
 
+const files = import.meta.glob<string>('../../levels/*.toml', { query: '?raw', import: 'default' });
+
 /** The levels of the website, in their order. */
-export const levels: readonly LevelEntry[] = listLevels(
-	import.meta.glob<string>('../../levels/*.toml', { query: '?raw', import: 'default' })
-);
+export const levels: readonly LevelEntry[] = listLevels(files);
+
+/** Reads the text of the file of the sandbox of the website. */
+export const sandboxFile: () => Promise<string> = sandboxIn(files);

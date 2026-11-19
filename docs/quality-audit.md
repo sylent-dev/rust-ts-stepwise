@@ -167,6 +167,30 @@ One exported function of the bridge, built from `ALL`, decided once for the thre
 
 Once chosen, close what 15b left public for this choice: `parse` and `checker::check` have no caller outside the core, and `tokenize` only a test of the bridge (`crates/wasm/src/position.rs`); the tree of `ast` stays public only because `parse` and `checker::check` name `Program`. It closes with them, down to its two operators, which the runtime errors carry.
 
+### Step 16: what a cleanup reads of `fromCore`
+
+Added at step 15d, which wrote `fromCore` (`web/src/lib/core-ready.svelte.ts`). It makes the object of the module (a `Level`, the `Sandbox`) in a `$derived` and frees it in the cleanup of an `$effect`. A cleanup, the function an `$effect` returns or `onDestroy`, that reads `current`, or what is derived from it (the `playground` of the level screen, a prop for the blocks of the screen), makes Svelte compute the `$derived` again from the values of before. Tried with Svelte 5.57, two outcomes:
+
+- `make` runs once more, for an object that nothing frees but the garbage collector: a third `Level`, read from the text of level 1, when the screen goes from level 1 to level 2 (the code review of step 15d);
+- `current` stops following what `make` reads: after a cleanup read it as the core became ready, a new text made no new object, and the screen would keep the level of before.
+
+Nothing reads it so today: the only cleanup, the one of the bench, uses what its effect read. Step 16 is the first that may: the code is saved as the learner types (see Code editor in `specs.md`), and if the saves are grouped, the last one is written when the screen leaves or changes level, in a cleanup, under `playground.name`.
+
+Two ways, to choose in the proposal of the step:
+
+- **Keep `fromCore` and its rule**, written in its doc comment: an effect reads first what its cleanup will need, a value and not the object, which may be freed by then.
+
+  ```ts
+  $effect(() => {
+  	const { name } = playground; // read while it is the playground of the screen
+  	return () => save(name, text); // the cleanup uses what the effect read, nothing else
+  });
+  ```
+
+- **Make the object in the `$effect`** and keep it in a `$state.raw`: the trap goes away, but the object arrives a pass later, and during that pass the screen sees the name of the new level with the `Level` of the one before.
+
+The first, unless a cleanup needs more of the playground than a value. Whatever is chosen gets its test in `core-ready.svelte.spec.ts`, where the effects run as in a browser.
+
 ### Step 17: the edges of `Playback`
 
 The engine is right and tested: one clock for the steps and their animations, `timeAt`, `now` and `lessMotion` injected, 38 tests through the public API and `tick(time)`. Five assumptions come from the bench (`web/src/lib/playback.svelte.ts`):
@@ -195,6 +219,8 @@ export interface PlaybackOptions {
 ```
 
 The run becomes optional (`reset()` frees it and puts `source.world` back; `play()` and `step()` start it); one private step, called by the animated path and by the loop of **Instant**, where what comes out of a step lives; `play()` and `step()` ask for their own frames, `tick` staying public for the tests; `calls()` for step 19; `NORMAL_SPEED` beside `SPEEDS` in `pace.ts`. Don't touch the pacing of `tick` (`#carry`, `#waiting`). `map/motion.ts` holds two things, the vocabulary and the times (lines 1-148) and the pose (150-277): the sounds need the first alone.
+
+Since step 15d, the level screen holds a `Playground` (`level-screen/playground.ts`), which gives the world at rest and starts a run from a text: the source of a `Playback` is the playground of the screen and the text of the editor. The screen then makes the `Playback` itself, where the bench makes it and hands it over by a binding: a playback must never outlive its playground on the map, which the tabs of the maps (step 21) change while the screen stays. Today the map takes its scene and its goals from two sources (`playback ?? playground` and `playground?.goals`), and for one pass that is never painted, a new playground shows with the playback of the one before.
 
 Two things to decide with it:
 

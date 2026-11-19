@@ -16,3 +16,32 @@ export function coreReady(): { readonly ready: boolean } {
 		}
 	};
 }
+
+/**
+ * An object that stays in the module of the core (a level, the sandbox), for the component that
+ * calls this as it starts: `current` is nothing until the core is ready, then what `make` gives,
+ * made again when what `make` reads changes. The object is freed once another one replaces it,
+ * and once the component leaves: nothing may call it afterwards.
+ *
+ * Never read `current`, nor what is derived from it (the playground of a screen), in a cleanup:
+ * the function an `$effect` returns, or `onDestroy`. Svelte computes it again there, from the
+ * values of before: `make` runs once more, for an object that nothing frees, and `current` may
+ * stop following what `make` reads (tried with Svelte 5.57). An effect reads first what its
+ * cleanup will need: a value taken from the object (a name, a text), not the object, which may
+ * be freed by the time that cleanup runs.
+ */
+export function fromCore<T extends { free(): void }>(
+	make: () => T
+): { readonly current: T | undefined } {
+	const core = coreReady();
+	const object = $derived(core.ready ? make() : undefined);
+	$effect(() => {
+		const made = object;
+		return () => made?.free();
+	});
+	return {
+		get current() {
+			return object;
+		}
+	};
+}

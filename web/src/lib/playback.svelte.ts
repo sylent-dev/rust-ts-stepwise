@@ -15,6 +15,7 @@ import {
 	type Action,
 	type Motion
 } from '#lib/map/motion.ts';
+import type { Scene } from '#lib/map/scene.ts';
 import { paceFrame, runInstant, SPEEDS, START_CARRY } from '#lib/pace.ts';
 
 /** The time an **Instant** frame spends running steps, so that the page still draws. */
@@ -53,7 +54,7 @@ function systemLessMotion(): () => boolean {
 	return () => query?.matches ?? false;
 }
 
-export class Playback {
+export class Playback implements Scene {
 	/** The world at rest, or as the step under way found it, which the map draws. */
 	world: World;
 	/**

@@ -3,8 +3,17 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import english from '../../locales/en.ftl?raw';
 import { createBundle } from './i18n.ts';
-import { levelAt, levels, listLevels, titleMessage, type LevelFiles } from './levels.ts';
-import { initSync, Level } from '#lib/wasm/stepwise.js';
+import {
+	levelAt,
+	levels,
+	listLevels,
+	SANDBOX,
+	sandboxFile,
+	sandboxIn,
+	titleMessage,
+	type LevelFiles
+} from './levels.ts';
+import { initSync, Level, Sandbox } from '#lib/wasm/stepwise.js';
 
 initSync({ module: readFileSync(new URL('./wasm/stepwise_bg.wasm', import.meta.url)) });
 
@@ -59,6 +68,19 @@ describe('levelAt', () => {
 	});
 });
 
+describe('sandboxIn', () => {
+	it('gives the way to read the file of the sandbox, among those of the levels', async () => {
+		const file = sandboxIn(
+			folder('levels/forward.toml', 'levels/sandbox.toml', 'levels/turn.toml')
+		);
+		expect(await file()).toBe('levels/sandbox.toml');
+	});
+
+	it('fails to read it in a folder without it', async () => {
+		await expect(sandboxIn(folder('levels/forward.toml'))()).rejects.toThrow(`${SANDBOX}.toml`);
+	});
+});
+
 describe('the levels of the website', () => {
 	const { bundle } = createBundle('en', english);
 	const each = levels.map((level) => [level.name, level] as const);
@@ -85,5 +107,13 @@ describe('the levels of the website', () => {
 			.body.flatMap((entry) => (entry.type === 'Message' ? [entry.id.name] : []))
 			.flatMap((id) => /^level-(.+)-title$/.exec(id)?.[1] ?? []);
 		expect(titled.sort()).toEqual(levels.map(({ name }) => name).sort());
+	});
+});
+
+describe('the sandbox of the website', () => {
+	// A wrong path of the folder would give no file, and the sandbox a page that can't load.
+	it('reaches the core as the text of its file', async () => {
+		using read = new Sandbox(await sandboxFile());
+		expect(read.world().width).toBeGreaterThan(0);
 	});
 });
