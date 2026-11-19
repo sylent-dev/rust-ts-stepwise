@@ -196,6 +196,8 @@ export interface PlaybackOptions {
 
 The run becomes optional (`reset()` frees it and puts `source.world` back; `play()` and `step()` start it); one private step, called by the animated path and by the loop of **Instant**, where what comes out of a step lives; `play()` and `step()` ask for their own frames, `tick` staying public for the tests; `calls()` for step 19; `NORMAL_SPEED` beside `SPEEDS` in `pace.ts`. Don't touch the pacing of `tick` (`#carry`, `#waiting`). `map/motion.ts` holds two things, the vocabulary and the times (lines 1-148) and the pose (150-277): the sounds need the first alone.
 
+Since step 15d, the level screen holds a `Playground` (`level-screen/playground.ts`), which gives the world at rest and starts a run from a text: the source of a `Playback` is the playground of the screen and the text of the editor. The screen then makes the `Playback` itself, where the bench makes it and hands it over by a binding: a playback must never outlive its playground on the map, which the tabs of the maps (step 21) change while the screen stays.
+
 Two things to decide with it:
 
 - **"Ended" has three meanings.** `State::Ended` in the core: the program ran to its end, without error. `Outcome.type === 'ended'`: it did so in the sandbox. `PlaybackStatus 'ended'` and `Playback.ended`: any stop, an error included; and `RunEnd`, `runEnd()` and `map/run-end.ts` are the animation of `passed` and `goals-not-met` alone. The status bar tells `Error at line 3` from `Ended`: one name each.
