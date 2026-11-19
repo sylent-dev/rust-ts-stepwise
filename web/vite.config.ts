@@ -44,6 +44,19 @@ export default defineConfig({
 					include: ['src/**/*.{test,spec}.{js,ts}'],
 					exclude: ['src/**/*.svelte.{test,spec}.{js,ts}']
 				}
+			},
+			{
+				// The tests named `*.svelte.spec.ts`: what lives in a component, its effects run as
+				// in a browser, without a page. Their files are compiled as for a browser (see
+				// vitest-node-client.ts), and Svelte itself is the one of a browser: on a server,
+				// its `flushSync` does nothing.
+				extends: './vite.config.ts',
+				resolve: { conditions: ['browser'] },
+				test: {
+					name: 'client',
+					environment: './vitest-node-client.ts',
+					include: ['src/**/*.svelte.{test,spec}.{js,ts}']
+				}
 			}
 		]
 	}
