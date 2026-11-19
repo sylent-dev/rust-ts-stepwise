@@ -116,8 +116,8 @@ The rule of `CLAUDE.md` holds: no color, text size, radius nor duration outside 
 
 - **The stacking order is written in figures** in two files that name each other in a comment (`shell/menu-bar.svelte:237`, `styles/screen-message.css:16`, `:38`), and steps 16 to 22 add six layers at least: `--layer-…` in `layout.css`, with their line in `docs/design-system.md`.
 - **Three buttons made of an icon alone**, each with its square, its hover and its pair `title` and `aria-label` (`shell/panel.svelte:79`, `shell/storage-banner.svelte:27`, `settings/settings-button.svelte:19`): one component, `shell/icon-button.svelte`. The rule of `CLAUDE.md` then says when a look is a component (the same markup and the same look) and when it is a class of `styles/` (the same look on different elements, or one that `app.html` needs).
-- **The colors of the paint are written two ways** (`map/paint-stroke.svelte:49-59` with a class per color, `map/moving-paint.svelte:80`, `:92` with a template), and a fourth color would be drawn without paint, without an error: one table, `satisfies Record<Color, string>`. The same for the events animated: `EVENT_TIMES` as a `Record<StepEvent, number | undefined>`, so that a new event of the core must be placed (`map/motion.ts:47-55`, and the list of `playback.svelte.ts:258`).
-- Small: values without their reason in their block (`shell/place.svelte:28`, `:44`, `shell/storage-banner.svelte:66`), a size shared by two blocks (`settings/settings-button.svelte:34`, `styles/band.css:9`); the three files of the fonts named in `app.html:39-53` and in `styles/fonts.css`, compared by nothing: a test in `page-fill.spec.ts`; a `styles/app.css` that imports the style sheets, as `tokens.css` does, rather than a line each in `+layout.svelte`.
+- **The colors of the paint are written two ways** (`map/paint-stroke.svelte:49-59` with a class per color, `map/moving-paint.svelte:80`, `:92` with a template), and a fourth color would be drawn without paint, without an error: one table, `satisfies Record<Color, string>`. The same for the events animated: `EVENT_TIMES` as a `Record<StepEvent, number | undefined>`, so that a new event of the core must be placed (`map/motion.ts:47-55`, and the list of `run/playback.svelte.ts:258`).
+- Small: values without their reason in their block (`shell/place.svelte:28`, `:44`, `shell/storage-banner.svelte:66`), a size shared by two blocks (`settings/settings-button.svelte:34`, `styles/band.css:9`); the three files of the fonts named in `app.html:39-53` and in `styles/fonts.css`, compared by nothing: a test in `page/page-fill.spec.ts`; a `styles/app.css` that imports the style sheets, as `tokens.css` does, rather than a line each in `+layout.svelte`.
 - Left to step 16, with its first button outside a message: `styles/button.css`, the main button being today `.screen-message-action`, in the style sheet of the messages.
 
 ## To settle first, by step
@@ -169,7 +169,7 @@ Once chosen, close what 15b left public for this choice: `parse` and `checker::c
 
 ### Step 16: what a cleanup reads of `fromCore`
 
-Added at step 15d, which wrote `fromCore` (`web/src/lib/core-ready.svelte.ts`). It makes the object of the module (a `Level`, the `Sandbox`) in a `$derived` and frees it in the cleanup of an `$effect`. A cleanup, the function an `$effect` returns or `onDestroy`, that reads `current`, or what is derived from it (the `playground` of the level screen, a prop for the blocks of the screen), makes Svelte compute the `$derived` again from the values of before. Tried with Svelte 5.57, two outcomes:
+Added at step 15d, which wrote `fromCore` (`web/src/lib/core/core-ready.svelte.ts`). It makes the object of the module (a `Level`, the `Sandbox`) in a `$derived` and frees it in the cleanup of an `$effect`. A cleanup, the function an `$effect` returns or `onDestroy`, that reads `current`, or what is derived from it (the `playground` of the level screen, a prop for the blocks of the screen), makes Svelte compute the `$derived` again from the values of before. Tried with Svelte 5.57, two outcomes:
 
 - `make` runs once more, for an object that nothing frees but the garbage collector: a third `Level`, read from the text of level 1, when the screen goes from level 1 to level 2 (the code review of step 15d);
 - `current` stops following what `make` reads: after a cleanup read it as the core became ready, a new text made no new object, and the screen would keep the level of before.
@@ -193,7 +193,7 @@ The first, unless a cleanup needs more of the playground than a value. Whatever 
 
 ### Step 17: the edges of `Playback`
 
-The engine is right and tested: one clock for the steps and their animations, `timeAt`, `now` and `lessMotion` injected, 38 tests through the public API and `tick(time)`. Five assumptions come from the bench (`web/src/lib/playback.svelte.ts`):
+The engine is right and tested: one clock for the steps and their animations, `timeAt`, `now` and `lessMotion` injected, 38 tests through the public API and `tick(time)`. Five assumptions come from the bench (`web/src/lib/run/playback.svelte.ts`):
 
 1. **A run always exists.** The constructor and `reset()` call `start()` (`:116`, `:170`), which throws for a program with errors; and the map at rest comes from `playback.world` alone. With the editor, the map shows while the code has errors, and **Reset** after a change of the code would throw.
 2. **The clock is elsewhere.** `tick()` runs only if someone asks for the frames: `wake()` of the bench (`bench/bench.svelte:33-40`), which each command must remember to call. Step 17 has three callers at least: the controls, the shortcuts, the menu **Run**.

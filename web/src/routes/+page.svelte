@@ -2,7 +2,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { t } from '#lib/i18n.ts';
-	import { levelMessage, levels } from '#lib/levels.ts';
+	import { levelMessage, levels } from '#lib/levels/levels.ts';
 	import SettingsButton from '#lib/settings/settings-button.svelte';
 	import Header from '#lib/shell/header.svelte';
 </script>
@@ -13,8 +13,8 @@
 
 <Header>
 	<nav>
-		<a class="band-item" href={resolve('/sandbox')}>{t('screen-sandbox')}</a>
-		<a class="band-item" href={resolve('/manual')}>{t('screen-manual')}</a>
+		<a class="band-item" href={resolve('sandbox')}>{t('screen-sandbox')}</a>
+		<a class="band-item" href={resolve('manual')}>{t('screen-manual')}</a>
 		<SettingsButton />
 	</nav>
 </Header>
@@ -22,7 +22,7 @@
 	<ol>
 		{#each levels as { number, name } (name)}
 			<li>
-				<a href={resolve('/levels/[number]', { number: String(number) })}>
+				<a href={resolve(`levels/${number}`)}>
 					{t('screen-level', { number, title: t(levelMessage(name, 'title')) })}
 				</a>
 			</li>

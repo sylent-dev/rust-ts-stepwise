@@ -2,8 +2,8 @@
 // the sandbox, the level screen without goal. In the core, `Level` and `Sandbox` stay two types,
 // since a map of a level without goal must not exist; the screen reads both as one, here.
 
-import type { Goals, Level, Run, Sandbox, World } from '#lib/core.ts';
-import { SANDBOX } from '#lib/levels.ts';
+import type { Goals, Level, Run, Sandbox, World } from '#lib/core/core.ts';
+import { SANDBOX } from '#lib/levels/levels.ts';
 
 /**
  * What a level screen plays on: a map of a level, or the sandbox. It reads its level, or the

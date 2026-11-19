@@ -3,7 +3,7 @@
 // the units of the drawings (geometry.ts); the reference is the mock-up,
 // `docs/mockups/world-elements/motion.js`.
 
-import type { Color, Direction, Paint, Point, World } from '#lib/core.ts';
+import type { Color, Direction, Paint, Point, World } from '#lib/core/core.ts';
 import { CELL, MIDDLE, STEPS, cellAt, placedFloors } from './geometry.ts';
 import type { Rect } from './ground.ts';
 import type { Motion, Pose } from './motion.ts';

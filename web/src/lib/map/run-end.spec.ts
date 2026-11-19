@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { Outcome } from '#lib/core.ts';
+import type { Outcome } from '#lib/core/core.ts';
 import type { Motion } from './motion.ts';
 import { eyesOf, flagSize, hopShadow, missedCells } from './run-end.ts';
 import { worldOf } from './test-support.ts';

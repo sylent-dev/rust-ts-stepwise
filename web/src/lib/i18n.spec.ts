@@ -2,8 +2,8 @@
 // names that the code writes are checked by messages.spec.ts.
 
 import { describe, expect, it, vi } from 'vitest';
+import { adviceMessage } from '#lib/shell/window-size.ts';
 import { createBundle, findMessage, formatAround, formatMessage, t, tAround } from './i18n.ts';
-import { adviceMessage } from './shell/window-size.ts';
 
 describe('createBundle', () => {
 	it('reads the files of a language into one bundle', () => {

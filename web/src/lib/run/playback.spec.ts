@@ -1,35 +1,18 @@
 // A program played on the map through the module the page loads, its frames given by the tests.
 
-import { readFileSync } from 'node:fs';
 import { afterAll, describe, expect, it } from 'vitest';
-import { initSync, Level, Sandbox } from '#lib/wasm/stepwise.js';
+import { Level, Sandbox } from '#lib/core/core.ts';
+import { corridor, levelOf, loadTestCore, sandboxOf } from '#lib/core/test-support.ts';
 import { Playback, type PlaybackOptions } from './playback.svelte.ts';
 
-initSync({ module: readFileSync(new URL('./wasm/stepwise_bg.wasm', import.meta.url)) });
+loadTestCore();
 
 /** A corridor of four cells, the robot on the first one, facing east. */
-const CORRIDOR = `version = 1
-starting_code = ''
-
-[map]
-terrain = '....'
-robot = { at = [0, 0], facing = "east" }
-`;
-
-const sandbox = new Sandbox(CORRIDOR);
+const sandbox = new Sandbox(sandboxOf(corridor('....')));
 /** The same corridor, an item on its second cell. */
-const withItem = new Sandbox(`${CORRIDOR}items = [[1, 0]]\n`);
+const withItem = new Sandbox(sandboxOf(corridor('....', 'items = [[1, 0]]\n')));
 /** The same corridor in a level, whose goal is to stand on its second cell. */
-const level = new Level(`version = 1
-starting_code = ''
-
-[[maps]]
-terrain = '....'
-robot = { at = [0, 0], facing = "east" }
-
-[maps.goals]
-robot_at = [1, 0]
-`);
+const level = new Level(levelOf(corridor('....', '\n[maps.goals]\nrobot_at = [1, 0]\n')));
 afterAll(() => {
 	sandbox.free();
 	withItem.free();

@@ -6,7 +6,7 @@
 <svelte:options namespace="svg" />
 
 <script lang="ts">
-	import type { World } from '#lib/core.ts';
+	import type { World } from '#lib/core/core.ts';
 	import { STROKE } from './geometry.ts';
 	import type { Motion, Pose } from './motion.ts';
 	import {

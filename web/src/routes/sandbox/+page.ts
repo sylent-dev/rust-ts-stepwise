@@ -1,4 +1,4 @@
-import { sandboxFile } from '#lib/levels.ts';
+import { sandboxFile } from '#lib/levels/levels.ts';
 import type { PageLoad } from './$types';
 
 /**

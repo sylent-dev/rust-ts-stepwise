@@ -1,6 +1,6 @@
 // What the tests of the map share: a world written as it is drawn. Used by the tests alone.
 
-import type { Cell, Robot, World } from '#lib/core.ts';
+import type { Cell, Robot, World } from '#lib/core/core.ts';
 
 /**
  * A world from its rows, one character per cell: `#` a wall, `.` a floor, `o` a floor with an

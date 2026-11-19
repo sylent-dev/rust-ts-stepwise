@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { Robot } from '#lib/core.ts';
+import type { Robot } from '#lib/core/core.ts';
 import { BAY, carryAt, IN_BAY } from './carry-motion.ts';
 import type { Action, Motion } from './motion.ts';
 import { worldOf } from './test-support.ts';

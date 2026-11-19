@@ -1,5 +1,6 @@
-import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { Level, Sandbox } from '#lib/core/core.ts';
+import { loadTestCore } from '#lib/core/test-support.ts';
 import {
 	levelAt,
 	levels,
@@ -9,9 +10,8 @@ import {
 	sandboxIn,
 	type LevelFiles
 } from './levels.ts';
-import { initSync, Level, Sandbox } from '#lib/wasm/stepwise.js';
 
-initSync({ module: readFileSync(new URL('./wasm/stepwise_bg.wasm', import.meta.url)) });
+loadTestCore();
 
 /** A folder of levels whose files hold their own path. */
 function folder(...paths: string[]): LevelFiles {
@@ -20,7 +20,7 @@ function folder(...paths: string[]): LevelFiles {
 
 describe('listLevels', () => {
 	it('names each level after its file and numbers them from 1, in the order of the names', () => {
-		const found = listLevels(folder('../../levels/turn-left.toml', '../../levels/forward.toml'));
+		const found = listLevels(folder('/levels/turn-left.toml', '/levels/forward.toml'));
 		expect(found.map(({ number, name }) => [number, name])).toEqual([
 			[1, 'forward'],
 			[2, 'turn-left']
@@ -29,7 +29,7 @@ describe('listLevels', () => {
 
 	it('leaves the sandbox out, without a number', () => {
 		const found = listLevels(
-			folder('levels/forward.toml', 'levels/sandbox.toml', 'levels/turn.toml')
+			folder('/levels/forward.toml', '/levels/sandbox.toml', '/levels/turn.toml')
 		);
 		expect(found.map(({ number, name }) => [number, name])).toEqual([
 			[1, 'forward'],
@@ -38,13 +38,13 @@ describe('listLevels', () => {
 	});
 
 	it('keeps the way to read the file of each level', async () => {
-		const found = listLevels(folder('levels/turn-left.toml', 'levels/forward.toml'));
-		expect(await found[1]?.file()).toBe('levels/turn-left.toml');
+		const found = listLevels(folder('/levels/turn-left.toml', '/levels/forward.toml'));
+		expect(await found[1]?.file()).toBe('/levels/turn-left.toml');
 	});
 });
 
 describe('levelAt', () => {
-	const found = listLevels(folder('levels/forward.toml', 'levels/turn-left.toml'));
+	const found = listLevels(folder('/levels/forward.toml', '/levels/turn-left.toml'));
 
 	it('gives the level of a number', () => {
 		expect(levelAt(found, '1')?.name).toBe('forward');
@@ -67,13 +67,13 @@ describe('levelAt', () => {
 describe('sandboxIn', () => {
 	it('gives the way to read the file of the sandbox, among those of the levels', async () => {
 		const file = sandboxIn(
-			folder('levels/forward.toml', 'levels/sandbox.toml', 'levels/turn.toml')
+			folder('/levels/forward.toml', '/levels/sandbox.toml', '/levels/turn.toml')
 		);
-		expect(await file()).toBe('levels/sandbox.toml');
+		expect(await file()).toBe('/levels/sandbox.toml');
 	});
 
 	it('fails to read it in a folder without it', async () => {
-		await expect(sandboxIn(folder('levels/forward.toml'))()).rejects.toThrow(`${SANDBOX}.toml`);
+		await expect(sandboxIn(folder('/levels/forward.toml'))()).rejects.toThrow(`${SANDBOX}.toml`);
 	});
 });
 

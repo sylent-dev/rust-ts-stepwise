@@ -12,7 +12,7 @@
 
 <main>
 	<aside>
-		<a class="name" href={resolve('/')} title={t('screen-home')}><Wordmark /></a>
+		<a class="name" href={resolve('')} title={t('screen-home')}><Wordmark /></a>
 	</aside>
 </main>
 

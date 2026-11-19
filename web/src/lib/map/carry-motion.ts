@@ -3,7 +3,7 @@
 // Everything is in the units of the drawings (geometry.ts), along the robot as its drawing faces
 // north; the reference is the mock-up, `docs/mockups/world-elements/motion.js`.
 
-import type { World } from '#lib/core.ts';
+import type { World } from '#lib/core/core.ts';
 import { clamp01, lerp, smoothBetween } from './easing.ts';
 import { CELL, cellAt } from './geometry.ts';
 import { STEP_BACK, type Action, type Motion } from './motion.ts';

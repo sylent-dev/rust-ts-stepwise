@@ -4,11 +4,11 @@
      core has loaded. -->
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import type { Run } from '#lib/core.ts';
+	import type { Run } from '#lib/core/core.ts';
 	import { t } from '#lib/i18n.ts';
 	import type { Playground } from '#lib/level-screen/playground.ts';
-	import { SPEEDS } from '#lib/pace.ts';
-	import { NORMAL_SPEED, Playback } from '#lib/playback.svelte.ts';
+	import { SPEEDS } from '#lib/run/pace.ts';
+	import { NORMAL_SPEED, Playback } from '#lib/run/playback.svelte.ts';
 	import { benchPrograms, programMessage } from './bench-programs.ts';
 
 	interface Props {

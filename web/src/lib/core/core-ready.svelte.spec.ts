@@ -2,16 +2,16 @@
 
 import { flushSync } from 'svelte';
 import { describe, expect, it, vi } from 'vitest';
+import { loadFailed } from '#lib/page/startup.ts';
 import { loadCore } from './core.ts';
 import { coreReady, fromCore } from './core-ready.svelte.ts';
-import { loadFailed } from './startup.ts';
 
 vi.mock('./core.ts', () => ({ loadCore: vi.fn() }));
-vi.mock('./startup.ts', () => ({ loadFailed: vi.fn() }));
+vi.mock('#lib/page/startup.ts', () => ({ loadFailed: vi.fn() }));
 
 describe('coreReady', () => {
 	it('says that the core is ready once it has loaded', async () => {
-		vi.mocked(loadCore).mockResolvedValue({ version: '0.1.0' });
+		vi.mocked(loadCore).mockResolvedValue();
 		const core = coreReady();
 		expect(core.ready).toBe(false);
 		await vi.waitFor(() => expect(core.ready).toBe(true));
@@ -42,7 +42,7 @@ class Kept {
 
 describe('fromCore', () => {
 	it('gives nothing until the core is ready, then what `make` gives', async () => {
-		vi.mocked(loadCore).mockResolvedValue({ version: '0.1.0' });
+		vi.mocked(loadCore).mockResolvedValue();
 		const make = vi.fn(() => new Kept('one'));
 		let kept: { readonly current: Kept | undefined } | undefined;
 		const leave = $effect.root(() => {
@@ -60,7 +60,7 @@ describe('fromCore', () => {
 	});
 
 	it('frees the object once another replaces it, and once the component leaves', async () => {
-		vi.mocked(loadCore).mockResolvedValue({ version: '0.1.0' });
+		vi.mocked(loadCore).mockResolvedValue();
 		let text = $state('one');
 		const make = vi.fn(() => new Kept(text));
 		let kept: { readonly current: Kept | undefined } | undefined;
@@ -83,7 +83,7 @@ describe('fromCore', () => {
 	});
 
 	it('makes one object for two changes before the screen follows', async () => {
-		vi.mocked(loadCore).mockResolvedValue({ version: '0.1.0' });
+		vi.mocked(loadCore).mockResolvedValue();
 		let text = $state('one');
 		const make = vi.fn(() => new Kept(text));
 		let kept: { readonly current: Kept | undefined } | undefined;
@@ -104,7 +104,7 @@ describe('fromCore', () => {
 	});
 
 	it('makes nothing more for an effect whose cleanup uses what the effect read first', async () => {
-		vi.mocked(loadCore).mockResolvedValue({ version: '0.1.0' });
+		vi.mocked(loadCore).mockResolvedValue();
 		let text = $state('one');
 		const made: Kept[] = [];
 		const left: string[] = [];

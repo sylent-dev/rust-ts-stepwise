@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { canChoose, type MenuRow } from '#lib/shell/menus.ts';
 import { levelMenus, type LevelScreenKind } from './level-menus.ts';
-import { canChoose, type MenuRow } from './shell/menus.ts';
 
 /** The row of a screen, by the name of its menu and its own in the code. */
 function row(screen: LevelScreenKind, menu: string, id: string): MenuRow | undefined {

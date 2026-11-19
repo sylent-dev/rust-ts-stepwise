@@ -24,9 +24,9 @@ export default defineConfig({
 	],
 	// The folders the development server may serve besides those SvelteKit allows (`src/`,
 	// `node_modules/`…): the files of the levels, which a level screen loads when it opens (see
-	// src/lib/levels.ts), and the drawings of the world elements, which live with their sheet (see
-	// src/lib/elements.ts). Without it, the address of a level file, under `/levels/`, would be
-	// answered by the page of the level screen.
+	// src/lib/levels/levels.ts), and the drawings of the world elements, which live with their
+	// sheet (see src/lib/elements.ts). Without it, the address of a level file, under `/levels/`,
+	// would be answered by the page of the level screen.
 	server: { fs: { allow: ['levels', '../docs/mockups/world-elements/daylight'] } },
 	test: {
 		expect: { requireAssertions: true },

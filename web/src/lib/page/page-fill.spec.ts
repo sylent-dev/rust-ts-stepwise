@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import page from '../app.html?raw';
-import { t } from './i18n.ts';
+import { t } from '#lib/i18n.ts';
+import screenMessage from '#lib/styles/screen-message.css?raw';
+import page from '../../app.html?raw';
 import { fillPage, type PageParts } from './page-fill.ts';
 import { pageParts } from './page-parts.ts';
-import screenMessage from './styles/screen-message.css?raw';
 
 const texts: Record<string, string> = { greeting: 'Hello', order: 'a < b & b > c' };
 

@@ -3,21 +3,14 @@
 
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import {
-	check,
-	coreVersion,
-	initSync,
-	Level,
-	Sandbox,
-	type Cell,
-	type Span
-} from '#lib/wasm/stepwise.js';
+import { check, coreVersion, Level, Sandbox, type Cell, type Span } from '#lib/wasm/stepwise.js';
+import { corridor, levelFile, levelOf, loadTestCore, sandboxOf } from './test-support.ts';
 
 const workspaceVersion = /\[workspace\.package\]\nversion = "([^"]+)"/.exec(
-	readFileSync(new URL('../../../Cargo.toml', import.meta.url), 'utf8')
+	readFileSync(new URL('../../../../Cargo.toml', import.meta.url), 'utf8')
 )?.[1];
 
-initSync({ module: readFileSync(new URL('./wasm/stepwise_bg.wasm', import.meta.url)) });
+loadTestCore();
 
 describe('the WebAssembly module', () => {
 	it('gives the version of the workspace, computed in Rust', () => {
@@ -173,11 +166,6 @@ robot = { at = [3, 0], facing = "west", carrying = true }
 items_at = [[0, 0]]
 `;
 
-	/** The file of a level of one map, the body of its `[[maps]]` table. */
-	function levelOf(map: string): string {
-		return `version = 1\nstarting_code = ''\n\n[[maps]]\n${map}`;
-	}
-
 	it('gives the code the learner starts with, as written', () => {
 		using level = new Level(LEVEL);
 		expect(level.startingCode()).toBe('# Paint the corner\nrepeat 2:\n    forward()\n');
@@ -262,18 +250,15 @@ describe('the file of the sandbox', () => {
 	});
 
 	it('reads the file of the website, whatever its map becomes', () => {
-		const file = readFileSync(new URL('../../levels/sandbox.toml', import.meta.url), 'utf8');
-		using sandbox = new Sandbox(file);
+		using sandbox = new Sandbox(levelFile('sandbox'));
 		const world = sandbox.world();
 		expect(world.cells).toHaveLength(world.width * world.height);
 		expect(check(sandbox.startingCode())).toEqual([]);
 	});
 
 	it('throws the error of a file that has goals, or that is the one of a level', () => {
-		const map = `terrain = '..'\nrobot = { at = [0, 0], facing = "east" }\n`;
-		const withGoals = `version = 1\nstarting_code = ''\n\n[map]\n${map}\n[map.goals]\nrobot_at = [1, 0]\n`;
+		const withGoals = sandboxOf(corridor('..', '\n[map.goals]\nrobot_at = [1, 0]\n'));
 		expect(() => new Sandbox(withGoals)).toThrow(new Error('the map of the sandbox has goals'));
-		const level = `version = 1\nstarting_code = ''\n\n[[maps]]\n${map}`;
-		expect(() => new Sandbox(level)).toThrow(/^TOML parse error/);
+		expect(() => new Sandbox(levelOf(corridor('..')))).toThrow(/^TOML parse error/);
 	});
 });

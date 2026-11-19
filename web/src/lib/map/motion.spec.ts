@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { Outcome, Robot, RuntimeErrorKind, StepEvent } from '#lib/core.ts';
+import type { Outcome, Robot, RuntimeErrorKind, StepEvent } from '#lib/core/core.ts';
 import {
 	actionTime,
 	isAnimated,

@@ -1,22 +1,18 @@
 import { describe, expect, it } from 'vitest';
-import { openStore, type Backend } from '#lib/storage/store.ts';
+import { openStore } from '#lib/storage/store.ts';
+import { memoryBackend } from '#lib/storage/test-support.ts';
 import { loadSettings, saveSettings, SETTINGS_KEY } from './saved-settings.ts';
 import { DEFAULT_SETTINGS, THEMES } from './settings.ts';
 
 /** A store over a storage in memory that holds `value` as the settings. */
 function storeWith(value?: string) {
-	const held = new Map(value === undefined ? [] : [[SETTINGS_KEY, value]]);
-	const backend: Backend = {
-		getItem: (key) => held.get(key) ?? null,
-		setItem: (key, text) => void held.set(key, text),
-		removeItem: (key) => void held.delete(key)
-	};
+	const backend = memoryBackend(value === undefined ? {} : { [SETTINGS_KEY]: value });
 	return {
 		store: openStore(
 			() => backend,
 			() => {}
 		),
-		held
+		held: backend.held
 	};
 }
 
@@ -38,7 +34,7 @@ describe('the settings saved', () => {
 	it('are saved with the version of their shape', () => {
 		const { store, held } = storeWith();
 		saveSettings(store, { theme: 'night-desk' });
-		expect(JSON.parse(held.get(SETTINGS_KEY) ?? '')).toEqual({ theme: 'night-desk', version: 1 });
+		expect(JSON.parse(held[SETTINGS_KEY] ?? '')).toEqual({ theme: 'night-desk', version: 1 });
 	});
 
 	it.each([

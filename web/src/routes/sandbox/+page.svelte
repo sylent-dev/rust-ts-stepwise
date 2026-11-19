@@ -1,8 +1,8 @@
 <!-- The sandbox: the level screen without goal. The page loads its file, the core reads it, and
      the screen plays on its open map. -->
 <script lang="ts">
-	import { Sandbox } from '#lib/core.ts';
-	import { fromCore } from '#lib/core-ready.svelte.ts';
+	import { Sandbox } from '#lib/core/core.ts';
+	import { fromCore } from '#lib/core/core-ready.svelte.ts';
 	import { t } from '#lib/i18n.ts';
 	import LevelScreen from '#lib/level-screen/level-screen.svelte';
 	import { sandboxPlayground } from '#lib/level-screen/playground.ts';

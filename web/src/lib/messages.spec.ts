@@ -15,12 +15,12 @@ import {
 	type TermReference
 } from '@fluent/syntax';
 import { describe, expect, it } from 'vitest';
+import { benchPrograms, programMessage } from '#lib/bench/bench-programs.ts';
+import { LEVEL_PARTS, levelMessage, levels, SANDBOX } from '#lib/levels/levels.ts';
+import { themeMessage, THEMES } from '#lib/settings/settings.ts';
+import { adviceMessage, WINDOW_ADVICES } from '#lib/shell/window-size.ts';
 import page from '../app.html?raw';
-import { benchPrograms, programMessage } from './bench/bench-programs.ts';
 import { createBundle, english } from './i18n.ts';
-import { LEVEL_PARTS, levelMessage, levels, SANDBOX } from './levels.ts';
-import { themeMessage, THEMES } from './settings/settings.ts';
-import { adviceMessage, WINDOW_ADVICES } from './shell/window-size.ts';
 
 /**
  * The families: the messages whose names hold a name of the data. Each is known by the one
@@ -217,7 +217,7 @@ describe('readCalls', () => {
 	});
 
 	// Nothing here tells a comment from the code. Taking the comments out with another expression
-	// would be worse: `'../../locales/en/*.ftl'` opens one that isn't, and real calls would go.
+	// would be worse: `'/locales/en/*.ftl'` opens one that isn't, and real calls would go.
 	it('reads a call written in a comment as one of the code', () => {
 		expect(readCalls("// As `t('app-name')` does.\n/** See `t(name)`. */")).toEqual([
 			{ line: 1, name: 'app-name', builder: undefined },

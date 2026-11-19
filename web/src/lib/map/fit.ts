@@ -1,7 +1,7 @@
 // The size of the cells of a map in its block: as large as the block allows, up to the size the
 // drawings were made for (see Level screen in specs.md: no zoom, no scrolling).
 
-import type { World } from '#lib/core.ts';
+import type { World } from '#lib/core/core.ts';
 
 /** The largest side of a cell, in pixels: the drawings at their own size, 64 units. */
 export const LARGEST_CELL = 64;

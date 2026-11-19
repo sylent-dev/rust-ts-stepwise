@@ -2,7 +2,7 @@
 // alone: the faces of the walls, the lines every five cells and the shadows of the walls (see
 // Look of the world in specs.md). Everything is in the units of the drawings (geometry.ts).
 
-import type { Point, World } from '#lib/core.ts';
+import type { Point, World } from '#lib/core/core.ts';
 import { CELL, isFloor, placedFloors } from './geometry.ts';
 
 /** A rectangle on the map, in the units of the drawings. */

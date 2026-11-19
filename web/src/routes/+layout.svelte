@@ -8,11 +8,11 @@
 	import '#lib/styles/band.css';
 	import '#lib/styles/screen-message.css';
 	import { onMount } from 'svelte';
+	import { applicationStarted } from '#lib/page/startup.ts';
 	import { followSavedSettings, settings } from '#lib/settings/current-settings.svelte.ts';
 	import { SETTINGS_KEY } from '#lib/settings/saved-settings.ts';
 	import { currentWindow } from '#lib/shell/current-window.svelte.ts';
 	import WindowMessage from '#lib/shell/window-message.svelte';
-	import { applicationStarted } from '#lib/startup.ts';
 	import type { LayoutProps } from './$types';
 
 	let { children }: LayoutProps = $props();
