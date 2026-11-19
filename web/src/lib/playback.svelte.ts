@@ -196,7 +196,8 @@ export class Playback {
 	 * when it has one and a time to show it at `rate` steps per second.
 	 */
 	#runStep(start: number | undefined, rate: number): void {
-		// A run that has stopped has no step left: the error it stopped on was shown already.
+		// A run that has stopped has no step left: its last action, or the error it stopped on, was
+		// shown already.
 		if (this.#run.line === undefined) return;
 		const event = this.#run.step();
 		this.steps = this.#run.steps;

@@ -43,12 +43,12 @@ const EVENT_TIMES = {
 	'started-erasing': 300,
 	'picked-up': 400,
 	dropped: 400
-} satisfies Readonly<Record<AnimatedEvent, number>>;
+} as const satisfies Record<AnimatedEvent, number>;
 
 /**
- * The time each error of the robot that the map shows takes, at every speed: a bump 450 ms, and a
- * `pick_up()` or a `drop()` that fails 650 ms, since they show what goes wrong before the robot
- * shakes. Its keys are the errors shown.
+ * The time each error of the robot that the map shows takes, at every animated speed: a bump
+ * 450 ms, and a `pick_up()` or a `drop()` that fails 650 ms, since they show what goes wrong before
+ * the robot shakes. Its keys are the errors shown.
  */
 const FAILURE_TIMES = {
 	bump: 450,
@@ -56,7 +56,7 @@ const FAILURE_TIMES = {
 	'no-item-here': 650,
 	'not-carrying': 650,
 	'item-already-here': 650
-} satisfies Readonly<Record<RobotFailure, number>>;
+} as const satisfies Record<RobotFailure, number>;
 
 /**
  * Whether the map animates what a step showed. A line without action, a line printed and a tool
@@ -99,7 +99,8 @@ const ACTION_SHARE = 0.8;
 /**
  * The time `action` takes at `rate` steps per second: the one of the normal speed, shortened when
  * a step is shorter, so that the robot still rests a moment between two steps. An error of the
- * robot keeps its whole time at every speed: it stops the program, so no step waits after it.
+ * robot keeps its whole time at every animated speed: it stops the program, so no step waits
+ * after it.
  * Nothing at **Instant**, which draws no animation.
  */
 export function actionTime(action: Action, rate: number): number {

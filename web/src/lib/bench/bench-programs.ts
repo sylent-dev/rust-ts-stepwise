@@ -37,22 +37,20 @@ const WALK: BenchProgram = {
 };
 
 /**
- * A `pick_up()` on the cell ahead of the robot, which has no item: on the maps of the bench, where
- * that cell is a floor.
+ * A `pick_up()` on the cell where the robot starts, which has no item on the maps of the bench: on
+ * a cell of the border, the robot steps back past it.
  */
 const PICK_UP_NOTHING: BenchProgram = {
 	name: 'pick-up-nothing',
-	text: `forward()
-pick_up()
+	text: `pick_up()
 `,
 	fails: 'no-item-here'
 };
 
-/** A `drop()` with nothing carried, on the cell ahead of the robot, as `PICK_UP_NOTHING`. */
+/** A `drop()` with nothing carried, on the cell where the robot starts, as `PICK_UP_NOTHING`. */
 const DROP_NOTHING: BenchProgram = {
 	name: 'drop-nothing',
-	text: `forward()
-drop()
+	text: `drop()
 `,
 	fails: 'not-carrying'
 };

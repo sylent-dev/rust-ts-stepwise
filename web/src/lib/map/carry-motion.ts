@@ -55,8 +55,9 @@ function tried(t: number): number {
 
 /**
  * What the robot of `before`, the world as the step found it, does with an item at `t` of the
- * step of `action`, from 0 to 1. It picks up the item of its cell into its bay, over itself, a little larger
- * as if lifted, or brings it back from the bay and sets it down on its cell, with its pincer out.
+ * step of `action`, from 0 to 1. It picks up the item of its cell into its bay, over itself, a
+ * little larger as if lifted, or brings it back from the bay and sets it down on its cell, with
+ * its pincer out.
  * When the action fails, its pincer comes out empty (nothing to pick up, nothing to drop), its
  * full bay swells (an item already carried), or the item comes out of the bay and goes back into
  * it (an item already on the cell). At rest, and for another action, nothing moves.

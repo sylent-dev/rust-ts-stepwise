@@ -147,7 +147,8 @@
 
 <style>
 	/* The robot may go past the border of the map, when it steps back on a cell of the border to
-	   pick up or drop an item: the margin of the block leaves it room. */
+	   pick up or drop an item, and so may the ring of a tool it puts down there, as in the mock-up:
+	   the margin of the block leaves them room. */
 	svg {
 		display: block;
 		overflow: visible;
