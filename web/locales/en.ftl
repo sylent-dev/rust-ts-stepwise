@@ -112,6 +112,13 @@ bench-program-square = Paint the square
 bench-program-paint-erase = Paint, then erase
 bench-program-paint-over = Paint over the yellow
 bench-program-erase-blue = Erase the blue
+bench-program-carry = Pick up an item, then drop it
+bench-program-bump-edge = Bump into the edge of the map
+bench-program-bump-wall = Bump into a wall
+bench-program-pick-up-nothing = Pick up where there is no item
+bench-program-drop-nothing = Drop with nothing carried
+bench-program-pick-up-twice = Pick up twice
+bench-program-drop-on-item = Drop on another item
 bench-program-turns = Turn left, then right
 bench-program-walk = Walk along the walls, forever
 bench-lines = The program, the line of its next step marked
@@ -135,3 +142,5 @@ bench-steps =
        *[other] { $count } steps
     }
 bench-ended = The program has ended.
+# $line (Number): the line of the error, from 1.
+bench-failed = The program stopped on an error at line { $line }.

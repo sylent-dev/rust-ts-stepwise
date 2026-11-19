@@ -2,10 +2,12 @@
      `side` pixels wide (see Map and Look of the world in specs.md). The drawings of the world
      elements are stacked in their cells; the map draws the rest from the cells: the lines every
      five cells, the paint strokes and the shadows of the walls. While a step runs, the map draws
-     the world as the step found it, its robot moving and its paint changing (see Animations). -->
+     the world as the step found it, its robot moving, its paint changing and its items carried
+     (see Animations). -->
 <script lang="ts">
 	import type { Goals, World } from '#lib/core.ts';
 	import { t } from '#lib/i18n.ts';
+	import { carryAt } from './carry-motion.ts';
 	import Element from './element.svelte';
 	import { CELL, paintAt, placedCells, placedFloors } from './geometry.ts';
 	import { fiveLines, wallFaces, wallShadow } from './ground.ts';
@@ -34,6 +36,10 @@
 	const paint = $derived(motion && paintMotion(world, motion.after));
 	const strokes = $derived(paint?.kept ?? paintParts(world));
 	const pose = $derived(motion ? poseAt(world.robot, motion, progress) : restingPose(world.robot));
+	const carry = $derived(carryAt(world, motion, progress));
+	/** Whether the item of a cell shows: the one of the cell of the robot comes and goes with it. */
+	const itemShows = (x: number, y: number, item: boolean): boolean =>
+		x === world.robot.position.x && y === world.robot.position.y ? carry.floor : item;
 
 	const floors = $derived(placedFloors(world));
 	const walls = $derived(
@@ -122,12 +128,12 @@
 	</g>
 
 	{#each floors as { x, y, cell } (`${x},${y}`)}
-		{#if cell.item}
+		{#if itemShows(x, y, cell.item)}
 			<Element name="item" {x} {y} />
 		{/if}
 	{/each}
 
-	<Robot {pose} carrying={world.robot.carrying} />
+	<Robot {pose} {carry} />
 </svg>
 
 <style>

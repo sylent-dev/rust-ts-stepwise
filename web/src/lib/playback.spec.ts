@@ -17,7 +17,12 @@ robot = { at = [0, 0], facing = "east" }
 `;
 
 const sandbox = new Sandbox(CORRIDOR);
-afterAll(() => sandbox.free());
+/** The same corridor, an item on its second cell. */
+const withItem = new Sandbox(`${CORRIDOR}items = [[1, 0]]\n`);
+afterAll(() => {
+	sandbox.free();
+	withItem.free();
+});
 
 /** Plays `program` in the corridor, at the normal speed: 2 steps per second, 300 ms an action. */
 function play(program: string, options?: PlaybackOptions): Playback {
@@ -241,5 +246,79 @@ describe('a program played on the map', () => {
 			position: { x: 0, y: 0 },
 			line: 1
 		});
+	});
+
+	it('animates an item picked up and dropped, longer than a move', () => {
+		using playback = new Playback(() => withItem.start('forward()\npick_up()\ndrop()\n'));
+		playback.play();
+		playback.tick(0);
+		playback.tick(300);
+		playback.tick(500);
+		expect(playback.motion?.action).toBe('picked-up');
+		expect(playback.world.robot.carrying).toBe(false);
+		playback.tick(850);
+		expect(playback.motion?.action).toBe('picked-up');
+		playback.tick(900);
+		expect({ carrying: playback.world.robot.carrying, line: playback.line }).toEqual({
+			carrying: true,
+			line: 3
+		});
+	});
+
+	it('shows a bump whole, even at 20 steps per second, then tells the error', () => {
+		using playback = play('repeat 4:\n    forward()\n');
+		playback.rate = 20;
+		playback.play();
+		let time = 0;
+		while (playback.motion?.action !== 'bump' && time < 1000) playback.tick((time += 50));
+		expect(playback.world.robot.position).toEqual({ x: 3, y: 0 });
+		// The line of the error stays lit, the program running, while the robot shows it.
+		expect({ line: playback.line, status: playback.status, outcome: playback.outcome }).toEqual({
+			line: 2,
+			status: 'running',
+			outcome: undefined
+		});
+		playback.tick(time + 400);
+		expect(playback.motion?.action).toBe('bump');
+		playback.tick(time + 450);
+		expect(playback.motion).toBeUndefined();
+		expect({ status: playback.status, error: playback.outcome }).toMatchObject({
+			status: 'ended',
+			error: { type: 'failed', error: { kind: { code: 'bump' }, span: { line: 2 } } }
+		});
+	});
+
+	it('shows a pick_up() that fails, and nothing on the map for another error', () => {
+		using failed = play('pick_up()\n');
+		failed.play();
+		failed.tick(0);
+		expect(failed.motion?.action).toBe('no-item-here');
+		using other = play('print(1 / 0)\n');
+		other.play();
+		other.tick(0);
+		expect({ motion: other.motion, code: other.outcome?.type }).toEqual({
+			motion: undefined,
+			code: 'failed'
+		});
+	});
+
+	it('shows no bump at Instant, the error told at once', () => {
+		using playback = play('repeat 4:\n    forward()\n', { now: ticking() });
+		playback.rate = Infinity;
+		playback.play();
+		expect(playback.tick(0)).toBe(false);
+		expect(playback.motion).toBeUndefined();
+		expect(playback.outcome?.type).toBe('failed');
+	});
+
+	it('tells how a program that ended well ended, and nothing once put back', () => {
+		using playback = play('forward()\n');
+		playback.play();
+		playback.tick(0);
+		expect(playback.outcome).toBeUndefined();
+		playback.tick(300);
+		expect(playback.outcome).toEqual({ type: 'ended' });
+		playback.reset();
+		expect(playback.outcome).toBeUndefined();
 	});
 });

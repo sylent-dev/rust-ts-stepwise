@@ -1,5 +1,6 @@
 // The programs of the bench, run on their maps through the module the page loads: the page
-// deployed must never start a program that has errors, nor show one that stops on an error.
+// deployed must never start a program that has errors, nor show one that stops on an error it
+// isn't made for.
 
 import { readFileSync } from 'node:fs';
 import { afterAll, describe, expect, it } from 'vitest';
@@ -38,18 +39,28 @@ const MAPS: Record<string, (text: string) => Run> = {
 
 describe.each(Object.entries(MAPS))('the programs of the bench on the map of %s', (map, start) => {
 	it.each(benchPrograms(map).map((program) => [program.name, program]))(
-		'%s has no error, a title, and never stops on an error',
-		(name, { text }) => {
+		'%s has no error, a title, and stops on no error but the one it shows',
+		(name, { text, fails }) => {
 			expect(check(text)).toEqual([]);
 			expect(hasMessage(`bench-program-${name}`)).toBe(true);
 			using run = start(text);
 			finish(run);
-			expect(run.outcome()?.type).not.toBe('failed');
+			const outcome = run.outcome();
+			if (fails) {
+				expect(outcome?.type === 'failed' && outcome.error.kind.code).toBe(fails);
+			} else {
+				expect(outcome?.type).not.toBe('failed');
+			}
 			if (name === 'walk') expect(run.line).toBeDefined();
 		}
 	);
 });
 
 it('gives the programs that fit any map to the map of another level', () => {
-	expect(benchPrograms('another-level').map(({ name }) => name)).toEqual(['turns', 'walk']);
+	expect(benchPrograms('another-level').map(({ name }) => name)).toEqual([
+		'pick-up-nothing',
+		'drop-nothing',
+		'turns',
+		'walk'
+	]);
 });
