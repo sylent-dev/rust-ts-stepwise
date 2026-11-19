@@ -12,9 +12,9 @@
 		world?: World;
 		/** The goals of a map of a level; the sandbox has none. */
 		goals?: Goals;
-		/** The step under way, if any. */
+		/** The step under way, or the end of the run after its last step, if any. */
 		motion?: Motion;
-		/** How far the step under way has gone, from 0 to 1. */
+		/** How far the step under way, or the end of the run, has gone, from 0 to 1. */
 		progress?: number;
 		/** How the run ended, once its last action has ended; nothing until then. */
 		outcome?: Outcome;

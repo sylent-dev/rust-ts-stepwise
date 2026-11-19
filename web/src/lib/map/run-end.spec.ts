@@ -71,6 +71,19 @@ describe('flagSize', () => {
 		expect(Math.max(...sizes)).toBeLessThan(1.1);
 	});
 
+	it('plants many flags in a wave, each long enough for its bounce to show', () => {
+		const count = 12;
+		const size = (t: number, index: number) => flagSize(notMet, t, index, count);
+		// The first starts once the head has shaken, and takes 150 ms of the 900 of the end.
+		expect(size(0.6, 0)).toBe(0);
+		expect(size(0.6 + 1 / 12, 0)).toBeGreaterThan(0.5);
+		expect(size(0.6 + 1 / 6, 0)).toBeCloseTo(1, 9);
+		// The next ones start before it has ended, and the last one ends with the others.
+		expect(size(0.6 + 1 / 12, 1)).toBeGreaterThan(0);
+		expect(size(0.75, count - 1)).toBe(0);
+		expect(size(0.95, count - 1)).toBeCloseTo(1, 9);
+	});
+
 	it('shows every flag at rest, during another action, and with less motion', () => {
 		expect(flagSize(undefined, 0, 2, 3)).toBe(1);
 		expect(flagSize({ ...notMet, action: 'passed' }, 0, 2, 3)).toBe(1);

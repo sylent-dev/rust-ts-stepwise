@@ -110,6 +110,7 @@ bench-title = Bench of the animations
 bench-program = Program
 bench-program-square = Paint the square
 bench-program-square-unfinished = Paint three sides of the square
+bench-program-square-ending-on-move = Paint the square, ending on a move
 bench-program-paint-erase = Paint, then erase
 bench-program-paint-over = Paint over the yellow
 bench-program-erase-blue = Erase the blue

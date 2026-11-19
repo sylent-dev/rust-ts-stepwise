@@ -398,7 +398,7 @@ describe('the end of a run', () => {
 			outcome: playback.outcome,
 			status: playback.status
 		}).toEqual({ action: 'passed', outcome: { type: 'passed' }, status: 'ended' });
-		playback.tick(750);
+		expect(playback.tick(750)).toBe(true);
 		expect(playback.progress).toBe(0.5);
 		expect(playback.tick(1200)).toBe(false);
 		expect({ motion: playback.motion, outcome: playback.outcome }).toEqual({
@@ -485,6 +485,81 @@ describe('the end of a run', () => {
 				line: 1
 			});
 		}
+	});
+
+	it('plays after the last action that a second Step ended at once', () => {
+		using playback = playLevel('forward()\n');
+		playback.step();
+		playback.tick(0);
+		playback.step();
+		expect({ action: playback.motion?.action, position: playback.world.robot.position }).toEqual({
+			action: 'passed',
+			position: { x: 1, y: 0 }
+		});
+	});
+
+	it('shows at once when the speed becomes Instant during the last action', () => {
+		using playback = playLevel('forward()\n');
+		playback.play();
+		playback.tick(0);
+		playback.rate = Infinity;
+		expect(playback.tick(16)).toBe(false);
+		expect({ motion: playback.motion, type: playback.outcome?.type }).toEqual({
+			motion: undefined,
+			type: 'passed'
+		});
+	});
+
+	it('plays on when the speed becomes Instant during it, the program having ended', () => {
+		using playback = playLevel('forward()\n');
+		playback.play();
+		playback.tick(0);
+		playback.tick(300);
+		playback.rate = Infinity;
+		expect(playback.tick(750)).toBe(true);
+		expect(playback.progress).toBe(0.5);
+	});
+
+	it('plays nothing after an error of the robot on a map of a level', () => {
+		using playback = playLevel('repeat 4:\n    forward()\n', { now: ticking() });
+		playback.rate = Infinity;
+		playback.play();
+		expect(playback.tick(0)).toBe(false);
+		using animated = playLevel('pick_up()\n');
+		animated.play();
+		animated.tick(0);
+		expect(animated.motion?.action).toBe('no-item-here');
+		expect(animated.tick(650)).toBe(false);
+		expect({ motion: animated.motion, type: animated.outcome?.type }).toEqual({
+			motion: undefined,
+			type: 'failed'
+		});
+	});
+
+	it('waits for Run for a program without a step, then plays at once', () => {
+		using playback = playLevel('# Nothing to run\n');
+		expect({
+			status: playback.status,
+			outcome: playback.outcome,
+			motion: playback.motion
+		}).toEqual({ status: 'ready', outcome: undefined, motion: undefined });
+		playback.play();
+		expect({ action: playback.motion?.action, type: playback.outcome?.type }).toEqual({
+			action: 'goals-not-met',
+			type: 'goals-not-met'
+		});
+		expect(playback.tick(0)).toBe(true);
+		expect(playback.status).toBe('ended');
+		expect(playback.tick(900)).toBe(false);
+		// Reset puts the map back, and the program waits for Run again, its end not played.
+		playback.reset();
+		expect({
+			status: playback.status,
+			outcome: playback.outcome,
+			motion: playback.motion
+		}).toEqual({ status: 'ready', outcome: undefined, motion: undefined });
+		playback.step();
+		expect(playback.motion?.action).toBe('goals-not-met');
 	});
 
 	it('plays nothing in the sandbox, which has no goal', () => {

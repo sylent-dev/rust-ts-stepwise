@@ -6,7 +6,7 @@
 import type { World } from '#lib/core.ts';
 import { clamp01, lerp, smoothBetween } from './easing.ts';
 import { CELL, cellAt } from './geometry.ts';
-import { STEP_BACK, type Action } from './motion.ts';
+import { STEP_BACK, type Action, type Motion } from './motion.ts';
 
 /** The size of the item in the bay, as a share of the item on the floor. */
 export const IN_BAY = 0.5;
@@ -57,7 +57,7 @@ function tried(t: number): number {
 
 /**
  * What the robot of `before`, the world as the step found it, does with an item at `t` of the
- * step of `action`, from 0 to 1. It picks up the item of its cell into its bay, over itself, a
+ * step of `motion`, from 0 to 1. It picks up the item of its cell into its bay, over itself, a
  * little larger as if lifted, or brings it back from the bay and sets it down on its cell, with
  * its pincer out.
  * When the action fails, its pincer comes out empty (nothing to pick up, nothing to drop), its
@@ -67,12 +67,7 @@ function tried(t: number): number {
  * With less motion, the pincer stays in: the item fades into the bay, or out of it, the robot
  * covering the item of its cell; an action that fails shows nothing.
  */
-export function carryAt(
-	before: World,
-	action: Action | undefined,
-	t: number,
-	lessMotion = false
-): Carry {
+export function carryAt(before: World, motion: Motion | undefined, t: number): Carry {
 	const { position, carrying } = before.robot;
 	const cell = cellAt(before, position);
 	const rest: Carry = {
@@ -80,7 +75,8 @@ export function carryAt(
 		bay: carrying ? IN_BAY : undefined,
 		floor: cell?.type === 'floor' && cell.item
 	};
-	if (lessMotion) return fadedAt(rest, action, t);
+	const action = motion?.action;
+	if (motion?.lessMotion === true) return fadedAt(rest, action, t);
 	switch (action) {
 		case 'picked-up': {
 			const way = smoothBetween(t, 0.4, 0.8);

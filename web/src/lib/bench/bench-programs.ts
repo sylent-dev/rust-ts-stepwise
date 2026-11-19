@@ -94,6 +94,20 @@ stop_painting()
 			ends: 'goals-not-met'
 		},
 		{
+			// The square, its last side written out: the run ends on a move, the end right after it.
+			name: 'square-ending-on-move',
+			text: `start_painting(red)
+repeat 3:
+    repeat 3:
+        forward()
+    turn_right()
+forward()
+forward()
+forward()
+`,
+			ends: 'passed'
+		},
+		{
 			name: 'paint-erase',
 			text: `start_painting(blue)
 repeat 3:

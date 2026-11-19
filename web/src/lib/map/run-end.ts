@@ -4,22 +4,23 @@
 // is the mock-up, `docs/mockups/world-elements/motion.js`.
 
 import type { Outcome, Point } from '#lib/core.ts';
+import type { WorldElement } from '#lib/elements.ts';
 import { clamp01, overshoot } from './easing.ts';
-import { HEAD_SHAKE_SHARE, type Motion, type Pose } from './motion.ts';
+import { HEAD_SHAKE_SHARE, runEnd, type Motion, type Pose, type RunEnd } from './motion.ts';
+
+/** The eyes of the robot at each end of a run, drawn over its own. */
+const EYES = {
+	passed: 'eyesLit',
+	'goals-not-met': 'eyesDim'
+} as const satisfies Record<RunEnd, WorldElement>;
 
 /** The eyes of the robot at the end of a run, drawn over its own. */
-export type Eyes = 'eyesLit' | 'eyesDim';
+export type Eyes = (typeof EYES)[RunEnd];
 
 /** The eyes of the robot once the run has ended: none for the sandbox, an error, or a run. */
 export function eyesOf(outcome: Outcome | undefined): Eyes | undefined {
-	switch (outcome?.type) {
-		case 'passed':
-			return 'eyesLit';
-		case 'goals-not-met':
-			return 'eyesDim';
-		default:
-			return undefined;
-	}
+	const end = runEnd(outcome);
+	return end && EYES[end];
 }
 
 /**
@@ -39,9 +40,15 @@ export function missedCells(outcome: Outcome | undefined): Point[] {
 const FLAGS_SHARE = 0.35;
 
 /**
+ * The share of the end of a run that a flag takes at least to be planted, 150 ms, so that its
+ * bounce shows: many flags then start before the one before them has ended, in a wave.
+ */
+const FLAG_SHARE = 1 / 6;
+
+/**
  * The size of the flag `index` of `count`, from 0 to 1 and a little more as it bounces: once the
- * head has shaken, the flags are planted one after the other. At rest, and with less motion, every
- * flag is there.
+ * head has shaken, the flags are planted one after the other, each in its share of the time, or
+ * in a wave when they are many. At rest, and with less motion, every flag is there.
  */
 export function flagSize(
 	motion: Motion | undefined,
@@ -50,8 +57,9 @@ export function flagSize(
 	count: number
 ): number {
 	if (motion?.action !== 'goals-not-met' || motion.lessMotion === true) return 1;
-	const planted = clamp01((t - HEAD_SHAKE_SHARE) / FLAGS_SHARE);
-	return overshoot(clamp01(planted * count - index));
+	const own = Math.max(FLAGS_SHARE / count, FLAG_SHARE);
+	const apart = count > 1 ? (FLAGS_SHARE - own) / (count - 1) : 0;
+	return overshoot(clamp01((t - HEAD_SHAKE_SHARE - index * apart) / own));
 }
 
 /** The foot of the pole of a flag, in the units of its drawing, where it is planted from. */

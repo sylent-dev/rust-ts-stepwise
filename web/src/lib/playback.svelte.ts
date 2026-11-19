@@ -65,7 +65,10 @@ export class Playback {
 	progress = $state(0);
 	/** The line highlighted, the one of the next step; nothing once the program has stopped. */
 	line = $state<number>();
-	/** How the program stopped, once its last action has ended; nothing until then. */
+	/**
+	 * How the program stopped, once its last action has ended; nothing until then, nor before **Run**
+	 * or **Step**, even for a program without a step.
+	 */
 	outcome = $state.raw<Outcome>();
 	/** The number of steps run so far. */
 	steps = $state(0);
@@ -91,6 +94,11 @@ export class Playback {
 	/** When the step under way started: nothing until the frame that draws it first. */
 	#motionStart: number | undefined;
 	#motionTime = 0;
+	/**
+	 * Whether **Run** or **Step** has started the program since the map was put back: a program
+	 * without a step only ends then.
+	 */
+	#started = false;
 
 	/** Plays the run that `start` gives, paused before its first step. */
 	constructor(
@@ -112,7 +120,7 @@ export class Playback {
 
 	/** Whether the program has stopped, at its end or on an error, and its last action ended. */
 	get ended(): boolean {
-		return this.line === undefined;
+		return this.outcome !== undefined;
 	}
 
 	/** Where the program stands, for the controls. */
@@ -131,6 +139,7 @@ export class Playback {
 		this.running = true;
 		this.#last = undefined;
 		this.#carry = START_CARRY;
+		this.#begin();
 	}
 
 	/** Pauses the program before its next step: the action under way still ends. */
@@ -151,6 +160,7 @@ export class Playback {
 			return;
 		}
 		this.#endMotion();
+		this.#begin();
 		this.#runStep(undefined, SLOWEST_SPEED);
 	}
 
@@ -164,6 +174,7 @@ export class Playback {
 		this.motion = undefined;
 		this.#carry = START_CARRY;
 		this.#waiting = false;
+		this.#started = false;
 		this.#rest(true);
 	}
 
@@ -244,7 +255,8 @@ export class Playback {
 		if (action && time > 0) {
 			this.#animate({ action, after: this.#run.world(), lessMotion }, start, time);
 		} else {
-			this.#rest(event !== 'nothing' && event !== 'printed', start);
+			this.#rest(event !== 'nothing' && event !== 'printed');
+			this.#showEnd(start);
 		}
 	}
 
@@ -274,6 +286,19 @@ export class Playback {
 		};
 		runInstant(step, this.#now(), INSTANT_BUDGET, this.#now);
 		this.#rest(true);
+		this.#showEnd(undefined);
+	}
+
+	/**
+	 * Starts the program, once since the map was put back: a program without a step, empty or made
+	 * of comments, ends at once, and the end of the run plays.
+	 */
+	#begin(): void {
+		if (this.#started) return;
+		this.#started = true;
+		if (this.#run.line !== undefined) return;
+		this.#showLine();
+		this.#showEnd(undefined);
 	}
 
 	/**
@@ -290,22 +315,19 @@ export class Playback {
 		if (!isRunEnd(motion.action)) this.#showEnd(time);
 	}
 
-	/**
-	 * Shows the run at rest, the world read again when the step may have changed it, then plays
-	 * the end of the run from `start` when it was the last step.
-	 */
-	#rest(changed: boolean, start?: number): void {
+	/** Shows the run at rest, the world read again when the step may have changed it. */
+	#rest(changed: boolean): void {
 		if (changed) this.world = this.#run.world();
 		this.#showLine();
 		this.steps = this.#run.steps;
-		this.#showEnd(start);
 	}
 
 	/**
 	 * Once the last action has ended, plays from `start` how the run ended: its whole time while the
 	 * program runs at an animated speed, as at the slowest speed after a **Step** or a pause, and
 	 * nothing at **Instant**, where the map shows the end at once. The map then reads it from
-	 * `outcome`.
+	 * `outcome`. The end is no step: **Instant** chosen while it plays doesn't cut it, the program
+	 * having ended already.
 	 */
 	#showEnd(start: number | undefined): void {
 		const end = runEnd(this.outcome);
@@ -315,9 +337,9 @@ export class Playback {
 		if (time > 0) this.#animate({ action: end, after: this.world, lessMotion }, start, time);
 	}
 
-	/** Highlights the line of the next step, or tells how the program stopped. */
+	/** Highlights the line of the next step, or tells how the program stopped once started. */
 	#showLine(): void {
 		this.line = this.#run.line;
-		this.outcome = this.line === undefined ? this.#run.outcome() : undefined;
+		this.outcome = this.#started && this.line === undefined ? this.#run.outcome() : undefined;
 	}
 }

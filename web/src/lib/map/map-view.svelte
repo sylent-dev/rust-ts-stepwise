@@ -26,9 +26,9 @@
 		goals?: Goals;
 		/** The side of a cell, in pixels. */
 		side: number;
-		/** The step under way, if any. */
+		/** The step under way, or the end of the run after its last step, if any. */
 		motion?: Motion;
-		/** How far the step under way has gone, from 0 to 1. */
+		/** How far the step under way, or the end of the run, has gone, from 0 to 1. */
 		progress?: number;
 		/** How the run ended, once its last action has ended; nothing until then. */
 		outcome?: Outcome;
@@ -40,7 +40,7 @@
 	const paint = $derived(motion && paintMotion(world, motion.after));
 	const strokes = $derived(paint?.kept ?? paintParts(world));
 	const pose = $derived(motion ? poseAt(world.robot, motion, progress) : restingPose(world.robot));
-	const carry = $derived(carryAt(world, motion?.action, progress, motion?.lessMotion));
+	const carry = $derived(carryAt(world, motion, progress));
 	const eyes = $derived(eyesOf(outcome));
 	const flags = $derived(missedCells(outcome));
 	/** Whether the item of a cell shows: the one of the cell of the robot comes and goes with it. */
