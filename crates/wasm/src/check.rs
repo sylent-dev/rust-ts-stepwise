@@ -3,8 +3,8 @@
 
 use serde::Serialize;
 use stepwise_core::checker::{CheckErrorKind, ReservedWord};
-use stepwise_core::lexer::LexErrorKind;
-use stepwise_core::parser::{ParseErrorKind, SyntaxError};
+use stepwise_core::lexer::{LexErrorKind, MAX_NUMBER};
+use stepwise_core::parser::{MAX_BLOCK_DEPTH, MAX_DEPTH, ParseErrorKind, SyntaxError};
 use stepwise_core::program::{self, Refused};
 use stepwise_core::span;
 use tsify::{Ts, Tsify};
@@ -72,7 +72,9 @@ pub struct ProgramError {
 /// Each variant is the error of the same name in the core, where it is described: those of
 /// `LexErrorKind`, of `ParseErrorKind`, then of `CheckErrorKind`. No name is in two of them.
 /// The words of the language (a keyword, a built-in function, a color) are given as they are
-/// written, and a place kept in an error as the place of the error itself.
+/// written, a place kept in an error as the place of the error itself, and a limit of the
+/// language with the error that it stops, so that no message repeats a number of the core:
+/// the two depths as numbers, the largest number of a program as its digits (see `Value`).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Tsify)]
 #[serde(
     tag = "code",
@@ -92,7 +94,9 @@ pub enum ProgramErrorKind {
         escape: char,
     },
     SingleQuote,
-    NumberTooLarge,
+    NumberTooLarge {
+        limit: String,
+    },
     NameStartsWithDigit {
         word: String,
     },
@@ -131,7 +135,12 @@ pub enum ProgramErrorKind {
     ExpectedFunctionName,
     ExpectedParentheses,
     InvalidParameter,
-    TooDeep,
+    ExpressionTooDeep {
+        limit: u32,
+    },
+    BlocksTooDeep {
+        limit: u32,
+    },
 
     // Its names and its structure: the checker.
     BreakOutsideLoop,
@@ -178,7 +187,7 @@ pub enum ProgramErrorKind {
         name: String,
         defined: Span,
     },
-    WrongArgumentCount {
+    WrongValueCount {
         name: String,
         expected: u32,
         given: u32,
@@ -222,7 +231,9 @@ impl ProgramErrorKind {
             K::UnclosedText => Self::UnclosedText,
             K::UnknownEscape { escape } => Self::UnknownEscape { escape },
             K::SingleQuote => Self::SingleQuote,
-            K::NumberTooLarge => Self::NumberTooLarge,
+            K::NumberTooLarge => Self::NumberTooLarge {
+                limit: MAX_NUMBER.to_string(),
+            },
             K::NameStartsWithDigit { word } => Self::NameStartsWithDigit { word },
             K::SymbolForKeyword { symbol, keyword } => Self::SymbolForKeyword {
                 symbol: symbol.to_owned(),
@@ -261,7 +272,10 @@ impl ProgramErrorKind {
             K::ExpectedFunctionName => Self::ExpectedFunctionName,
             K::ExpectedParentheses => Self::ExpectedParentheses,
             K::InvalidParameter => Self::InvalidParameter,
-            K::TooDeep => Self::TooDeep,
+            K::ExpressionTooDeep => Self::ExpressionTooDeep { limit: MAX_DEPTH },
+            K::BlocksTooDeep => Self::BlocksTooDeep {
+                limit: MAX_BLOCK_DEPTH,
+            },
         }
     }
 
@@ -307,11 +321,11 @@ impl ProgramErrorKind {
                 name,
                 defined: offsets.span(defined),
             },
-            K::WrongArgumentCount {
+            K::WrongValueCount {
                 name,
                 expected,
                 given,
-            } => Self::WrongArgumentCount {
+            } => Self::WrongValueCount {
                 name,
                 expected: count(expected),
                 given: count(given),
@@ -379,6 +393,10 @@ mod tests {
         let digit = Kind::NameStartsWithDigit {
             word: "2nd".to_owned(),
         };
+        // The largest number crosses as its digits: JavaScript doesn't hold it exactly.
+        let too_large = Kind::NumberTooLarge {
+            limit: "9223372036854775807".to_owned(),
+        };
         for (source, expected) in [
             ("if done:\n      forward()\n", error(2, 9, 15, wrong_indent)),
             (
@@ -387,6 +405,7 @@ mod tests {
             ),
             ("if a && b:\n    forward()\n", error(1, 5, 7, symbol)),
             ("let 2nd = 1\n", error(1, 4, 7, digit)),
+            ("let a = 9223372036854775808\n", error(1, 8, 27, too_large)),
             (
                 "let a = @\n",
                 error(1, 8, 9, Kind::UnexpectedCharacter { character: '@' }),
@@ -416,6 +435,21 @@ mod tests {
     }
 
     #[test]
+    fn a_program_too_deep_says_the_limit_it_passed() {
+        let kinds = |source: &str| -> Vec<Kind> {
+            let errors = errors(source);
+            errors.into_iter().map(|error| error.kind).collect()
+        };
+        let value = format!("print({}1{})\n", "(".repeat(300), ")".repeat(300));
+        assert_eq!(kinds(&value), [Kind::ExpressionTooDeep { limit: 200 }]);
+        let lines: Vec<String> = (0..60)
+            .map(|level| format!("{}if true:\n", "    ".repeat(level)))
+            .collect();
+        let blocks = format!("{}{}forward()\n", lines.concat(), "    ".repeat(60));
+        assert_eq!(kinds(&blocks), [Kind::BlocksTooDeep { limit: 50 }]);
+    }
+
+    #[test]
     fn something_missing_at_the_end_of_a_line_is_a_place_between_two_characters() {
         assert_eq!(
             errors("let sides =\nforward()\n"),
@@ -431,7 +465,7 @@ mod tests {
             name: "côté".to_owned(),
             declared: at(2, 16, 20),
         };
-        let wrong_count = Kind::WrongArgumentCount {
+        let wrong_count = Kind::WrongValueCount {
             name: "forward".to_owned(),
             expected: 0,
             given: 1,
@@ -686,7 +720,8 @@ mod tests {
             ParseErrorKind::ExpectedFunctionName,
             ParseErrorKind::ExpectedParentheses,
             ParseErrorKind::InvalidParameter,
-            ParseErrorKind::TooDeep,
+            ParseErrorKind::ExpressionTooDeep,
+            ParseErrorKind::BlocksTooDeep,
         ];
         assert_same_names(kinds, |kind| Kind::parse(&kind));
     }
@@ -735,7 +770,7 @@ mod tests {
                 name: name(),
                 defined: other,
             },
-            CheckErrorKind::WrongArgumentCount {
+            CheckErrorKind::WrongValueCount {
                 name: name(),
                 expected: 1,
                 given: 2,

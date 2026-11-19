@@ -113,7 +113,7 @@ pub enum CheckErrorKind {
     /// A call that doesn't give as many values as the function has parameters, built-in
     /// functions included (`forward(3)`). The span is the name in the call, as for every error
     /// of a call.
-    WrongArgumentCount {
+    WrongValueCount {
         /// The name of the function.
         name: String,
         /// The number of parameters of the function.
@@ -122,7 +122,7 @@ pub enum CheckErrorKind {
         given: usize,
     },
     /// A function, built-in or of the program, named without its parentheses (`forward`,
-    /// `let go = forward`). The span is the name, with the parentheses around it if any.
+    /// `let go = forward`). The span is the name.
     FunctionWithoutParentheses {
         /// The name.
         name: String,

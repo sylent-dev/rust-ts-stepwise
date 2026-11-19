@@ -4,7 +4,7 @@
 // they cross the bridge as they are.
 
 import { readFileSync } from 'node:fs';
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import {
 	check,
 	initSync,
@@ -526,9 +526,6 @@ paint_side(3)
 // which is far smaller than the one of the tests of the core. Each program below is the deepest
 // of its kind, checked then run to its end through the real module.
 describe('a program at the maximum depth of the tree', () => {
-	const MAX_DEPTH = 200;
-	const MAX_BLOCK_DEPTH = 50;
-
 	/** `depth` blocks, one inside the other, around `line`. */
 	function nestedBlocks(depth: number, line: string): string {
 		let source = '';
@@ -543,39 +540,79 @@ describe('a program at the maximum depth of the tree', () => {
 		return `print(${'('.repeat(depth)}1${')'.repeat(depth)})`;
 	}
 
-	/** What the deepest program prints, `deeper` being refused for one level more. */
-	function printedAtTheLimit(source: string, deeper: string): (string | undefined)[] {
-		expect(check(deeper).map((error) => error.kind.code)).toStrictEqual(['too-deep']);
+	/** The two errors of a program too deep: each says the limit that the program passes. */
+	type TooDeep = 'expression-too-deep' | 'blocks-too-deep';
+
+	/** The limit of the error `code`, read from the error of `source`, a program far too deep. */
+	function limitPassedBy(source: string, code: TooDeep): number {
+		const kind = check(source)[0]?.kind;
+		if (kind?.code !== code) {
+			throw new Error(`a program far too deep isn't refused as ${code}`);
+		}
+		return kind.limit;
+	}
+
+	// Read from the errors rather than written a second time: each test below then checks that
+	// the limit an error says is the one the parser holds. Read before the tests run, not while
+	// Vitest lists them, where a failure would stop every test of the file.
+	let maxDepth: number;
+	let maxBlockDepth: number;
+	beforeAll(() => {
+		maxDepth = limitPassedBy(nestedValue(1_000), 'expression-too-deep');
+		maxBlockDepth = limitPassedBy(nestedBlocks(1_000, 'forward()'), 'blocks-too-deep');
+	});
+
+	/**
+	 * What the deepest program prints, `deeper` being refused for one level more, with the error
+	 * `code` that says the limit `limit`.
+	 */
+	function printedAtTheLimit(
+		source: string,
+		deeper: string,
+		code: TooDeep,
+		limit: number
+	): (string | undefined)[] {
+		expect(check(deeper).map((error) => error.kind)).toStrictEqual([{ code, limit }]);
 		expect(check(source)).toStrictEqual([]);
 		return printedBy(source);
 	}
 
+	/** What the deepest expression prints, `deeper` having one level more. */
+	function printedByTheDeepest(source: string, deeper: string): (string | undefined)[] {
+		return printedAtTheLimit(source, deeper, 'expression-too-deep', maxDepth);
+	}
+
 	it('is checked and run for the deepest expressions', () => {
 		// In `print(…)`, the call and the value each take one level of the tree.
-		const depth = MAX_DEPTH - 2;
-		expect(printedAtTheLimit(nestedValue(depth), nestedValue(depth + 1))).toStrictEqual(['1']);
+		const depth = maxDepth - 2;
+		expect(printedByTheDeepest(nestedValue(depth), nestedValue(depth + 1))).toStrictEqual(['1']);
 		const negated = (count: number): string => `print(${'not '.repeat(count)}true)`;
-		expect(printedAtTheLimit(negated(depth), negated(depth + 1))).toStrictEqual(['true']);
+		expect(printedByTheDeepest(negated(depth), negated(depth + 1))).toStrictEqual(['true']);
 		// A chain of operators is as deep as it is long.
 		const sum = (terms: number): string => `print(${Array(terms).fill('1').join(' + ')})`;
-		expect(printedAtTheLimit(sum(depth + 1), sum(depth + 2))).toStrictEqual([String(depth + 1)]);
+		expect(printedByTheDeepest(sum(depth + 1), sum(depth + 2))).toStrictEqual([String(depth + 1)]);
 	});
 
 	it('is checked and run for the deepest blocks, around the deepest expression they take', () => {
 		const deep = (depth: number): string => nestedBlocks(depth, 'print("deep")');
-		expect(printedAtTheLimit(deep(MAX_BLOCK_DEPTH), deep(MAX_BLOCK_DEPTH + 1))).toStrictEqual([
-			'deep'
-		]);
+		expect(
+			printedAtTheLimit(
+				deep(maxBlockDepth),
+				deep(maxBlockDepth + 1),
+				'blocks-too-deep',
+				maxBlockDepth
+			)
+		).toStrictEqual(['deep']);
 		// The deepest expression the parser takes inside the deepest blocks.
-		const depth = MAX_DEPTH - MAX_BLOCK_DEPTH - 2;
-		const nested = (levels: number): string => nestedBlocks(MAX_BLOCK_DEPTH, nestedValue(levels));
-		expect(printedAtTheLimit(nested(depth), nested(depth + 1))).toStrictEqual(['1']);
+		const depth = maxDepth - maxBlockDepth - 2;
+		const nested = (levels: number): string => nestedBlocks(maxBlockDepth, nestedValue(levels));
+		expect(printedByTheDeepest(nested(depth), nested(depth + 1))).toStrictEqual(['1']);
 		// The worst case for the stack: a call costs more of it than a pair of parentheses, in the
 		// parser as in the checker, so the same depth made of calls of a function.
 		const same = 'function same(value):\n    return value\n\n';
 		const calls = (levels: number): string =>
 			`print(${'same('.repeat(levels)}1${')'.repeat(levels)})`;
-		const worst = (levels: number): string => same + nestedBlocks(MAX_BLOCK_DEPTH, calls(levels));
-		expect(printedAtTheLimit(worst(depth), worst(depth + 1))).toStrictEqual(['1']);
+		const worst = (levels: number): string => same + nestedBlocks(maxBlockDepth, calls(levels));
+		expect(printedByTheDeepest(worst(depth), worst(depth + 1))).toStrictEqual(['1']);
 	});
 });

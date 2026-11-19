@@ -48,7 +48,7 @@ No behavior changes; the compiler finds every place to change.
 
 What the interface reads of an error, before steps 16 and 17 write the messages and the underlining: the code of an error becomes the name of its message.
 
-- **`TooDeep` holds two rules** (`parser/error.rs:125-129`): the blocks, 50 deep (`specs.md`, Lines and indentation), and the tree, 200 deep, without saying which nor its number, while the runtime errors cross with their limit (`crates/wasm/src/runtime_error.rs:141-162`). Two kinds (`TooDeep`, `BlocksTooDeep`), each given its `limit` by the bridge. `web/src/lib/run.spec.ts:529-530` copies 200 and 50 by hand.
+- **`TooDeep` holds two rules** (`parser/error.rs:125-129`): the blocks, 50 deep (`specs.md`, Lines and indentation), and the tree, 200 deep, without saying which nor its number, while the runtime errors cross with their limit (`crates/wasm/src/runtime_error.rs:141-162`). Two kinds (`ExpressionTooDeep`, since the error is only raised in an expression and `specs.md` files the rule under Expressions, and `BlocksTooDeep`), each given its `limit` by the bridge. `NumberTooLarge` crosses with the largest number too, as its digits (added by the review of 15c). `web/src/lib/run.spec.ts:529-530` copies 200 and 50 by hand.
 - **`WrongArgumentCount`**, so the code `wrong-argument-count`, against "values", the word of `specs.md` ("A call gives exactly as many values"): `WrongValueCount`. Nine places, kept in step by the test `assert_same_names` of the bridge.
 - **The place of a name between parentheses covers the parentheses**, tried on the module: `let a = (sidse)` underlines `(sidse)`, while `checker/error.rs:43` says "The span is the name". `ExpressionKind::Name(String)` has no place of its own, and `parenthesized` widens the one of the expression (`parser/expression.rs:132-147`): `ExpressionKind::Name(Name)`, as `Call.function` (six uses).
 
@@ -98,7 +98,19 @@ The folders hold: one per block or per domain, with its components, its pure log
 - What is saved has a sound pattern, to write where it is described (Browser storage in `docs/technical-choices.md`) with its condition: `<thing>.ts` (the domain), `saved-<thing>.ts` (its saved shape, given its `Store`), `current-<thing>.svelte.ts` (the reactive state), and `current-*` holds no rule, since it opens the store when imported and a test can't replace it.
 - Small: `saving` is exported writable (`storage/browser-store.svelte.ts:10`) where `settings` is read-only; `Core.version` (`core.ts:6-8`) is read by nothing; the exclusion of `vite.config.ts:45` matches no file; an address is written two ways (`resolve('/sandbox')` in `routes/+page.svelte:16`, `to: 'sandbox'` in `level-menus.ts`); the header of `pace.ts` tells its history rather than its role.
 
-### 15g. Styles and exhaustive tables
+### 15g. Stricter TypeScript
+
+Not a finding of the audit: added by the owner on 2026-11-19, during step 15c. `web/tsconfig.json` has `strict: true` alone, and ESLint the `recommended` rules of typescript-eslint. The code already follows the stricter rules, by discipline and by its reviews (measured on 2026-11-19 with `tsc` on the `.ts` files: 9 errors in all), but nothing holds it there while steps 16 to 22 write most of the interface. The compiler then holds the interface as Clippy pedantic and the indexing forbidden hold the core.
+
+- **Turn on**: `noUncheckedIndexedAccess` (1 error), which makes `list[0]` and `table[key]` possibly `undefined`, as `clippy::indexing_slicing` does in the core; `noImplicitOverride`, `noImplicitReturns` and `noFallthroughCasesInSwitch` (no error).
+- **Try**: `exactOptionalPropertyTypes` (4 errors), which tells a field left out from a field that is `undefined`. Kept unless the types of Svelte fight it; to look at again when step 16 installs CodeMirror.
+- **Leave out**: `noPropertyAccessFromIndexSignature` (4 errors), a way of writing that adds no safety to the first.
+- **ESLint reading the types**: `strictTypeChecked` of typescript-eslint in place of `recommended`, for every file and not for the Svelte ones alone: an `await` forgotten, a `switch` that leaves out a code of an error or an event of the core (what 15h leans on), a condition that can't be false. A rule too noisy is tuned or turned off in `eslint.config.js`, with its reason; to look at first, `restrict-template-expressions`, which may refuse a number in a template.
+- **Not measured**: the `.svelte` files, which `tsc` doesn't read (`npm run check`), the findings of ESLint, and the time of `npm run lint` before and after.
+- **Out of reach of them all**: what comes from outside (`localStorage`, a level file) is checked when it is read, as today.
+- `docs/technical-choices.md` (Front-end tooling) says "TypeScript in strict mode": it names the options kept and the ones left out, with their reasons.
+
+### 15h. Styles and exhaustive tables
 
 The rule of `CLAUDE.md` holds: no color, text size, radius nor duration outside the tokens.
 
@@ -211,6 +223,7 @@ A statement fits on a line and the lexer reads line by line: the line of the cur
 
 ### Smaller notes
 
+- **Step 16**: the `limit` of `expression-too-deep` counts the blocks around the expression (an expression of 151 levels under 50 blocks has this error): its message says so, as `specs.md` does.
 - **Step 19**: the lines that start a step (see the backlog, a breakpoint on a line that never starts one) are known by `Code` (its `Instruction::Line`) and by the test helper `lines_run` (`crates/core/src/interpreter/tests.rs:218`): the function of the core reads `Code`, and `lines_run` stays the independent oracle.
 - **Step 21**: `chapters.toml` copies the three parts of `level/` (the schema, the building, the domain) with the errors of 15b, and `file::parse<T: Versioned>` (`level/file.rs:122`) reads it as it is. "What the learner used" on the success panel is a walk of the checked tree, in the core. The rules of the progress go in `progress.ts` and `saved-progress.ts`, never in `current-progress.svelte.ts` (see 15f).
 - **Step 23**: one sentence of the errors of a level file is tested, of about twenty; read them all once, since the owner will meet them while writing the levels.

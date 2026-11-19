@@ -313,9 +313,9 @@ impl<'a> Compiler<'a> {
                 self.push_value(Value::Text(Rc::from(text.as_str())), span);
             }
             ExpressionKind::Name(name) => {
-                if let Some(slot) = self.slot(name) {
+                if let Some(slot) = self.slot(&name.text) {
                     self.code.push(Instruction::Load(slot), span);
-                } else if let Some(color) = Color::from_word(name) {
+                } else if let Some(color) = Color::from_word(&name.text) {
                     self.push_value(Value::Color(color), span);
                 } else {
                     return Err(NotChecked(span));

@@ -69,7 +69,7 @@ describe('the checks before running', () => {
 			},
 			{
 				span: { line: 4, from: 39, to: 46 },
-				kind: { code: 'wrong-argument-count', name: 'forward', expected: 0, given: 1 }
+				kind: { code: 'wrong-value-count', name: 'forward', expected: 0, given: 1 }
 			}
 		]);
 	});
@@ -83,6 +83,15 @@ describe('the checks before running', () => {
 		]);
 		expect(check('let repeat = 3\n')).toEqual([
 			{ span: { line: 1, from: 4, to: 10 }, kind: { code: 'keyword-as-name', keyword: 'repeat' } }
+		]);
+	});
+
+	it('give the largest number as its digits, which a number of JavaScript would round', () => {
+		expect(check('let most = 9223372036854775808\n')).toEqual([
+			{
+				span: { line: 1, from: 11, to: 30 },
+				kind: { code: 'number-too-large', limit: '9223372036854775807' }
+			}
 		]);
 	});
 

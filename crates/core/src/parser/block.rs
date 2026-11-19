@@ -168,7 +168,7 @@ impl Parser {
         }
         // Around a statement, the levels are all blocks.
         if self.depth >= MAX_BLOCK_DEPTH {
-            let kind = ParseErrorKind::TooDeep;
+            let kind = ParseErrorKind::BlocksTooDeep;
             return Err(ParseError {
                 kind,
                 span: opening,

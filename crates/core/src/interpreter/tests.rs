@@ -2242,14 +2242,14 @@ print(here_is(paint), here_is(red))
 // The depth of a program.
 
 /// Runs `source`, the deepest program of its kind: `deeper`, one level more, is refused by
-/// the parser for its depth.
+/// the parser for the depth `too_deep`.
 #[track_caller]
-fn printed_at_the_limit(source: &str, deeper: &str) -> Vec<String> {
-    let too_deep = matches!(
+fn printed_at_the_limit(source: &str, deeper: &str, too_deep: &ParseErrorKind) -> Vec<String> {
+    let refused = matches!(
         parse(deeper),
-        Err(SyntaxError::Parse(error)) if error.kind == ParseErrorKind::TooDeep
+        Err(SyntaxError::Parse(error)) if error.kind == *too_deep
     );
-    assert!(too_deep, "one level more isn't refused for its depth");
+    assert!(refused, "one level more isn't refused for its depth");
     printed(source)
 }
 
@@ -2275,19 +2275,20 @@ fn the_deepest_expressions_run() {
     // In `print(…)`, the call and the value each take one level of the tree.
     let depth = usize::try_from(MAX_DEPTH).unwrap() - 2;
     let nested = |depth: usize| format!("print({}1{})", "(".repeat(depth), ")".repeat(depth));
+    let too_deep = &ParseErrorKind::ExpressionTooDeep;
     assert_eq!(
-        printed_at_the_limit(&nested(depth), &nested(depth + 1)),
+        printed_at_the_limit(&nested(depth), &nested(depth + 1), too_deep),
         ["1"]
     );
     let negated = |depth: usize| format!("print({}true)", "not ".repeat(depth));
     assert_eq!(
-        printed_at_the_limit(&negated(depth), &negated(depth + 1)),
+        printed_at_the_limit(&negated(depth), &negated(depth + 1), too_deep),
         ["true"]
     );
     // A chain of operators is as deep as it is long.
     let sum = |terms: usize| format!("print({})", vec!["1"; terms].join(" + "));
     assert_eq!(
-        printed_at_the_limit(&sum(depth + 1), &sum(depth + 2)),
+        printed_at_the_limit(&sum(depth + 1), &sum(depth + 2), too_deep),
         [(depth + 1).to_string()]
     );
 }
@@ -2297,7 +2298,11 @@ fn the_deepest_blocks_run() {
     let blocks = usize::try_from(MAX_BLOCK_DEPTH).unwrap();
     let deep = |depth: usize| nested_blocks(depth, "print(\"deep\")");
     assert_eq!(
-        printed_at_the_limit(&deep(blocks), &deep(blocks + 1)),
+        printed_at_the_limit(
+            &deep(blocks),
+            &deep(blocks + 1),
+            &ParseErrorKind::BlocksTooDeep
+        ),
         ["deep"]
     );
     // The worst case: the deepest expression the parser takes inside the deepest blocks.
@@ -2307,7 +2312,11 @@ fn the_deepest_blocks_run() {
         nested_blocks(blocks, &line)
     };
     assert_eq!(
-        printed_at_the_limit(&nested(depth), &nested(depth + 1)),
+        printed_at_the_limit(
+            &nested(depth),
+            &nested(depth + 1),
+            &ParseErrorKind::ExpressionTooDeep
+        ),
         ["1"]
     );
 }

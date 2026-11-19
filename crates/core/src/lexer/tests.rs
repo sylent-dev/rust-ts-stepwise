@@ -1,6 +1,8 @@
 //! The tests of the lexer, grouped by the rules of the specifications.
 
-use super::{Keyword as K, LexError, LexErrorKind as E, Token, TokenKind as T, tokenize};
+use super::{
+    Keyword as K, LexError, LexErrorKind as E, MAX_NUMBER, Token, TokenKind as T, tokenize,
+};
 use crate::span::{Position, Span};
 use crate::test_support::span;
 
@@ -1073,6 +1075,8 @@ mod numbers {
     #[test]
     fn the_largest_number() {
         assert_eq!(line_kinds("9223372036854775807"), vec![T::Number(i64::MAX)]);
+        // The number that the error of a number too large gives.
+        assert_eq!(MAX_NUMBER.to_string(), "9223372036854775807");
     }
 
     #[test]

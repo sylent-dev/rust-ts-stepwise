@@ -90,7 +90,7 @@ fn called_before(name: &str, defined: Span) -> E {
 
 fn wrong_count(name: &str, expected: usize, given: usize) -> E {
     let name = name.to_owned();
-    E::WrongArgumentCount {
+    E::WrongValueCount {
         name,
         expected,
         given,
@@ -735,6 +735,41 @@ mod unknown_names {
                 kind: unknown("sidse"),
                 span: span(2, 9, 14),
             }
+        );
+    }
+
+    #[test]
+    fn a_name_between_parentheses_has_its_errors_on_the_name() {
+        let source = "\
+let total = (sidse) + 1
+print((early))
+let early = 0
+if true:
+    let inner = 0
+print(( inner ))
+function walk():
+    print((total))
+";
+        assert_eq!(
+            errors(source),
+            [
+                CheckError {
+                    kind: unknown("sidse"),
+                    span: span(1, 14, 19),
+                },
+                CheckError {
+                    kind: before_let("early", span(3, 5, 10)),
+                    span: span(2, 8, 13),
+                },
+                CheckError {
+                    kind: after_block("inner", span(5, 9, 14)),
+                    span: span(6, 9, 14),
+                },
+                CheckError {
+                    kind: main_variable("total"),
+                    span: span(8, 12, 17),
+                },
+            ]
         );
     }
 
@@ -2053,7 +2088,7 @@ mod functions_without_parentheses {
             error("(forward)\n"),
             CheckError {
                 kind: without_parentheses("forward"),
-                span: span(1, 1, 10),
+                span: span(1, 2, 9),
             }
         );
     }
