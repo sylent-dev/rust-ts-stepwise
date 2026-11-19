@@ -128,7 +128,8 @@ impl Parser {
     }
 
     /// An expression between parentheses, from the `(`. The parentheses leave no node in the
-    /// tree, but they widen the span of the expression and count for one level.
+    /// tree, but they widen the span of the expression and count for one level. A name keeps
+    /// its own span inside them, for the errors that are about it.
     fn parenthesized(&mut self) -> Result<Deep, ParseError> {
         let open = self.current.span;
         self.advance();
@@ -149,7 +150,8 @@ impl Parser {
     /// The name alone, or its call when a `(` follows.
     fn name_or_call(&mut self, name: Name) -> Result<Deep, ParseError> {
         if self.current.kind != TokenKind::LeftParen {
-            return self.node(ExpressionKind::Name(name.text), name.span, 0);
+            let span = name.span;
+            return self.node(ExpressionKind::Name(name), span, 0);
         }
         let open = self.current.span;
         self.advance();
@@ -238,7 +240,7 @@ impl Parser {
         parse: impl FnOnce(&mut Self) -> Result<Deep, ParseError>,
     ) -> Result<Deep, ParseError> {
         if !self.fits_deeper() {
-            return Err(self.error(ParseErrorKind::TooDeep));
+            return Err(self.error(ParseErrorKind::ExpressionTooDeep));
         }
         self.deeper(parse)
     }
@@ -252,7 +254,7 @@ impl Parser {
         let height = below.saturating_add(1);
         if self.depth.saturating_add(height) > MAX_DEPTH {
             return Err(ParseError {
-                kind: ParseErrorKind::TooDeep,
+                kind: ParseErrorKind::ExpressionTooDeep,
                 span,
             });
         }

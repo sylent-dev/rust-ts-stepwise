@@ -69,7 +69,7 @@ describe('the checks before running', () => {
 			},
 			{
 				span: { line: 4, from: 39, to: 46 },
-				kind: { code: 'wrong-argument-count', name: 'forward', expected: 0, given: 1 }
+				kind: { code: 'wrong-value-count', name: 'forward', expected: 0, given: 1 }
 			}
 		]);
 	});

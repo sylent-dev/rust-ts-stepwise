@@ -127,9 +127,9 @@ pub struct Branch {
     pub span: Span,
 }
 
-/// A name where the language expects one (the variable of a `let`, the function of a call or
-/// of a definition, a parameter),
-/// as written: the checker refuses the names that aren't in `snake_case` or are reserved.
+/// A name, as written, with its own place: the variable of a `let`, the function of a call or
+/// of a definition, a parameter, a name read in an expression. The checker refuses the new
+/// names that aren't in `snake_case` or are reserved.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Name {
     /// The name.
@@ -157,7 +157,8 @@ pub enum ExpressionKind {
     /// A text, its escapes already replaced.
     Text(String),
     /// A name alone: a variable, a color, or a function written without its parentheses.
-    Name(String),
+    /// Its span is the name, while the one of the expression takes the parentheses around it.
+    Name(Name),
     /// A call: `paint_side(3)`.
     Call {
         /// The function called.

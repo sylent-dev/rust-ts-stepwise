@@ -111,11 +111,13 @@ pub enum ParseErrorKind {
     /// (`function f(3):`, `function f(a + b):`, `function f(a = 3):`, `function f(, a):`).
     /// The span is the first token that can't be there.
     InvalidParameter,
-    /// Parentheses, operators, calls and blocks nested deeper than
-    /// [`MAX_DEPTH`](super::MAX_DEPTH), or blocks alone deeper than
-    /// [`MAX_BLOCK_DEPTH`](super::MAX_BLOCK_DEPTH). For a block, the span is the line that
-    /// opens it.
-    TooDeep,
+    /// An expression nested deeper than [`MAX_DEPTH`](super::MAX_DEPTH): its parentheses, its
+    /// operators and its calls, with the blocks around it. The span is what the level too
+    /// many holds or, for a chain of operators, the chain up to the value too many.
+    ExpressionTooDeep,
+    /// Blocks nested deeper than [`MAX_BLOCK_DEPTH`](super::MAX_BLOCK_DEPTH), whatever they
+    /// hold. The span is the line that opens the block too many.
+    BlocksTooDeep,
 }
 
 word_enum! {

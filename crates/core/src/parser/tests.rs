@@ -4,7 +4,7 @@ use super::{
     ForeignWord, MAX_BLOCK_DEPTH, MAX_DEPTH, ParseError, ParseErrorKind as E, SyntaxError, parse,
 };
 use crate::ast::{
-    BinaryOperator, Expression, ExpressionKind, Statement, StatementKind, UnaryOperator,
+    BinaryOperator, Expression, ExpressionKind, Name, Statement, StatementKind, UnaryOperator,
 };
 use crate::lexer::{Keyword, LexErrorKind};
 use crate::span::{Position, Span};
@@ -105,7 +105,7 @@ fn show(expression: &Expression) -> String {
         ExpressionKind::Number(number) => number.to_string(),
         ExpressionKind::Boolean(boolean) => boolean.to_string(),
         ExpressionKind::Text(text) => format!("{text:?}"),
-        ExpressionKind::Name(name) => name.clone(),
+        ExpressionKind::Name(name) => name.text.clone(),
         ExpressionKind::Call {
             function,
             arguments,
@@ -245,7 +245,11 @@ mod values {
     #[test]
     fn a_name_alone() {
         let expression = expression("red");
-        assert_eq!(expression.kind, ExpressionKind::Name("red".to_owned()));
+        let name = Name {
+            text: "red".to_owned(),
+            span: span(1, 1, 4),
+        };
+        assert_eq!(expression.kind, ExpressionKind::Name(name));
         assert_eq!(expression.span, span(1, 1, 4));
     }
 
@@ -492,6 +496,16 @@ mod spans {
             panic!("an operator expected");
         };
         assert_eq!(left.span, span(1, 1, 10));
+    }
+
+    #[test]
+    fn a_name_keeps_its_own_span_between_parentheses() {
+        let expression = expression("( (sides) )");
+        assert_eq!(expression.span, span(1, 1, 12));
+        let ExpressionKind::Name(name) = expression.kind else {
+            panic!("a name expected");
+        };
+        assert_eq!(name.span, span(1, 4, 9));
     }
 
     #[test]
@@ -1674,7 +1688,7 @@ mod depth {
     #[test]
     fn a_chain_of_operators_as_deep_as_the_limit() {
         assert_eq!(height(&expression(&chain(MAX))), MAX);
-        assert_eq!(error_kind(&chain(MAX + 1)), E::TooDeep);
+        assert_eq!(error_kind(&chain(MAX + 1)), E::ExpressionTooDeep);
     }
 
     #[test]
@@ -1688,7 +1702,7 @@ mod depth {
     fn parentheses_as_deep_as_the_limit() {
         assert!(parse(&parentheses(MAX - 1)).is_ok());
         let error = error(&parentheses(MAX));
-        assert_eq!(error.kind, E::TooDeep);
+        assert_eq!(error.kind, E::ExpressionTooDeep);
         let column = u32::try_from(MAX).unwrap() + 1;
         assert_eq!(
             error.span,
@@ -1711,17 +1725,20 @@ mod depth {
     fn a_call_is_as_deep_as_its_deepest_value() {
         let call = |count: usize| format!("f(1, {}, 1) + 1", chain(count));
         assert_eq!(height(&expression(&call(MAX - 2))), MAX);
-        assert_eq!(error_kind(&call(MAX - 1)), E::TooDeep);
+        assert_eq!(error_kind(&call(MAX - 1)), E::ExpressionTooDeep);
     }
 
     #[test]
     fn operators_in_front_as_deep_as_the_limit() {
         assert!(parse(&format!("{}1", "-".repeat(MAX - 1))).is_ok());
-        assert_eq!(error_kind(&format!("{}1", "-".repeat(MAX))), E::TooDeep);
+        assert_eq!(
+            error_kind(&format!("{}1", "-".repeat(MAX))),
+            E::ExpressionTooDeep
+        );
         assert!(parse(&format!("{}true", "not ".repeat(MAX - 1))).is_ok());
         assert_eq!(
             error_kind(&format!("{}true", "not ".repeat(MAX))),
-            E::TooDeep
+            E::ExpressionTooDeep
         );
     }
 
@@ -1729,22 +1746,25 @@ mod depth {
     fn calls_as_deep_as_the_limit() {
         let calls = |count: usize| format!("{}1{}", "f(".repeat(count), ")".repeat(count));
         assert!(parse(&calls(MAX - 1)).is_ok());
-        assert_eq!(error_kind(&calls(MAX)), E::TooDeep);
+        assert_eq!(error_kind(&calls(MAX)), E::ExpressionTooDeep);
     }
 
     #[test]
     fn the_levels_add_up() {
         // A chain inside parentheses: one level more than the chain.
         assert!(parse(&format!("({})", chain(MAX - 1))).is_ok());
-        assert_eq!(error_kind(&format!("({})", chain(MAX))), E::TooDeep);
+        assert_eq!(
+            error_kind(&format!("({})", chain(MAX))),
+            E::ExpressionTooDeep
+        );
         // A chain whose first value is deep: the chain is above it.
         let deep_first = |count: usize| format!("{} + 1 + 1", parentheses(count));
         assert!(parse(&deep_first(MAX - 3)).is_ok());
-        assert_eq!(error_kind(&deep_first(MAX - 2)), E::TooDeep);
+        assert_eq!(error_kind(&deep_first(MAX - 2)), E::ExpressionTooDeep);
         // A chain whose last value is deep: only one operator is above it.
         let deep_last = |count: usize| format!("1 + 1 + {}", parentheses(count));
         assert!(parse(&deep_last(MAX - 2)).is_ok());
-        assert_eq!(error_kind(&deep_last(MAX - 1)), E::TooDeep);
+        assert_eq!(error_kind(&deep_last(MAX - 1)), E::ExpressionTooDeep);
     }
 
     #[test]
@@ -1802,7 +1822,7 @@ mod depth {
         let mut statements = statements(&blocks(BLOCKS, "b()"));
         assert_eq!(statement_height(&statements.pop().unwrap()), BLOCKS + 1);
         let error = error(&blocks(BLOCKS + 1, "b()"));
-        assert_eq!(error.kind, E::TooDeep);
+        assert_eq!(error.kind, E::BlocksTooDeep);
         let column = u32::try_from(BLOCKS * 4 + 1).unwrap();
         assert_eq!(
             error.span,
@@ -1813,7 +1833,10 @@ mod depth {
 
     #[test]
     fn a_block_too_deep_is_an_error_whatever_it_holds() {
-        assert_eq!(error_kind(&blocks(BLOCKS + 1, "break")), E::TooDeep);
+        assert_eq!(error_kind(&blocks(BLOCKS + 1, "break")), E::BlocksTooDeep);
+        // Even an expression too deep on its own: the line of the block comes first.
+        let source = blocks(BLOCKS + 1, &chain(MAX + 1));
+        assert_eq!(error_kind(&source), E::BlocksTooDeep);
     }
 
     #[test]
@@ -1823,7 +1846,7 @@ mod depth {
             let mut statements = statements(&fits);
             assert_eq!(statement_height(&statements.pop().unwrap()), MAX, "{count}");
             let too_deep = blocks(count, &chain(MAX - count + 1));
-            assert_eq!(error_kind(&too_deep), E::TooDeep, "{count}");
+            assert_eq!(error_kind(&too_deep), E::ExpressionTooDeep, "{count}");
         }
     }
 
@@ -1845,7 +1868,11 @@ mod depth {
                 blocks(10, &format!("{line}{inside}b()"))
             };
             assert!(parse(&nested(&chain(MAX - 10))).is_ok(), "{line}");
-            assert_eq!(error_kind(&nested(&chain(MAX - 9))), E::TooDeep, "{line}");
+            assert_eq!(
+                error_kind(&nested(&chain(MAX - 9))),
+                E::ExpressionTooDeep,
+                "{line}"
+            );
         }
     }
 
@@ -1859,7 +1886,7 @@ mod depth {
             blocks_with(count, opening, "b()")
         };
         assert!(parse(&nested(BLOCKS)).is_ok());
-        assert_eq!(error_kind(&nested(BLOCKS + 1)), E::TooDeep);
+        assert_eq!(error_kind(&nested(BLOCKS + 1)), E::BlocksTooDeep);
     }
 
     #[test]
@@ -1871,7 +1898,7 @@ mod depth {
             blocks_with(count, opening, "b()")
         };
         assert!(parse(&nested(BLOCKS)).is_ok());
-        assert_eq!(error_kind(&nested(BLOCKS + 1)), E::TooDeep);
+        assert_eq!(error_kind(&nested(BLOCKS + 1)), E::BlocksTooDeep);
     }
 
     #[test]
@@ -1895,7 +1922,7 @@ mod depth {
 
     #[test]
     fn a_huge_nesting_of_blocks_is_an_error_and_never_an_overflow() {
-        assert_eq!(error_kind(&blocks(1_000, "b()")), E::TooDeep);
+        assert_eq!(error_kind(&blocks(1_000, "b()")), E::BlocksTooDeep);
     }
 
     #[test]
@@ -1909,7 +1936,7 @@ mod depth {
             "1 + (".repeat(100_000),
             "let a = ".to_owned() + &"(1 * ".repeat(100_000),
         ] {
-            assert_eq!(error_kind(&source), E::TooDeep);
+            assert_eq!(error_kind(&source), E::ExpressionTooDeep);
         }
     }
 }
@@ -2042,7 +2069,13 @@ mod robustness {
             if bounded(&source) {
                 read += 1;
             } else {
-                assert_eq!(error_kind(&source), E::TooDeep);
+                // The blocks are refused first: their lines come before the expression.
+                let expected = if kinds.len() > BLOCKS {
+                    E::BlocksTooDeep
+                } else {
+                    E::ExpressionTooDeep
+                };
+                assert_eq!(error_kind(&source), expected);
                 refused += 1;
             }
         }

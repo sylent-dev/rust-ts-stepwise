@@ -239,7 +239,7 @@ impl<'a> Checker<'a> {
     fn is_call_or_function(&self, expression: &Expression) -> bool {
         match &expression.kind {
             ExpressionKind::Call { .. } => true,
-            ExpressionKind::Name(name) => self.functions.callee(name).is_some(),
+            ExpressionKind::Name(name) => self.functions.callee(&name.text).is_some(),
             ExpressionKind::Number(_)
             | ExpressionKind::Boolean(_)
             | ExpressionKind::Text(_)
@@ -252,17 +252,15 @@ impl<'a> Checker<'a> {
     fn expression(&mut self, expression: &'a Expression, context: Context) {
         match &expression.kind {
             ExpressionKind::Number(_) | ExpressionKind::Boolean(_) | ExpressionKind::Text(_) => {}
-            ExpressionKind::Name(name) => {
-                if Color::from_word(name).is_some() {
+            // The errors of a name are on the name, not on the parentheses around it.
+            ExpressionKind::Name(Name { text, span }) => {
+                if Color::from_word(text).is_some() {
                     // A color is a value.
-                } else if self.functions.callee(name).is_some() {
-                    let name = name.clone();
-                    self.report(
-                        CheckErrorKind::FunctionWithoutParentheses { name },
-                        expression.span,
-                    );
+                } else if self.functions.callee(text).is_some() {
+                    let name = text.clone();
+                    self.report(CheckErrorKind::FunctionWithoutParentheses { name }, *span);
                 } else {
-                    self.variable(name, expression.span, Access::Read, context);
+                    self.variable(text, *span, Access::Read, context);
                 }
             }
             ExpressionKind::Call {
@@ -342,7 +340,7 @@ impl<'a> Checker<'a> {
         {
             let name = name();
             self.report(
-                CheckErrorKind::WrongArgumentCount {
+                CheckErrorKind::WrongValueCount {
                     name,
                     expected,
                     given,
