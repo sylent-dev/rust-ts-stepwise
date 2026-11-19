@@ -7,7 +7,7 @@
 	import { platformOf } from '#lib/platform.ts';
 	import { currentWindow } from './current-window.svelte.ts';
 	import ScreenMessage from './screen-message.svelte';
-	import { SMALLEST_WINDOW, windowAdvice } from './window-size.ts';
+	import { adviceMessage, SMALLEST_WINDOW, windowAdvice } from './window-size.ts';
 
 	/** A size as a message writes it: `1280 × 720`. */
 	function size(width: number, height: number): string {
@@ -20,7 +20,7 @@
 	});
 	const platform = platformOf(navigator.platform, navigator.userAgent);
 
-	/** What to do about it, each named after its message: `window-small-<advice>`. */
+	/** What to do about it, and only what can work. */
 	const advice = $derived(windowAdvice(currentWindow.place, platform));
 </script>
 
@@ -31,6 +31,6 @@
 {:else}
 	<ScreenMessage title={t('window-small-title')}>
 		<p>{before}<b>{size(currentWindow.width, currentWindow.height)}</b>{after}</p>
-		<p>{t(`window-small-${advice}`, { platform })}</p>
+		<p>{t(adviceMessage(advice), { platform })}</p>
 	</ScreenMessage>
 {/if}

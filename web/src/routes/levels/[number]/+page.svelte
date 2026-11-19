@@ -6,12 +6,12 @@
 	import { t } from '#lib/i18n.ts';
 	import LevelScreen from '#lib/level-screen/level-screen.svelte';
 	import { levelPlayground } from '#lib/level-screen/playground.ts';
-	import { titleMessage } from '#lib/levels.ts';
+	import { levelMessage } from '#lib/levels.ts';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
 
-	const title = $derived(t(titleMessage(data.name)));
+	const title = $derived(t(levelMessage(data.name, 'title')));
 
 	/** The level, from the text of its file, kept in the module while its screen is open. */
 	const level = fromCore(() => new Level(data.text));
@@ -21,7 +21,7 @@
 </script>
 
 <svelte:head>
-	<title>{t('page-title', { page: t('level-numbered', { number: data.number, title }) })}</title>
+	<title>{t('tab-title', { page: t('screen-level', { number: data.number, title }) })}</title>
 </svelte:head>
 
 <LevelScreen screen="level" {title} {playground} />

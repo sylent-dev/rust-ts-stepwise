@@ -69,7 +69,7 @@
 	height={world.height * side}
 	viewBox="0 0 {world.width * CELL} {world.height * CELL}"
 	role="img"
-	aria-label={t('map')}
+	aria-label={t('map-name')}
 >
 	<defs>
 		<clipPath id={floorClip}>

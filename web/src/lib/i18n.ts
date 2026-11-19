@@ -1,25 +1,34 @@
 // The texts of the interface, from the Fluent files of `locales/` (see docs/technical-choices.md):
-// never written in the code, so that a language is added without touching it.
+// never written in the code, so that a language is added without touching it. The code writes the
+// names of the messages, which follow the rule at the top of locales/en/interface.ftl; a test
+// reads them all (messages.spec.ts).
 
 import { FluentBundle, FluentResource, type FluentVariable } from '@fluent/bundle';
-import english from '../../locales/en.ftl?raw';
 
 /** The values a message takes, such as `{ version: '0.1.0' }` for `{ $version }`. */
 export type MessageArguments = Record<string, FluentVariable>;
 
+/** The Fluent files of a language, the text of each by its path: one file per domain. */
+export type MessageFiles = Readonly<Record<string, string>>;
+
 /**
- * Reads a Fluent file into a bundle, with the messages it defines twice (only the first one is
- * kept). A message with a syntax error is skipped without an error, and the messages around it
- * still load: the syntax of the files is checked by the tests, with `@fluent/syntax`.
+ * Reads the Fluent files of a language into one bundle, with the messages defined twice, in a
+ * file or in two (only the first one is kept), each error starting with the path of its file. A
+ * message with a syntax error is skipped without an error, and the messages around it still load:
+ * the syntax of the files is checked by the tests, with `@fluent/syntax`.
  */
 export function createBundle(
 	locale: string,
-	source: string
+	files: MessageFiles
 ): { bundle: FluentBundle; errors: Error[] } {
 	// Without the invisible marks that isolate each value from the text around it: they only
 	// matter when a right-to-left language mixes with a left-to-right one.
 	const bundle = new FluentBundle(locale, { useIsolating: false });
-	const errors = bundle.addResource(new FluentResource(source));
+	const errors = Object.entries(files).flatMap(([path, source]) =>
+		bundle
+			.addResource(new FluentResource(source))
+			.map((error) => new Error(`${path}: ${error.message}`, { cause: error }))
+	);
 	return { bundle, errors };
 }
 
@@ -60,17 +69,29 @@ export function formatAround(
 	return at < 0 ? [text, ''] : [text.slice(0, at), text.slice(at + PLACE.length)];
 }
 
+/** The files of English, the reference language: every file of `locales/en/`. */
+export const english: MessageFiles = import.meta.glob<string>('../../locales/en/*.ftl', {
+	query: '?raw',
+	import: 'default',
+	eager: true
+});
+
 const { bundle, errors } = createBundle('en', english);
 for (const error of errors) {
-	console.warn(`i18n: locales/en.ftl: ${error.message}`);
+	console.warn(`i18n: ${error.message}`);
 }
 
-/** The text of a message of the interface, in English for now. */
+/**
+ * The text of a message of the interface, in English for now. Its name is written as it is,
+ * between quotes, or built by the function of its family (`themeMessage`), and `t` is always
+ * called, under its own name, never renamed nor given as a value: the test of the names reads the
+ * calls as they are written (messages.spec.ts).
+ */
 export function t(id: string, args?: MessageArguments): string {
 	return formatMessage(bundle, id, args);
 }
 
-/** The text of a message of the interface on both sides of its value `value`. */
+/** The text of a message of the interface on both sides of its value `value`; named as for `t`. */
 export function tAround(
 	id: string,
 	value: string,
@@ -79,7 +100,11 @@ export function tAround(
 	return formatAround(bundle, id, value, args);
 }
 
-/** Whether the interface has a message of this name. */
-export function hasMessage(id: string): boolean {
-	return bundle.hasMessage(id);
+/**
+ * The text of a message whose name comes from outside the code, or nothing when the interface has
+ * no such message: the page itself names its texts (src/app.html), and takes this function as it
+ * is. A name of the code goes to `t`.
+ */
+export function findMessage(id: string): string | undefined {
+	return bundle.hasMessage(id) ? formatMessage(bundle, id) : undefined;
 }

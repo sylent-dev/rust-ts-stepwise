@@ -16,7 +16,7 @@
 	const themes = THEMES.map((theme) => ({ value: theme, label: t(themeMessage(theme)) }));
 </script>
 
-<Panel title={t('settings')} bind:open width={500}>
+<Panel title={t('settings-title')} bind:open width={500}>
 	<div class="rows">
 		<div class="row">
 			<div>

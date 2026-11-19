@@ -38,7 +38,15 @@ export interface WindowPlace {
  * What the message of a window too small tells to do: make the window grow, zoom out or go to
  * the full screen, or zoom out alone.
  */
-export type WindowAdvice = 'grow' | 'full-screen' | 'zoom';
+export const WINDOW_ADVICES = ['grow', 'full-screen', 'zoom'] as const;
+
+/** One thing that the message of a window too small tells to do. */
+export type WindowAdvice = (typeof WINDOW_ADVICES)[number];
+
+/** The name of the message that tells what to do: `window-advice-full-screen`. */
+export function adviceMessage(advice: WindowAdvice): string {
+	return `window-advice-${advice}`;
+}
 
 /** A browser may round the sizes of a window that fills its screen a pixel or two apart. */
 const ROUNDING = 2;

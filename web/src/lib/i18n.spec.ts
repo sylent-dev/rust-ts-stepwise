@@ -1,30 +1,35 @@
-import { FluentParser } from '@fluent/syntax';
-import { describe, expect, it, vi } from 'vitest';
-import english from '../../locales/en.ftl?raw';
-import { createBundle, formatAround, formatMessage, hasMessage, t, tAround } from './i18n.ts';
-import type { WindowAdvice } from './shell/window-size.ts';
+// The reading of the Fluent files and the formatting of a message. The files themselves and the
+// names that the code writes are checked by messages.spec.ts.
 
-describe('locales/en.ftl', () => {
-	// The parser of the bundle skips a message it can't read without a word: the full parser
-	// keeps it as `Junk`, with what went wrong.
-	it('has no syntax error', () => {
-		const junk = new FluentParser()
-			.parse(english)
-			.body.filter((entry) => entry.type === 'Junk')
-			.map((entry) => ({
-				content: entry.content,
-				errors: entry.annotations.map((a) => a.message)
-			}));
-		expect(junk).toEqual([]);
+import { describe, expect, it, vi } from 'vitest';
+import { createBundle, findMessage, formatAround, formatMessage, t, tAround } from './i18n.ts';
+import { adviceMessage } from './shell/window-size.ts';
+
+describe('createBundle', () => {
+	it('reads the files of a language into one bundle', () => {
+		const { bundle, errors } = createBundle('en', {
+			'en/interface.ftl': 'greeting = Hello!\n',
+			'en/levels.ftl': 'title = Paint a square\n'
+		});
+		expect(errors).toEqual([]);
+		expect(formatMessage(bundle, 'greeting')).toBe('Hello!');
+		expect(formatMessage(bundle, 'title')).toBe('Paint a square');
 	});
 
-	it('defines each message once', () => {
-		expect(createBundle('en', english).errors).toEqual([]);
+	it('keeps the first of two messages of the same name, and says the file of the second', () => {
+		const { bundle, errors } = createBundle('en', {
+			'en/interface.ftl': 'title = The interface\n',
+			'en/levels.ftl': 'title = A level\n'
+		});
+		expect(formatMessage(bundle, 'title')).toBe('The interface');
+		expect(errors.map((error) => error.message)).toEqual([
+			expect.stringMatching(/^en\/levels\.ftl: .*"title"/)
+		]);
 	});
 });
 
 describe('formatMessage', () => {
-	const { bundle } = createBundle('en', 'greeting = Hello, { $name }!\n');
+	const { bundle } = createBundle('en', { 'en.ftl': 'greeting = Hello, { $name }!\n' });
 
 	it('fills the values of a message', () => {
 		expect(formatMessage(bundle, 'greeting', { name: 'Ada' })).toBe('Hello, Ada!');
@@ -44,10 +49,10 @@ describe('formatMessage', () => {
 });
 
 describe('formatAround', () => {
-	const { bundle } = createBundle(
-		'en',
-		'size = At least { $least }. This one is { $size }.\nlast = Only { $size }\nplain = Nothing to draw.\n'
-	);
+	const { bundle } = createBundle('en', {
+		'en.ftl':
+			'size = At least { $least }. This one is { $size }.\nlast = Only { $size }\nplain = Nothing to draw.\n'
+	});
 
 	it('gives the text before a value and the text after it, the other values filled', () => {
 		expect(formatAround(bundle, 'size', 'size', { least: '1280 × 720' })).toEqual([
@@ -67,7 +72,7 @@ describe('formatAround', () => {
 
 describe('t', () => {
 	it('formats the messages of the interface in English', () => {
-		expect(t('page-title', { page: 'Sandbox' })).toBe('Sandbox · Stepwise');
+		expect(t('tab-title', { page: 'Sandbox' })).toBe('Sandbox · Stepwise');
 	});
 
 	it('formats a message of the interface around one of its values', () => {
@@ -77,18 +82,10 @@ describe('t', () => {
 		]);
 	});
 
-	it.each(['grow', 'zoom'])('names the key that zooms on each computer, %s', (advice) => {
-		expect(t(`window-small-${advice}`, { platform: 'mac' })).toContain('Cmd and −');
-		expect(t(`window-small-${advice}`, { platform: 'other' })).toContain('Ctrl and −');
-		expect(t(`window-small-${advice}`, { platform: 'chromeos' })).toContain('Ctrl and −');
-	});
-
-	it('has a message for each thing to do about a window too small', () => {
-		// Each of them is named here, or the types don't check: one added later can't be left out.
-		const advices: Record<WindowAdvice, true> = { grow: true, 'full-screen': true, zoom: true };
-		for (const advice of Object.keys(advices)) {
-			expect(hasMessage(`window-small-${advice}`)).toBe(true);
-		}
+	it.each(['grow', 'zoom'] as const)('names the key that zooms on each computer, %s', (advice) => {
+		expect(t(adviceMessage(advice), { platform: 'mac' })).toContain('Cmd and −');
+		expect(t(adviceMessage(advice), { platform: 'other' })).toContain('Ctrl and −');
+		expect(t(adviceMessage(advice), { platform: 'chromeos' })).toContain('Ctrl and −');
 	});
 
 	it('writes a size without a separator of thousands', () => {
@@ -96,9 +93,14 @@ describe('t', () => {
 	});
 });
 
-describe('hasMessage', () => {
-	it('knows the messages of the interface', () => {
-		expect(hasMessage('app-name')).toBe(true);
-		expect(hasMessage('no-such-message')).toBe(false);
+describe('findMessage', () => {
+	it('gives the text of a message of the interface', () => {
+		expect(findMessage('app-name')).toBe('Stepwise');
+	});
+
+	it('gives nothing for a name without message, and doesn’t warn', () => {
+		const warn = vi.spyOn(console, 'warn');
+		expect(findMessage('no-such-message')).toBeUndefined();
+		expect(warn).not.toHaveBeenCalled();
 	});
 });

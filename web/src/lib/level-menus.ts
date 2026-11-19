@@ -20,18 +20,18 @@ export type LevelScreenKind = 'level' | 'sandbox';
 export function levelMenus(screen: LevelScreenKind): Menu[] {
 	const sandbox: MenuRow =
 		screen === 'sandbox'
-			? { id: 'sandbox', label: t('sandbox'), here: true }
-			: { id: 'sandbox', label: t('sandbox'), to: 'sandbox' };
+			? { id: 'sandbox', label: t('screen-sandbox'), here: true }
+			: { id: 'sandbox', label: t('screen-sandbox'), to: 'sandbox' };
 	return [
 		{
 			id: 'level',
 			name: t('menu-level'),
-			rows: [{ id: 'all-levels', label: t('all-levels'), to: '' }, sandbox]
+			rows: [{ id: 'all-levels', label: t('screen-home'), to: '' }, sandbox]
 		},
 		{
 			id: 'help',
 			name: t('menu-help'),
-			rows: [{ id: 'manual', label: t('manual'), to: 'manual', tab: MANUAL_TAB }]
+			rows: [{ id: 'manual', label: t('screen-manual'), to: 'manual', tab: MANUAL_TAB }]
 		}
 	];
 }

@@ -17,7 +17,7 @@
 </script>
 
 <svelte:head>
-	<title>{t('page-title', { page: t('sandbox') })}</title>
+	<title>{t('tab-title', { page: t('screen-sandbox') })}</title>
 </svelte:head>
 
-<LevelScreen screen="sandbox" title={t('sandbox')} {playground} />
+<LevelScreen screen="sandbox" title={t('screen-sandbox')} {playground} />

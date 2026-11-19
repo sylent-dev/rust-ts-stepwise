@@ -4,7 +4,6 @@
 
 import { readFileSync } from 'node:fs';
 import { afterAll, describe, expect, it } from 'vitest';
-import { hasMessage } from '#lib/i18n.ts';
 import { check, initSync, Level, Sandbox, type Run } from '#lib/wasm/stepwise.js';
 import { benchPrograms } from './bench-programs.ts';
 
@@ -39,10 +38,9 @@ const MAPS: Record<string, (text: string) => Run> = {
 
 describe.each(Object.entries(MAPS))('the programs of the bench on the map of %s', (map, start) => {
 	it.each(benchPrograms(map).map((program) => [program.name, program]))(
-		'%s has no error, a title, and stops on no error but the one it shows',
+		'%s has no error and stops on no error but the one it shows',
 		(name, { text, fails, ends }) => {
 			expect(check(text)).toEqual([]);
-			expect(hasMessage(`bench-program-${name}`)).toBe(true);
 			using run = start(text);
 			finish(run);
 			const outcome = run.outcome();

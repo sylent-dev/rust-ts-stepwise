@@ -7,12 +7,12 @@
 </script>
 
 <svelte:head>
-	<title>{t('page-title', { page: t('manual') })}</title>
+	<title>{t('tab-title', { page: t('screen-manual') })}</title>
 </svelte:head>
 
 <main>
 	<aside>
-		<a class="name" href={resolve('/')} title={t('all-levels')}><Wordmark /></a>
+		<a class="name" href={resolve('/')} title={t('screen-home')}><Wordmark /></a>
 	</aside>
 </main>
 

@@ -134,7 +134,7 @@
 	class:keys
 	class:swap
 	role="menubar"
-	aria-label={t('menus')}
+	aria-label={t('menus-name')}
 	{onfocusout}
 	onmousedown={(event) => event.preventDefault()}
 >
