@@ -1,27 +1,57 @@
 <!-- The level screen, and the sandbox, the level screen without goal (see Level screen in
      specs.md): under its header, the code on the left on the whole height, the map on top on the
      right, the console and the variables under it. The blocks meet without any line, each zone in
-     its own tone; the panels come with the running (step 17). -->
+     its own tone; the panels come with the running (step 17). A route gives it what it plays on,
+     and it wires the rest: the same for a level and for the sandbox. -->
 <script lang="ts">
-	import type { Snippet } from 'svelte';
+	import Bench from '#lib/bench/bench.svelte';
+	import { levelMenus } from '#lib/level-menus.ts';
+	import type { Scene } from '#lib/map/scene.ts';
+	import type { Playback } from '#lib/playback.svelte.ts';
+	import SettingsButton from '#lib/settings/settings-button.svelte';
+	import Header from '#lib/shell/header.svelte';
+	import MenuBar from '#lib/shell/menu-bar.svelte';
+	import Place from '#lib/shell/place.svelte';
+	import MapBlock from './map-block.svelte';
+	import type { Playground } from './playground.ts';
 
 	interface Props {
-		/** The header of the screen. */
-		header: Snippet;
-		/** The column of the code. */
-		code?: Snippet;
-		/** The block of the map. */
-		map: Snippet;
+		/** Which screen it is: the one of a level, or the sandbox. */
+		screen: 'level' | 'sandbox';
+		/** The place of the screen, in its header: the title of the level, or the sandbox. */
+		title: string;
+		/** What the screen plays on; nothing until the core is ready. */
+		playground?: Playground;
 	}
 
-	let { header, code, map }: Props = $props();
+	let { screen, title, playground }: Props = $props();
+
+	/** The program played on the map. */
+	let playback = $state.raw<Playback>();
+
+	/** What the map draws: the program played, or the world at rest before any program. */
+	const scene = $derived<Scene | undefined>(playback ?? playground);
 </script>
 
 <div class="level-screen">
-	{@render header()}
+	<Header>
+		<MenuBar menus={levelMenus(screen)} />
+		<!-- The diamond is the mark of the sandbox. -->
+		<Place {title} icon={screen === 'sandbox' ? 'diamond' : undefined} />
+		<SettingsButton gear />
+	</Header>
 	<main>
-		<div class="code">{@render code?.()}</div>
-		<div class="map">{@render map()}</div>
+		<!-- Until the editor (step 16) and the running (step 17), the column of the code holds the
+		     bench of the animations: short programs played by the core on the map of the screen. A
+		     bench of its own for each map, whose runs start on it. -->
+		<div class="code">
+			{#if playground}
+				{#key playground}
+					<Bench {playground} bind:playback />
+				{/key}
+			{/if}
+		</div>
+		<div class="map"><MapBlock {scene} goals={playground?.goals} /></div>
 		<div class="panels"></div>
 	</main>
 </div>

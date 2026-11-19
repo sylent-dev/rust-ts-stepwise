@@ -6,35 +6,35 @@
      once the run has ended, the eyes of the robot and the flags of the goals not met say how
      (see Animations). -->
 <script lang="ts">
-	import type { Goals, Outcome, World } from '#lib/core.ts';
+	import type { Goals } from '#lib/core.ts';
 	import { t } from '#lib/i18n.ts';
 	import { carryAt } from './carry-motion.ts';
 	import Element from './element.svelte';
 	import { CELL, paintAt, placedCells, placedFloors } from './geometry.ts';
 	import { fiveLines, wallFaces, wallShadow } from './ground.ts';
-	import { poseAt, restingPose, type Motion } from './motion.ts';
+	import { poseAt, restingPose } from './motion.ts';
 	import MovingPaint from './moving-paint.svelte';
 	import { fadeOut, paintMotion, paintParts } from './paint-motion.ts';
 	import PaintStroke from './paint-stroke.svelte';
 	import Robot from './robot.svelte';
 	import { eyesOf, FLAG_FOOT, flagSize, missedCells } from './run-end.ts';
+	import type { Scene } from './scene.ts';
 
 	interface Props {
-		/** The world at rest, or as the step under way found it. */
-		world: World;
+		/** The world, and the program played on it, if any. */
+		scene: Scene;
 		/** The goals of a map of a level; the sandbox has none. */
 		goals?: Goals;
 		/** The side of a cell, in pixels. */
 		side: number;
-		/** The step under way, or the end of the run after its last step, if any. */
-		motion?: Motion;
-		/** How far the step under way, or the end of the run, has gone, from 0 to 1. */
-		progress?: number;
-		/** How the run ended, once its last action has ended; nothing until then. */
-		outcome?: Outcome;
 	}
 
-	let { world, goals, side, motion, progress = 0, outcome }: Props = $props();
+	let { scene, goals, side }: Props = $props();
+
+	const world = $derived(scene.world);
+	const motion = $derived(scene.motion);
+	const progress = $derived(scene.progress ?? 0);
+	const outcome = $derived(scene.outcome);
 
 	/** Built once per step, not at each frame of its animation. */
 	const paint = $derived(motion && paintMotion(world, motion.after));

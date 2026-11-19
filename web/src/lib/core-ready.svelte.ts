@@ -16,3 +16,25 @@ export function coreReady(): { readonly ready: boolean } {
 		}
 	};
 }
+
+/**
+ * An object that stays in the module of the core (a level, the sandbox), for the component that
+ * calls this as it starts: `current` is nothing until the core is ready, then what `make` gives,
+ * made again when what `make` reads changes. The object is freed once another one replaces it,
+ * and once the component leaves: nothing may call it afterwards.
+ */
+export function fromCore<T extends { free(): void }>(
+	make: () => T
+): { readonly current: T | undefined } {
+	const core = coreReady();
+	const object = $derived(core.ready ? make() : undefined);
+	$effect(() => {
+		const made = object;
+		return () => made?.free();
+	});
+	return {
+		get current() {
+			return object;
+		}
+	};
+}

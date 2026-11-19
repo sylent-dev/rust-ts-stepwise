@@ -1,70 +1,27 @@
-<!-- The level screen. Its map shows the first map of the level, until its tabs (step 21); until
-     the editor (step 16) and the running (step 17), the column of the code holds the bench of the
-     animations: short programs played by the core on that map. -->
+<!-- The level screen of a level: the page loads its file, the core reads it, and the screen plays
+     on its first map, until the tabs of the maps (step 21). -->
 <script lang="ts">
-	import Bench from '#lib/bench/bench.svelte';
 	import { Level } from '#lib/core.ts';
-	import { coreReady } from '#lib/core-ready.svelte.ts';
+	import { fromCore } from '#lib/core-ready.svelte.ts';
 	import { t } from '#lib/i18n.ts';
-	import { levelMenus } from '#lib/level-menus.ts';
 	import LevelScreen from '#lib/level-screen/level-screen.svelte';
-	import MapBlock from '#lib/level-screen/map-block.svelte';
+	import { levelPlayground } from '#lib/level-screen/playground.ts';
 	import { titleMessage } from '#lib/levels.ts';
-	import type { Playback } from '#lib/playback.svelte.ts';
-	import SettingsButton from '#lib/settings/settings-button.svelte';
-	import Header from '#lib/shell/header.svelte';
-	import MenuBar from '#lib/shell/menu-bar.svelte';
-	import Place from '#lib/shell/place.svelte';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
 
 	const title = $derived(t(titleMessage(data.name)));
 
-	// The map needs the core.
-	const core = coreReady();
-
 	/** The level, from the text of its file, kept in the module while its screen is open. */
-	const level = $derived(core.ready ? new Level(data.text) : undefined);
-	$effect(() => {
-		const current = level;
-		return () => current?.free();
-	});
+	const level = fromCore(() => new Level(data.text));
 
-	/** The goals of the map shown, its first one. */
-	const goals = $derived(level?.maps()[0]?.goals);
-
-	/** The program played on the map. */
-	let playback = $state.raw<Playback>();
+	/** The map shown, its first one. */
+	const playground = $derived(level.current && levelPlayground(data.name, level.current, 0));
 </script>
 
 <svelte:head>
 	<title>{t('page-title', { page: t('level-numbered', { number: data.number, title }) })}</title>
 </svelte:head>
 
-<LevelScreen>
-	{#snippet header()}
-		<Header>
-			<MenuBar menus={levelMenus('level')} />
-			<Place {title} />
-			<SettingsButton gear />
-		</Header>
-	{/snippet}
-	{#snippet code()}
-		<!-- A bench of its own for each level, whose runs start on its map. -->
-		{#if level}
-			{#key level}
-				<Bench map={data.name} start={(text) => level.start(0, text)} bind:playback />
-			{/key}
-		{/if}
-	{/snippet}
-	{#snippet map()}
-		<MapBlock
-			world={playback?.world}
-			{goals}
-			motion={playback?.motion}
-			progress={playback?.progress}
-			outcome={playback?.outcome}
-		/>
-	{/snippet}
-</LevelScreen>
+<LevelScreen screen="level" {title} {playground} />
