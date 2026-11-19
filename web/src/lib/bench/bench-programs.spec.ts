@@ -57,10 +57,5 @@ describe.each(Object.entries(MAPS))('the programs of the bench on the map of %s'
 });
 
 it('gives the programs that fit any map to the map of another level', () => {
-	expect(benchPrograms('another-level').map(({ name }) => name)).toEqual([
-		'pick-up-nothing',
-		'drop-nothing',
-		'turns',
-		'walk'
-	]);
+	expect(benchPrograms('another-level').map(({ name }) => name)).toEqual(['turns', 'walk']);
 });

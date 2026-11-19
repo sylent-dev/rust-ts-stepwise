@@ -24,7 +24,7 @@ afterAll(() => {
 	withItem.free();
 });
 
-/** Plays `program` in the corridor, at the normal speed: 2 steps per second, 300 ms an action. */
+/** Plays `program` in the corridor, at the normal speed: 2 steps per second, 300 ms a move. */
 function play(program: string, options?: PlaybackOptions): Playback {
 	return new Playback(() => sandbox.start(program), options);
 }
@@ -282,9 +282,9 @@ describe('a program played on the map', () => {
 		expect(playback.motion?.action).toBe('bump');
 		playback.tick(time + 450);
 		expect(playback.motion).toBeUndefined();
-		expect({ status: playback.status, error: playback.outcome }).toMatchObject({
+		expect({ status: playback.status, outcome: playback.outcome }).toMatchObject({
 			status: 'ended',
-			error: { type: 'failed', error: { kind: { code: 'bump' }, span: { line: 2 } } }
+			outcome: { type: 'failed', error: { kind: { code: 'bump' }, span: { line: 2 } } }
 		});
 	});
 
@@ -296,9 +296,34 @@ describe('a program played on the map', () => {
 		using other = play('print(1 / 0)\n');
 		other.play();
 		other.tick(0);
-		expect({ motion: other.motion, code: other.outcome?.type }).toEqual({
+		expect({ motion: other.motion, type: other.outcome?.type }).toEqual({
 			motion: undefined,
-			code: 'failed'
+			type: 'failed'
+		});
+	});
+
+	it('ends an error of the robot at once on a second Step, without playing it again', () => {
+		using playback = play('pick_up()\n');
+		playback.step();
+		expect(playback.motion?.action).toBe('no-item-here');
+		playback.step();
+		expect({ motion: playback.motion, status: playback.status }).toEqual({
+			motion: undefined,
+			status: 'ended'
+		});
+		expect(playback.outcome?.type).toBe('failed');
+	});
+
+	it('ends an error of the robot at once when the speed becomes Instant', () => {
+		using playback = play('pick_up()\n');
+		playback.play();
+		playback.tick(0);
+		expect(playback.motion?.action).toBe('no-item-here');
+		playback.rate = Infinity;
+		expect(playback.tick(16)).toBe(false);
+		expect({ motion: playback.motion, status: playback.status }).toEqual({
+			motion: undefined,
+			status: 'ended'
 		});
 	});
 

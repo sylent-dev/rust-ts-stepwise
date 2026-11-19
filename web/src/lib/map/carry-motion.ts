@@ -6,7 +6,7 @@
 import type { World } from '#lib/core.ts';
 import { clamp01, lerp, smoothBetween } from './easing.ts';
 import { CELL, cellAt } from './geometry.ts';
-import { STEP_BACK, type Motion } from './motion.ts';
+import { STEP_BACK, type Action } from './motion.ts';
 
 /** The size of the item in the bay, as a share of the item on the floor. */
 export const IN_BAY = 0.5;
@@ -55,13 +55,13 @@ function tried(t: number): number {
 
 /**
  * What the robot of `before`, the world as the step found it, does with an item at `t` of the
- * step, from 0 to 1. It picks up the item of its cell into its bay, over itself, a little larger
+ * step of `action`, from 0 to 1. It picks up the item of its cell into its bay, over itself, a little larger
  * as if lifted, or brings it back from the bay and sets it down on its cell, with its pincer out.
  * When the action fails, its pincer comes out empty (nothing to pick up, nothing to drop), its
  * full bay swells (an item already carried), or the item comes out of the bay and goes back into
  * it (an item already on the cell). At rest, and for another action, nothing moves.
  */
-export function carryAt(before: World, motion: Motion | undefined, t: number): Carry {
+export function carryAt(before: World, action: Action | undefined, t: number): Carry {
 	const { position, carrying } = before.robot;
 	const cell = cellAt(before, position);
 	const rest: Carry = {
@@ -69,7 +69,7 @@ export function carryAt(before: World, motion: Motion | undefined, t: number): C
 		bay: carrying ? IN_BAY : undefined,
 		floor: cell?.type === 'floor' && cell.item
 	};
-	switch (motion?.action) {
+	switch (action) {
 		case 'picked-up': {
 			const way = smoothBetween(t, 0.4, 0.8);
 			return {

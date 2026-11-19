@@ -31,55 +31,44 @@ export type RobotFailure = Extract<
 export type Action = AnimatedEvent | RobotFailure;
 
 /**
- * The time each action takes at the normal speed, 2 steps per second (decided at step 11a): a
- * move, a turn or a tool 300 ms; an item 400 ms, since it travels between the floor and the bay;
- * a bump 450 ms and a `pick_up()` or a `drop()` that fails 650 ms, since they show what goes
- * wrong before the robot shakes.
+ * The time each action of the program that the map animates takes at the normal speed, 2 steps
+ * per second (decided at step 11a): a move, a turn or a tool 300 ms; an item 400 ms, since it
+ * travels between the floor and the bay. Its keys are the actions animated.
  */
-const NORMAL_TIMES: Readonly<Record<Action, number>> = {
+const EVENT_TIMES = {
 	moved: 300,
 	'turned-left': 300,
 	'turned-right': 300,
 	'started-painting': 300,
 	'started-erasing': 300,
 	'picked-up': 400,
-	dropped: 400,
+	dropped: 400
+} satisfies Readonly<Record<AnimatedEvent, number>>;
+
+/**
+ * The time each error of the robot that the map shows takes, at every speed: a bump 450 ms, and a
+ * `pick_up()` or a `drop()` that fails 650 ms, since they show what goes wrong before the robot
+ * shakes. Its keys are the errors shown.
+ */
+const FAILURE_TIMES = {
 	bump: 450,
 	'already-carrying': 650,
 	'no-item-here': 650,
 	'not-carrying': 650,
 	'item-already-here': 650
-};
-
-const ANIMATED: readonly StepEvent[] = [
-	'moved',
-	'turned-left',
-	'turned-right',
-	'started-painting',
-	'started-erasing',
-	'picked-up',
-	'dropped'
-] satisfies AnimatedEvent[];
-
-const FAILURES: readonly string[] = [
-	'bump',
-	'already-carrying',
-	'no-item-here',
-	'not-carrying',
-	'item-already-here'
-] satisfies RobotFailure[];
+} satisfies Readonly<Record<RobotFailure, number>>;
 
 /**
  * Whether the map animates what a step showed. A line without action, a line printed and a tool
  * lifted show nothing: the highlighted line moves on at once.
  */
 export function isAnimated(event: StepEvent): event is AnimatedEvent {
-	return ANIMATED.includes(event);
+	return Object.hasOwn(EVENT_TIMES, event);
 }
 
 /** Whether an action, or the code of an error, is an error of the robot that the map shows. */
 function isFailure(code: string): code is RobotFailure {
-	return FAILURES.includes(code);
+	return Object.hasOwn(FAILURE_TIMES, code);
 }
 
 /**
@@ -115,8 +104,8 @@ const ACTION_SHARE = 0.8;
  */
 export function actionTime(action: Action, rate: number): number {
 	if (!Number.isFinite(rate)) return 0;
-	const normal = NORMAL_TIMES[action];
-	return isFailure(action) ? normal : Math.min(normal, (ACTION_SHARE * 1000) / rate);
+	if (isFailure(action)) return FAILURE_TIMES[action];
+	return Math.min(EVENT_TIMES[action], (ACTION_SHARE * 1000) / rate);
 }
 
 /** Where the robot stands: its place in cells, which may lie between two, and its angle. */

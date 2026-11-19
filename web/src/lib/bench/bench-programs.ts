@@ -36,7 +36,10 @@ const WALK: BenchProgram = {
 `
 };
 
-/** A `pick_up()` on a cell without item, beside the robot on any map that starts it on a floor. */
+/**
+ * A `pick_up()` on the cell ahead of the robot, which has no item: on the maps of the bench, where
+ * that cell is a floor.
+ */
 const PICK_UP_NOTHING: BenchProgram = {
 	name: 'pick-up-nothing',
 	text: `forward()
@@ -45,7 +48,7 @@ pick_up()
 	fails: 'no-item-here'
 };
 
-/** A `drop()` with nothing carried. */
+/** A `drop()` with nothing carried, on the cell ahead of the robot, as `PICK_UP_NOTHING`. */
 const DROP_NOTHING: BenchProgram = {
 	name: 'drop-nothing',
 	text: `forward()
@@ -170,5 +173,5 @@ drop()
 
 /** The programs of the bench for the map of a level, by its name, or of the sandbox. */
 export function benchPrograms(map: string): readonly BenchProgram[] {
-	return PROGRAMS[map] ?? [PICK_UP_NOTHING, DROP_NOTHING, TURNS, WALK];
+	return PROGRAMS[map] ?? [TURNS, WALK];
 }

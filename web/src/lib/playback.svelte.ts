@@ -108,8 +108,9 @@ export class Playback {
 
 	/**
 	 * Runs one step while the program waits, its action played as at the slowest speed, so that
-	 * it is seen whatever the speed. An action still under way ends at once. Once the program has
-	 * ended, it puts the map back and waits on the first step, as before the program started.
+	 * it is seen whatever the speed. An action still under way ends at once, and nothing more runs
+	 * when it was the last one. Once the program has ended, it puts the map back and waits on the
+	 * first step, as before the program started.
 	 */
 	step(): void {
 		if (this.running) return;
@@ -148,6 +149,10 @@ export class Playback {
 	 * way, then the steps due at the speed. Returns whether another frame is needed.
 	 */
 	tick(time: number): boolean {
+		const instant = !Number.isFinite(this.rate);
+		// **Instant** draws no animation: while the program runs, the action under way ends at once,
+		// the last one too.
+		if (this.running && instant) this.#endMotion();
 		if (this.motion) {
 			this.#motionStart ??= time;
 			const progress = (time - this.#motionStart) / this.#motionTime;
@@ -158,7 +163,7 @@ export class Playback {
 			}
 		}
 		if (this.running && this.#run.line !== undefined) {
-			if (Number.isFinite(this.rate)) {
+			if (!instant) {
 				const elapsed = this.#last === undefined ? 0 : time - this.#last;
 				const paced = paceFrame(this.rate, elapsed, this.#carry);
 				if (!paced.step) {
@@ -177,7 +182,6 @@ export class Playback {
 					this.#runStep(time, this.rate);
 				}
 			} else {
-				this.#endMotion();
 				this.#runInstant();
 			}
 			this.#last = time;
@@ -192,6 +196,8 @@ export class Playback {
 	 * when it has one and a time to show it at `rate` steps per second.
 	 */
 	#runStep(start: number | undefined, rate: number): void {
+		// A run that has stopped has no step left: the error it stopped on was shown already.
+		if (this.#run.line === undefined) return;
 		const event = this.#run.step();
 		this.steps = this.#run.steps;
 		const action = this.#actionOf(event);

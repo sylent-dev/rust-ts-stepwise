@@ -36,7 +36,7 @@
 	const paint = $derived(motion && paintMotion(world, motion.after));
 	const strokes = $derived(paint?.kept ?? paintParts(world));
 	const pose = $derived(motion ? poseAt(world.robot, motion, progress) : restingPose(world.robot));
-	const carry = $derived(carryAt(world, motion, progress));
+	const carry = $derived(carryAt(world, motion?.action, progress));
 	/** Whether the item of a cell shows: the one of the cell of the robot comes and goes with it. */
 	const itemShows = (x: number, y: number, item: boolean): boolean =>
 		x === world.robot.position.x && y === world.robot.position.y ? carry.floor : item;
@@ -48,9 +48,13 @@
 			.map(({ x, y }) => ({ x, y, ...wallFaces(world, { x, y }) }))
 	);
 
-	/** The shadows are kept on the floor, by a clip of their own on each map of a page. */
+	/**
+	 * The shadows are kept on the floor, and the walls on the map, by clips of their own on each map
+	 * of a page.
+	 */
 	const id = $props.id();
 	const floorClip = `${id}-floor`;
+	const mapClip = `${id}-map`;
 	const aheadClip = `${id}-ahead`;
 </script>
 
@@ -67,22 +71,27 @@
 				<rect x={x * CELL} y={y * CELL} width={CELL} height={CELL} />
 			{/each}
 		</clipPath>
+		<clipPath id={mapClip}>
+			<rect width={world.width * CELL} height={world.height * CELL} />
+		</clipPath>
 	</defs>
 
 	{#each floors as { x, y } (`${x},${y}`)}
 		<Element name="floor" {x} {y} />
 	{/each}
 	<!-- The walls over the floor, which they overlap by a unit, then their faces: each layer as
-	     one mass. -->
-	{#each walls as { x, y } (`${x},${y}`)}
-		<Element name="wall" {x} {y} joined />
-	{/each}
-	{#each walls.filter(({ rim }) => rim) as { x, y } (`${x},${y}`)}
-		<Element name="wallRim" {x} {y} joined />
-	{/each}
-	{#each walls.filter(({ edge }) => edge) as { x, y } (`${x},${y}`)}
-		<Element name="wallEdge" {x} {y} joined />
-	{/each}
+	     one mass, cut at the border of the map. -->
+	<g clip-path="url(#{mapClip})">
+		{#each walls as { x, y } (`${x},${y}`)}
+			<Element name="wall" {x} {y} joined />
+		{/each}
+		{#each walls.filter(({ rim }) => rim) as { x, y } (`${x},${y}`)}
+			<Element name="wallRim" {x} {y} joined />
+		{/each}
+		{#each walls.filter(({ edge }) => edge) as { x, y } (`${x},${y}`)}
+			<Element name="wallEdge" {x} {y} joined />
+		{/each}
+	</g>
 
 	<g class="ink">
 		{#each fiveLines(world) as line, index (index)}
@@ -137,8 +146,11 @@
 </svg>
 
 <style>
+	/* The robot may go past the border of the map, when it steps back on a cell of the border to
+	   pick up or drop an item: the margin of the block leaves it room. */
 	svg {
 		display: block;
+		overflow: visible;
 		box-shadow: var(--map-shadow);
 	}
 
