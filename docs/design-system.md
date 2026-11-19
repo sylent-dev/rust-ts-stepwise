@@ -19,6 +19,7 @@ Two themes, chosen in the settings: **Day Desk**, light, by default, and **Night
 - `--<role>-text` is the role as a text on a zone, when its fill can't be read as a text there.
 - A token that both themes share is written once.
 - A part of the interface with tones of its own keeps them under its name: `--code-…`, `--goal-…`, `--home-…`.
+- Each theme tells the browser whether it is light or dark (`color-scheme`), so that what the browser draws itself follows it: a native control, the list it opens, a field. Without it, a native button of Night Desk kept its light fill under the light text of the theme (seen on the bench of the animations, step 14d, 2026-11-19).
 
 ### Shared by both themes
 
