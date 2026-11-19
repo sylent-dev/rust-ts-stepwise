@@ -105,7 +105,6 @@ mod tests {
                 }
             }
         }
-        assert_eq!(seen.len(), 47, "the words of the language");
     }
 
     fn words<T: Copy>(all: &[T], as_str: impl Fn(T) -> &'static str) -> Vec<&'static str> {

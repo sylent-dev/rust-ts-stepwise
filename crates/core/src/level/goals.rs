@@ -94,23 +94,10 @@ impl Goals {
             .any(|passage| passage == (point, neighbor) || passage == (neighbor, point))
     }
 
-    /// Whether no cell other than those of the strokes should be painted.
-    #[must_use]
-    pub const fn nothing_else_painted(&self) -> bool {
-        self.nothing_else_painted
-    }
-
     /// The cells where an item should lie.
     #[must_use]
     pub fn items_at(&self) -> &[Point] {
         &self.items_at
-    }
-
-    /// Whether the robot should carry an item (`Some(true)`), carry none (`Some(false)`), or
-    /// either.
-    #[must_use]
-    pub const fn carrying(&self) -> Option<bool> {
-        self.carrying
     }
 
     /// Every goal not met on `world`, in the order of the goals: where to stand, the paints,

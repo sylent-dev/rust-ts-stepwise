@@ -63,7 +63,7 @@ pub fn tokenize(source: &str) -> Result<Lexed, LexError> {
     };
     let mut end = Position::new(1, 1);
     for (index, line) in source.split('\n').enumerate() {
-        let number = count(index).saturating_add(1);
+        let number = saturating_u32(index).saturating_add(1);
         end = lexer.line(line.strip_suffix('\r').unwrap_or(line), number)?;
     }
     for _ in 0..lexer.levels.len() {
@@ -98,7 +98,7 @@ impl Lexer {
 
     /// Reads one line, without its line break, and returns the position of its end.
     fn line(&mut self, line: &str, number: u32) -> Result<Position, LexError> {
-        let length = count(line.chars().count());
+        let length = saturating_u32(line.chars().count());
         let end = Position::new(number, length.saturating_add(1));
         // Blank characters of any kind, tabs and non-breaking spaces included: a line that
         // looks empty is empty.
@@ -108,8 +108,8 @@ impl Lexer {
         }
         if content.starts_with('#') {
             // Without the blank characters before the `#` nor those after the comment.
-            let width = count(content.trim_end().chars().count());
-            let before = length.saturating_sub(count(content.chars().count()));
+            let width = saturating_u32(content.trim_end().chars().count());
+            let before = length.saturating_sub(saturating_u32(content.chars().count()));
             let start = before.saturating_add(1);
             self.comments.push(Span::new(
                 Position::new(number, start),
@@ -352,6 +352,6 @@ fn keyword_or_name(word: String) -> TokenKind {
 
 /// A count of lines or of characters as a position holds it, stopped at the largest number
 /// it can hold.
-fn count(count: usize) -> u32 {
+fn saturating_u32(count: usize) -> u32 {
     u32::try_from(count).unwrap_or(u32::MAX)
 }

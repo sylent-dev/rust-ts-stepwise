@@ -57,7 +57,7 @@ fn world(map: &MapFile) -> Result<World, LevelErrorKind> {
         if grid.has_item(at) {
             return Err(LevelErrorKind::DuplicateItem(at));
         }
-        grid.set_item(at).map_err(LevelErrorKind::Map)?;
+        grid.set_item(at)?;
     }
     for stroke in &map.paints {
         paint(&mut grid, &self::stroke(stroke)?)?;
@@ -68,14 +68,14 @@ fn world(map: &MapFile) -> Result<World, LevelErrorKind> {
     } else {
         robot
     };
-    World::new(grid, robot).map_err(LevelErrorKind::Map)
+    Ok(World::new(grid, robot)?)
 }
 
 /// The map drawn by the rows of the terrain: [`WALL`] a wall, [`FLOOR`] a floor cell.
 fn terrain(terrain: &str) -> Result<Map, LevelErrorKind> {
     let rows: Vec<&str> = terrain.lines().collect();
     let width = rows.first().map_or(0, |row| row.chars().count());
-    let mut map = Map::new(width, rows.len()).map_err(LevelErrorKind::Map)?;
+    let mut map = Map::new(width, rows.len())?;
     // `Map::new` has refused more rows than `MAX_ROWS`, and each row is checked to be `width`
     // long: zipping with the `u8` ranges gives each cell its coordinates without a cast, and
     // drops nothing.
@@ -91,7 +91,7 @@ fn terrain(terrain: &str) -> Result<Map, LevelErrorKind> {
         for (x, character) in (0..map.width()).zip(row.chars()) {
             let at = Point::new(x, y);
             match character {
-                WALL => map.set_wall(at).map_err(LevelErrorKind::Map)?,
+                WALL => map.set_wall(at)?,
                 FLOOR => {}
                 character => return Err(LevelErrorKind::UnknownCharacter { at, character }),
             }
@@ -103,11 +103,10 @@ fn terrain(terrain: &str) -> Result<Map, LevelErrorKind> {
 /// Paints `stroke` on `map`, its cells and its passages, over any paint already there.
 fn paint(map: &mut Map, stroke: &Stroke) -> Result<(), LevelErrorKind> {
     for &at in stroke.path() {
-        map.set_paint(at, stroke.color())
-            .map_err(LevelErrorKind::Map)?;
+        map.set_paint(at, stroke.color())?;
     }
     for (from, to) in stroke.passages() {
-        map.set_passage(from, to).map_err(LevelErrorKind::Map)?;
+        map.set_passage(from, to)?;
     }
     Ok(())
 }

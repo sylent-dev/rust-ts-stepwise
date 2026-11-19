@@ -164,9 +164,7 @@ carrying = false
         assert_eq!(goals.paint_cells().len(), 8);
         assert_eq!(goals.paint_cells()[0], (Point::new(1, 1), Color::Red));
         assert!(goals.passage(Point::new(1, 1), Direction::South));
-        assert!(goals.nothing_else_painted());
         assert_eq!(goals.items_at(), [Point::new(1, 2)]);
-        assert_eq!(goals.carrying(), Some(false));
     }
 
     #[test]
@@ -183,9 +181,7 @@ carrying = false
         );
         let goals = level.maps()[0].goals();
         assert_eq!(goals.paint_cells(), []);
-        assert!(!goals.nothing_else_painted());
         assert_eq!(goals.items_at(), []);
-        assert_eq!(goals.carrying(), None);
     }
 
     #[test]

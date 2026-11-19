@@ -76,6 +76,12 @@ pub enum LevelErrorKind {
     Goals(GoalsError),
 }
 
+impl From<BuildError> for LevelErrorKind {
+    fn from(error: BuildError) -> Self {
+        Self::Map(error)
+    }
+}
+
 impl From<StrokeError> for LevelErrorKind {
     fn from(error: StrokeError) -> Self {
         Self::Stroke(error)
