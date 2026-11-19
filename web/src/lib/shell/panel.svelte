@@ -76,8 +76,8 @@
 			<button
 				type="button"
 				class="close"
-				title={t('close')}
-				aria-label={t('close')}
+				title={t('panel-close')}
+				aria-label={t('panel-close')}
 				onclick={() => (open = false)}
 			>
 				<Icon name="close" size={16} />

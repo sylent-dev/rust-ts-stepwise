@@ -13,8 +13,8 @@
 
 <Header>
 	<nav>
-		<a class="band-item" href={resolve('/sandbox')}>{t('sandbox')}</a>
-		<a class="band-item" href={resolve('/manual')}>{t('manual')}</a>
+		<a class="band-item" href={resolve('/sandbox')}>{t('screen-sandbox')}</a>
+		<a class="band-item" href={resolve('/manual')}>{t('screen-manual')}</a>
 		<SettingsButton />
 	</nav>
 </Header>
@@ -23,7 +23,7 @@
 		{#each levels as { number, name } (name)}
 			<li>
 				<a href={resolve('/levels/[number]', { number: String(number) })}>
-					{t('level-numbered', { number, title: t(titleMessage(name)) })}
+					{t('screen-level', { number, title: t(titleMessage(name)) })}
 				</a>
 			</li>
 		{/each}

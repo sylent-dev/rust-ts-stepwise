@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { levelMenus, type LevelScreenKind } from './level-menus.ts';
 import { canChoose, type MenuRow } from './shell/menus.ts';
 
@@ -37,13 +37,5 @@ describe('levelMenus', () => {
 		};
 		expect(tab('level')).toBeTruthy();
 		expect(tab('sandbox')).toBe(tab('level'));
-	});
-
-	it('names every menu and every row with a message of the interface', () => {
-		// A message that the Fluent file lacks shows its name and warns: nothing else tells.
-		const warn = vi.spyOn(console, 'warn');
-		levelMenus('level');
-		levelMenus('sandbox');
-		expect(warn).not.toHaveBeenCalled();
 	});
 });

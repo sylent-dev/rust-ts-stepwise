@@ -17,12 +17,12 @@
 </script>
 
 <svelte:head>
-	<title>{missing ? t('page-title', { page: t('missing-title') }) : t('app-name')}</title>
+	<title>{missing ? t('tab-title', { page: t('missing-title') }) : t('app-name')}</title>
 </svelte:head>
 
 {#if missing}
 	<ScreenMessage title={t('missing-title')} mark={t('missing-mark')}>
 		<p>{t('missing-text')}</p>
-		<a class="screen-message-action" href={resolve('/')}>{t('all-levels')}</a>
+		<a class="screen-message-action" href={resolve('/')}>{t('screen-home')}</a>
 	</ScreenMessage>
 {/if}

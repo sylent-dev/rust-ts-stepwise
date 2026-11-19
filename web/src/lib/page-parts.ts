@@ -3,7 +3,7 @@
 // draw them. The hook of the build and the tests share it, so that the tests check what ships.
 
 import { logoDisappointedDrawing } from './elements.ts';
-import { hasMessage, t } from './i18n.ts';
+import { findMessage } from './i18n.ts';
 import type { PageParts } from './page-fill.ts';
 import colors from './styles/colors.css?raw';
 import screenMessage from './styles/screen-message.css?raw';
@@ -11,7 +11,7 @@ import spacing from './styles/spacing.css?raw';
 import typography from './styles/typography.css?raw';
 
 export const pageParts: PageParts = {
-	text: (name) => (hasMessage(name) ? t(name) : undefined),
+	text: findMessage,
 	drawings: { disappointed: logoDisappointedDrawing },
 	// The design tokens that a message uses, then its look: a test checks that none is missing.
 	styles: [colors, typography, spacing, screenMessage]

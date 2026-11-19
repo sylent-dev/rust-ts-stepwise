@@ -9,7 +9,7 @@
 	import type { Playground } from '#lib/level-screen/playground.ts';
 	import { SPEEDS } from '#lib/pace.ts';
 	import { NORMAL_SPEED, Playback } from '#lib/playback.svelte.ts';
-	import { benchPrograms } from './bench-programs.ts';
+	import { benchPrograms, programMessage } from './bench-programs.ts';
 
 	interface Props {
 		/** What the screen plays on: its name chooses the programs, which start on its map. */
@@ -84,7 +84,7 @@
 		{t('bench-program')}
 		<select bind:value={chosen}>
 			{#each programs as { name }, index (name)}
-				<option value={index}>{t(`bench-program-${name}`)}</option>
+				<option value={index}>{t(programMessage(name))}</option>
 			{/each}
 		</select>
 	</label>

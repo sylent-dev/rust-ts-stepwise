@@ -16,13 +16,13 @@
 	type="button"
 	class="band-item"
 	class:gear
-	title={gear ? t('settings') : undefined}
-	aria-label={gear ? t('settings') : undefined}
+	title={gear ? t('settings-title') : undefined}
+	aria-label={gear ? t('settings-title') : undefined}
 	aria-haspopup="dialog"
 	aria-expanded={open}
 	onclick={() => (open = true)}
 >
-	{#if gear}<Icon name="gear" size={18} />{:else}{t('settings')}{/if}
+	{#if gear}<Icon name="gear" size={18} />{:else}{t('settings-title')}{/if}
 </button>
 <SettingsPanel bind:open />
 

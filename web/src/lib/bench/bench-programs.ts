@@ -5,7 +5,7 @@ import type { RobotFailure, RunEnd } from '#lib/map/motion.ts';
 
 /** A program of the bench. */
 export interface BenchProgram {
-	/** Its name, which names its message: `bench-program-<name>`. */
+	/** Its name, which names its message (`programMessage`). */
 	name: string;
 	text: string;
 	/** The error of the robot it is made to stop on, if any. */
@@ -197,6 +197,11 @@ drop()
 		WALK
 	]
 };
+
+/** The name of the message that holds the title of a program: `bench-program-walk`. */
+export function programMessage(name: string): string {
+	return `bench-program-${name}`;
+}
 
 /** The programs of the bench for the map of a level, by its name, or of the sandbox. */
 export function benchPrograms(map: string): readonly BenchProgram[] {
