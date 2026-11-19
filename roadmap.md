@@ -41,7 +41,7 @@ Model: each step to come names its model. Fable 5.2 runs the steps whose design 
   - [x] **15b. Core** (#60)
   - [x] **15c. Errors** (#61)
   - [x] **15d. Level screen** (#62)
-  - [x] **15e. Messages**: a test of every message name, a naming rule, a file per domain.
+  - [x] **15e. Messages** (#63)
   - [ ] **15f. Layout of the interface**: a rule for `web/src/lib` and the moves it asks, the test helpers shared.
   - [ ] **15g. Stricter TypeScript**: the options beyond `strict` that the code already follows, and ESLint reading the types, so that the compiler holds what the reviews hold today.
   - [ ] **15h. Styles**: the layers named, one component for a button made of an icon, the tables that the compiler checks.
