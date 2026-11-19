@@ -72,6 +72,14 @@ describe('the playground of a map of a level', () => {
 		expect(onSecond?.world().robot.position).toEqual({ x: 3, y: 0 });
 	});
 
+	it('starts a program when `start` is called on its own, away from the playground', () => {
+		const first = levelPlayground('walk-to-the-mark', level, 0);
+		if (!first) throw new Error('the level has a first map');
+		const { start } = first;
+		using run = start('forward()\nforward()\n');
+		expect(finish(run)?.type).toBe('passed');
+	});
+
 	it('keeps its world at rest while a program runs', () => {
 		const first = levelPlayground('walk-to-the-mark', level, 0);
 		using run = first?.start('forward()\n');
@@ -98,7 +106,9 @@ describe('the playground of the sandbox', () => {
 	});
 
 	it('starts a program on its map, which ends without goal to meet', () => {
-		using run = playground.start('forward()\n');
+		// On its own, as the bench calls it.
+		const { start } = playground;
+		using run = start('forward()\n');
 		expect(finish(run)?.type).toBe('ended');
 		expect(run.world().robot.position).toEqual({ x: 1, y: 0 });
 		expect(playground.world.robot.position).toEqual({ x: 0, y: 0 });

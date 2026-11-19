@@ -5,7 +5,7 @@
      and it wires the rest: the same for a level and for the sandbox. -->
 <script lang="ts">
 	import Bench from '#lib/bench/bench.svelte';
-	import { levelMenus } from '#lib/level-menus.ts';
+	import { levelMenus, type LevelScreenKind } from '#lib/level-menus.ts';
 	import type { Scene } from '#lib/map/scene.ts';
 	import type { Playback } from '#lib/playback.svelte.ts';
 	import SettingsButton from '#lib/settings/settings-button.svelte';
@@ -16,8 +16,8 @@
 	import type { Playground } from './playground.ts';
 
 	interface Props {
-		/** Which screen it is: the one of a level, or the sandbox. */
-		screen: 'level' | 'sandbox';
+		/** Which screen it is: its menus, and the mark of the sandbox in its header. */
+		screen: LevelScreenKind;
 		/** The place of the screen, in its header: the title of the level, or the sandbox. */
 		title: string;
 		/** What the screen plays on; nothing until the core is ready. */
