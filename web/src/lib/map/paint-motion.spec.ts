@@ -1,9 +1,8 @@
 // The paint of the map while a step runs, from the worlds that the core gives before and after it.
 
-import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import type { Point, World } from '#lib/core.ts';
-import { initSync, Sandbox } from '#lib/wasm/stepwise.js';
+import { Sandbox, type Point, type World } from '#lib/core/core.ts';
+import { corridor, loadTestCore, sandboxOf } from '#lib/core/test-support.ts';
 import type { Rect } from './ground.ts';
 import { isAnimated, poseAt, type Motion } from './motion.ts';
 import {
@@ -15,18 +14,11 @@ import {
 	ringAt
 } from './paint-motion.ts';
 
-initSync({ module: readFileSync(new URL('../wasm/stepwise_bg.wasm', import.meta.url)) });
+loadTestCore();
 
 /** A row of three floor cells, the robot on the first one, facing east, with these paints. */
 function rowOf(paints: string): string {
-	return `version = 1
-starting_code = ''
-
-[map]
-terrain = '...'
-robot = { at = [0, 0], facing = "east" }
-paints = [${paints}]
-`;
+	return sandboxOf(corridor('...', `paints = [${paints}]\n`));
 }
 
 /** The last step of `program` in `sandbox`: the world as it found it, and its motion. */
@@ -96,17 +88,13 @@ describe('paintMotion', () => {
 	});
 
 	it('fades in the halves of a cell erased alone once the brush paints it again', () => {
-		const sandbox = `version = 1
-starting_code = ''
-
-[map]
-terrain = '''
+		const sandbox = sandboxOf(`terrain = '''
 ....
 ....
 '''
 robot = { at = [2, 0], facing = "south" }
 paints = [{ color = "red", path = [[1, 0], [2, 0], [3, 0]] }]
-`;
+`);
 		const program =
 			'start_erasing()\nforward()\nstart_painting(blue)\nturn_right()\nturn_right()\nforward()\n';
 		const { before, motion } = lastStep(sandbox, program);

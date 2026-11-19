@@ -6,7 +6,7 @@
      once the run has ended, the eyes of the robot and the flags of the goals not met say how
      (see Animations). -->
 <script lang="ts">
-	import type { Goals } from '#lib/core.ts';
+	import type { Goals } from '#lib/core/core.ts';
 	import { t } from '#lib/i18n.ts';
 	import { carryAt } from './carry-motion.ts';
 	import Element from './element.svelte';

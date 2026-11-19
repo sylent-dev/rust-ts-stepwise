@@ -1,6 +1,6 @@
 // What the map draws (see map-view.svelte).
 
-import type { Outcome, World } from '#lib/core.ts';
+import type { Outcome, World } from '#lib/core/core.ts';
 import type { Motion } from './motion.ts';
 
 /**

@@ -12,7 +12,8 @@ const MANUAL_TAB = 'stepwise-manual';
 
 /**
  * Which level screen it is: the one of a level, or the sandbox, the level screen without goal.
- * Not the stable name of the sandbox (`SANDBOX` in levels.ts), which happens to read the same.
+ * Not the stable name of the sandbox (`SANDBOX` in levels/levels.ts), which happens to read the
+ * same.
  */
 export type LevelScreenKind = 'level' | 'sandbox';
 

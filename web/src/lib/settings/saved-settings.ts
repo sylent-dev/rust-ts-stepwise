@@ -2,7 +2,7 @@
 // fields beside the version of their shape, `{"theme":"night-desk","version":1}`. A field that is
 // missing, or that can't be read, takes its default: a setting added later needs no new version.
 // The script of `src/app.html` reads the same value before the first paint: a test keeps the two
-// in step (lib/page-theme.spec.ts).
+// in step (lib/page/page-theme.spec.ts).
 
 import { keyOf, type Store } from '#lib/storage/store.ts';
 import { DEFAULT_SETTINGS, isTheme, type Settings } from './settings.ts';

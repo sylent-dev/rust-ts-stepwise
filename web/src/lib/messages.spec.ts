@@ -15,12 +15,12 @@ import {
 	type TermReference
 } from '@fluent/syntax';
 import { describe, expect, it } from 'vitest';
+import { benchPrograms, programMessage } from '#lib/bench/bench-programs.ts';
+import { LEVEL_PARTS, levelMessage, levels, SANDBOX } from '#lib/levels/levels.ts';
+import { themeMessage, THEMES } from '#lib/settings/settings.ts';
+import { adviceMessage, WINDOW_ADVICES } from '#lib/shell/window-size.ts';
 import page from '../app.html?raw';
-import { benchPrograms, programMessage } from './bench/bench-programs.ts';
 import { createBundle, english } from './i18n.ts';
-import { LEVEL_PARTS, levelMessage, levels, SANDBOX } from './levels.ts';
-import { themeMessage, THEMES } from './settings/settings.ts';
-import { adviceMessage, WINDOW_ADVICES } from './shell/window-size.ts';
 
 /**
  * The families: the messages whose names hold a name of the data. Each is known by the one

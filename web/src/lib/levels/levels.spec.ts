@@ -1,5 +1,6 @@
-import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { Level, Sandbox } from '#lib/core/core.ts';
+import { loadTestCore } from '#lib/core/test-support.ts';
 import {
 	levelAt,
 	levels,
@@ -9,9 +10,8 @@ import {
 	sandboxIn,
 	type LevelFiles
 } from './levels.ts';
-import { initSync, Level, Sandbox } from '#lib/wasm/stepwise.js';
 
-initSync({ module: readFileSync(new URL('./wasm/stepwise_bg.wasm', import.meta.url)) });
+loadTestCore();
 
 /** A folder of levels whose files hold their own path. */
 function folder(...paths: string[]): LevelFiles {

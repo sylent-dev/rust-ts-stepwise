@@ -17,7 +17,7 @@ interface Row {
 
 /** A row that leads to a page. */
 export interface LinkRow extends Row {
-	/** The page, as its address from the root of the website: `sandbox`. */
+	/** The page, as every address is written: what follows the root of the website, `sandbox`. */
 	to: Path;
 	/** The tab of the browser that shows the page, when it isn't this one. */
 	tab?: string;

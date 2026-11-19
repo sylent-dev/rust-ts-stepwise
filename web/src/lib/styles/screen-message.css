@@ -3,7 +3,7 @@
    not a component: the page itself writes some of these messages (src/app.html), for a browser
    where the application can't start, and the application writes the others
    (shell/screen-message.svelte). The page carries this file and the tokens it uses
-   (lib/page-fill.ts), so that its messages show even when nothing else could load. */
+   (lib/page/page-fill.ts), so that its messages show even when nothing else could load. */
 .screen-message {
 	/* The four sides one by one: the browsers that the message of a browser too old is for
 	   don't know `inset`. */

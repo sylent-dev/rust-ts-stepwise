@@ -3,7 +3,7 @@
 // the goals not met, and the shadow of its hop. They stay until the map is put back. The reference
 // is the mock-up, `docs/mockups/world-elements/motion.js`.
 
-import type { Outcome, Point } from '#lib/core.ts';
+import type { Outcome, Point } from '#lib/core/core.ts';
 import type { WorldElement } from '#lib/elements.ts';
 import { clamp01, overshoot } from './easing.ts';
 import { HEAD_SHAKE_SHARE, runEnd, type Motion, type Pose, type RunEnd } from './motion.ts';

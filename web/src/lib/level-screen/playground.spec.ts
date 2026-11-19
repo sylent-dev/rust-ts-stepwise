@@ -1,13 +1,13 @@
 // What a level screen plays on, read from a level and from the sandbox through the module the
 // page loads.
 
-import { readFileSync } from 'node:fs';
 import { afterAll, describe, expect, it } from 'vitest';
-import { SANDBOX } from '#lib/levels.ts';
-import { initSync, Level, Sandbox, type Outcome, type Run } from '#lib/wasm/stepwise.js';
+import { Level, Sandbox, type Outcome, type Run } from '#lib/core/core.ts';
+import { loadTestCore } from '#lib/core/test-support.ts';
+import { SANDBOX } from '#lib/levels/levels.ts';
 import { levelPlayground, sandboxPlayground } from './playground.ts';
 
-initSync({ module: readFileSync(new URL('../wasm/stepwise_bg.wasm', import.meta.url)) });
+loadTestCore();
 
 /**
  * A level of two corridors whose goal is to stand on a cell: two steps east of the robot on the

@@ -5,7 +5,7 @@
 // 14b; the running of step 17 takes it over. It knows nothing of the clock: the page calls `tick`
 // at each animation frame.
 
-import type { Outcome, Run, StepEvent, World } from '#lib/core.ts';
+import type { Outcome, Run, StepEvent, World } from '#lib/core/core.ts';
 import {
 	actionTime,
 	isAnimated,
@@ -16,7 +16,7 @@ import {
 	type Motion
 } from '#lib/map/motion.ts';
 import type { Scene } from '#lib/map/scene.ts';
-import { paceFrame, runInstant, SPEEDS, START_CARRY } from '#lib/pace.ts';
+import { paceFrame, runInstant, SPEEDS, START_CARRY } from './pace.ts';
 
 /** The time an **Instant** frame spends running steps, so that the page still draws. */
 const INSTANT_BUDGET = 8;

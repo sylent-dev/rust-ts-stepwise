@@ -12,7 +12,7 @@
 	import { SETTINGS_KEY } from '#lib/settings/saved-settings.ts';
 	import { currentWindow } from '#lib/shell/current-window.svelte.ts';
 	import WindowMessage from '#lib/shell/window-message.svelte';
-	import { applicationStarted } from '#lib/startup.ts';
+	import { applicationStarted } from '#lib/page/startup.ts';
 	import type { LayoutProps } from './$types';
 
 	let { children }: LayoutProps = $props();

@@ -3,10 +3,11 @@
 // what the application saves, so that the two stay in step.
 
 import { describe, expect, it } from 'vitest';
-import page from '../app.html?raw';
-import { loadSettings, saveSettings, SETTINGS_KEY } from './settings/saved-settings.ts';
-import { THEMES } from './settings/settings.ts';
-import { openStore, type Backend } from './storage/store.ts';
+import { loadSettings, saveSettings, SETTINGS_KEY } from '#lib/settings/saved-settings.ts';
+import { THEMES } from '#lib/settings/settings.ts';
+import { openStore, type Backend } from '#lib/storage/store.ts';
+import { memoryBackend } from '#lib/storage/test-support.ts';
+import page from '../../app.html?raw';
 
 /** The theme the page is written with: the one it keeps when the script changes nothing. */
 const WRITTEN = /<html[^>]* data-theme="([^"]+)"/.exec(page)?.[1];
@@ -16,12 +17,7 @@ const scripts = [...page.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((match) 
 
 /** A storage in memory that holds `value` as the settings. */
 function storageWith(value?: string): Backend {
-	const held = new Map(value === undefined ? [] : [[SETTINGS_KEY, value]]);
-	return {
-		getItem: (key) => held.get(key) ?? null,
-		setItem: (key, text) => void held.set(key, text),
-		removeItem: (key) => void held.delete(key)
-	};
+	return memoryBackend(value === undefined ? {} : { [SETTINGS_KEY]: value });
 }
 
 /**

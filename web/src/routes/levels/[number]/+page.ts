@@ -1,5 +1,5 @@
 import { error } from '@sveltejs/kit';
-import { levelAt, levels } from '#lib/levels.ts';
+import { levelAt, levels } from '#lib/levels/levels.ts';
 import type { EntryGenerator, PageLoad } from './$types';
 
 // One page per level, written when the website is built: `/levels/1`, `/levels/2`…

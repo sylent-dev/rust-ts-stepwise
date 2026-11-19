@@ -2,7 +2,7 @@
 // 64 units wide, as each drawing (see Look of the world in specs.md). The map scales them all to
 // the size of its cells.
 
-import type { Cell, Color, Direction, Point, World } from '#lib/core.ts';
+import type { Cell, Color, Direction, Point, World } from '#lib/core/core.ts';
 
 /** The side of a cell, in the units of the drawings. */
 export const CELL = 64;

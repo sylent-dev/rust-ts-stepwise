@@ -2,7 +2,7 @@
      large as the block allows up to the size of the drawings; no zoom, no scrolling (see Level
      screen in specs.md). Empty until the core has given the world. -->
 <script lang="ts">
-	import type { Goals } from '#lib/core.ts';
+	import type { Goals } from '#lib/core/core.ts';
 	import { cellSide } from '#lib/map/fit.ts';
 	import MapView from '#lib/map/map-view.svelte';
 	import type { Scene } from '#lib/map/scene.ts';

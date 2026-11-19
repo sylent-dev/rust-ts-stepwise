@@ -7,7 +7,7 @@
 	import { page } from '$app/state';
 	import { t } from '#lib/i18n.ts';
 	import ScreenMessage from '#lib/shell/screen-message.svelte';
-	import { loadFailed } from '#lib/startup.ts';
+	import { loadFailed } from '#lib/page/startup.ts';
 
 	const missing = $derived(page.status === 404);
 
@@ -23,6 +23,6 @@
 {#if missing}
 	<ScreenMessage title={t('missing-title')} mark={t('missing-mark')}>
 		<p>{t('missing-text')}</p>
-		<a class="screen-message-action" href={resolve('/')}>{t('screen-home')}</a>
+		<a class="screen-message-action" href={resolve('')}>{t('screen-home')}</a>
 	</ScreenMessage>
 {/if}

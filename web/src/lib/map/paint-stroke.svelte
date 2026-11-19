@@ -6,7 +6,7 @@
 <svelte:options namespace="svg" />
 
 <script lang="ts">
-	import type { Color, Direction } from '#lib/core.ts';
+	import type { Color, Direction } from '#lib/core/core.ts';
 	import { CELL, MIDDLE, STEPS, STROKE } from './geometry.ts';
 
 	interface Props {

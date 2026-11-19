@@ -3,11 +3,9 @@
 // The rules of the language and of the goals are tested in the core; these tests check that
 // they cross the bridge as they are.
 
-import { readFileSync } from 'node:fs';
 import { beforeAll, describe, expect, it } from 'vitest';
 import {
 	check,
-	initSync,
 	Level,
 	Sandbox,
 	type Cell,
@@ -17,31 +15,30 @@ import {
 	type StepEvent,
 	type Tool
 } from '#lib/wasm/stepwise.js';
+import { corridor, levelFile, levelOf, loadTestCore, sandboxOf } from './test-support.ts';
 
-initSync({ module: readFileSync(new URL('./wasm/stepwise_bg.wasm', import.meta.url)) });
+loadTestCore();
 
 /** The most steps a program of these tests runs, unless it says otherwise. */
 const MAX_STEPS = 10_000;
 
-/** The file of a level of one map, the body of its `[[maps]]` table. */
-function levelOf(map: string): string {
-	return `version = 1\nstarting_code = ''\n\n[[maps]]\n${map}`;
-}
-
 /** A corridor of four cells, an item to carry from its second cell to its last. */
-const CORRIDOR = levelOf(`
-terrain = '....'
-robot = { at = [0, 0], facing = "east" }
-items = [[1, 0]]
+const CORRIDOR_MAP = corridor(
+	'....',
+	`items = [[1, 0]]
 
 [maps.goals]
 robot_at = [3, 0]
 items_at = [[3, 0]]
 carrying = false
-`);
+`
+);
+
+/** The level of that corridor alone. */
+const CORRIDOR = levelOf(CORRIDOR_MAP);
 
 /** A sandbox of two cells, for the programs that don't look at the map. */
-const SMALL_SANDBOX = `version = 1\nstarting_code = ''\n\n[map]\nterrain = '..'\nrobot = { at = [0, 0], facing = "east" }\n`;
+const SMALL_SANDBOX = sandboxOf(corridor('..'));
 
 /** What a program did, step after step. */
 interface Steps {
@@ -229,8 +226,8 @@ forward()
 	});
 
 	it('starts on the map asked, each run from the world of the map as it starts', () => {
-		const twoMaps = `${CORRIDOR}\n[[maps]]\nterrain = '..'\nrobot = { at = [0, 0], facing = "east" }\n\n[maps.goals]\nrobot_at = [1, 0]\n`;
-		using level = new Level(twoMaps);
+		const twoCells = corridor('..', '\n[maps.goals]\nrobot_at = [1, 0]\n');
+		using level = new Level(levelOf(CORRIDOR_MAP, twoCells));
 		const start = level.maps().map((map) => map.world);
 		for (let turn = 0; turn < 2; turn += 1) {
 			using run = level.start(1, 'forward()\n');
@@ -327,8 +324,7 @@ describe('a program run in the sandbox', () => {
 	});
 
 	it('runs the file of the website with its starting code', () => {
-		const file = readFileSync(new URL('../../levels/sandbox.toml', import.meta.url), 'utf8');
-		using sandbox = new Sandbox(file);
+		using sandbox = new Sandbox(levelFile('sandbox'));
 		using run = sandbox.start(sandbox.startingCode());
 		finish(run);
 		expect(run.outcome()).toStrictEqual({ type: 'ended' });

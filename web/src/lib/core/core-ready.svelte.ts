@@ -1,7 +1,7 @@
 // The core, for a screen that needs it (see core.ts).
 
+import { loadFailed } from '#lib/page/startup.ts';
 import { loadCore } from './core.ts';
-import { loadFailed } from './startup.ts';
 
 /**
  * Starts loading the core and says when it is ready: `ready` is false until then, and follows it

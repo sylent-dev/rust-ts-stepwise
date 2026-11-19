@@ -2,7 +2,14 @@
 // animates, how long they take at each speed, and where the robot stands at each moment, with
 // full motion or less of it. The reference is the mock-up, `docs/mockups/world-elements/motion.js`.
 
-import type { Direction, Outcome, Robot, RuntimeErrorKind, StepEvent, World } from '#lib/core.ts';
+import type {
+	Direction,
+	Outcome,
+	Robot,
+	RuntimeErrorKind,
+	StepEvent,
+	World
+} from '#lib/core/core.ts';
 import { clamp01, easeOut, overshoot, smooth, smoothBetween } from './easing.ts';
 import { STEPS } from './geometry.ts';
 

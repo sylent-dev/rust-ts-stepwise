@@ -5,13 +5,13 @@
      and it wires the rest: the same for a level and for the sandbox. -->
 <script lang="ts">
 	import Bench from '#lib/bench/bench.svelte';
-	import { levelMenus, type LevelScreenKind } from '#lib/level-menus.ts';
 	import type { Scene } from '#lib/map/scene.ts';
-	import type { Playback } from '#lib/playback.svelte.ts';
+	import type { Playback } from '#lib/run/playback.svelte.ts';
 	import SettingsButton from '#lib/settings/settings-button.svelte';
 	import Header from '#lib/shell/header.svelte';
 	import MenuBar from '#lib/shell/menu-bar.svelte';
 	import Place from '#lib/shell/place.svelte';
+	import { levelMenus, type LevelScreenKind } from './level-menus.ts';
 	import MapBlock from './map-block.svelte';
 	import type { Playground } from './playground.ts';
 

@@ -11,9 +11,9 @@
 		<title>%stepwise.text.app-name%</title>
 		<!-- The theme saved in the settings, given to the page before its first paint: Night Desk
 		     never starts with a flash of Day Desk. It reads what lib/settings/saved-settings.ts
-		     saves, and a test keeps the two in step (lib/page-theme.spec.ts). It is written in the
-		     JavaScript of an old browser: the message for a browser too old to run Stepwise is in
-		     this page too, and takes the theme saved (see Error handling in specs.md). -->
+		     saves, and a test keeps the two in step (lib/page/page-theme.spec.ts). It is written
+		     in the JavaScript of an old browser: the message for a browser too old to run Stepwise
+		     is in this page too, and takes the theme saved (see Error handling in specs.md). -->
 		<script>
 			(function () {
 				try {
@@ -89,8 +89,8 @@
 		</div>
 		<!-- The page watches the application start, and shows one of the two messages above when
 		     it can't. The application tells it when it runs, and when a file couldn't load later
-		     (lib/startup.ts). Written in the JavaScript of an old browser, as the script of the
-		     theme, and tried by lib/page-startup.spec.ts. -->
+		     (lib/page/startup.ts). Written in the JavaScript of an old browser, as the script of
+		     the theme, and tried by lib/page/page-startup.spec.ts. -->
 		<script>
 			(function () {
 				var messages = {

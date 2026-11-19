@@ -2,17 +2,12 @@
 // deployed must never start a program that has errors, nor show one that stops on an error it
 // isn't made for.
 
-import { readFileSync } from 'node:fs';
 import { afterAll, describe, expect, it } from 'vitest';
-import { check, initSync, Level, Sandbox, type Run } from '#lib/wasm/stepwise.js';
+import { check, Level, Sandbox, type Run } from '#lib/core/core.ts';
+import { levelFile, loadTestCore } from '#lib/core/test-support.ts';
 import { benchPrograms } from './bench-programs.ts';
 
-initSync({ module: readFileSync(new URL('../wasm/stepwise_bg.wasm', import.meta.url)) });
-
-/** The text of a file of `web/levels/`. */
-function levelFile(name: string): string {
-	return readFileSync(new URL(`../../../levels/${name}.toml`, import.meta.url), 'utf8');
-}
+loadTestCore();
 
 /** The steps a program that never ends runs in these tests. */
 const FOREVER = 500;

@@ -70,7 +70,7 @@ export function levelMessage(name: string, part: LevelPart): string {
 	return `level-${name}-${part}`;
 }
 
-const files = import.meta.glob<string>('../../levels/*.toml', { query: '?raw', import: 'default' });
+const files = import.meta.glob<string>('/levels/*.toml', { query: '?raw', import: 'default' });
 
 /** The levels of the website, in their order. */
 export const levels: readonly LevelEntry[] = listLevels(files);

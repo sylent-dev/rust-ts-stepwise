@@ -3,7 +3,7 @@
 // share its code: these tests run it in a browser made for them.
 
 import { describe, expect, it } from 'vitest';
-import page from '../app.html?raw';
+import page from '../../app.html?raw';
 
 /** The scripts written in the page itself; this one hands `stepwisePage` to the application. */
 const script =
