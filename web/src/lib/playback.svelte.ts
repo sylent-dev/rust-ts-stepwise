@@ -4,8 +4,8 @@
 // robot does what it says. Written for the bench of step 14b; the running of step 17 takes it
 // over. It knows nothing of the clock: the page calls `tick` at each animation frame.
 
-import type { Run, World } from '#lib/core.ts';
-import { actionTime, isAnimated, type Motion } from '#lib/map/motion.ts';
+import type { Outcome, Run, StepEvent, World } from '#lib/core.ts';
+import { actionTime, isAnimated, robotFailure, type Action, type Motion } from '#lib/map/motion.ts';
 import { paceFrame, runInstant, SPEEDS, START_CARRY } from '#lib/pace.ts';
 
 /** The time an **Instant** frame spends running steps, so that the page still draws. */
@@ -25,7 +25,7 @@ export type PlaybackStatus = 'ready' | 'running' | 'paused' | 'ended';
 
 export interface PlaybackOptions {
 	/** The time an action takes at a speed, in steps per second: `actionTime` by default. */
-	timeAt?: (rate: number) => number;
+	timeAt?: (action: Action, rate: number) => number;
 	/** The clock that an **Instant** frame reads: `performance.now` by default. */
 	now?: () => number;
 }
@@ -39,6 +39,8 @@ export class Playback {
 	progress = $state(0);
 	/** The line highlighted, the one of the next step; nothing once the program has stopped. */
 	line = $state<number>();
+	/** How the program stopped, once its last action has ended; nothing until then. */
+	outcome = $state.raw<Outcome>();
 	/** The number of steps run so far. */
 	steps = $state(0);
 	/**
@@ -50,7 +52,7 @@ export class Playback {
 	rate = $state<number>(NORMAL_SPEED);
 
 	readonly #start: () => Run;
-	readonly #timeAt: (rate: number) => number;
+	readonly #timeAt: (action: Action, rate: number) => number;
 	readonly #now: () => number;
 	#run: Run;
 	/** The time of the frame before, for the pace; nothing before the first frame of a run. */
@@ -73,7 +75,7 @@ export class Playback {
 		this.#now = now;
 		this.#run = start();
 		this.world = $state.raw(this.#run.world());
-		this.line = this.#run.line;
+		this.#showLine();
 	}
 
 	/** Whether the program has stopped, at its end or on an error, and its last action ended. */
@@ -106,8 +108,9 @@ export class Playback {
 
 	/**
 	 * Runs one step while the program waits, its action played as at the slowest speed, so that
-	 * it is seen whatever the speed. An action still under way ends at once. Once the program has
-	 * ended, it puts the map back and waits on the first step, as before the program started.
+	 * it is seen whatever the speed. An action still under way ends at once, and nothing more runs
+	 * when it was the last one. Once the program has ended, it puts the map back and waits on the
+	 * first step, as before the program started.
 	 */
 	step(): void {
 		if (this.running) return;
@@ -116,7 +119,7 @@ export class Playback {
 			return;
 		}
 		this.#endMotion();
-		this.#runStep(undefined, this.#timeAt(SLOWEST_SPEED));
+		this.#runStep(undefined, SLOWEST_SPEED);
 	}
 
 	/** Ends the program and puts the map back to its start, with a new run. */
@@ -146,6 +149,10 @@ export class Playback {
 	 * way, then the steps due at the speed. Returns whether another frame is needed.
 	 */
 	tick(time: number): boolean {
+		const instant = !Number.isFinite(this.rate);
+		// **Instant** draws no animation: while the program runs, the action under way ends at once,
+		// the last one too.
+		if (this.running && instant) this.#endMotion();
 		if (this.motion) {
 			this.#motionStart ??= time;
 			const progress = (time - this.#motionStart) / this.#motionTime;
@@ -156,7 +163,7 @@ export class Playback {
 			}
 		}
 		if (this.running && this.#run.line !== undefined) {
-			if (Number.isFinite(this.rate)) {
+			if (!instant) {
 				const elapsed = this.#last === undefined ? 0 : time - this.#last;
 				const paced = paceFrame(this.rate, elapsed, this.#carry);
 				if (!paced.step) {
@@ -172,10 +179,9 @@ export class Playback {
 					// the next one.
 					this.#carry = this.#waiting ? 0 : paced.carry;
 					this.#waiting = false;
-					this.#runStep(time, this.#timeAt(this.rate));
+					this.#runStep(time, this.rate);
 				}
 			} else {
-				this.#endMotion();
 				this.#runInstant();
 			}
 			this.#last = time;
@@ -185,18 +191,35 @@ export class Playback {
 		return this.running || this.motion !== undefined;
 	}
 
-	/** Runs a step, and animates its action when it has one and a time to show it. */
-	#runStep(start: number | undefined, time: number): void {
+	/**
+	 * Runs a step, and animates its action, or the error of the robot that stopped the program,
+	 * when it has one and a time to show it at `rate` steps per second.
+	 */
+	#runStep(start: number | undefined, rate: number): void {
+		// A run that has stopped has no step left: its last action, or the error it stopped on, was
+		// shown already.
+		if (this.#run.line === undefined) return;
 		const event = this.#run.step();
 		this.steps = this.#run.steps;
-		if (isAnimated(event) && time > 0) {
-			this.motion = { action: event, after: this.#run.world() };
+		const action = this.#actionOf(event);
+		const time = action ? this.#timeAt(action, rate) : 0;
+		if (action && time > 0) {
+			this.motion = { action, after: this.#run.world() };
 			this.#motionStart = start;
 			this.#motionTime = time;
 			this.progress = 0;
 		} else {
 			this.#rest(event !== 'nothing' && event !== 'printed');
 		}
+	}
+
+	/**
+	 * What the map animates of the step that gave `event`: its action, or the error of the robot
+	 * that stopped the program there.
+	 */
+	#actionOf(event: StepEvent): Action | undefined {
+		if (isAnimated(event)) return event;
+		return this.#run.line === undefined ? robotFailure(this.#run.outcome()) : undefined;
 	}
 
 	/** At **Instant**, runs the steps that a frame has the time for, with no animation. */
@@ -216,13 +239,19 @@ export class Playback {
 		this.world = this.motion.after;
 		this.motion = undefined;
 		this.progress = 0;
-		this.line = this.#run.line;
+		this.#showLine();
 	}
 
 	/** Shows the run at rest, the world read again when the step may have changed it. */
 	#rest(changed: boolean): void {
 		if (changed) this.world = this.#run.world();
-		this.line = this.#run.line;
+		this.#showLine();
 		this.steps = this.#run.steps;
+	}
+
+	/** Highlights the line of the next step, or tells how the program stopped. */
+	#showLine(): void {
+		this.line = this.#run.line;
+		this.outcome = this.line === undefined ? this.#run.outcome() : undefined;
 	}
 }

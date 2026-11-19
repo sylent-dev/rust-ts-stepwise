@@ -38,3 +38,26 @@ export function overshoot(t: number): number {
 	const c = OVERSHOOT_CURVE;
 	return 1 + (c + 1) * (t - 1) ** 3 + c * (t - 1) ** 2;
 }
+
+/** Keeps a share of the time between 0 and 1. */
+export function clamp01(t: number): number {
+	return Math.min(Math.max(t, 0), 1);
+}
+
+/** The value at `t` of the way from `from` to `to`. */
+export function lerp(from: number, to: number, t: number): number {
+	return from + (to - from) * t;
+}
+
+/**
+ * Goes smoothly from 0 to 1 between the shares `from` and `to` of the time, and stays at 0 before
+ * and at 1 after: one part of an action that has several (step back, pincer out, item lifted).
+ */
+export function smoothBetween(t: number, from: number, to: number): number {
+	return smooth(clamp01((t - from) / (to - from)));
+}
+
+/** Leaves fast and stops gently: the robot that comes back from the wall it touched. */
+export function easeOut(t: number): number {
+	return 1 - (1 - t) ** 3;
+}

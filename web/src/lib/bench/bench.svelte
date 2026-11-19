@@ -125,7 +125,9 @@
 		</fieldset>
 
 		<p>{t('bench-steps', { count: playback.steps })}</p>
-		{#if playback.ended}
+		{#if playback.outcome?.type === 'failed'}
+			<p role="status">{t('bench-failed', { line: playback.outcome.error.span.line })}</p>
+		{:else if playback.ended}
 			<p role="status">{t('bench-ended')}</p>
 		{/if}
 	{/if}

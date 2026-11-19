@@ -203,3 +203,7 @@ The window too small on every screen, the manual too (its size followed live, th
 ### 14a. Static map (#54)
 
 The level screen and the sandbox laid out as the mock-up (the code on the left, the map on top on the right, the panels under it, still empty); the map of the level (its first map, until the tabs of step 21) and of the sandbox drawn from the core: the floor, the walls with their rim and their edge, the lines every five cells, the shadows, the paint strokes, the goal marks, the items, the robot facing its direction with the item it carries; the cells sized to fill the block, 64 pixels at most; the probe moved into the column of the code, drawing on that map.
+
+### 14b. Bench and first moves (#55)
+
+The probe turned into the bench of the animations, on the level screen and in the sandbox: short programs made for the map of the screen, played with **Run**, **Pause**, **Step**, **Reset** and the five speeds, the line of the next step marked once the action has ended; `forward()`, the turns, the brush and the eraser animated, tuned with the owner at every speed: 300 ms up to 2 steps per second, 80 % of a step faster; **Step** plays its action as at the slowest speed; the tool the robot has down given by the bridge, for the animations.

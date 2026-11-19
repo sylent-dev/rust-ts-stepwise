@@ -393,7 +393,7 @@ The sheet of the world elements, [`docs/mockups/world-elements.html`](docs/mocku
 
 ### Animations
 
-The robot plays each action of the program at the chosen speed. The reference is the sections *Animations* of [`docs/mockups/world-elements.html`](docs/mockups/world-elements.html) (decided on 2026-11-15). The durations are those of the normal speed, two steps per second, a step every 500 ms, so that the robot rests a moment between two steps; at 1 step per second, an action keeps that time; at a faster speed, it takes 80 % of a step so that the robot still rests: 160 ms at 5 steps per second, 40 ms at 20 (tried at every speed on the bench of the application, decided on 2026-11-18); **Instant** draws none.
+The robot plays each action of the program at the chosen speed. The reference is the sections *Animations* of [`docs/mockups/world-elements.html`](docs/mockups/world-elements.html) (decided on 2026-11-15). The durations are those of the normal speed, two steps per second, a step every 500 ms, so that the robot rests a moment between two steps; at 1 step per second, an action keeps that time; at a faster speed, it takes 80 % of a step so that the robot still rests: 160 ms at 5 steps per second, 40 ms at 20 (tried at every speed on the bench of the application, decided on 2026-11-18); **Instant** draws none. A bump and a `pick_up()` or a `drop()` that fails keep their whole time at every speed but **Instant**: they stop the program, so no step waits after them (decided on 2026-11-19).
 
 - The line highlighted is the one of the next step: it moves on once the action of the step has ended, so that a line stays lit while the robot does what it says. A line without action (a computation, the line of a loop, a sensor) moves on at once.
 
