@@ -70,6 +70,8 @@ export function levelMessage(name: string, part: LevelPart): string {
 	return `level-${name}-${part}`;
 }
 
+// For Vite, a pattern that starts with `/` starts at the root of `web/`, wherever this module
+// lives: the folder `web/levels/`, not the addresses `/levels/…` of the website.
 const files = import.meta.glob<string>('/levels/*.toml', { query: '?raw', import: 'default' });
 
 /** The levels of the website, in their order. */

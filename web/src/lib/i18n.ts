@@ -69,8 +69,11 @@ export function formatAround(
 	return at < 0 ? [text, ''] : [text.slice(0, at), text.slice(at + PLACE.length)];
 }
 
-/** The files of English, the reference language: every file of `locales/en/`. */
-export const english: MessageFiles = import.meta.glob<string>('../../locales/en/*.ftl', {
+/**
+ * The files of English, the reference language: every file of `locales/en/`. For Vite, a pattern
+ * that starts with `/` starts at the root of `web/`, wherever this module lives.
+ */
+export const english: MessageFiles = import.meta.glob<string>('/locales/en/*.ftl', {
 	query: '?raw',
 	import: 'default',
 	eager: true

@@ -217,7 +217,7 @@ describe('readCalls', () => {
 	});
 
 	// Nothing here tells a comment from the code. Taking the comments out with another expression
-	// would be worse: `'../../locales/en/*.ftl'` opens one that isn't, and real calls would go.
+	// would be worse: `'/locales/en/*.ftl'` opens one that isn't, and real calls would go.
 	it('reads a call written in a comment as one of the code', () => {
 		expect(readCalls("// As `t('app-name')` does.\n/** See `t(name)`. */")).toEqual([
 			{ line: 1, name: 'app-name', builder: undefined },

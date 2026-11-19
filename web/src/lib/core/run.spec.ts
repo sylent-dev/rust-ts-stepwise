@@ -14,7 +14,7 @@ import {
 	type RuntimeErrorKind,
 	type StepEvent,
 	type Tool
-} from '#lib/wasm/stepwise.js';
+} from './core.ts';
 import { corridor, levelFile, levelOf, loadTestCore, sandboxOf } from './test-support.ts';
 
 loadTestCore();

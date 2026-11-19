@@ -193,7 +193,7 @@ The first, unless a cleanup needs more of the playground than a value. Whatever 
 
 ### Step 17: the edges of `Playback`
 
-The engine is right and tested: one clock for the steps and their animations, `timeAt`, `now` and `lessMotion` injected, 38 tests through the public API and `tick(time)`. Five assumptions come from the bench (`web/src/lib/playback.svelte.ts`):
+The engine is right and tested: one clock for the steps and their animations, `timeAt`, `now` and `lessMotion` injected, 38 tests through the public API and `tick(time)`. Five assumptions come from the bench (`web/src/lib/run/playback.svelte.ts`):
 
 1. **A run always exists.** The constructor and `reset()` call `start()` (`:116`, `:170`), which throws for a program with errors; and the map at rest comes from `playback.world` alone. With the editor, the map shows while the code has errors, and **Reset** after a change of the code would throw.
 2. **The clock is elsewhere.** `tick()` runs only if someone asks for the frames: `wake()` of the bench (`bench/bench.svelte:33-40`), which each command must remember to call. Step 17 has three callers at least: the controls, the shortcuts, the menu **Run**.
