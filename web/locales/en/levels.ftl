@@ -3,8 +3,10 @@
 ###
 ### The family of the levels: the messages of a level are named after its stable name, the name of
 ### its file in `levels/`, and after the part of the level that they hold, `level-<name>-<part>`
-### (`levelMessage`). No other message starts with `level-`. A new part, as the goal or the hint of
-### a level, joins the list of the parts (`LEVEL_PARTS`): a family keeps one function.
+### (`levelMessage`). No other message starts with `level-`. A new part is named by the same
+### function: a family keeps one. The list of the parts (`LEVEL_PARTS`) holds what every level
+### has, as its goal later; a part that a level may leave out, as its hint, is settled with the
+### levels (step 21).
 
 # The titles.
 level-paint-a-square-title = Paint a square

@@ -56,8 +56,9 @@ export function sandboxIn(files: LevelFiles): () => Promise<string> {
 }
 
 /**
- * What a level says, each part in a message of its own. The goal and the hint join the title here
- * with the levels (step 21).
+ * What every level says, each part in a message of its own. The goal joins the title here with
+ * the levels (step 21), which also settle how a part that a level may leave out, as its hint, is
+ * named and checked.
  */
 export const LEVEL_PARTS = ['title'] as const;
 

@@ -82,7 +82,7 @@ function readCalls(source: string): Call[] {
 	// declaration of the function; then a name between quotes, or the call of a function without
 	// a call among its values, each being the whole value.
 	const call =
-		/(?<![\w$])(?<!(?<!\.\.)\.)(?<!function )(?:t|tAround|findMessage)\(\s*(?:'([^'\\]*)'\s*[,)]|(\w+)\([^()]*\)\s*[,)])?/g;
+		/(?<![\w$])(?<!(?<!\.\.)\.)(?<!function )(?:t|tAround|findMessage)\(\s*(?:(?:'([^'\\]*)'|(\w+)\([^()]*\))\s*[,)])?/g;
 	return [...source.matchAll(call)].map((match) => ({
 		line: lineAt(source, match.index),
 		name: match[1],
@@ -92,18 +92,24 @@ function readCalls(source: string): Call[] {
 
 /**
  * The lines of a source that name `t` or `tAround` without calling it: given as a value
- * (`names.map(t)`, `const say = t`) or imported under another name, it would be called where
- * `readCalls` reads nothing. The clause that imports it names it too, and is left out unless it
- * renames. For a source that imports them: elsewhere, `t` is a time or a text.
+ * (`names.map(t)`, `const say = t`), imported under another name or with the whole module
+ * (`import * as i18n`), it would be called where `readCalls` reads nothing. The clause that
+ * imports it names it too, and is left out unless it renames. Only in a source that imports the
+ * module of the messages: elsewhere, `t` is a time or a text, and nothing is found.
+ *
+ * In such a source, a comment names `t` between backticks, as the code does; written bare, as a
+ * word of its sentence, it is found, like a variable or a field declared under that name.
  */
 function readMentions(source: string): number[] {
-	const clause = /^[ \t]*import \{[^}]*\} from '[^']*\/i18n\.ts';$/m;
+	if (!/from '[^']*\/i18n(?:\.ts)?'/.test(source)) return [];
+	const clause = /^[ \t]*import \{[^}]*\} from '[^']*\/i18n(?:\.ts)?';$/m;
 	const code = source.replace(clause, (found) =>
 		/\bas\b/.test(found) ? found : found.replace(/[^\n]/g, ' ')
 	);
 	// Neither the end or the start of a word (`don’t`, `--t`, `t-shirt`), nor a field (`at.t`),
-	// nor a call.
-	const mention = /(?<![\w$.'’-])(?:t|tAround)(?![\w$'’(-])/g;
+	// nor a tab (`\t`), nor a name between backticks, nor a call; then the import of the module.
+	const mention =
+		/(?<![\w$.'’`\\-])(?:t|tAround)(?![\w$'’`(-])|\* as \w+ from '[^']*\/i18n(?:\.ts)?'/g;
 	return [...code.matchAll(mention)].map((match) => lineAt(code, match.index));
 }
 
@@ -141,6 +147,11 @@ const defined = entries.flatMap((entry) => (entry.type === 'Message' ? [entry.id
 
 /** The names of the terms that the Fluent files define, without their dash. */
 const terms = entries.flatMap((entry) => (entry.type === 'Term' ? [entry.id.name] : []));
+
+/** The names that the messages of all the files read, in their own file or in another. */
+const references = files.map(({ resource }) => readReferences(resource));
+const readMessages = references.flatMap((read) => read.messages);
+const readTerms = references.flatMap((read) => read.terms);
 
 const calls = Object.entries(sources).flatMap(([file, source]) =>
 	readCalls(source).map((call) => ({ file, ...call }))
@@ -226,6 +237,16 @@ describe('readMentions', () => {
 		expect(readMentions(source)).toEqual([1, 2, 3, 4]);
 	});
 
+	it('finds the whole module imported under a name, with its extension or without it', () => {
+		expect(readMentions("import * as i18n from '#lib/i18n.ts';\ni18n.t('app-name');")).toEqual([1]);
+		expect(readMentions("import * as i18n from './i18n';\ni18n.t('app-name');")).toEqual([1]);
+	});
+
+	it('finds `t` after an import written over several lines, on its own line', () => {
+		const source = "import {\n\tt,\n\ttAround\n} from './i18n';\nconst labels = names.map(t);";
+		expect(readMentions(source)).toEqual([5]);
+	});
+
 	it('finds none where `t` is imported, then called', () => {
 		const source = [
 			'<script lang="ts">',
@@ -237,9 +258,19 @@ describe('readMentions', () => {
 		expect(readMentions(source)).toEqual([]);
 	});
 
-	it('finds none in a word, a field or a design token', () => {
-		const source = "// It doesn’t, and it can't.\nconst at = step.t + 't';\n/* var(--t) */";
+	it('finds none in a word, a field, a design token, a tab or a name between backticks', () => {
+		const source = [
+			"import { t } from '#lib/i18n.ts';",
+			"// It doesn’t, and it can't: the name comes from `t`, or from `tAround`.",
+			"const at = step.t + 't';",
+			'/* var(--t) */',
+			"const indent = '\\t\\t'.replace(/^\\t+/, '');"
+		].join('\n');
 		expect(readMentions(source)).toEqual([]);
+	});
+
+	it('finds none in a source that doesn’t import the messages, where `t` is a time', () => {
+		expect(readMentions('const ease = (t: number) => t * t;\nframes.map(t);')).toEqual([]);
 	});
 });
 
@@ -285,17 +316,12 @@ describe('the Fluent files', () => {
 
 	// A message that reads `{ app-nam }` loads without a word, and shows `{app-nam}`.
 	it('read, from a message, only messages and terms that they define', () => {
-		const read = files.map(({ resource }) => readReferences(resource));
-		const messages = read.flatMap((references) => references.messages);
-		expect(messages.filter((name) => !defined.includes(name))).toEqual([]);
-		expect(
-			read.flatMap((references) => references.terms).filter((name) => !terms.includes(name))
-		).toEqual([]);
+		expect(readMessages.filter((name) => !defined.includes(name))).toEqual([]);
+		expect(readTerms.filter((name) => !terms.includes(name))).toEqual([]);
 	});
 
 	it('define no term that no message reads', () => {
-		const read = files.flatMap(({ resource }) => readReferences(resource).terms);
-		expect(terms.filter((name) => !read.includes(name))).toEqual([]);
+		expect(terms.filter((name) => !readTerms.includes(name))).toEqual([]);
 	});
 });
 
@@ -311,11 +337,10 @@ describe('the names that the code writes', () => {
 	});
 
 	it('are read by `t` under its own name: never renamed, never given as a value', () => {
-		const importing = Object.entries(sources).filter(([, source]) => /\/i18n\.ts'/.test(source));
-		expect(importing.length).toBeGreaterThan(0);
-		expect(
-			importing.flatMap(([file, source]) => readMentions(source).map((line) => `${file}:${line}`))
-		).toEqual([]);
+		const named = Object.entries(sources).flatMap(([file, source]) =>
+			readMentions(source).map((line) => `${file}:${line}`)
+		);
+		expect(named).toEqual([]);
 	});
 
 	it('each have their message', () => {
