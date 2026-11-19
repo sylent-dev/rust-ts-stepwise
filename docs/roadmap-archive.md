@@ -215,3 +215,9 @@ The probe turned into the bench of the animations, on the level screen and in th
 ### 14d. End of a run and less motion (#57)
 
 Once the last action has ended, the robot shows how the run ended, in 900 ms at every animated speed and at once at **Instant**: every goal met, its eyes light up and it hops; a goal not met, its eyes dim, it shakes its head, then a flag is planted on each cell of a goal not met, in a wave when they are many; nothing in the sandbox, which has no goal. A program without a step only ends once **Run** or **Step** has started it. Less motion for every action, for a learner who asked their system for it, read as each step starts: a turn without its overshoot, `pick_up()` and `drop()` without the pincer nor the step back, the bump without its shake, a `pick_up()` or a `drop()` that fails and the end of a run shown at once. Each theme sets `color-scheme`, so that the native controls follow it. The bench of the animations stays in the column of the code until the running of step 17 replaces it.
+
+## 15. Quality audit
+
+### 15a. Plan and notes (#58)
+
+The audit of the whole code, made on 2026-11-19 once step 14 was merged: the code is sound, and what needs work sits where steps 16 to 22 will copy, nearly all of it in `web/`. The owner kept its seven themes, which became the sub-steps 15b to 15g, one pull request each; what the audit found is kept in `docs/quality-audit.md`: the brief of each refactoring, what steps 16, 17, 18, 20 and 23 settle first, what is sound and should be copied, and what the audit chose not to change.
