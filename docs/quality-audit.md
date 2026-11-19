@@ -48,7 +48,7 @@ No behavior changes; the compiler finds every place to change.
 
 What the interface reads of an error, before steps 16 and 17 write the messages and the underlining: the code of an error becomes the name of its message.
 
-- **`TooDeep` holds two rules** (`parser/error.rs:125-129`): the blocks, 50 deep (`specs.md`, Lines and indentation), and the tree, 200 deep, without saying which nor its number, while the runtime errors cross with their limit (`crates/wasm/src/runtime_error.rs:141-162`). Two kinds (`TooDeep`, `BlocksTooDeep`), each given its `limit` by the bridge. `web/src/lib/run.spec.ts:529-530` copies 200 and 50 by hand.
+- **`TooDeep` holds two rules** (`parser/error.rs:125-129`): the blocks, 50 deep (`specs.md`, Lines and indentation), and the tree, 200 deep, without saying which nor its number, while the runtime errors cross with their limit (`crates/wasm/src/runtime_error.rs:141-162`). Two kinds (`ExpressionTooDeep`, since the error is only raised in an expression and `specs.md` files the rule under Expressions, and `BlocksTooDeep`), each given its `limit` by the bridge. `NumberTooLarge` crosses with the largest number too, as its digits (added by the review of 15c). `web/src/lib/run.spec.ts:529-530` copies 200 and 50 by hand.
 - **`WrongArgumentCount`**, so the code `wrong-argument-count`, against "values", the word of `specs.md` ("A call gives exactly as many values"): `WrongValueCount`. Nine places, kept in step by the test `assert_same_names` of the bridge.
 - **The place of a name between parentheses covers the parentheses**, tried on the module: `let a = (sidse)` underlines `(sidse)`, while `checker/error.rs:43` says "The span is the name". `ExpressionKind::Name(String)` has no place of its own, and `parenthesized` widens the one of the expression (`parser/expression.rs:132-147`): `ExpressionKind::Name(Name)`, as `Call.function` (six uses).
 
@@ -211,6 +211,7 @@ A statement fits on a line and the lexer reads line by line: the line of the cur
 
 ### Smaller notes
 
+- **Step 16**: the `limit` of `expression-too-deep` counts the blocks around the expression (an expression of 151 levels under 50 blocks has this error): its message says so, as `specs.md` does.
 - **Step 19**: the lines that start a step (see the backlog, a breakpoint on a line that never starts one) are known by `Code` (its `Instruction::Line`) and by the test helper `lines_run` (`crates/core/src/interpreter/tests.rs:218`): the function of the core reads `Code`, and `lines_run` stays the independent oracle.
 - **Step 21**: `chapters.toml` copies the three parts of `level/` (the schema, the building, the domain) with the errors of 15b, and `file::parse<T: Versioned>` (`level/file.rs:122`) reads it as it is. "What the learner used" on the success panel is a walk of the checked tree, in the core. The rules of the progress go in `progress.ts` and `saved-progress.ts`, never in `current-progress.svelte.ts` (see 15f).
 - **Step 23**: one sentence of the errors of a level file is tested, of about twenty; read them all once, since the owner will meet them while writing the levels.

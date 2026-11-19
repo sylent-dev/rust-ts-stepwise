@@ -3,7 +3,7 @@
 
 use serde::Serialize;
 use stepwise_core::checker::{CheckErrorKind, ReservedWord};
-use stepwise_core::lexer::LexErrorKind;
+use stepwise_core::lexer::{LexErrorKind, MAX_NUMBER};
 use stepwise_core::parser::{MAX_BLOCK_DEPTH, MAX_DEPTH, ParseErrorKind, SyntaxError};
 use stepwise_core::program::{self, Refused};
 use stepwise_core::span;
@@ -73,7 +73,8 @@ pub struct ProgramError {
 /// `LexErrorKind`, of `ParseErrorKind`, then of `CheckErrorKind`. No name is in two of them.
 /// The words of the language (a keyword, a built-in function, a color) are given as they are
 /// written, a place kept in an error as the place of the error itself, and a limit of the
-/// language with the error that it stops, so that no message repeats a number of the core.
+/// language with the error that it stops, so that no message repeats a number of the core:
+/// the two depths as numbers, the largest number of a program as its digits (see `Value`).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Tsify)]
 #[serde(
     tag = "code",
@@ -93,7 +94,9 @@ pub enum ProgramErrorKind {
         escape: char,
     },
     SingleQuote,
-    NumberTooLarge,
+    NumberTooLarge {
+        limit: String,
+    },
     NameStartsWithDigit {
         word: String,
     },
@@ -228,7 +231,9 @@ impl ProgramErrorKind {
             K::UnclosedText => Self::UnclosedText,
             K::UnknownEscape { escape } => Self::UnknownEscape { escape },
             K::SingleQuote => Self::SingleQuote,
-            K::NumberTooLarge => Self::NumberTooLarge,
+            K::NumberTooLarge => Self::NumberTooLarge {
+                limit: MAX_NUMBER.to_string(),
+            },
             K::NameStartsWithDigit { word } => Self::NameStartsWithDigit { word },
             K::SymbolForKeyword { symbol, keyword } => Self::SymbolForKeyword {
                 symbol: symbol.to_owned(),
@@ -388,6 +393,10 @@ mod tests {
         let digit = Kind::NameStartsWithDigit {
             word: "2nd".to_owned(),
         };
+        // The largest number crosses as its digits: JavaScript doesn't hold it exactly.
+        let too_large = Kind::NumberTooLarge {
+            limit: "9223372036854775807".to_owned(),
+        };
         for (source, expected) in [
             ("if done:\n      forward()\n", error(2, 9, 15, wrong_indent)),
             (
@@ -396,6 +405,7 @@ mod tests {
             ),
             ("if a && b:\n    forward()\n", error(1, 5, 7, symbol)),
             ("let 2nd = 1\n", error(1, 4, 7, digit)),
+            ("let a = 9223372036854775808\n", error(1, 8, 27, too_large)),
             (
                 "let a = @\n",
                 error(1, 8, 9, Kind::UnexpectedCharacter { character: '@' }),

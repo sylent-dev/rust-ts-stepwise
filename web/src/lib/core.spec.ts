@@ -86,6 +86,15 @@ describe('the checks before running', () => {
 		]);
 	});
 
+	it('give the largest number as its digits, which a number of JavaScript would round', () => {
+		expect(check('let most = 9223372036854775808\n')).toEqual([
+			{
+				span: { line: 1, from: 11, to: 30 },
+				kind: { code: 'number-too-large', limit: '9223372036854775807' }
+			}
+		]);
+	});
+
 	it('give a character as a text, of two units for an emoji', () => {
 		expect(check('print("\\🤖")\n')).toEqual([
 			{ span: { line: 1, from: 7, to: 10 }, kind: { code: 'unknown-escape', escape: '🤖' } }

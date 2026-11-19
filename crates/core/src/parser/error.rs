@@ -112,8 +112,9 @@ pub enum ParseErrorKind {
     /// The span is the first token that can't be there.
     InvalidParameter,
     /// An expression nested deeper than [`MAX_DEPTH`](super::MAX_DEPTH): its parentheses, its
-    /// operators and its calls, with the blocks around it. The span is what the level too
-    /// many holds or, for a chain of operators, the chain up to the value too many.
+    /// operators and its calls, with the blocks around it. The span is the first token of the
+    /// level too many (the `1` of `(…(1 + 2)…)`): the parser refuses the level before it
+    /// reads it. For a chain of operators, it is the chain up to the value too many.
     ExpressionTooDeep,
     /// Blocks nested deeper than [`MAX_BLOCK_DEPTH`](super::MAX_BLOCK_DEPTH), whatever they
     /// hold. The span is the line that opens the block too many.

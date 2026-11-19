@@ -36,6 +36,10 @@ use crate::span::{Position, Span};
 /// The number of spaces that indent a block further than the line that opens it.
 pub const INDENT_WIDTH: u32 = 4;
 
+/// The largest whole number a program writes: the values are 64-bit, and a number is written
+/// without its `-`.
+pub const MAX_NUMBER: i64 = i64::MAX;
+
 /// What the lexer reads in a source.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Lexed {

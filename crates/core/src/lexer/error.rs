@@ -41,7 +41,8 @@ pub enum LexErrorKind {
     },
     /// A `'`: texts are written between double quotes.
     SingleQuote,
-    /// A whole number beyond the 64-bit range (above 9 223 372 036 854 775 807).
+    /// A whole number above [`MAX_NUMBER`](super::MAX_NUMBER), beyond the 64-bit range. The
+    /// span is the number.
     NumberTooLarge,
     /// A word that starts with a digit, such as `2nd_side`: a name starts with a letter.
     NameStartsWithDigit {

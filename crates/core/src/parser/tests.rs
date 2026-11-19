@@ -1712,6 +1712,13 @@ mod depth {
     }
 
     #[test]
+    fn a_level_too_many_is_underlined_at_its_first_token() {
+        let source = format!("{}1 + 2{}", "(".repeat(MAX), ")".repeat(MAX));
+        let column = u32::try_from(MAX).unwrap() + 1;
+        assert_eq!(error(&source).span, span(1, column, column + 1));
+    }
+
+    #[test]
     fn the_tree_is_never_deeper_than_the_limit() {
         // Parentheses leave no node: the tree is less deep than the levels counted.
         assert_eq!(height(&expression(&parentheses(MAX - 1))), 1);
@@ -1837,6 +1844,16 @@ mod depth {
         // Even an expression too deep on its own: the line of the block comes first.
         let source = blocks(BLOCKS + 1, &chain(MAX + 1));
         assert_eq!(error_kind(&source), E::BlocksTooDeep);
+    }
+
+    #[test]
+    fn the_condition_of_a_block_too_deep_comes_first() {
+        // The line that opens the block too many is read before its block is refused.
+        let inside = " ".repeat((BLOCKS + 1) * 4);
+        let nested = |condition: &str| blocks(BLOCKS, &format!("if {condition}:\n{inside}b()"));
+        assert_eq!(error_kind(&nested("a")), E::BlocksTooDeep);
+        let too_deep = chain(MAX - BLOCKS + 1);
+        assert_eq!(error_kind(&nested(&too_deep)), E::ExpressionTooDeep);
     }
 
     #[test]
