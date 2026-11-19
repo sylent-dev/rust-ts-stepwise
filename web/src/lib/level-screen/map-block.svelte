@@ -2,7 +2,7 @@
      large as the block allows up to the size of the drawings; no zoom, no scrolling (see Level
      screen in specs.md). Empty until the core has given the world. -->
 <script lang="ts">
-	import type { Goals, World } from '#lib/core.ts';
+	import type { Goals, Outcome, World } from '#lib/core.ts';
 	import { cellSide } from '#lib/map/fit.ts';
 	import MapView from '#lib/map/map-view.svelte';
 	import type { Motion } from '#lib/map/motion.ts';
@@ -12,13 +12,15 @@
 		world?: World;
 		/** The goals of a map of a level; the sandbox has none. */
 		goals?: Goals;
-		/** The step under way, if any. */
+		/** The step under way, or the end of the run after its last step, if any. */
 		motion?: Motion;
-		/** How far the step under way has gone, from 0 to 1. */
+		/** How far the step under way, or the end of the run, has gone, from 0 to 1. */
 		progress?: number;
+		/** How the run ended, once its last action has ended; nothing until then. */
+		outcome?: Outcome;
 	}
 
-	let { world, goals, motion, progress }: Props = $props();
+	let { world, goals, motion, progress, outcome }: Props = $props();
 
 	/** The room the map has, inside the margin of the block. */
 	let room = $state<DOMRectReadOnly>();
@@ -26,7 +28,7 @@
 
 <div class="block" bind:contentRect={room}>
 	{#if world && room}
-		<MapView {world} {goals} side={cellSide(room, world)} {motion} {progress} />
+		<MapView {world} {goals} side={cellSide(room, world)} {motion} {progress} {outcome} />
 	{/if}
 </div>
 

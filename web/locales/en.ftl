@@ -109,6 +109,8 @@ map = The map
 bench-title = Bench of the animations
 bench-program = Program
 bench-program-square = Paint the square
+bench-program-square-unfinished = Paint three sides of the square
+bench-program-square-ending-on-move = Paint the square, ending on a move
 bench-program-paint-erase = Paint, then erase
 bench-program-paint-over = Paint over the yellow
 bench-program-erase-blue = Erase the blue
@@ -142,5 +144,7 @@ bench-steps =
        *[other] { $count } steps
     }
 bench-ended = The program has ended.
+bench-passed = The program has ended, every goal met.
+bench-goals-not-met = The program has ended, a goal not met.
 # $line (Number): the line of the error, from 1.
 bench-failed = The program stopped on an error at line { $line }.

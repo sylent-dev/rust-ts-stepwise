@@ -40,7 +40,7 @@ const MAPS: Record<string, (text: string) => Run> = {
 describe.each(Object.entries(MAPS))('the programs of the bench on the map of %s', (map, start) => {
 	it.each(benchPrograms(map).map((program) => [program.name, program]))(
 		'%s has no error, a title, and stops on no error but the one it shows',
-		(name, { text, fails }) => {
+		(name, { text, fails, ends }) => {
 			expect(check(text)).toEqual([]);
 			expect(hasMessage(`bench-program-${name}`)).toBe(true);
 			using run = start(text);
@@ -51,6 +51,7 @@ describe.each(Object.entries(MAPS))('the programs of the bench on the map of %s'
 			} else {
 				expect(outcome?.type).not.toBe('failed');
 			}
+			if (ends) expect(outcome?.type).toBe(ends);
 			if (name === 'walk') expect(run.line).toBeDefined();
 		}
 	);

@@ -1,7 +1,7 @@
 // The programs of the bench of the animations (step 14b), until the running of step 17 replaces
 // it: short programs made for the map of the screen, each showing a few actions of the robot.
 
-import type { RobotFailure } from '#lib/map/motion.ts';
+import type { RobotFailure, RunEnd } from '#lib/map/motion.ts';
 
 /** A program of the bench. */
 export interface BenchProgram {
@@ -10,6 +10,8 @@ export interface BenchProgram {
 	text: string;
 	/** The error of the robot it is made to stop on, if any. */
 	fails?: RobotFailure;
+	/** The end of a run it is made to show on the map of a level, if any. */
+	ends?: RunEnd;
 }
 
 /** Turns on the spot, both ways, past each direction. */
@@ -76,7 +78,34 @@ repeat 4:
         forward()
     turn_right()
 stop_painting()
-`
+`,
+			ends: 'passed'
+		},
+		{
+			// Three sides of the square: the two cells of the fourth one aren't painted.
+			name: 'square-unfinished',
+			text: `start_painting(red)
+repeat 3:
+    repeat 3:
+        forward()
+    turn_right()
+stop_painting()
+`,
+			ends: 'goals-not-met'
+		},
+		{
+			// The square, its last side written out: the run ends on a move, the end right after it.
+			name: 'square-ending-on-move',
+			text: `start_painting(red)
+repeat 3:
+    repeat 3:
+        forward()
+    turn_right()
+forward()
+forward()
+forward()
+`,
+			ends: 'passed'
 		},
 		{
 			name: 'paint-erase',

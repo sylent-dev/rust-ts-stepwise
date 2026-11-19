@@ -48,6 +48,11 @@
 		{/if}
 	{/snippet}
 	{#snippet map()}
-		<MapBlock world={playback?.world} motion={playback?.motion} progress={playback?.progress} />
+		<MapBlock
+			world={playback?.world}
+			motion={playback?.motion}
+			progress={playback?.progress}
+			outcome={playback?.outcome}
+		/>
 	{/snippet}
 </LevelScreen>

@@ -207,3 +207,7 @@ The level screen and the sandbox laid out as the mock-up (the code on the left, 
 ### 14b. Bench and first moves (#55)
 
 The probe turned into the bench of the animations, on the level screen and in the sandbox: short programs made for the map of the screen, played with **Run**, **Pause**, **Step**, **Reset** and the five speeds, the line of the next step marked once the action has ended; `forward()`, the turns, the brush and the eraser animated, tuned with the owner at every speed: 300 ms up to 2 steps per second, 80 % of a step faster; **Step** plays its action as at the slowest speed; the tool the robot has down given by the bridge, for the animations.
+
+### 14c. Carrying and the errors of the robot (#56)
+
+`pick_up()` and `drop()` animated: the robot steps back a quarter of a cell, its pincer takes the item of its cell over itself into its bay, or sets it down there, then it rolls back onto its cell. The bump against the border of its cell, then back onto it shaking its body; the `pick_up()` and `drop()` that fail tried, showing what goes wrong (an empty pincer, a full bay that swells, an item that can't go down), then shaken. These errors stop the program, so they keep their whole time at every animated speed; the playback tells how the program stopped once its last action has ended, and the bench has a program for each of them.
