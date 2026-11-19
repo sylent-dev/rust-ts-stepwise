@@ -3,10 +3,15 @@
 //! the goals, which check their own rules.
 
 use super::file::{GoalsFile, LevelFile, MapFile, SandboxFile, StrokeFile, point};
-use super::{
-    FLOOR, Goals, Level, LevelError, LevelErrorKind, LevelMap, MAX_MAPS, Sandbox, Stroke, WALL,
-};
+use super::stroke::{Stroke, StrokeError};
+use super::{Goals, Level, LevelError, LevelErrorKind, LevelMap, MAX_MAPS, Sandbox};
 use crate::world::{Map, Point, Robot, World};
+
+/// A wall, in the terrain of a map.
+pub(super) const WALL: char = '#';
+
+/// A floor cell, in the terrain of a map.
+pub(super) const FLOOR: char = '.';
 
 /// A level, its maps numbered from 1 in its errors.
 pub(super) fn level(file: LevelFile) -> Result<Level, LevelError> {
@@ -38,7 +43,9 @@ pub(super) fn sandbox(file: SandboxFile) -> Result<Sandbox, LevelError> {
 
 fn level_map(map: MapFile) -> Result<LevelMap, LevelErrorKind> {
     let world = world(&map)?;
-    let goals = goals(map.goals.ok_or(LevelErrorKind::NoGoal)?, &world)?;
+    // A map without its table of goals has none, as one whose table is empty: the goals say
+    // so themselves.
+    let goals = goals(map.goals.unwrap_or_default(), &world)?;
     Ok(LevelMap { world, goals })
 }
 
@@ -57,7 +64,7 @@ fn world(map: &MapFile) -> Result<World, LevelErrorKind> {
     }
     let robot = Robot::new(point(map.robot.at), map.robot.facing.into());
     let robot = if map.robot.carrying {
-        robot.carrying()
+        robot.with_item()
     } else {
         robot
     };
@@ -99,24 +106,24 @@ fn paint(map: &mut Map, stroke: &Stroke) -> Result<(), LevelErrorKind> {
         map.set_paint(at, stroke.color())
             .map_err(LevelErrorKind::Map)?;
     }
-    for (from, to) in stroke.steps() {
+    for (from, to) in stroke.passages() {
         map.set_passage(from, to).map_err(LevelErrorKind::Map)?;
     }
     Ok(())
 }
 
-fn stroke(file: &StrokeFile) -> Result<Stroke, LevelErrorKind> {
+fn stroke(file: &StrokeFile) -> Result<Stroke, StrokeError> {
     Stroke::new(file.color, file.path.iter().copied().map(point).collect())
 }
 
 fn goals(file: GoalsFile, world: &World) -> Result<Goals, LevelErrorKind> {
     let paints = file.paints.iter().map(stroke).collect::<Result<_, _>>()?;
-    Goals::new(
+    Ok(Goals::new(
         file.robot_at.map(point),
         paints,
         file.nothing_else_painted,
         file.items_at.into_iter().map(point).collect(),
         file.carrying,
         world,
-    )
+    )?)
 }

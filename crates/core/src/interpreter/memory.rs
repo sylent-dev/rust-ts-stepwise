@@ -5,7 +5,7 @@ use std::iter;
 use std::mem;
 use std::rc::Rc;
 
-use super::builtins::{self, Outcome};
+use super::builtins::{self, Effect};
 use super::code::{Function, Instruction};
 use super::error::RuntimeErrorKind;
 use super::event::Event;
@@ -257,7 +257,7 @@ impl Memory {
             Instruction::CallBuiltin { builtin, arguments } => {
                 let values = self.take_arguments(*arguments)?;
                 self.result = match builtins::call(*builtin, &values, world)? {
-                    Outcome::Acted(acted) => {
+                    Effect::Acted(acted) => {
                         // A step shows one thing at most: a second one is a mistake of the
                         // compiler, told rather than lost.
                         if event.replace(acted).is_some() {
@@ -266,7 +266,7 @@ impl Memory {
                         // What acts gives back no value.
                         None
                     }
-                    Outcome::Sensed(sensed) => Some(Value::Boolean(sensed)),
+                    Effect::Sensed(sensed) => Some(Value::Boolean(sensed)),
                 };
             }
             Instruction::Call(function) => self.enter(function, span)?,

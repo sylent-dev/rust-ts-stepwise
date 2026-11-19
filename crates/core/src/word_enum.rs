@@ -55,6 +55,13 @@ pub(crate) use word_enum;
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+
+    use crate::builtin::Builtin;
+    use crate::color::Color;
+    use crate::lexer::Keyword;
+    use crate::parser::ForeignWord;
+
     word_enum! {
         /// Two words, for the tests.
         enum Side {
@@ -75,6 +82,34 @@ mod tests {
         for side in Side::ALL {
             assert_eq!(Side::from_word(side.as_str()), Some(side));
         }
+    }
+
+    /// The lexer, the parser and the checker each read a word in their own list, in that
+    /// order: a word in two of them would silently be the one of the first.
+    #[test]
+    fn no_word_of_the_language_is_in_two_lists() {
+        let lists = [
+            ("keywords", words(&Keyword::ALL, Keyword::as_str)),
+            (
+                "foreign words",
+                words(&ForeignWord::ALL, ForeignWord::as_str),
+            ),
+            ("built-in functions", words(&Builtin::ALL, Builtin::as_str)),
+            ("colors", words(&Color::ALL, Color::as_str)),
+        ];
+        let mut seen = HashMap::new();
+        for (list, words) in lists {
+            for word in words {
+                if let Some(first) = seen.insert(word, list) {
+                    panic!("`{word}` is in the {first} and in the {list}");
+                }
+            }
+        }
+        assert_eq!(seen.len(), 47, "the words of the language");
+    }
+
+    fn words<T: Copy>(all: &[T], as_str: impl Fn(T) -> &'static str) -> Vec<&'static str> {
+        all.iter().copied().map(as_str).collect()
     }
 
     #[test]

@@ -329,7 +329,7 @@ impl Map {
 
     /// Removes the paint of `to` and of the passage from `from`, which the robot just crossed
     /// with its eraser down: the eraser takes away what it passes over, as the brush paints it.
-    pub(super) fn erase_step(&mut self, from: Point, to: Point) {
+    pub(super) fn erase_crossing(&mut self, from: Point, to: Point) {
         self.erase_cell(to);
         if let Some(direction) = from.direction_to(to) {
             self.set_passage_paint(from, direction, false);
@@ -346,7 +346,7 @@ impl Map {
     /// Paints `to` with `color` and the passage from `from`, which the robot just crossed with
     /// its brush down. The passage is painted only when `from` is painted, as it always is with
     /// the brush down, so that the map keeps its rule on its own.
-    pub(super) fn paint_step(&mut self, from: Point, to: Point, color: Color) {
+    pub(super) fn paint_crossing(&mut self, from: Point, to: Point, color: Color) {
         self.paint_cell(to, color);
         if self.paint(from).is_none() || self.paint(to).is_none() {
             return;

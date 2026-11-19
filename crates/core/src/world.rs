@@ -46,7 +46,7 @@ impl Robot {
 
     /// The same robot, carrying an item.
     #[must_use]
-    pub const fn carrying(self) -> Self {
+    pub const fn with_item(self) -> Self {
         Self {
             carrying: true,
             ..self
@@ -154,8 +154,8 @@ impl World {
             .ok_or(RobotError::Bump)?;
         self.robot.position = to;
         match self.robot.tool {
-            Some(Tool::Brush(color)) => self.map.paint_step(from, to, color),
-            Some(Tool::Eraser) => self.map.erase_step(from, to),
+            Some(Tool::Brush(color)) => self.map.paint_crossing(from, to, color),
+            Some(Tool::Eraser) => self.map.erase_crossing(from, to),
             None => {}
         }
         Ok(())

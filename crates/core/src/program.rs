@@ -15,7 +15,7 @@ pub struct Checked(Program);
 impl Checked {
     /// Its syntax tree.
     #[must_use]
-    pub const fn program(&self) -> &Program {
+    pub(crate) const fn program(&self) -> &Program {
         &self.0
     }
 }

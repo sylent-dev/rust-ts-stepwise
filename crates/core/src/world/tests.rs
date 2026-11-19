@@ -438,7 +438,7 @@ mod carrying {
     #[test]
     fn pick_up_while_carrying_is_an_error_and_leaves_the_item() {
         let map = world(&[">o"]).map().clone();
-        let robot = Robot::new(Point::new(1, 0), Direction::East).carrying();
+        let robot = Robot::new(Point::new(1, 0), Direction::East).with_item();
         let mut world = World::new(map, robot).unwrap();
         assert_eq!(world.pick_up(), Err(RobotError::AlreadyCarrying));
         assert!(world.item_here());
@@ -478,7 +478,7 @@ mod carrying {
     #[test]
     fn drop_on_an_item_is_an_error_and_keeps_the_item_carried() {
         let map = world(&[">o"]).map().clone();
-        let robot = Robot::new(Point::new(1, 0), Direction::East).carrying();
+        let robot = Robot::new(Point::new(1, 0), Direction::East).with_item();
         let mut world = World::new(map, robot).unwrap();
         assert_eq!(world.drop_item(), Err(RobotError::ItemAlreadyHere));
         assert!(world.is_carrying());
@@ -489,7 +489,7 @@ mod carrying {
         let map = world(&[">"]).map().clone();
         let mut world = World::new(
             map,
-            Robot::new(Point::new(0, 0), Direction::East).carrying(),
+            Robot::new(Point::new(0, 0), Direction::East).with_item(),
         )
         .unwrap();
         world.drop_item().unwrap();
@@ -628,7 +628,7 @@ fn the_painted_passages_follow_the_rules_of_the_map() {
                 3 => world.turn_left(),
                 4 => world.turn_right(),
                 5 => {
-                    let color = Color::ALL[random.next() % 3];
+                    let color = Color::ALL[random.next() % Color::ALL.len()];
                     world.start_painting(color);
                     let here = world.robot().position();
                     assert_eq!(world.map().paint(here), Some(color), "{round}, {action}");

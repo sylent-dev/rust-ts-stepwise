@@ -14,17 +14,6 @@ pub enum SyntaxError {
     Parse(ParseError),
 }
 
-impl SyntaxError {
-    /// The stretch of the source to underline.
-    #[must_use]
-    pub const fn span(&self) -> Span {
-        match self {
-            Self::Lex(error) => error.span,
-            Self::Parse(error) => error.span,
-        }
-    }
-}
-
 impl From<LexError> for SyntaxError {
     fn from(error: LexError) -> Self {
         Self::Lex(error)

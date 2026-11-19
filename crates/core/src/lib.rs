@@ -1,4 +1,5 @@
-//! The language of Stepwise, run one step at a time.
+//! The core of Stepwise: its language, run one step at a time, the world of the robot and the
+//! levels.
 //!
 //! The core must never panic: compiled to WebAssembly, a panic aborts the module and the page
 //! with it, while every program of a learner, even absurd, must end with an error the

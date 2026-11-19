@@ -29,14 +29,14 @@ pub fn check(program: &Program) -> Vec<CheckError> {
         functions: Functions::of(&program.statements),
         ..Checker::default()
     };
-    checker.block(&program.statements, Place::TOP_LEVEL);
+    checker.block(&program.statements, Context::TOP_LEVEL);
     checker.errors
 }
 
 /// Where a statement is in the program: what decides whether a `break`, a `return` or a
 /// function may be written there.
 #[derive(Debug, Clone, Copy)]
-struct Place {
+struct Context {
     /// Outside every block and every function.
     top_level: bool,
     /// In the body of a function, however deep in its blocks.
@@ -45,7 +45,7 @@ struct Place {
     in_loop: bool,
 }
 
-impl Place {
+impl Context {
     /// The top level of the program.
     const TOP_LEVEL: Self = Self {
         top_level: true,
@@ -61,7 +61,7 @@ impl Place {
         in_loop: false,
     };
 
-    /// A block of an `if` written at this place.
+    /// A block of an `if` written in this context.
     const fn enter_branch(self) -> Self {
         Self {
             top_level: false,
@@ -69,7 +69,7 @@ impl Place {
         }
     }
 
-    /// The block of a `while` or of a `repeat` written at this place.
+    /// The block of a `while` or of a `repeat` written in this context.
     const fn enter_loop(self) -> Self {
         Self {
             top_level: false,
@@ -103,35 +103,35 @@ impl<'a> Checker<'a> {
         self.errors.push(CheckError { kind, span });
     }
 
-    /// The statements of a block, or of the top level, written at `place`.
-    fn block(&mut self, statements: &'a [Statement], place: Place) {
+    /// The statements of a block, or of the top level, written in `context`.
+    fn block(&mut self, statements: &'a [Statement], context: Context) {
         self.variables.open(statements);
         for statement in statements {
-            self.statement(statement, place);
+            self.statement(statement, context);
         }
         self.variables.close();
     }
 
-    fn statement(&mut self, statement: &'a Statement, place: Place) {
+    fn statement(&mut self, statement: &'a Statement, context: Context) {
         match &statement.kind {
-            StatementKind::Let { name, value } => self.declaration(name, value, place),
+            StatementKind::Let { name, value } => self.declaration(name, value, context),
             StatementKind::Assign { name, value } => {
                 if self.check_variable_name(name) {
-                    self.variable(&name.text, name.span, Access::Change, place);
+                    self.variable(&name.text, name.span, Access::Change, context);
                 }
-                self.expression(value, place);
+                self.expression(value, context);
             }
             StatementKind::Break => {
-                if !place.in_loop {
+                if !context.in_loop {
                     self.report(CheckErrorKind::BreakOutsideLoop, statement.span);
                 }
             }
             StatementKind::Return { value } => {
-                if !place.in_function {
+                if !context.in_function {
                     self.report(CheckErrorKind::ReturnOutsideFunction, statement.span);
                 }
                 if let Some(value) = value {
-                    self.expression(value, place);
+                    self.expression(value, context);
                 }
             }
             StatementKind::If {
@@ -144,11 +144,11 @@ impl<'a> Checker<'a> {
                     span: _,
                 } in branches
                 {
-                    self.expression(condition, place);
-                    self.block(body, place.enter_branch());
+                    self.expression(condition, context);
+                    self.block(body, context.enter_branch());
                 }
                 if let Some(body) = otherwise {
-                    self.block(body, place.enter_branch());
+                    self.block(body, context.enter_branch());
                 }
             }
             StatementKind::While {
@@ -159,15 +159,15 @@ impl<'a> Checker<'a> {
                 count: header,
                 body,
             } => {
-                self.expression(header, place);
-                self.block(body, place.enter_loop());
+                self.expression(header, context);
+                self.block(body, context.enter_loop());
             }
             StatementKind::Function {
                 name,
                 parameters,
                 body,
             } => {
-                if !place.top_level {
+                if !context.top_level {
                     self.report(CheckErrorKind::NestedFunction, statement.span);
                 }
                 self.check_function_name(name);
@@ -177,14 +177,14 @@ impl<'a> Checker<'a> {
                 if !self.is_call_or_function(expression) {
                     self.report(CheckErrorKind::ExpressionAlone, statement.span);
                 }
-                self.expression(expression, place);
+                self.expression(expression, context);
             }
         }
     }
 
     /// A `let`. Its value is read before the variable exists (`let x = x + 1`), so the name
     /// is checked first, in the order of the source, and declared last.
-    fn declaration(&mut self, name: &'a Name, value: &'a Expression, place: Place) {
+    fn declaration(&mut self, name: &'a Name, value: &'a Expression, context: Context) {
         let free = self.check_new_variable(name);
         let first = self.variables.declared(&name.text);
         if let (true, Some(first)) = (free, first) {
@@ -197,7 +197,7 @@ impl<'a> Checker<'a> {
                 name.span,
             );
         }
-        self.expression(value, place);
+        self.expression(value, context);
         if free && first.is_none() {
             self.variables.declare(&name.text, name.span);
         }
@@ -211,7 +211,7 @@ impl<'a> Checker<'a> {
         // can't take their names.
         self.variables.open(&[]);
         self.parameters(parameters);
-        self.block(body, Place::FUNCTION_BODY);
+        self.block(body, Context::FUNCTION_BODY);
         let function = std::mem::replace(&mut self.variables, around);
         self.variables.absorb(function);
     }
@@ -249,7 +249,7 @@ impl<'a> Checker<'a> {
     }
 
     /// The names an expression reads and the functions it calls.
-    fn expression(&mut self, expression: &'a Expression, place: Place) {
+    fn expression(&mut self, expression: &'a Expression, context: Context) {
         match &expression.kind {
             ExpressionKind::Number(_) | ExpressionKind::Boolean(_) | ExpressionKind::Text(_) => {}
             ExpressionKind::Name(name) => {
@@ -262,7 +262,7 @@ impl<'a> Checker<'a> {
                         expression.span,
                     );
                 } else {
-                    self.variable(name, expression.span, Access::Read, place);
+                    self.variable(name, expression.span, Access::Read, context);
                 }
             }
             ExpressionKind::Call {
@@ -271,30 +271,30 @@ impl<'a> Checker<'a> {
             } => {
                 self.call(function, arguments.len());
                 for argument in arguments {
-                    self.expression(argument, place);
+                    self.expression(argument, context);
                 }
             }
             ExpressionKind::Unary {
                 operator: _,
                 operand,
-            } => self.expression(operand, place),
+            } => self.expression(operand, context),
             ExpressionKind::Binary {
                 operator: _,
                 left,
                 right,
             } => {
-                self.expression(left, place);
-                self.expression(right, place);
+                self.expression(left, context);
+                self.expression(right, context);
             }
         }
     }
 
     /// A variable read or changed at `span`: it must exist there.
-    fn variable(&mut self, name: &str, span: Span, access: Access, place: Place) {
+    fn variable(&mut self, name: &str, span: Span, access: Access, context: Context) {
         let Some(missing) = self.variables.missing(name) else {
             return;
         };
-        let of_main_program = place.in_function && self.main_variables.contains(name);
+        let of_main_program = context.in_function && self.main_variables.contains(name);
         // The name is copied only now that there is an error to hold it.
         let name = name.to_owned();
         let kind = match missing {

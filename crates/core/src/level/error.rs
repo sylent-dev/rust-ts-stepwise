@@ -1,12 +1,18 @@
-//! The errors of a level file. Unlike those of the language, only the authors of the levels
-//! see them, in the tests: they are codes with their values, and also a sentence in English
-//! (`Display`), without a translation until a level editor exists.
+//! The errors of a level file: what only a file can have wrong, and the errors of what it
+//! describes (a map, a stroke, goals), which belong to the domain and are wrapped here. Unlike
+//! those of the language, only the authors of the levels see them, in the tests: they are
+//! codes with their values, and also a sentence in English (`Display`), written here for them
+//! all, without a translation until a level editor exists.
 
 use std::fmt;
 
 use crate::world::{BuildError, MAX_COLUMNS, MAX_ROWS, Point};
 
-use super::{FLOOR, FORMAT_VERSION, MAX_MAPS, WALL};
+use super::MAX_MAPS;
+use super::build::{FLOOR, WALL};
+use super::file::FORMAT_VERSION;
+use super::goals::GoalsError;
+use super::stroke::StrokeError;
 
 /// Why a level file can't be read.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -37,7 +43,7 @@ pub enum LevelErrorKind {
     /// Not valid TOML, or a field missing, unknown or of the wrong type, as the TOML reader
     /// says it, with its line and column.
     Syntax(String),
-    /// Another version than [`FORMAT_VERSION`].
+    /// Another version of the format than the one this core reads.
     Version(u32),
     /// No map, or more than [`MAX_MAPS`].
     MapCount(usize),
@@ -50,44 +56,36 @@ pub enum LevelErrorKind {
         /// The number of cells of the first row.
         expected: usize,
     },
-    /// A character of the terrain that is neither [`WALL`] nor [`FLOOR`].
+    /// A character of the terrain that is neither a wall nor a floor cell.
     UnknownCharacter {
         /// Its cell.
         at: Point,
         /// The character.
         character: char,
     },
+    /// The same cell twice in the items of a map.
+    DuplicateItem(Point),
+    /// Goals in the map of the sandbox, which has none.
+    GoalsInSandbox,
     /// The map can't be built: its size, or an item, a paint or the robot on a wall or
     /// outside it.
     Map(BuildError),
-    /// Two items on the same cell.
-    DuplicateItem(Point),
-    /// A stroke without any cell.
-    EmptyPath,
-    /// Two cells that follow each other in the path of a stroke, while they aren't next to
-    /// each other.
-    NotNeighbors(Point, Point),
-    /// A goal on a wall or outside the map: only [`BuildError::OnWall`] and
-    /// [`BuildError::OutsideMap`].
-    Goal(BuildError),
-    /// A cell that two strokes of the goals want in two different colors.
-    ConflictingPaintGoal(Point),
-    /// The same cell twice in the cells where an item should lie.
-    DuplicateItemGoal(Point),
-    /// A map of a level without any goal: an empty program would pass it.
-    NoGoal,
-    /// A map whose goals are all met before the program runs: an empty program would pass it.
-    GoalsMetAtStart,
-    /// More items needed by the goals (on their cells, and carried) than the map has (on its
-    /// cells, and carried by the robot).
-    NotEnoughItems {
-        /// The items the goals need.
-        needed: usize,
-        /// The items of the map.
-        available: usize,
-    },
-    /// Goals in the map of the sandbox, which has none.
-    GoalsInSandbox,
+    /// A stroke, of a map or of its goals, can't be.
+    Stroke(StrokeError),
+    /// The goals can't be those of their map.
+    Goals(GoalsError),
+}
+
+impl From<StrokeError> for LevelErrorKind {
+    fn from(error: StrokeError) -> Self {
+        Self::Stroke(error)
+    }
+}
+
+impl From<GoalsError> for LevelErrorKind {
+    fn from(error: GoalsError) -> Self {
+        Self::Goals(error)
+    }
 }
 
 impl std::error::Error for LevelError {}
@@ -126,29 +124,11 @@ impl fmt::Display for LevelErrorKind {
                 "{} in the terrain is {character:?}, neither a wall `{WALL}` nor a floor `{FLOOR}`",
                 cell(*at)
             ),
-            Self::Map(error) => write_build_error(f, *error),
             Self::DuplicateItem(at) => write!(f, "two items on {}", cell(*at)),
-            Self::EmptyPath => write!(f, "a stroke has an empty path"),
-            Self::NotNeighbors(from, to) => {
-                write_build_error(f, BuildError::NotNeighbors(*from, *to))
-            }
-            Self::Goal(error) => {
-                write!(f, "a goal: ")?;
-                write_build_error(f, *error)
-            }
-            Self::ConflictingPaintGoal(at) => {
-                write!(f, "the goals paint {} in two different colors", cell(*at))
-            }
-            Self::DuplicateItemGoal(at) => {
-                write!(f, "the goals want an item on {} twice", cell(*at))
-            }
-            Self::NoGoal => write!(f, "the map has no goal"),
-            Self::GoalsMetAtStart => write!(f, "the goals are all met before the program runs"),
-            Self::NotEnoughItems { needed, available } => write!(
-                f,
-                "the goals need {needed} items, while the map has {available}"
-            ),
             Self::GoalsInSandbox => write!(f, "the map of the sandbox has goals"),
+            Self::Map(error) => write_build_error(f, *error),
+            Self::Stroke(error) => write_stroke_error(f, *error),
+            Self::Goals(error) => write_goals_error(f, *error),
         }
     }
 }
@@ -160,17 +140,63 @@ fn write_build_error(f: &mut fmt::Formatter<'_>, error: BuildError) -> fmt::Resu
             "the terrain is {width} × {height}, while a map has from 1 × 1 to \
              {MAX_COLUMNS} × {MAX_ROWS} cells"
         ),
-        BuildError::OutsideMap(at) => write!(f, "{} is outside the map", cell(at)),
-        BuildError::OnWall(at) => write!(f, "{} is a wall", cell(at)),
+        BuildError::OutsideMap(at) => write_outside_map(f, at),
+        BuildError::OnWall(at) => write_on_wall(f, at),
         BuildError::NotEmpty(at) => write!(f, "{} already has a paint or an item", cell(at)),
-        BuildError::NotNeighbors(from, to) => write!(
-            f,
-            "{} and {} follow each other in a path, while they aren't next to each other",
-            cell(from),
-            cell(to)
-        ),
+        BuildError::NotNeighbors(from, to) => write_not_neighbors(f, from, to),
         BuildError::Unpainted(at) => write!(f, "{} has no paint", cell(at)),
     }
+}
+
+fn write_stroke_error(f: &mut fmt::Formatter<'_>, error: StrokeError) -> fmt::Result {
+    match error {
+        StrokeError::EmptyPath => write!(f, "a stroke has an empty path"),
+        StrokeError::NotNeighbors(from, to) => write_not_neighbors(f, from, to),
+    }
+}
+
+fn write_goals_error(f: &mut fmt::Formatter<'_>, error: GoalsError) -> fmt::Result {
+    match error {
+        GoalsError::OutsideMap(at) => {
+            write!(f, "a goal: ")?;
+            write_outside_map(f, at)
+        }
+        GoalsError::OnWall(at) => {
+            write!(f, "a goal: ")?;
+            write_on_wall(f, at)
+        }
+        GoalsError::ConflictingPaint(at) => {
+            write!(f, "the goals paint {} in two different colors", cell(at))
+        }
+        GoalsError::DuplicateItem(at) => {
+            write!(f, "the goals want an item on {} twice", cell(at))
+        }
+        GoalsError::NoGoal => write!(f, "the map has no goal"),
+        GoalsError::MetAtStart => write!(f, "the goals are all met before the program runs"),
+        GoalsError::NotEnoughItems { needed, available } => write!(
+            f,
+            "the goals need {needed} items, while the map has {available}"
+        ),
+    }
+}
+
+// The sentences that a map, a stroke and goals share: each says the same thing of a cell.
+
+fn write_outside_map(f: &mut fmt::Formatter<'_>, at: Point) -> fmt::Result {
+    write!(f, "{} is outside the map", cell(at))
+}
+
+fn write_on_wall(f: &mut fmt::Formatter<'_>, at: Point) -> fmt::Result {
+    write!(f, "{} is a wall", cell(at))
+}
+
+fn write_not_neighbors(f: &mut fmt::Formatter<'_>, from: Point, to: Point) -> fmt::Result {
+    write!(
+        f,
+        "{} and {} follow each other in a path, while they aren't next to each other",
+        cell(from),
+        cell(to)
+    )
 }
 
 /// A cell as the file writes it.
