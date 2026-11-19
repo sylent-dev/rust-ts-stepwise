@@ -299,6 +299,8 @@ export class Playback {
 		if (this.#run.line !== undefined) return;
 		this.#showLine();
 		this.#showEnd(undefined);
+		// Ended, it no longer runs, from this frame on.
+		this.running = false;
 	}
 
 	/**

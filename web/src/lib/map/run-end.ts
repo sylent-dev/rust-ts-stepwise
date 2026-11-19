@@ -37,13 +37,13 @@ export function missedCells(outcome: Outcome | undefined): Point[] {
 }
 
 /** The share of the end of a run that the flags take to be planted, after the shake of the head. */
-const FLAGS_SHARE = 0.35;
+const PLANTING_SHARE = 0.35;
 
 /**
  * The share of the end of a run that a flag takes at least to be planted, 150 ms, so that its
  * bounce shows: many flags then start before the one before them has ended, in a wave.
  */
-const FLAG_SHARE = 1 / 6;
+const MIN_FLAG_SHARE = 1 / 6;
 
 /**
  * The size of the flag `index` of `count`, from 0 to 1 and a little more as it bounces: once the
@@ -57,9 +57,9 @@ export function flagSize(
 	count: number
 ): number {
 	if (motion?.action !== 'goals-not-met' || motion.lessMotion === true) return 1;
-	const own = Math.max(FLAGS_SHARE / count, FLAG_SHARE);
-	const apart = count > 1 ? (FLAGS_SHARE - own) / (count - 1) : 0;
-	return overshoot(clamp01((t - HEAD_SHAKE_SHARE - index * apart) / own));
+	const each = Math.max(PLANTING_SHARE / count, MIN_FLAG_SHARE);
+	const stagger = count > 1 ? (PLANTING_SHARE - each) / (count - 1) : 0;
+	return overshoot(clamp01((t - HEAD_SHAKE_SHARE - index * stagger) / each));
 }
 
 /** The foot of the pole of a flag, in the units of its drawing, where it is planted from. */

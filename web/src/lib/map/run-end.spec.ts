@@ -84,6 +84,22 @@ describe('flagSize', () => {
 		expect(size(0.95, count - 1)).toBeCloseTo(1, 9);
 	});
 
+	it.each([1, 2, 3, 12, 40])(
+		'plants %i flags after the head has shaken, each in 150 ms at least, all by 95 %%',
+		(count) => {
+			const indexes = Array.from({ length: count }, (_, index) => index);
+			const size = (t: number, index: number) => flagSize(notMet, t, index, count);
+			expect(indexes.map((index) => size(0.6, index))).toEqual(indexes.map(() => 0));
+			for (const index of indexes) expect(size(0.95, index)).toBeCloseTo(1, 9);
+			expect(indexes.map((index) => size(1, index))).toEqual(indexes.map(() => 1));
+			// The first flag, as each one, takes 150 ms of the 900 of the end at least.
+			expect(size(0.6 + 1 / 6 - 0.01, 0)).toBeLessThan(1.06);
+			expect(size(0.6 + 1 / 6 - 0.01, 0)).not.toBe(1);
+			// From three flags, the next one starts before the one before it has ended.
+			if (count >= 3) expect(size(0.6 + 1 / 6 - 0.01, 1)).toBeGreaterThan(0);
+		}
+	);
+
 	it('shows every flag at rest, during another action, and with less motion', () => {
 		expect(flagSize(undefined, 0, 2, 3)).toBe(1);
 		expect(flagSize({ ...notMet, action: 'passed' }, 0, 2, 3)).toBe(1);

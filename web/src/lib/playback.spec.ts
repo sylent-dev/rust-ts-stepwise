@@ -544,12 +544,12 @@ describe('the end of a run', () => {
 			motion: playback.motion
 		}).toEqual({ status: 'ready', outcome: undefined, motion: undefined });
 		playback.play();
-		expect({ action: playback.motion?.action, type: playback.outcome?.type }).toEqual({
-			action: 'goals-not-met',
-			type: 'goals-not-met'
-		});
+		expect({
+			action: playback.motion?.action,
+			type: playback.outcome?.type,
+			status: playback.status
+		}).toEqual({ action: 'goals-not-met', type: 'goals-not-met', status: 'ended' });
 		expect(playback.tick(0)).toBe(true);
-		expect(playback.status).toBe('ended');
 		expect(playback.tick(900)).toBe(false);
 		// Reset puts the map back, and the program waits for Run again, its end not played.
 		playback.reset();
@@ -560,6 +560,31 @@ describe('the end of a run', () => {
 		}).toEqual({ status: 'ready', outcome: undefined, motion: undefined });
 		playback.step();
 		expect(playback.motion?.action).toBe('goals-not-met');
+	});
+
+	it('shows the end of a program without a step at once at Instant', () => {
+		using playback = playLevel('# Nothing to run\n');
+		playback.rate = Infinity;
+		playback.play();
+		expect({
+			motion: playback.motion,
+			type: playback.outcome?.type,
+			status: playback.status
+		}).toEqual({ motion: undefined, type: 'goals-not-met', status: 'ended' });
+		expect(playback.tick(0)).toBe(false);
+	});
+
+	it('plays the end of a program without a step again on another Run', () => {
+		using playback = playLevel('# Nothing to run\n');
+		playback.play();
+		playback.tick(0);
+		playback.tick(900);
+		expect(playback.motion).toBeUndefined();
+		playback.play();
+		expect({ action: playback.motion?.action, status: playback.status }).toEqual({
+			action: 'goals-not-met',
+			status: 'ended'
+		});
 	});
 
 	it('plays nothing in the sandbox, which has no goal', () => {
