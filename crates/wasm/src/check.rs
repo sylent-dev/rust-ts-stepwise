@@ -13,6 +13,7 @@ use wasm_bindgen::prelude::wasm_bindgen;
 
 use crate::count;
 use crate::position::{Offsets, Span};
+use crate::word;
 
 /// Checks a program before it runs, as the learner types and again when **Run** is pressed.
 ///
@@ -71,8 +72,9 @@ pub struct ProgramError {
 ///
 /// Each variant is the error of the same name in the core, where it is described: those of
 /// `LexErrorKind`, of `ParseErrorKind`, then of `CheckErrorKind`. No name is in two of them.
-/// The words of the language (a keyword, a built-in function, a color) are given as they are
-/// written, a place kept in an error as the place of the error itself, and a limit of the
+/// The words of the language are given as they are written: a keyword and a word of another
+/// language by their type (`word.rs`), which a table of the interface is keyed by. A place
+/// kept in an error is given as the place of the error itself, and a limit of the
 /// language with the error that it stops, so that no message repeats a number of the core:
 /// the two depths as numbers, the largest number of a program as its digits (see `Value`).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Tsify)]
@@ -102,7 +104,7 @@ pub enum ProgramErrorKind {
     },
     SymbolForKeyword {
         symbol: String,
-        keyword: String,
+        keyword: word::Keyword,
     },
     UnexpectedCharacter {
         character: char,
@@ -118,11 +120,11 @@ pub enum ProgramErrorKind {
     AssignInExpression,
     ChainedComparison,
     ForeignWord {
-        word: String,
+        word: word::ForeignWord,
     },
     ExpectedName,
     KeywordAsName {
-        keyword: String,
+        keyword: word::Keyword,
     },
     ExpectedEqual,
     UnexpectedIndent,
@@ -237,7 +239,7 @@ impl ProgramErrorKind {
             K::NameStartsWithDigit { word } => Self::NameStartsWithDigit { word },
             K::SymbolForKeyword { symbol, keyword } => Self::SymbolForKeyword {
                 symbol: symbol.to_owned(),
-                keyword: keyword.as_str().to_owned(),
+                keyword: keyword.into(),
             },
             K::UnexpectedCharacter { character } => Self::UnexpectedCharacter { character },
         }
@@ -254,12 +256,10 @@ impl ProgramErrorKind {
             K::UnmatchedParen => Self::UnmatchedParen,
             K::AssignInExpression => Self::AssignInExpression,
             K::ChainedComparison => Self::ChainedComparison,
-            K::ForeignWord { word } => Self::ForeignWord {
-                word: word.as_str().to_owned(),
-            },
+            K::ForeignWord { word } => Self::ForeignWord { word: word.into() },
             K::ExpectedName => Self::ExpectedName,
             K::KeywordAsName { keyword } => Self::KeywordAsName {
-                keyword: keyword.as_str().to_owned(),
+                keyword: keyword.into(),
             },
             K::ExpectedEqual => Self::ExpectedEqual,
             K::UnexpectedIndent => Self::UnexpectedIndent,
@@ -351,6 +351,7 @@ mod tests {
 
     use super::{ProgramError, ProgramErrorKind as Kind, ReservedKind, errors};
     use crate::position::{Offsets, Span};
+    use crate::word;
 
     const fn at(line: u32, from: u32, to: u32) -> Span {
         Span { line, from, to }
@@ -388,7 +389,7 @@ mod tests {
         };
         let symbol = Kind::SymbolForKeyword {
             symbol: "&&".to_owned(),
-            keyword: "and".to_owned(),
+            keyword: word::Keyword::And,
         };
         let digit = Kind::NameStartsWithDigit {
             word: "2nd".to_owned(),
@@ -418,10 +419,10 @@ mod tests {
     #[test]
     fn an_error_of_the_parser_keeps_its_values() {
         let keyword = Kind::KeywordAsName {
-            keyword: "repeat".to_owned(),
+            keyword: word::Keyword::Repeat,
         };
         let foreign = Kind::ForeignWord {
-            word: "elif".to_owned(),
+            word: word::ForeignWord::Elif,
         };
         for (source, expected) in [
             ("let repeat = 3\n", error(1, 4, 10, keyword)),

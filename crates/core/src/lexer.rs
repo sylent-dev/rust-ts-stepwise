@@ -1,4 +1,5 @@
-//! The lexer: turns the source of a program into the tokens the parser reads.
+//! The lexer: turns the source of a program into the tokens the parser reads, and says what
+//! each stretch of a line is, for the editor to color it ([`classify_line`]).
 //!
 //! It reads the source line by line, since a statement never spans two lines (see *Lines and
 //! indentation* in `specs.md`):
@@ -6,27 +7,34 @@
 //! - an empty line or a comment line is skipped, whatever its indentation, tabs and other
 //!   blank characters included; the place of each comment line is kept aside, for the parser
 //!   to tell a block that holds only comments from an empty one;
-//! - the indentation of any other line, in spaces only, opens a block with
-//!   [`TokenKind::Indent`] when it is four spaces more than the line above, or closes blocks
-//!   with one [`TokenKind::Dedent`] each when it goes back to an enclosing line; any other
-//!   indentation is an error;
-//! - the tokens of the line follow, up to its end or a `#`, then a [`TokenKind::Newline`].
+//! - the indentation of any other line, in spaces only, opens a block with an `Indent` token
+//!   when it is four spaces more than the line above, or closes blocks with one `Dedent`
+//!   each when it goes back to an enclosing line; any other indentation is an error;
+//! - the tokens of the line follow, up to its end or a `#`, then a `Newline`.
 //!
-//! The source ends with a [`TokenKind::Dedent`] per block still open, then [`TokenKind::End`].
+//! The source ends with a `Dedent` per block still open, then `End`.
 //!
 //! Whether an indented line follows a `:`, and whether a `:` is followed by an indented line,
 //! is left to the parser: it can then say that the `:` is missing on the line above, rather
 //! than that the next line is indented. The lexer stops at the first error, as the parser
 //! does, since what follows can't be read reliably.
+//!
+//! The tokens stay in the core: outside it, a source is checked whole
+//! ([`check`](crate::program::check)). The colors of the editor can't wait for a source
+//! without error, so [`classify_line`] reads one line with the same cursor and goes on after
+//! what is wrong (`classify.rs`).
 
+mod classify;
 mod error;
 mod token;
 
 #[cfg(test)]
 mod tests;
 
+pub use classify::{Stretch, StretchKind, classify_line};
 pub use error::{LexError, LexErrorKind};
-pub use token::{Keyword, Token, TokenKind};
+pub use token::Keyword;
+pub(crate) use token::{Token, TokenKind};
 
 use std::iter::Peekable;
 use std::str::Chars;
@@ -42,7 +50,7 @@ pub const MAX_NUMBER: i64 = i64::MAX;
 
 /// What the lexer reads in a source.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Lexed {
+pub(crate) struct Lexed {
     /// The tokens, ending with [`TokenKind::End`].
     pub tokens: Vec<Token>,
     /// The comment of each line that holds only a comment, from its `#` to its last
@@ -59,7 +67,7 @@ pub struct Lexed {
 /// The first error of the source: a tab, a wrong indentation, a text not closed or with an
 /// unknown escape, a number too large, a word that starts with a digit, or a character that
 /// has no meaning outside a text or a comment.
-pub fn tokenize(source: &str) -> Result<Lexed, LexError> {
+pub(crate) fn tokenize(source: &str) -> Result<Lexed, LexError> {
     let mut lexer = Lexer {
         tokens: Vec::new(),
         comments: Vec::new(),
@@ -245,41 +253,51 @@ impl<'a> Cursor<'a> {
 
     /// The next token of the line, or `None` at its end or at a comment.
     fn token(&mut self) -> Result<Option<Token>, LexError> {
+        match self.piece() {
+            None | Some((Piece::Comment, _)) => Ok(None),
+            Some((Piece::Token(kind), span)) => Ok(Some(Token { kind, span })),
+            Some((Piece::Refused(error), _)) => Err(error),
+        }
+    }
+
+    /// The next piece of the line with the stretch it takes, or `None` at the end of the
+    /// line. Each piece is read whole, whatever is wrong in it, so that the reading can go
+    /// on after it: [`classify_line`] reads a line that way, to its end.
+    fn piece(&mut self) -> Option<(Piece, Span)> {
         while self.eat(' ') {}
         let start = self.position();
-        let Some(character) = self.bump() else {
-            return Ok(None);
-        };
-        let kind = match character {
-            '#' => return Ok(None),
-            '(' => TokenKind::LeftParen,
-            ')' => TokenKind::RightParen,
-            ',' => TokenKind::Comma,
-            ':' => TokenKind::Colon,
-            '+' => TokenKind::Plus,
-            '-' => TokenKind::Minus,
-            '*' => TokenKind::Star,
-            '/' => TokenKind::Slash,
-            '%' => TokenKind::Percent,
-            '=' if self.eat('=') => TokenKind::EqualEqual,
-            '=' => TokenKind::Equal,
-            '!' if self.eat('=') => TokenKind::NotEqual,
-            '<' if self.eat('=') => TokenKind::LessEqual,
-            '<' => TokenKind::Less,
-            '>' if self.eat('=') => TokenKind::GreaterEqual,
-            '>' => TokenKind::Greater,
-            '"' => self.text(start)?,
-            '0'..='9' => self.number(character, start)?,
-            _ if is_word(character) => keyword_or_name(self.word(character)),
+        let character = self.bump()?;
+        let token = match character {
+            '#' => {
+                while self.bump().is_some() {}
+                return Some((Piece::Comment, Span::new(start, self.position())));
+            }
+            '(' => Ok(TokenKind::LeftParen),
+            ')' => Ok(TokenKind::RightParen),
+            ',' => Ok(TokenKind::Comma),
+            ':' => Ok(TokenKind::Colon),
+            '+' => Ok(TokenKind::Plus),
+            '-' => Ok(TokenKind::Minus),
+            '*' => Ok(TokenKind::Star),
+            '/' => Ok(TokenKind::Slash),
+            '%' => Ok(TokenKind::Percent),
+            '=' if self.eat('=') => Ok(TokenKind::EqualEqual),
+            '=' => Ok(TokenKind::Equal),
+            '!' if self.eat('=') => Ok(TokenKind::NotEqual),
+            '<' if self.eat('=') => Ok(TokenKind::LessEqual),
+            '<' => Ok(TokenKind::Less),
+            '>' if self.eat('=') => Ok(TokenKind::GreaterEqual),
+            '>' => Ok(TokenKind::Greater),
+            '"' => self.text(start),
+            '0'..='9' => self.number(character, start),
+            _ if is_word(character) => Ok(keyword_or_name(self.word(character))),
             _ => {
                 let kind = self.unexpected(character);
-                return Err(self.error(kind, start));
+                Err(self.error(kind, start))
             }
         };
-        Ok(Some(Token {
-            kind,
-            span: Span::new(start, self.position()),
-        }))
+        let piece = token.map_or_else(Piece::Refused, Piece::Token);
+        Some((piece, Span::new(start, self.position())))
     }
 
     /// The error for `character`, just read, which starts no token. A symbol of another
@@ -318,29 +336,41 @@ impl<'a> Cursor<'a> {
             .map_err(|_| self.error(LexErrorKind::NumberTooLarge, start))
     }
 
-    /// The text whose opening `"`, already read, is at `start`.
+    /// The text whose opening `"`, already read, is at `start`. It is read to its closing
+    /// `"`, or to the end of the line, and the error is the first thing wrong in it.
     fn text(&mut self, start: Position) -> Result<TokenKind, LexError> {
         let mut text = String::new();
+        let mut refused = None;
         loop {
             let escape = self.position();
             match self.bump() {
-                Some('"') => return Ok(TokenKind::Text(text)),
+                Some('"') => return refused.map_or(Ok(TokenKind::Text(text)), Err),
                 Some('\\') => match self.bump() {
                     Some('"') => text.push('"'),
                     Some('\\') => text.push('\\'),
                     Some('n') => text.push('\n'),
                     Some(character) => {
-                        return Err(
-                            self.error(LexErrorKind::UnknownEscape { escape: character }, escape)
-                        );
+                        let kind = LexErrorKind::UnknownEscape { escape: character };
+                        refused = refused.or_else(|| Some(self.error(kind, escape)));
                     }
-                    None => return Err(self.error(LexErrorKind::UnclosedText, start)),
+                    None => break,
                 },
                 Some(character) => text.push(character),
-                None => return Err(self.error(LexErrorKind::UnclosedText, start)),
+                None => break,
             }
         }
+        Err(refused.unwrap_or_else(|| self.error(LexErrorKind::UnclosedText, start)))
     }
+}
+
+/// What a [`Cursor`] reads at a place of a line.
+enum Piece {
+    /// A token.
+    Token(TokenKind),
+    /// A comment, from its `#` to the end of the line.
+    Comment,
+    /// Characters that make no token, with the first thing wrong in them.
+    Refused(LexError),
 }
 
 /// Whether `character` can be part of a name: a letter, a digit or an underscore, in any

@@ -21,7 +21,7 @@
     )
 )]
 
-pub mod ast;
+mod ast;
 pub mod builtin;
 pub mod checker;
 pub mod color;

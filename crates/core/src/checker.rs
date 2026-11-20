@@ -23,7 +23,7 @@ use scope::{Missing, Variables, main_program_variables};
 
 /// Every error of names and of structure of `program`, in the order of the source.
 #[must_use]
-pub fn check(program: &Program) -> Vec<CheckError> {
+pub(crate) fn check(program: &Program) -> Vec<CheckError> {
     let mut checker = Checker {
         main_variables: main_program_variables(&program.statements),
         functions: Functions::of(&program.statements),

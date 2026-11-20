@@ -28,6 +28,7 @@ mod value;
 #[cfg(test)]
 mod tests;
 
+pub use crate::ast::{BinaryOperator, UnaryOperator};
 pub use error::{RuntimeError, RuntimeErrorKind};
 pub use event::{Action, Event};
 pub use machine::{Machine, State};

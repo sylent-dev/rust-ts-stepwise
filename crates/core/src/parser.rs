@@ -49,7 +49,7 @@ pub const MAX_DEPTH: u32 = 200;
 /// # Errors
 ///
 /// The first syntax error of the source, from the lexer or from the parser.
-pub fn parse(source: &str) -> Result<Program, SyntaxError> {
+pub(crate) fn parse(source: &str) -> Result<Program, SyntaxError> {
     let lexed = tokenize(source)?;
     Ok(Parser::new(lexed).program()?)
 }

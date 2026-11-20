@@ -118,7 +118,8 @@ impl Offsets {
 
 #[cfg(test)]
 mod tests {
-    use stepwise_core::lexer::{TokenKind, tokenize};
+    use stepwise_core::checker::CheckErrorKind;
+    use stepwise_core::program::{Refused, check};
     use stepwise_core::span::{self, Position};
 
     use super::{Offsets, Span};
@@ -254,19 +255,24 @@ mod tests {
     }
 
     /// The lines are cut here as the lexer cuts them, a rule written in both crates: the
-    /// positions of this test come from the lexer itself.
+    /// positions of this test come from the core itself, which gives one error for each name
+    /// that the program doesn't know.
     #[test]
-    fn every_name_the_lexer_reads_is_cut_where_it_is_written() {
-        let source = "let côté = \"🤖\"\r\nif côté:\r\n    print(côté, sidse)\n# 🤖\nforward()";
+    fn every_name_the_core_reads_is_cut_where_it_is_written() {
+        let source = "print(côté, \"🤖\")\r\nif sidse:\r\n    print(côté, sidse)\n# 🤖\nprint(nom)";
         let offsets = Offsets::new(source);
+        let Err(Refused::Check(errors)) = check(source) else {
+            panic!("the names of {source:?} are unknown");
+        };
         let mut names = Vec::new();
-        for token in tokenize(source).unwrap().tokens {
-            if let TokenKind::Name(name) = token.kind {
-                assert_eq!(cut(source, offsets.span(token.span)), name);
-                names.push(name);
-            }
+        for error in errors {
+            let CheckErrorKind::UnknownName { name } = error.kind else {
+                panic!("{error:?} is no unknown name");
+            };
+            assert_eq!(cut(source, offsets.span(error.span)), name);
+            names.push(name);
         }
-        assert_eq!(names, ["côté", "côté", "print", "côté", "sidse", "forward"]);
+        assert_eq!(names, ["côté", "sidse", "côté", "sidse", "nom"]);
     }
 
     #[test]
