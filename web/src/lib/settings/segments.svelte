@@ -24,7 +24,7 @@
 	const group = $props.id();
 
 	/** The box of each segment as the browser lays it out, given again each time it changes. */
-	let boxes: (ResizeObserverSize[] | undefined)[] = $state([]);
+	const boxes: (ResizeObserverSize[] | undefined)[] = $state([]);
 
 	/** Where the fill stands: under the segment of the value chosen, once it is measured. */
 	const fill = $derived(

@@ -49,6 +49,8 @@ npm run check    # svelte-check: TypeScript and Svelte
 npm test         # Vitest
 ```
 
+ESLint reads the types of the module generated from the core. On a copy just cloned, an editor shows its errors in every file that reads the core until `npm run wasm` has run once, or `npm run lint`, `npm run check` or `npm test`, which run it first.
+
 ## Deployment
 
 Stepwise is a static website, published on GitHub Pages at <https://stepwise.sylent.tools/> at each merge into `main` (see [GitHub Pages usage](docs/github-pages-usage.md)). A version tag, such as `v0.1.0`, names a version: it matches `version` in `[workspace.package]` of `Cargo.toml`.

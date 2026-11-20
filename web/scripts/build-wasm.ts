@@ -59,8 +59,18 @@ function toolVersion(): string | undefined {
 
 /** The folder where Cargo writes its builds, which `CARGO_TARGET_DIR` can move. */
 function targetDirectory(): string {
-	const metadata = read('cargo', ['metadata', '--format-version', '1', '--no-deps']);
-	return (JSON.parse(metadata) as { target_directory: string }).target_directory;
+	const metadata: unknown = JSON.parse(
+		read('cargo', ['metadata', '--format-version', '1', '--no-deps'])
+	);
+	if (
+		typeof metadata === 'object' &&
+		metadata !== null &&
+		'target_directory' in metadata &&
+		typeof metadata.target_directory === 'string'
+	) {
+		return metadata.target_directory;
+	}
+	return fail('`cargo metadata` names no `target_directory`.');
 }
 
 const expected = crateVersion();

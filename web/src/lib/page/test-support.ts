@@ -1,5 +1,10 @@
 // What the tests of the page itself (`src/app.html`) share. Used by the tests alone.
 
+/** The scripts written in the page itself, in their order. */
+export function pageScripts(page: string): string[] {
+	return [...page.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((match) => match[1] ?? '');
+}
+
 /**
  * Runs a script written in the page itself, in a browser made for a test. The script names
  * `localStorage`, `document` and the like as a page does: they are looked up in `browser` first,

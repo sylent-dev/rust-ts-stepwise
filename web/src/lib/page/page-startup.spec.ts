@@ -4,13 +4,10 @@
 
 import { describe, expect, it } from 'vitest';
 import page from '../../app.html?raw';
-import { runPageScript } from './test-support.ts';
+import { pageScripts, runPageScript } from './test-support.ts';
 
 /** The scripts written in the page itself; this one hands `stepwisePage` to the application. */
-const script =
-	[...page.matchAll(/<script>([\s\S]*?)<\/script>/g)]
-		.map((match) => match[1] ?? '')
-		.find((text) => text.includes('stepwisePage')) ?? '';
+const script = pageScripts(page).find((text) => text.includes('stepwisePage')) ?? '';
 
 /** An element of the page, as much of it as the script uses. */
 function element() {

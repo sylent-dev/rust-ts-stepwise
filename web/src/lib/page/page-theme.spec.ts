@@ -8,13 +8,13 @@ import { THEMES } from '#lib/settings/settings.ts';
 import { openStore, type Backend } from '#lib/storage/store.ts';
 import { memoryBackend } from '#lib/storage/test-support.ts';
 import page from '../../app.html?raw';
-import { runPageScript } from './test-support.ts';
+import { pageScripts, runPageScript } from './test-support.ts';
 
 /** The theme the page is written with: the one it keeps when the script changes nothing. */
 const WRITTEN = /<html[^>]* data-theme="([^"]+)"/.exec(page)?.[1];
 
 /** The scripts written in the page itself. */
-const scripts = [...page.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((match) => match[1]);
+const scripts = pageScripts(page);
 
 /** A storage in memory that holds `value` as the settings. */
 function storageWith(value?: string): Backend {

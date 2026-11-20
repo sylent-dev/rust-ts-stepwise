@@ -1,3 +1,4 @@
+import comments from '@eslint-community/eslint-plugin-eslint-comments';
 import prettier from 'eslint-config-prettier';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -120,6 +121,7 @@ export default defineConfig(
 	{
 		// A comment that turns a rule off for nothing is removed with what it excused.
 		linterOptions: { reportUnusedDisableDirectives: 'error' },
+		plugins: { '@eslint-community/eslint-comments': comments },
 		languageOptions: {
 			globals: { ...globals.browser, ...globals.node },
 			parserOptions: {
@@ -146,24 +148,55 @@ export default defineConfig(
 					allowRegExp: false
 				}
 			],
-			// A function of one line may call one that gives nothing (`onclick={() => menu.close()}`):
-			// nothing is taken for a value there. The narrower option, which lets through only a
-			// callback typed as giving nothing, doesn't see the handlers written in the markup of a
-			// component, whose types ESLint doesn't read.
-			'@typescript-eslint/no-confusing-void-expression': ['error', { ignoreArrowShorthand: true }],
+			// A callback typed as giving nothing may call, in one line, a function that gives nothing
+			// (`vi.fn(() => menu.close())`): nothing is taken for a value there.
+			'@typescript-eslint/no-confusing-void-expression': [
+				'error',
+				{ ignoreVoidReturningFunctions: true }
+			],
 			// In no set of typescript-eslint. A `switch` without `default` names every value: a new
 			// event or a new code of an error of the core must then be placed. A `default` says
-			// that the others are handled alike, as `_` does in a `match` of the core.
+			// that the others are handled alike, as `_` does in a `match` of the core; one that
+			// stands for no value is refused, since it would take the next value without a word.
 			'@typescript-eslint/switch-exhaustiveness-check': [
 				'error',
-				{ considerDefaultExhaustiveForUnions: true, requireDefaultForNonUnion: true }
-			]
+				{
+					considerDefaultExhaustiveForUnions: true,
+					requireDefaultForNonUnion: true,
+					allowDefaultCaseForExhaustiveSwitch: false
+				}
+			],
+			// The rules below are in no set either, and the code followed them already.
+			// An `as` checks nothing: what comes from outside (`localStorage`, a file) is checked
+			// before it is given a type, never said to be of one.
+			'@typescript-eslint/no-unsafe-type-assertion': 'error',
+			// Without a function to compare, `sort` orders numbers as texts: 1, 10, 9.
+			'@typescript-eslint/require-array-sort-compare': 'error',
+			// `==` converts before it compares; `== null`, for `null` or `undefined`, stays.
+			eqeqeq: ['error', 'always', { null: 'ignore' }],
+			// An exception to a rule is one line and its reason: `eslint-disable-next-line <rule> --
+			// <reason>`, never a rule turned off for a file or for the lines that follow. The same
+			// in the markup of a component, held with `no-restricted-syntax` below.
+			'@eslint-community/eslint-comments/require-description': 'error',
+			'@eslint-community/eslint-comments/no-use': ['error', { allow: ['eslint-disable-next-line'] }]
+		}
+	},
+	{
+		files: ['**/*.svelte'],
+		rules: {
+			// typescript-eslint turns `no-var` and `prefer-const` on for the `.ts` files alone; the
+			// rule of Svelte knows the runes (`let { title } = $props()`).
+			'no-var': 'error',
+			'svelte/prefer-const': 'error',
+			// The handlers written in the markup (`onclick={() => menu.close()}`) reach ESLint
+			// untyped: the option above doesn't see that they give nothing, hence the wider one.
+			'@typescript-eslint/no-confusing-void-expression': ['error', { ignoreArrowShorthand: true }]
 		}
 	},
 	{
 		// A test replaces a function by one that does nothing (a spy, a callback left unused).
 		files: ['**/*.spec.ts', '**/test-support.ts'],
-		rules: { '@typescript-eslint/no-empty-function': 'off' }
+		rules: { '@typescript-eslint/no-empty-function': ['error', { allow: ['arrowFunctions'] }] }
 	},
 	// The last entry that names a file gives it its imports refused: each one lists them all.
 	{
@@ -203,6 +236,14 @@ export default defineConfig(
 					selector: 'TSImportType[source.value=/^(#lib|\\.)/]',
 					message:
 						'Write `import type … from`: the layout of `src/lib` is checked on those imports alone.'
+				},
+				// An exception to a rule written in the markup of a component, which the rules of
+				// the comments don't read: one line and its reason there too.
+				{
+					selector:
+						'SvelteHTMLComment[value=/^\\s*eslint-(?!disable-next-line\\s+\\S.*\\s--\\s+\\S)/]',
+					message:
+						'An exception to a rule is one line and its reason: `<!-- eslint-disable-next-line <rule> -- <reason> -->`.'
 				}
 			]
 		}

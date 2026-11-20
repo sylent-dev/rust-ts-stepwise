@@ -93,6 +93,7 @@ describe('a store whose browser refuses to save', () => {
 
 	it('reports a browser without storage', () => {
 		const onRefused = vi.fn();
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- a browser without storage hands `null` where its types promise one
 		const store = openStore(() => null as unknown as Backend, onRefused);
 		expect(onRefused).toHaveBeenCalledOnce();
 		expect(store.read('settings', 1)).toBeUndefined();
