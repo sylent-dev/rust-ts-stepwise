@@ -21,10 +21,12 @@
     )
 )]
 // What the core makes public is what the bridge uses (see Language core in
-// docs/technical-choices.md): an item declared `pub` that nothing outside the crate can reach
-// is written `pub(crate)`, so that the compiler refuses it in a public signature. Outside the
-// tests, whose helpers are public to each other.
-#![cfg_attr(not(test), warn(unreachable_pub))]
+// docs/technical-choices.md). An item declared `pub` that nothing outside the crate can reach
+// is written `pub(crate)`, so that the compiler refuses it in a public signature
+// (`unreachable_pub`); and a `pub` type of a private module that a public signature would
+// still give is refused too, since the bridge couldn't name it (`unnameable_types`). Outside
+// the tests, whose helpers are public to each other.
+#![cfg_attr(not(test), warn(unreachable_pub, unnameable_types))]
 
 mod ast;
 pub mod builtin;

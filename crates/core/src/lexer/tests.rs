@@ -2444,6 +2444,8 @@ mod stretches {
                 (Name, "c"),
             ],
         );
+        // One `\r` is the one of the line break, no more: the lexer refuses the one before.
+        assert_read("a\r\r", &[(Name, "a"), (Invalid, "\r")]);
     }
 
     #[test]
@@ -2462,7 +2464,7 @@ mod stretches {
     }
 
     /// Lines of every kind, right and wrong, to read in any order.
-    const PIECES: [&str; 24] = [
+    const PIECES: [&str; 25] = [
         "let sides = 0",
         "sides = sides + 1",
         "while sides < 4:",
@@ -2487,6 +2489,7 @@ mod stretches {
         "elif\tx != y >= z <= w > v",
         "a.b @ c \\ d",
         "\"\\",
+        "repeat 99999999999999999999:",
     ];
 
     #[test]

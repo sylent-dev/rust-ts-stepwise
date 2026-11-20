@@ -42,8 +42,9 @@ export { type Builtin, type ForeignWord, type Keyword } from '#lib/wasm/stepwise
 /**
  * What each stretch of a line of code is (see crates/wasm/src/stretch.rs), to call once
  * `loadCore` has resolved: a keyword, a function, a number, a text, a color, a comment…, from
- * left to right, the blank characters left out. It is how the code gets its colors: the core
- * reads the line as it reads a program, so no rule of the language is written here.
+ * left to right, the spaces left out, and any blank character before the first stretch. It is
+ * how the code gets its colors: the core reads the line as it reads a program, so no rule of
+ * the language is written here.
  *
  * It takes one line, without its line break, and never fails: a line being typed is wrong most
  * of the time. A statement never spans two lines, so a line is read alone, whatever is around

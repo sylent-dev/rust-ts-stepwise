@@ -10,8 +10,8 @@ use wasm_bindgen::prelude::wasm_bindgen;
 
 use crate::position::Units;
 
-/// What each stretch of a line of code is, from left to right, the blank characters left
-/// out: nothing for an empty line.
+/// What each stretch of a line of code is, from left to right, the spaces left out, and any
+/// blank character before the first stretch: nothing for an empty line.
 ///
 /// `line` is one line, without its line break. It may be wrong in any way, as a line being
 /// typed is: a statement never spans two lines, so each line is read alone, as in its

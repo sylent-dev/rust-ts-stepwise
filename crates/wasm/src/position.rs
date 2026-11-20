@@ -371,8 +371,14 @@ mod tests {
         // Thousands of places on one line: the time must not grow as their square.
         let line = "🤖".repeat(100_000);
         let offsets = Offsets::new(&line);
+        let start = std::time::Instant::now();
         for column in 1..=100_000 {
             assert_eq!(offsets.offset(Position::new(1, column)), (column - 1) * 2);
         }
+        // 0.01 s with the dichotomy, 30 s with a walk of the wide characters before each
+        // place (measured on 2026-11-20, in the profile of the tests): the bound is far from
+        // both.
+        let elapsed = start.elapsed();
+        assert!(elapsed < std::time::Duration::from_secs(5), "{elapsed:?}");
     }
 }
