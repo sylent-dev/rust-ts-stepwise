@@ -5,7 +5,7 @@ use crate::word_enum::word_enum;
 
 /// A token, with the stretch of the source it comes from.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Token {
+pub(crate) struct Token {
     /// What the token is.
     pub kind: TokenKind,
     /// Where it is in the source.
@@ -14,7 +14,7 @@ pub struct Token {
 
 /// What a token is.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum TokenKind {
+pub(crate) enum TokenKind {
     /// A name of a variable, a function, a parameter, a built-in function or a color, as
     /// written: the checker refuses the names that aren't in `snake_case` or are reserved.
     Name(String),

@@ -59,8 +59,8 @@ mod tests {
 
     use crate::builtin::Builtin;
     use crate::color::Color;
+    use crate::foreign_word::ForeignWord;
     use crate::lexer::Keyword;
-    use crate::parser::ForeignWord;
 
     word_enum! {
         /// Two words, for the tests.

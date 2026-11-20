@@ -9,7 +9,7 @@ use crate::span::Span;
 
 /// A whole program: its statements, in the order of the source.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Program {
+pub(crate) struct Program {
     /// The statements of the top level.
     pub statements: Vec<Statement>,
 }
@@ -18,7 +18,7 @@ pub struct Program {
 /// indentation nor a comment at its end. For a statement that opens a block, it is the line
 /// up to its `:`, without the block.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Statement {
+pub(crate) struct Statement {
     /// What the statement is.
     pub kind: StatementKind,
     /// Where it is in the source.
@@ -28,7 +28,7 @@ pub struct Statement {
 impl Statement {
     /// The blocks the statement opens, in the order of the source: those of an `if` and of
     /// its `else if` and `else`, the one of a loop or of a function, none for the others.
-    pub fn blocks(&self) -> impl Iterator<Item = &[Self]> {
+    pub(crate) fn blocks(&self) -> impl Iterator<Item = &[Self]> {
         let (branches, last): (&[Branch], Option<&[Self]>) = match &self.kind {
             StatementKind::If {
                 branches,
@@ -56,7 +56,7 @@ impl Statement {
 
 /// What a statement is.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum StatementKind {
+pub(crate) enum StatementKind {
     /// `let name = value`, which declares a variable.
     Let {
         /// The variable declared.
@@ -118,7 +118,7 @@ pub enum StatementKind {
 
 /// An `if` or an `else if` with its block.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Branch {
+pub(crate) struct Branch {
     /// The condition.
     pub condition: Expression,
     /// The block that runs when the condition is true.
@@ -131,7 +131,7 @@ pub struct Branch {
 /// of a definition, a parameter, a name read in an expression. The checker refuses the new
 /// names that aren't in `snake_case` or are reserved.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Name {
+pub(crate) struct Name {
     /// The name.
     pub text: String,
     /// Where it is in the source.
@@ -140,7 +140,7 @@ pub struct Name {
 
 /// An expression, with the stretch of the source it comes from, its parentheses included.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Expression {
+pub(crate) struct Expression {
     /// What the expression is.
     pub kind: ExpressionKind,
     /// Where it is in the source.
@@ -149,7 +149,7 @@ pub struct Expression {
 
 /// What an expression is.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum ExpressionKind {
+pub(crate) enum ExpressionKind {
     /// A whole number, as written: never negative, since `-7` is a [`UnaryOperator::Negate`].
     Number(i64),
     /// `true` or `false`

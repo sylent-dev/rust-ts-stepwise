@@ -9,6 +9,8 @@
 //! editor when that text is the one of its document, where every line break is one `\n`: the
 //! editor counts one unit for a line break, whatever the text it was given wrote there.
 
+use std::str::Chars;
+
 use serde::Serialize;
 use stepwise_core::span::{self, Position};
 use tsify::Tsify;
@@ -94,11 +96,10 @@ impl Offsets {
         };
         // Each character before the column is one unit, and one more when it is wide.
         let characters = position.column.saturating_sub(1);
+        // The columns are in order: no walk of a line that holds thousands of them.
         let wide = line
             .wide
-            .iter()
-            .take_while(|&&column| column < position.column)
-            .count();
+            .partition_point(|&column| column < position.column);
         line.start
             .saturating_add(characters)
             .saturating_add(u32::try_from(wide).unwrap_or(u32::MAX))
@@ -116,12 +117,52 @@ impl Offsets {
     }
 }
 
+/// The offsets of the columns of one line, asked from left to right: the line is walked
+/// once, whatever it holds. [`Offsets`] is for a source, which it cuts into its lines; a line
+/// read alone is one line by contract, and a line break left in it is a character as any
+/// other.
+#[derive(Debug, Clone)]
+pub struct Units<'a> {
+    characters: Chars<'a>,
+    /// The column of the next character, from 1.
+    column: u32,
+    /// Its offset in the line, in UTF-16 code units.
+    offset: u32,
+}
+
+impl<'a> Units<'a> {
+    /// The offsets of `line`, from its start.
+    #[must_use]
+    pub fn new(line: &'a str) -> Self {
+        Self {
+            characters: line.chars(),
+            column: 1,
+            offset: 0,
+        }
+    }
+
+    /// The offset of `column`, which is no smaller than the last one asked. Past the end of
+    /// the line, the offset of that end.
+    pub fn offset(&mut self, column: u32) -> u32 {
+        while self.column < column {
+            let Some(character) = self.characters.next() else {
+                break;
+            };
+            let units = if character.len_utf16() > 1 { 2 } else { 1 };
+            self.offset = self.offset.saturating_add(units);
+            self.column = self.column.saturating_add(1);
+        }
+        self.offset
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use stepwise_core::lexer::{TokenKind, tokenize};
+    use stepwise_core::checker::CheckErrorKind;
+    use stepwise_core::program::{Refused, check};
     use stepwise_core::span::{self, Position};
 
-    use super::{Offsets, Span};
+    use super::{Offsets, Span, Units};
 
     fn core_span(start: (u32, u32), end: (u32, u32)) -> span::Span {
         span::Span::new(Position::new(start.0, start.1), Position::new(end.0, end.1))
@@ -254,19 +295,24 @@ mod tests {
     }
 
     /// The lines are cut here as the lexer cuts them, a rule written in both crates: the
-    /// positions of this test come from the lexer itself.
+    /// positions of this test come from the core itself, which gives one error for each name
+    /// that the program doesn't know.
     #[test]
-    fn every_name_the_lexer_reads_is_cut_where_it_is_written() {
-        let source = "let côté = \"🤖\"\r\nif côté:\r\n    print(côté, sidse)\n# 🤖\nforward()";
+    fn every_name_the_core_reads_is_cut_where_it_is_written() {
+        let source = "print(côté, \"🤖\")\r\nif sidse:\r\n    print(côté, sidse)\n# 🤖\nprint(nom)";
         let offsets = Offsets::new(source);
+        let Err(Refused::Check(errors)) = check(source) else {
+            panic!("the names of {source:?} are unknown");
+        };
         let mut names = Vec::new();
-        for token in tokenize(source).unwrap().tokens {
-            if let TokenKind::Name(name) = token.kind {
-                assert_eq!(cut(source, offsets.span(token.span)), name);
-                names.push(name);
-            }
+        for error in errors {
+            let CheckErrorKind::UnknownName { name } = error.kind else {
+                panic!("{error:?} is no unknown name");
+            };
+            assert_eq!(cut(source, offsets.span(error.span)), name);
+            names.push(name);
         }
-        assert_eq!(names, ["côté", "côté", "print", "côté", "sidse", "forward"]);
+        assert_eq!(names, ["côté", "sidse", "côté", "sidse", "nom"]);
     }
 
     #[test]
@@ -283,5 +329,56 @@ mod tests {
         assert_eq!(offsets.offset(Position::new(0, 1)), 9);
         // The column 0, that no position has either: the start of its line.
         assert_eq!(offsets.offset(Position::new(2, 0)), 6);
+    }
+
+    #[test]
+    fn the_columns_of_a_line_are_the_length_of_what_is_before_them() {
+        // A line break left in the line is a character as any other: one unit each.
+        let line = "let côté = \"🤖 ok 🤖\" # 𝒳\r\nand é\r";
+        let mut units = Units::new(line);
+        let mut before = String::new();
+        for (column, character) in (1_u32..).zip(line.chars()) {
+            let expected = u32::try_from(before.encode_utf16().count()).unwrap();
+            assert_eq!(
+                units.offset(column),
+                expected,
+                "at {column}, after {before:?}"
+            );
+            // Asked twice, a column gives the same offset.
+            assert_eq!(units.offset(column), expected);
+            before.push(character);
+        }
+        let end = u32::try_from(line.encode_utf16().count()).unwrap();
+        let after = u32::try_from(line.chars().count()).unwrap() + 1;
+        assert_eq!(units.offset(after), end);
+        // Past the end of the line: its end.
+        assert_eq!(units.offset(after + 9), end);
+        assert_eq!(units.offset(u32::MAX), end);
+    }
+
+    #[test]
+    fn the_columns_of_a_line_may_be_asked_far_apart() {
+        let mut units = Units::new("🤖🤖 ab");
+        assert_eq!(units.offset(1), 0);
+        assert_eq!(units.offset(4), 5);
+        assert_eq!(units.offset(6), 7);
+        assert_eq!(Units::new("").offset(1), 0);
+        assert_eq!(Units::new("").offset(5), 0);
+    }
+
+    #[test]
+    fn a_line_of_wide_characters_is_placed_without_walking_it_at_each_place() {
+        // Thousands of places on one line: the time must not grow as their square.
+        let line = "🤖".repeat(100_000);
+        let offsets = Offsets::new(&line);
+        let start = std::time::Instant::now();
+        for column in 1..=100_000 {
+            assert_eq!(offsets.offset(Position::new(1, column)), (column - 1) * 2);
+        }
+        // 0.01 s with the dichotomy, 30 s with a walk of the wide characters before each
+        // place (measured on 2026-11-20, in the profile of the tests): the bound is far from
+        // both.
+        let elapsed = start.elapsed();
+        assert!(elapsed < std::time::Duration::from_secs(5), "{elapsed:?}");
     }
 }

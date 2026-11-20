@@ -1,9 +1,9 @@
 //! The errors of the parser: a code with its values and its place, never a sentence, so that
 //! the interface writes the message in the language of the learner.
 
+use crate::foreign_word::ForeignWord;
 use crate::lexer::{Keyword, LexError};
 use crate::span::Span;
-use crate::word_enum::word_enum;
 
 /// The first syntax error of a program, found by the lexer or by the parser.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -119,29 +119,4 @@ pub enum ParseErrorKind {
     /// Blocks nested deeper than [`MAX_BLOCK_DEPTH`](super::MAX_BLOCK_DEPTH), whatever they
     /// hold. The span is the line that opens the block too many.
     BlocksTooDeep,
-}
-
-word_enum! {
-    /// The words a learner may write from another language, reserved so that each gets a
-    /// message that shows the Stepwise way.
-    pub enum ForeignWord {
-        /// `elif`, written `else if`.
-        Elif => "elif",
-        /// `def`, written `function`.
-        Def => "def",
-        /// `var`, written `let`.
-        Var => "var",
-        /// `const`, written `let`.
-        Const => "const",
-        /// `for`
-        For => "for",
-        /// `continue`
-        Continue => "continue",
-        /// `pass`
-        Pass => "pass",
-        /// `none`
-        NoneWord => "none",
-        /// `null`
-        Null => "null",
-    }
 }

@@ -10,6 +10,7 @@ use tsify::Tsify;
 use crate::count;
 use crate::position::{Offsets, Span};
 use crate::value::ValueType;
+use crate::word;
 
 /// An error that stopped a program while it ran, as the core gives it: where it is, and what
 /// went wrong there.
@@ -27,8 +28,9 @@ pub struct RuntimeError {
 /// Each variant is the error of the same name in the core, where it is described: those of
 /// `RuntimeErrorKind`, the ones of the robot (`RobotError`) among them, each with its own
 /// code. No code is one of the checks before running (`ProgramErrorKind`). An operator and a
-/// built-in function are given as they are written, a whole number of the program as its
-/// digits (see `Value`), and a limit of the language with the error that it stops.
+/// function are given as they are written, a built-in function that the error can only come
+/// from by its type (`word.rs`), a whole number of the program as its digits (see `Value`),
+/// and a limit of the language with the error that it stops.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Tsify)]
 #[serde(
     tag = "code",
@@ -81,7 +83,7 @@ pub enum RuntimeErrorKind {
     NotCarrying,
     ItemAlreadyHere,
     ValueNotColor {
-        function: String,
+        function: word::Builtin,
         found: ValueType,
     },
 
@@ -155,7 +157,7 @@ impl RuntimeErrorKind {
                 RobotError::ItemAlreadyHere => Self::ItemAlreadyHere,
             },
             K::ValueNotColor { function, found } => Self::ValueNotColor {
-                function: function.as_str().to_owned(),
+                function: function.into(),
                 found: found.into(),
             },
             K::LineTooLong => Self::LineTooLong {
@@ -168,15 +170,15 @@ impl RuntimeErrorKind {
 
 #[cfg(test)]
 mod tests {
-    use stepwise_core::ast::{BinaryOperator, UnaryOperator};
     use stepwise_core::builtin::Builtin;
-    use stepwise_core::interpreter::{self, RuntimeErrorKind as K};
+    use stepwise_core::interpreter::{self, BinaryOperator, RuntimeErrorKind as K, UnaryOperator};
     use stepwise_core::span::{self, Position};
     use stepwise_core::world::RobotError;
 
     use super::{RuntimeError, RuntimeErrorKind as B};
     use crate::position::{Offsets, Span};
     use crate::value::ValueType;
+    use crate::word;
 
     fn function(name: &str) -> String {
         name.to_owned()
@@ -286,7 +288,7 @@ mod tests {
                     found: interpreter::ValueType::Number,
                 },
                 B::ValueNotColor {
-                    function: function("start_painting"),
+                    function: word::Builtin::StartPainting,
                     found: ValueType::Number,
                 },
             ),

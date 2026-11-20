@@ -32,6 +32,28 @@ export {
 } from '#lib/wasm/stepwise.js';
 
 /**
+ * The words of the language that an error carries (see crates/wasm/src/word.rs), each list a
+ * union of the words as they are written: a table keyed by one of them, written
+ * `satisfies Record<ForeignWord, …>`, names every word, and a word added to the core is refused
+ * until it is placed. The colors have their type with the world (`Color`).
+ */
+export { type Builtin, type ForeignWord, type Keyword } from '#lib/wasm/stepwise.js';
+
+/**
+ * What each stretch of a line of code is (see crates/wasm/src/stretch.rs), to call once
+ * `loadCore` has resolved: a keyword, a function, a number, a text, a color, a comment…, from
+ * left to right, the spaces left out, and any blank character before the first stretch. It is
+ * how the code gets its colors: the core reads the line as it reads a program, so no rule of
+ * the language is written here.
+ *
+ * It takes one line, without its line break, and never fails: a line being typed is wrong most
+ * of the time. A statement never spans two lines, so a line is read alone, whatever is around
+ * it. A stretch is `line.slice(from, to)`, never empty. A text cut on `\n` may leave a `\r` at
+ * the end of a line: it is taken as part of the line break, as the checks do.
+ */
+export { classifyLine, type Stretch, type StretchKind } from '#lib/wasm/stepwise.js';
+
+/**
  * The levels and the sandbox (see crates/wasm/src/level.rs and world.rs), to create once
  * `loadCore` has resolved: `new Level(toml)` and `new Sandbox(toml)` read the text of a file of
  * `web/levels/`, and throw an `Error` with the reason, in English, when it isn't valid.

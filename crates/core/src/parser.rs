@@ -19,12 +19,13 @@ mod expression;
 #[cfg(test)]
 mod tests;
 
-pub use error::{ForeignWord, ParseError, ParseErrorKind, SyntaxError};
+pub use error::{ParseError, ParseErrorKind, SyntaxError};
 
 use std::iter::Peekable;
 use std::vec::IntoIter;
 
 use crate::ast::{Name, Program, Statement, StatementKind};
+use crate::foreign_word::ForeignWord;
 use crate::lexer::{Keyword, Lexed, Token, TokenKind, tokenize};
 use crate::span::{Position, Span};
 
@@ -49,7 +50,7 @@ pub const MAX_DEPTH: u32 = 200;
 /// # Errors
 ///
 /// The first syntax error of the source, from the lexer or from the parser.
-pub fn parse(source: &str) -> Result<Program, SyntaxError> {
+pub(crate) fn parse(source: &str) -> Result<Program, SyntaxError> {
     let lexed = tokenize(source)?;
     Ok(Parser::new(lexed).program()?)
 }

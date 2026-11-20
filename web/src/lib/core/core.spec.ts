@@ -3,7 +3,17 @@
 
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { check, coreVersion, Level, Sandbox, type Cell, type Span } from '#lib/wasm/stepwise.js';
+import {
+	check,
+	classifyLine,
+	coreVersion,
+	Level,
+	Sandbox,
+	type Cell,
+	type ForeignWord,
+	type Span,
+	type StretchKind
+} from '#lib/wasm/stepwise.js';
 import { corridor, levelFile, levelOf, loadTestCore, sandboxOf } from './test-support.ts';
 
 const workspaceVersion = /\[workspace\.package\]\nversion = "([^"]+)"/.exec(
@@ -126,6 +136,127 @@ describe('the checks before running', () => {
 		const kind = check('print(sidse)\n')[0]?.kind;
 		// Only some errors carry a name: this line compiles because the code narrows the type.
 		expect(kind?.code === 'unknown-name' ? kind.name : undefined).toBe('sidse');
+	});
+});
+
+describe('the words of the language', () => {
+	it('cross by their type, which a table of the interface is keyed by', () => {
+		// A table that names every word of the other languages: one more in the core, and this
+		// line no longer compiles.
+		const written = {
+			elif: 'else if',
+			def: 'function',
+			var: 'let',
+			const: 'let',
+			for: 'repeat',
+			continue: '',
+			pass: '',
+			none: '',
+			null: ''
+		} satisfies Record<ForeignWord, string>;
+		const kind = check('if done:\n    forward()\nelif stuck:\n    turn_left()\n')[0]?.kind;
+		expect(kind?.code === 'foreign-word' ? written[kind.word] : undefined).toBe('else if');
+	});
+
+	it('cross as they are written, a keyword and a built-in function too', () => {
+		expect(check('if a && b:\n    forward()\n')[0]?.kind).toEqual({
+			code: 'symbol-for-keyword',
+			symbol: '&&',
+			keyword: 'and'
+		});
+		expect(check('let none = 3\n')[0]?.kind).toEqual({ code: 'foreign-word', word: 'none' });
+	});
+});
+
+describe('the stretches of a line of code', () => {
+	/** Each stretch of `line` as what it is and the text JavaScript cuts for it. */
+	function read(line: string): [StretchKind, string][] {
+		return classifyLine(line).map(({ kind, from, to }) => [kind, line.slice(from, to)]);
+	}
+
+	it('say what each one is, the blank characters left out', () => {
+		expect(read('    if front_is_clear() and not here_is(red):  # go on')).toEqual([
+			['keyword', 'if'],
+			['function', 'front_is_clear'],
+			['symbol', '('],
+			['symbol', ')'],
+			['keyword', 'and'],
+			['keyword', 'not'],
+			['function', 'here_is'],
+			['symbol', '('],
+			['color', 'red'],
+			['symbol', ')'],
+			['symbol', ':'],
+			['comment', '# go on']
+		]);
+		expect(read('let done = sides == 4 or true')).toEqual([
+			['keyword', 'let'],
+			['name', 'done'],
+			['symbol', '='],
+			['name', 'sides'],
+			['symbol', '=='],
+			['number', '4'],
+			['keyword', 'or'],
+			['boolean', 'true']
+		]);
+		expect(classifyLine('')).toEqual([]);
+		expect(classifyLine('        ')).toEqual([]);
+	});
+
+	it('are plain objects, placed where JavaScript counts them', () => {
+		// An accent is one unit for JavaScript, an emoji two: the core counts one character for each.
+		expect(classifyLine('let côté = "🤖" # 🤖')).toEqual([
+			{ kind: 'keyword', from: 0, to: 3 },
+			{ kind: 'name', from: 4, to: 8 },
+			{ kind: 'symbol', from: 9, to: 10 },
+			{ kind: 'text', from: 11, to: 15 },
+			{ kind: 'comment', from: 16, to: 20 }
+		]);
+	});
+
+	it('keep a word of another language a name, before a parenthesis too', () => {
+		expect(read('elif (stuck):')).toEqual([
+			['name', 'elif'],
+			['symbol', '('],
+			['name', 'stuck'],
+			['symbol', ')'],
+			['symbol', ':']
+		]);
+	});
+
+	it('read the lines of a text cut on `\\n`, a carriage return left at their end', () => {
+		const lines = 'forward()\r\nprint("🤖")\r\n'.split('\n');
+		expect(lines.map(read)).toEqual([
+			[
+				['function', 'forward'],
+				['symbol', '('],
+				['symbol', ')']
+			],
+			[
+				['function', 'print'],
+				['symbol', '('],
+				['text', '"🤖"'],
+				['symbol', ')']
+			],
+			[]
+		]);
+	});
+
+	it('are given for a line that is wrong, as a line being typed is', () => {
+		expect(read('print("I am stu')).toEqual([
+			['function', 'print'],
+			['symbol', '('],
+			['text', '"I am stu']
+		]);
+		expect(read("let a = 'x' ;")).toEqual([
+			['keyword', 'let'],
+			['name', 'a'],
+			['symbol', '='],
+			['invalid', "'"],
+			['name', 'x'],
+			['invalid', "'"],
+			['invalid', ';']
+		]);
 	});
 });
 

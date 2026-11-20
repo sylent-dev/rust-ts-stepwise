@@ -15,9 +15,10 @@ pub struct Point {
     pub y: u8,
 }
 
-/// A color of paint, as a program writes it.
+/// A color of paint, as a program writes it: a word of the language, written as the others
+/// are (`word.rs`).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Tsify)]
-#[serde(rename_all = "kebab-case")]
+#[serde(rename_all = "snake_case")]
 pub enum Color {
     /// `red`
     Red,

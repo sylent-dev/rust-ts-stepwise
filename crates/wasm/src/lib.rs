@@ -24,7 +24,9 @@ mod level;
 mod position;
 mod run;
 mod runtime_error;
+mod stretch;
 mod value;
+mod word;
 mod world;
 
 use wasm_bindgen::prelude::wasm_bindgen;
