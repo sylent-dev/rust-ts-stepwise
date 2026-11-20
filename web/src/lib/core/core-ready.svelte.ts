@@ -1,6 +1,6 @@
 // The core, for a screen that needs it (see core.ts).
 
-import { loadFailed } from '#lib/page/startup.ts';
+import { loadFailed } from '#lib/page/startup.svelte.ts';
 import { loadCore } from './core.ts';
 
 /**

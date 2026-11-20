@@ -5,6 +5,7 @@
 import { logoDisappointedDrawing } from '#lib/elements.ts';
 import { findMessage } from '#lib/i18n.ts';
 import colors from '#lib/styles/colors.css?raw';
+import layout from '#lib/styles/layout.css?raw';
 import screenMessage from '#lib/styles/screen-message.css?raw';
 import spacing from '#lib/styles/spacing.css?raw';
 import typography from '#lib/styles/typography.css?raw';
@@ -14,5 +15,5 @@ export const pageParts: PageParts = {
 	text: findMessage,
 	drawings: { disappointed: logoDisappointedDrawing },
 	// The design tokens that a message uses, then its look: a test checks that none is missing.
-	styles: [colors, typography, spacing, screenMessage]
+	styles: [colors, typography, spacing, layout, screenMessage]
 };

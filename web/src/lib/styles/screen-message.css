@@ -3,7 +3,7 @@
    not a component: the page itself writes some of these messages (src/app.html), for a browser
    where the application can't start, and the application writes the others
    (shell/screen-message.svelte). The page carries this file and the tokens it uses
-   (lib/page/page-fill.ts), so that its messages show even when nothing else could load. */
+   (lib/page/page-parts.ts), so that its messages show even when nothing else could load. */
 .screen-message {
 	/* The four sides one by one: the browsers that the message of a browser too old is for
 	   don't know `inset`. */
@@ -12,8 +12,8 @@
 	right: 0;
 	bottom: 0;
 	left: 0;
-	/* Over the screen and what it raises: the menus of the header are at 2. */
-	z-index: 10;
+	/* Over the screen and what it opened (styles/layout.css). */
+	z-index: var(--layer-screen-message);
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -35,7 +35,7 @@
 
 /* A message of the page itself says that nothing runs: it goes over one of the application. */
 .screen-message.is-page {
-	z-index: 11;
+	z-index: var(--layer-page-message);
 }
 
 /* The head of the robot: 72 pixels high, the size of its drawing in the mock-up, whether it is an
@@ -100,7 +100,8 @@
 
 /* Behind a message, what it is about, in two or three signs (JS, 404), in the font of the name:
    as tall as two thirds of the window, never wider than it, and hardly there. Its size and its
-   2 % belong to no scale: tuned by eye on the mock-up (docs/design-system.md, Messages). */
+   2 % belong to no scale: tuned by eye on the mock-up (docs/design-system.md, Messages). Its
+   `z-index` is an order inside the message, behind its sentences, not a layer of the page. */
 .screen-message-mark {
 	position: absolute;
 	top: 0;

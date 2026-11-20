@@ -1,14 +1,9 @@
-<!-- What every page shares: the design tokens, the fonts, the base styles, the look of what is
-     clicked in a band and of a message in place of the screen; the settings, which the page
+<!-- What every page shares: its styles (lib/styles/app.css); the settings, which the page
      follows; and the message of a window too small, which takes the place of any screen. -->
 <script lang="ts">
-	import '#lib/styles/tokens.css';
-	import '#lib/styles/fonts.css';
-	import '#lib/styles/base.css';
-	import '#lib/styles/band.css';
-	import '#lib/styles/screen-message.css';
+	import '#lib/styles/app.css';
 	import { onMount } from 'svelte';
-	import { applicationStarted } from '#lib/page/startup.ts';
+	import { applicationStarted } from '#lib/page/startup.svelte.ts';
 	import { followSavedSettings, settings } from '#lib/settings/current-settings.svelte.ts';
 	import { SETTINGS_KEY } from '#lib/settings/saved-settings.ts';
 	import { currentWindow } from '#lib/shell/current-window.svelte.ts';

@@ -234,7 +234,7 @@
 	.rows {
 		position: absolute;
 		top: 100%;
-		z-index: 2;
+		z-index: var(--layer-pop);
 		box-sizing: border-box;
 		width: 272px;
 		padding: var(--space-4) 0;

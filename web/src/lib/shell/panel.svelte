@@ -2,14 +2,17 @@
      Escape, × or a click on the veil closes it. It is the `dialog` of the browser, shown as a
      modal: the keys stay in the panel, the screen under the veil can't be clicked, and the focus
      goes back to what opened the panel when it closes. It is there at once, without a motion
-     (see Motion in docs/design-system.md). While the message of a window too small takes the
-     place of the screen, the dialog is closed, so that nothing blocks the message; it opens
-     again with the screen, what it holds kept. -->
+     (see Motion in docs/design-system.md). While a message takes the place of the screen, the
+     dialog is closed: the browser draws it over everything and keeps the keys in it, so it would
+     cover the message and block it. Under the message of a window too small, it opens again
+     with the screen, what it holds kept; the one of the page itself stays until the page is
+     loaded again. -->
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import Icon from '#lib/icon.svelte';
 	import { t } from '#lib/i18n.ts';
+	import { currentPage } from '#lib/page/startup.svelte.ts';
 	import { currentWindow } from './current-window.svelte.ts';
+	import IconButton from './icon-button.svelte';
 
 	interface Props {
 		title: string;
@@ -26,8 +29,11 @@
 
 	let dialog = $state<HTMLDialogElement>();
 
-	/** Whether the dialog shows: the panel is open, on a screen that shows. */
-	const shown = $derived(open && currentWindow.fit === 'screen');
+	/**
+	 * Whether the dialog shows: the panel is open, on a screen that shows. A message has taken
+	 * its place in a window too small, and once the page shows its own.
+	 */
+	const shown = $derived(open && currentWindow.fit === 'screen' && !currentPage.failed);
 
 	// The dialog follows `shown`, once what it holds is in the page: the first thing that takes
 	// the keys, the cross, gets the focus.
@@ -53,7 +59,7 @@
 	/**
 	 * The browser says that the dialog has closed, a moment after it did, whatever closed it. A
 	 * panel opened again in that moment stays open, and so does one whose dialog closed with the
-	 * screen, under the message of a window too small.
+	 * screen, under a message in its place.
 	 */
 	function onclose() {
 		if (!dialog?.open && shown) open = false;
@@ -73,15 +79,14 @@
 	{#if open}
 		<div class="panel" style:width="{width}px">
 			<h2 id="{id}-title">{title}</h2>
-			<button
-				type="button"
-				class="close"
-				title={t('panel-close')}
-				aria-label={t('panel-close')}
-				onclick={() => (open = false)}
-			>
-				<Icon name="close" size={16} />
-			</button>
+			<div class="close">
+				<IconButton
+					icon="close"
+					label={t('panel-close')}
+					zone="pop"
+					onclick={() => (open = false)}
+				/>
+			</div>
 			{@render children()}
 		</div>
 	{/if}
@@ -133,19 +138,5 @@
 		position: absolute;
 		top: var(--space-6);
 		right: var(--space-6);
-		display: grid;
-		place-items: center;
-		width: 26px;
-		height: 26px;
-		padding: 0;
-		border: 0;
-		border-radius: var(--radius);
-		background: none;
-		color: var(--weak);
-	}
-
-	.close:hover {
-		background: var(--hover);
-		color: var(--text);
 	}
 </style>
