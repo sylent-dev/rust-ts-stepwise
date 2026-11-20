@@ -25,7 +25,9 @@ runs:
     - name: Read the minimum Node.js from web/package.json
       id: node
       shell: bash
-      run: echo "version=$(sed -n 's/.*"node": ">=\([0-9.]*\)".*/\1/p' web/package.json)" >> "$GITHUB_OUTPUT"
+      # A block of text: on one line, the `: ` of the pattern would start a YAML mapping.
+      run: |
+        echo "version=$(sed -n 's/.*"node": ">=\([0-9.]*\)".*/\1/p' web/package.json)" >> "$GITHUB_OUTPUT"
     - uses: actions/setup-node@v7
       with:
         node-version: ${{ steps.node.outputs.version }}
