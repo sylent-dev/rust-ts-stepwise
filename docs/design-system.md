@@ -284,6 +284,21 @@ The sizes of the layout are written in the block that they size, as the mock-up 
 | Token | Value | Role |
 |---|---|---|
 | `--header-height` | `46px` | The header of a screen, without the bar of the progress, which gives 3 pixels more to the screens that draw it (step 21). The level screen gives its map the height of the window under the header, less the panels, so that the banner of a browser that refuses to save takes its height from the panels and the map keeps its size. |
+| `--band-item-height` | `30px` | What is clicked in a band: the name of a menu, a link of the home screen, the square of the gear. Its fill under the pointer leaves 8 pixels above it and under it in a header of 46 pixels. |
+
+### Layers
+
+What stands over the screen has a layer: its place in the stacking order, by its name, written as its `z-index`. The layers are only compared with each other, from the lowest to the highest (decided on 2026-11-20, step 15h).
+
+| Token | Value | Role |
+|---|---|---|
+| `--layer-pop` | `10` | What opens from a control, over the blocks of the screen: a menu of the header. |
+| `--layer-screen-message` | `20` | A message of the application in place of the screen: over the screen and what it opened. |
+| `--layer-page-message` | `30` | A message of the page itself, which says that nothing runs: over one of the application. |
+
+- A block that stands over others takes a layer, never a figure. A new layer gets its line here, at its place in the order: the figures are spaced by ten, so that the others keep theirs.
+- An order inside a block is no layer: the mark behind the sentences of a message, a text over the fill of its own button. It is written `-1` or `1`, in a block that keeps its own order (one that has a layer, or `isolation: isolate`), so that it is never compared with the layers.
+- A panel needs no layer: it is the `dialog` of the browser, shown as a modal, which the browser draws over everything else. It closes while a message takes the place of the screen.
 
 ## Motion
 

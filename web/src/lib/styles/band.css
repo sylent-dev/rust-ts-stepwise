@@ -6,7 +6,7 @@
 .band-item {
 	display: flex;
 	align-items: center;
-	height: 30px;
+	height: var(--band-item-height);
 	padding: 0 var(--space-12);
 	border: 0;
 	border-radius: var(--radius);

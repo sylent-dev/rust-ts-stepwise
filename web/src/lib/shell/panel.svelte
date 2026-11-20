@@ -7,9 +7,9 @@
      again with the screen, what it holds kept. -->
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import Icon from '#lib/icon.svelte';
 	import { t } from '#lib/i18n.ts';
 	import { currentWindow } from './current-window.svelte.ts';
+	import IconButton from './icon-button.svelte';
 
 	interface Props {
 		title: string;
@@ -73,15 +73,14 @@
 	{#if open}
 		<div class="panel" style:width="{width}px">
 			<h2 id="{id}-title">{title}</h2>
-			<button
-				type="button"
-				class="close"
-				title={t('panel-close')}
-				aria-label={t('panel-close')}
-				onclick={() => (open = false)}
-			>
-				<Icon name="close" size={16} />
-			</button>
+			<div class="close">
+				<IconButton
+					icon="close"
+					label={t('panel-close')}
+					zone="pop"
+					onclick={() => (open = false)}
+				/>
+			</div>
 			{@render children()}
 		</div>
 	{/if}
@@ -133,19 +132,5 @@
 		position: absolute;
 		top: var(--space-6);
 		right: var(--space-6);
-		display: grid;
-		place-items: center;
-		width: 26px;
-		height: 26px;
-		padding: 0;
-		border: 0;
-		border-radius: var(--radius);
-		background: none;
-		color: var(--weak);
-	}
-
-	.close:hover {
-		background: var(--hover);
-		color: var(--text);
 	}
 </style>

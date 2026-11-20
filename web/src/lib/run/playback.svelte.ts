@@ -57,6 +57,29 @@ function systemLessMotion(): () => boolean {
 	return () => query.matches;
 }
 
+/**
+ * Whether a step that gave `event` may have changed the world, which is then read again from the
+ * core: every event but a line without action and a line printed. Each event is named, so that a
+ * new one of the core must be placed: a `switch` without `default` (see web/eslint.config.js).
+ */
+function changesWorld(event: StepEvent): boolean {
+	switch (event) {
+		case 'nothing':
+		case 'printed':
+			return false;
+		case 'moved':
+		case 'turned-left':
+		case 'turned-right':
+		case 'started-painting':
+		case 'stopped-painting':
+		case 'started-erasing':
+		case 'stopped-erasing':
+		case 'picked-up':
+		case 'dropped':
+			return true;
+	}
+}
+
 export class Playback implements Scene {
 	/** The world at rest, or as the step under way found it, which the map draws. */
 	world: World;
@@ -259,7 +282,7 @@ export class Playback implements Scene {
 		if (action && time > 0) {
 			this.#animate({ action, after: this.#run.world(), lessMotion }, start, time);
 		} else {
-			this.#rest(event !== 'nothing' && event !== 'printed');
+			this.#rest(changesWorld(event));
 			this.#showEnd(start);
 		}
 	}

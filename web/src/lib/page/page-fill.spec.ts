@@ -1,9 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import { t } from '#lib/i18n.ts';
+import fonts from '#lib/styles/fonts.css?raw';
 import screenMessage from '#lib/styles/screen-message.css?raw';
 import page from '../../app.html?raw';
 import { fillPage, type PageParts } from './page-fill.ts';
 import { pageParts } from './page-parts.ts';
+
+/** The files of the fonts on the disk, as the website names them: `/fonts/<font>/<file>.woff2`. */
+const fontFiles = Object.keys(import.meta.glob('/static/fonts/*/*.woff2')).map((file) =>
+	file.replace(/^\/static/, '')
+);
+
+/** What the first group of `pattern` holds, each time `text` matches it. */
+function captured(text: string, pattern: RegExp): Set<string> {
+	return new Set([...text.matchAll(pattern)].map((match) => match[1] ?? ''));
+}
 
 const texts: Record<string, string> = { greeting: 'Hello', order: 'a < b & b > c' };
 
@@ -76,10 +87,17 @@ describe('the page', () => {
 	// page would only show where nothing else could load, which no one tries.
 	it('carries every design token that the look of a message uses', () => {
 		const carried = pageParts.styles.join('\n');
-		const used = new Set(
-			[...screenMessage.matchAll(/var\((--[a-z0-9-]+)/g)].map((match) => match[1] ?? '')
-		);
+		const used = captured(screenMessage, /var\((--[a-z0-9-]+)/g);
 		expect(used.size).toBeGreaterThan(0);
 		for (const token of used) expect(carried, token).toContain(`${token}:`);
+	});
+
+	// The page asks for each font before the styles that name it arrive. A file renamed in one
+	// place alone would be fetched for nothing, and the texts shown late, without an error.
+	it('preloads the files of the fonts that the styles name, each one on the disk', () => {
+		const onDisk = new Set(fontFiles);
+		expect(onDisk.size).toBeGreaterThan(0);
+		expect(captured(page, /href="%sveltekit\.assets%(\/fonts\/[^"]+)"/g)).toEqual(onDisk);
+		expect(captured(fonts, /url\('(\/fonts\/[^']+)'\)/g)).toEqual(onDisk);
 	});
 });

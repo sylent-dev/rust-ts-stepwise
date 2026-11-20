@@ -9,6 +9,7 @@
 	import type { World } from '#lib/core/core.ts';
 	import { STROKE } from './geometry.ts';
 	import type { Motion, Pose } from './motion.ts';
+	import { PAINT_COLORS, TOOL_COLORS } from './paint-colors.ts';
 	import {
 		aheadOfBack,
 		FADE_FROM,
@@ -77,7 +78,7 @@
 		x2={stroke.to.x}
 		y2={stroke.to.y}
 		stroke-width={STROKE}
-		style:--paint="var(--paint-{stroke.color})"
+		style:--paint={PAINT_COLORS[stroke.color]}
 	/>
 {/if}
 
@@ -89,7 +90,7 @@
 		r={ring.radius}
 		stroke-width={ring.width}
 		opacity={ring.opacity}
-		style:--paint={ring.tool === 'eraser' ? 'var(--robot-eyes-dim)' : `var(--paint-${ring.tool})`}
+		style:--paint={TOOL_COLORS[ring.tool]}
 	/>
 {/if}
 

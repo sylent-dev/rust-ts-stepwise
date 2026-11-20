@@ -13,17 +13,34 @@ import type {
 import { clamp01, easeOut, overshoot, smooth, smoothBetween } from './easing.ts';
 import { STEPS } from './geometry.ts';
 
-/** The actions of a program that the map animates: a move, a turn, a tool put down, an item. */
-export type AnimatedEvent = Extract<
-	StepEvent,
-	| 'moved'
-	| 'turned-left'
-	| 'turned-right'
-	| 'started-painting'
-	| 'started-erasing'
-	| 'picked-up'
-	| 'dropped'
->;
+/**
+ * The time each event of a step takes on the map at the normal speed, 2 steps per second (decided
+ * at step 11a): a move, a turn or a tool put down 300 ms; an item 400 ms, since it travels between
+ * the floor and the bay. Nothing for what the map doesn't animate, where the highlighted line
+ * moves on at once: a line without action, a line printed, a tool lifted. Its keys are every
+ * event of the core: a new one doesn't compile until it is placed here.
+ */
+const EVENT_TIMES = {
+	nothing: undefined,
+	printed: undefined,
+	moved: 300,
+	'turned-left': 300,
+	'turned-right': 300,
+	'started-painting': 300,
+	'stopped-painting': undefined,
+	'started-erasing': 300,
+	'stopped-erasing': undefined,
+	'picked-up': 400,
+	dropped: 400
+} as const satisfies Record<StepEvent, number | undefined>;
+
+/**
+ * The actions of a program that the map animates: a move, a turn, a tool put down, an item. They
+ * are the events that have a time above.
+ */
+export type AnimatedEvent = {
+	[Name in StepEvent]: (typeof EVENT_TIMES)[Name] extends number ? Name : never;
+}[StepEvent];
 
 /**
  * The errors of the robot that the map shows: the bump into a wall or the edge of the map, and
@@ -45,21 +62,6 @@ export type RunEnd = Extract<Outcome['type'], 'passed' | 'goals-not-met'>;
  * after its last step.
  */
 export type Action = AnimatedEvent | RobotFailure | RunEnd;
-
-/**
- * The time each action of the program that the map animates takes at the normal speed, 2 steps
- * per second (decided at step 11a): a move, a turn or a tool 300 ms; an item 400 ms, since it
- * travels between the floor and the bay. Its keys are the actions animated.
- */
-const EVENT_TIMES = {
-	moved: 300,
-	'turned-left': 300,
-	'turned-right': 300,
-	'started-painting': 300,
-	'started-erasing': 300,
-	'picked-up': 400,
-	dropped: 400
-} as const satisfies Record<AnimatedEvent, number>;
 
 /**
  * The time each error of the robot that the map shows takes, at every animated speed: a bump
@@ -89,7 +91,7 @@ const END_TIMES = {
  * lifted show nothing: the highlighted line moves on at once.
  */
 export function isAnimated(event: StepEvent): event is AnimatedEvent {
-	return Object.hasOwn(EVENT_TIMES, event);
+	return EVENT_TIMES[event] !== undefined;
 }
 
 /** Whether an action, or the code of an error, is an error of the robot that the map shows. */

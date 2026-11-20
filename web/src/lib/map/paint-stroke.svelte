@@ -8,6 +8,7 @@
 <script lang="ts">
 	import type { Color, Direction } from '#lib/core/core.ts';
 	import { CELL, MIDDLE, STEPS, STROKE } from './geometry.ts';
+	import { PAINT_COLORS } from './paint-colors.ts';
 
 	interface Props {
 		x: number;
@@ -21,7 +22,7 @@
 	let { x, y, color, passages, middle = true }: Props = $props();
 </script>
 
-<g class={color} transform="translate({x * CELL} {y * CELL})">
+<g style:--paint={PAINT_COLORS[color]} transform="translate({x * CELL} {y * CELL})">
 	{#if middle}
 		<circle cx={MIDDLE} cy={MIDDLE} r={STROKE / 2} />
 	{/if}
@@ -37,6 +38,7 @@
 </g>
 
 <style>
+	/* `--paint`: the color of the cell, given above (paint-colors.ts). */
 	g {
 		fill: var(--paint);
 		stroke: var(--paint);
@@ -44,17 +46,5 @@
 
 	circle {
 		stroke: none;
-	}
-
-	.red {
-		--paint: var(--paint-red);
-	}
-
-	.yellow {
-		--paint: var(--paint-yellow);
-	}
-
-	.blue {
-		--paint: var(--paint-blue);
 	}
 </style>
