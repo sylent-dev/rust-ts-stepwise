@@ -4,19 +4,19 @@
 
 use serde::Serialize;
 use stepwise_core::lexer;
-use stepwise_core::span::Position;
 use tsify::{Ts, Tsify};
 use wasm_bindgen::JsError;
 use wasm_bindgen::prelude::wasm_bindgen;
 
-use crate::position::Offsets;
+use crate::position::Units;
 
 /// What each stretch of a line of code is, from left to right, the blank characters left
 /// out: nothing for an empty line.
 ///
 /// `line` is one line, without its line break. It may be wrong in any way, as a line being
 /// typed is: a statement never spans two lines, so each line is read alone, as in its
-/// program.
+/// program. A `\r` at its end is taken as part of its line break, as the lexer does, and any
+/// other line break left in it is a character that the language doesn't read.
 ///
 /// # Errors
 ///
@@ -29,17 +29,17 @@ pub fn classify_line(line: &str) -> Result<Vec<Ts<Stretch>>, JsError> {
         .collect()
 }
 
-/// The stretches of `line`, as [`classify_line`] gives them, before they cross to JavaScript.
+/// The stretches of `line`, as [`classify_line`] gives them, before they cross to JavaScript:
+/// those of the core, from left to right, each with one character at least.
 #[must_use]
 pub fn stretches(line: &str) -> Vec<Stretch> {
-    let offsets = Offsets::new(line);
-    let offset = |column| offsets.offset(Position::new(1, column));
+    let mut units = Units::new(line);
     lexer::classify_line(line)
         .into_iter()
         .map(|stretch| Stretch {
             kind: stretch.kind.into(),
-            from: offset(stretch.start),
-            to: offset(stretch.end),
+            from: units.offset(stretch.start),
+            to: units.offset(stretch.end),
         })
         .collect()
 }
@@ -139,5 +139,80 @@ mod tests {
         );
         assert_eq!(stretches(""), []);
         assert_eq!(stretches("    "), []);
+    }
+
+    #[test]
+    fn a_line_break_left_in_a_line_gives_no_empty_stretch() {
+        use super::StretchKind::Invalid;
+        // A `\r` at the end belongs to the line break: a text cut on `\n` alone reads the same.
+        assert_eq!(stretches("forward()\r"), stretches("forward()"));
+        // Anywhere else, a line break is a character that the language doesn't read, placed
+        // as the core places it.
+        assert_eq!(
+            read("a\nb\r c"),
+            [
+                (Name, "a"),
+                (Invalid, "\n"),
+                (Name, "b"),
+                (Invalid, "\r"),
+                (Name, "c")
+            ]
+            .map(|(kind, text)| (kind, text.to_owned()))
+        );
+    }
+
+    #[test]
+    fn every_stretch_holds_the_characters_that_the_core_gives_it() {
+        let pieces = [
+            "let",
+            "côté",
+            "=",
+            "\"🤖 ok\"",
+            "#",
+            "🤖",
+            "\r",
+            "\n",
+            " ",
+            "'",
+            "𝒳",
+            "forward(",
+            "\"\\",
+        ];
+        let mut random = 7_u64;
+        for _ in 0..2_000 {
+            let mut line = String::new();
+            for _ in 0..12 {
+                random = random
+                    .wrapping_mul(6_364_136_223_846_793_005)
+                    .wrapping_add(1_442_695_040_888_963_407);
+                let index = usize::try_from(random >> 33).unwrap() % pieces.len();
+                line.push_str(pieces[index]);
+            }
+            // The line as the core reads it: without the `\r` of its line break.
+            let read_line = line.strip_suffix('\r').unwrap_or(&line);
+            let characters: Vec<char> = read_line.chars().collect();
+            let units: Vec<u16> = line.encode_utf16().collect();
+            let core = stepwise_core::lexer::classify_line(&line);
+            let bridge = stretches(&line);
+            assert_eq!(core.len(), bridge.len(), "in {line:?}");
+            let mut after = 0;
+            for (core, bridge) in core.iter().zip(&bridge) {
+                assert!(
+                    after <= bridge.from && bridge.from < bridge.to,
+                    "in {line:?}"
+                );
+                after = bridge.to;
+                let start = usize::try_from(core.start).unwrap() - 1;
+                let end = usize::try_from(core.end).unwrap() - 1;
+                let expected: String = characters[start..end].iter().collect();
+                let from = usize::try_from(bridge.from).unwrap();
+                let to = usize::try_from(bridge.to).unwrap();
+                assert_eq!(
+                    String::from_utf16(&units[from..to]).unwrap(),
+                    expected,
+                    "in {line:?}"
+                );
+            }
+        }
     }
 }

@@ -345,8 +345,9 @@ mod tests {
     use stepwise_core::builtin::Builtin;
     use stepwise_core::checker::{CheckErrorKind, ReservedWord};
     use stepwise_core::color::Color;
+    use stepwise_core::foreign_word::ForeignWord;
     use stepwise_core::lexer::{Keyword, LexErrorKind};
-    use stepwise_core::parser::{ForeignWord, ParseErrorKind};
+    use stepwise_core::parser::ParseErrorKind;
     use stepwise_core::span::{self, Position};
 
     use super::{ProgramError, ProgramErrorKind as Kind, ReservedKind, errors};

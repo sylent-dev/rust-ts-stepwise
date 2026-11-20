@@ -2027,10 +2027,15 @@ mod robustness {
 
 /// What each stretch of a line is, for the colors of the editor (`classify.rs`).
 mod stretches {
+    use crate::builtin;
+    use crate::color;
+    use crate::foreign_word::ForeignWord;
     use crate::lexer::StretchKind::{
         Boolean, Color, Comment, Function, Invalid, Keyword, Name, Number, Symbol, Text,
     };
-    use crate::lexer::{Stretch, StretchKind, TokenKind, classify_line, tokenize};
+    use crate::lexer::{
+        Keyword as K, LexErrorKind, Stretch, StretchKind, TokenKind, classify_line, tokenize,
+    };
     use crate::test_support::Random;
 
     /// The stretches of `line`, each as what it is and its characters.
@@ -2152,11 +2157,78 @@ mod stretches {
     }
 
     #[test]
+    fn a_keyword_stays_a_keyword_before_a_parenthesis() {
+        assert_read(
+            "if (done):",
+            &[
+                (Keyword, "if"),
+                (Symbol, "("),
+                (Name, "done"),
+                (Symbol, ")"),
+                (Symbol, ":"),
+            ],
+        );
+        assert_read(
+            "not (true)",
+            &[
+                (Keyword, "not"),
+                (Symbol, "("),
+                (Boolean, "true"),
+                (Symbol, ")"),
+            ],
+        );
+        assert_read("true(", &[(Boolean, "true"), (Symbol, "(")]);
+    }
+
+    /// A parenthesis makes a function of a name, never of a reserved word: each of the four
+    /// lists of words is asked first.
+    #[test]
+    fn every_word_of_the_language_is_the_same_alone_and_before_a_parenthesis() {
+        #[track_caller]
+        fn assert_word(word: &str, expected: StretchKind) {
+            for line in [word.to_owned(), format!("{word}("), format!("{word} (3)")] {
+                let first = read(&line).into_iter().next();
+                assert_eq!(first, Some((expected, word.to_owned())), "in {line:?}");
+            }
+        }
+        for keyword in K::ALL {
+            let expected = match keyword {
+                K::True | K::False => Boolean,
+                _ => Keyword,
+            };
+            assert_word(keyword.as_str(), expected);
+        }
+        for function in builtin::Builtin::ALL {
+            assert_word(function.as_str(), Function);
+        }
+        for color in color::Color::ALL {
+            assert_word(color.as_str(), Color);
+        }
+        for word in ForeignWord::ALL {
+            assert_word(word.as_str(), Name);
+        }
+    }
+
+    #[test]
     fn a_word_of_another_language_is_a_name() {
         assert_read(
             "elif sides:",
             &[(Name, "elif"), (Name, "sides"), (Symbol, ":")],
         );
+        // Before a parenthesis too, as who comes from another language writes it.
+        assert_read(
+            "elif (sides == 4):",
+            &[
+                (Name, "elif"),
+                (Symbol, "("),
+                (Name, "sides"),
+                (Symbol, "=="),
+                (Number, "4"),
+                (Symbol, ")"),
+                (Symbol, ":"),
+            ],
+        );
+        assert_read("none()", &[(Name, "none"), (Symbol, "("), (Symbol, ")")]);
         assert_read(
             "def square():",
             &[
@@ -2353,6 +2425,28 @@ mod stretches {
     }
 
     #[test]
+    fn a_carriage_return_at_the_end_belongs_to_the_line_break() {
+        // A text cut on `\n` alone leaves it there: the lexer takes it off its lines too.
+        assert_eq!(classify_line("forward()\r"), classify_line("forward()"));
+        assert_eq!(classify_line("\r"), []);
+        assert_read(
+            "print(\"stuck\r",
+            &[(Function, "print"), (Symbol, "("), (Text, "\"stuck")],
+        );
+        // Anywhere else, a line break is a character that the language doesn't read.
+        assert_read(
+            "a\rb\nc",
+            &[
+                (Name, "a"),
+                (Invalid, "\r"),
+                (Name, "b"),
+                (Invalid, "\n"),
+                (Name, "c"),
+            ],
+        );
+    }
+
+    #[test]
     fn the_columns_count_characters_from_1() {
         assert_eq!(
             classify_line("    let côté = \"🤖\" # é"),
@@ -2439,8 +2533,38 @@ mod stretches {
         }
     }
 
+    /// Whether a stretch of the kind `kind` may stand for the token `token`.
+    fn stands_for(kind: StretchKind, token: &TokenKind) -> bool {
+        match token {
+            TokenKind::Keyword(K::True | K::False) => kind == Boolean,
+            TokenKind::Keyword(_) => kind == Keyword,
+            TokenKind::Number(_) => kind == Number,
+            TokenKind::Text(_) => kind == Text,
+            TokenKind::Name(_) => matches!(kind, Name | Function | Color),
+            TokenKind::LeftParen
+            | TokenKind::RightParen
+            | TokenKind::Comma
+            | TokenKind::Colon
+            | TokenKind::Equal
+            | TokenKind::EqualEqual
+            | TokenKind::NotEqual
+            | TokenKind::Less
+            | TokenKind::LessEqual
+            | TokenKind::Greater
+            | TokenKind::GreaterEqual
+            | TokenKind::Plus
+            | TokenKind::Minus
+            | TokenKind::Star
+            | TokenKind::Slash
+            | TokenKind::Percent => kind == Symbol,
+            TokenKind::Newline | TokenKind::Indent | TokenKind::Dedent | TokenKind::End => false,
+        }
+    }
+
     /// The same rules read a source and color it: the stretches of each line of a source
-    /// that the lexer accepts are its tokens, and its comments.
+    /// that the lexer accepts are its tokens, each of a kind that stands for its token, and
+    /// its comments. The two share their cursor, so the places agree by construction: the
+    /// test holds the kinds, and the places the day the colors are read another way.
     #[test]
     fn the_stretches_of_a_line_are_the_tokens_the_lexer_reads_on_it() {
         let valid: Vec<&str> = PIECES[..16].to_vec();
@@ -2462,19 +2586,108 @@ mod stretches {
                 })
                 .peekable();
             for (number, line) in (1..).zip(source.split('\n')) {
-                let mut columns = Vec::new();
+                let mut expected = Vec::new();
                 while let Some(token) = tokens.next_if(|token| token.span.start.line == number) {
-                    columns.push((token.span.start.column, token.span.end.column));
+                    expected.push(token);
                 }
-                let read: Vec<(u32, u32)> = classify_line(line)
+                let stretches: Vec<Stretch> = classify_line(line)
                     .into_iter()
                     .filter(|stretch| stretch.kind != Comment)
-                    .map(|stretch| (stretch.start, stretch.end))
                     .collect();
-                assert_eq!(read, columns, "in {line:?}");
+                assert_eq!(stretches.len(), expected.len(), "in {line:?}");
+                for (stretch, token) in stretches.iter().zip(expected) {
+                    assert_eq!(
+                        (stretch.start, stretch.end),
+                        (token.span.start.column, token.span.end.column),
+                        "in {line:?}"
+                    );
+                    assert!(
+                        stands_for(stretch.kind, &token.kind),
+                        "{stretch:?} for {token:?} in {line:?}"
+                    );
+                }
                 compared += 1;
             }
         }
         assert!(compared > 5_000, "only {compared} lines compared");
+    }
+
+    /// What the lexer refuses on a line is where its colors say so: the error starts in a
+    /// stretch, the same one when the stretch is invalid, a text or a number that holds it
+    /// otherwise, and nothing before it is invalid. So the underline of an error (step 16e)
+    /// never falls beside the stretch it is about.
+    #[test]
+    fn the_error_of_the_lexer_falls_on_a_stretch() {
+        let mut random = Random(23);
+        let (mut refused, mut accepted) = (0, 0);
+        for _ in 0..5_000 {
+            // Lines cut anywhere, as while they are typed, without an indentation: its
+            // errors are those of a line among the others, not of a stretch.
+            let whole = format!("{} {}", random.pick(&PIECES), random.pick(&PIECES));
+            let length = whole.chars().count();
+            let cut: String = whole.chars().take(random.next() % (length + 1)).collect();
+            let line = cut.trim_start();
+            let stretches = classify_line(line);
+            let Err(error) = tokenize(line) else {
+                assert!(
+                    stretches.iter().all(|stretch| stretch.kind != Invalid),
+                    "an invalid stretch in {line:?}, which the lexer accepts"
+                );
+                accepted += 1;
+                continue;
+            };
+            let (start, end) = (error.span.start.column, error.span.end.column);
+            let index = stretches
+                .iter()
+                .position(|stretch| stretch.start <= start && start < stretch.end);
+            let Some(index) = index else {
+                panic!("{error:?} starts in no stretch of {line:?}");
+            };
+            let stretch = stretches[index];
+            match error.kind {
+                LexErrorKind::UnclosedText | LexErrorKind::UnknownEscape { .. } => {
+                    assert_eq!(stretch.kind, Text, "{error:?} in {line:?}");
+                    assert!(end <= stretch.end, "{error:?} past {stretch:?} in {line:?}");
+                }
+                LexErrorKind::NumberTooLarge => {
+                    assert_eq!(
+                        stretch,
+                        Stretch {
+                            kind: Number,
+                            start,
+                            end
+                        },
+                        "in {line:?}"
+                    );
+                }
+                LexErrorKind::Tab
+                | LexErrorKind::WrongIndent { .. }
+                | LexErrorKind::SingleQuote
+                | LexErrorKind::NameStartsWithDigit { .. }
+                | LexErrorKind::SymbolForKeyword { .. }
+                | LexErrorKind::UnexpectedCharacter { .. } => {
+                    assert_eq!(
+                        stretch,
+                        Stretch {
+                            kind: Invalid,
+                            start,
+                            end
+                        },
+                        "in {line:?}"
+                    );
+                }
+            }
+            assert!(
+                stretches[..index]
+                    .iter()
+                    .all(|before| before.kind != Invalid),
+                "an invalid stretch before {error:?} in {line:?}"
+            );
+            refused += 1;
+        }
+        assert!(
+            refused > 1_000 && accepted > 500,
+            "{refused} refused, {accepted} accepted"
+        );
     }
 }

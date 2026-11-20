@@ -47,7 +47,8 @@ export { type Builtin, type ForeignWord, type Keyword } from '#lib/wasm/stepwise
  *
  * It takes one line, without its line break, and never fails: a line being typed is wrong most
  * of the time. A statement never spans two lines, so a line is read alone, whatever is around
- * it. A stretch is `line.slice(from, to)`.
+ * it. A stretch is `line.slice(from, to)`, never empty. A text cut on `\n` may leave a `\r` at
+ * the end of a line: it is taken as part of the line break, as the checks do.
  */
 export { classifyLine, type Stretch, type StretchKind } from '#lib/wasm/stepwise.js';
 

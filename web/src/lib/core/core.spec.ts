@@ -214,6 +214,34 @@ describe('the stretches of a line of code', () => {
 		]);
 	});
 
+	it('keep a word of another language a name, before a parenthesis too', () => {
+		expect(read('elif (stuck):')).toEqual([
+			['name', 'elif'],
+			['symbol', '('],
+			['name', 'stuck'],
+			['symbol', ')'],
+			['symbol', ':']
+		]);
+	});
+
+	it('read the lines of a text cut on `\\n`, a carriage return left at their end', () => {
+		const lines = 'forward()\r\nprint("🤖")\r\n'.split('\n');
+		expect(lines.map(read)).toEqual([
+			[
+				['function', 'forward'],
+				['symbol', '('],
+				['symbol', ')']
+			],
+			[
+				['function', 'print'],
+				['symbol', '('],
+				['text', '"🤖"'],
+				['symbol', ')']
+			],
+			[]
+		]);
+	});
+
 	it('are given for a line that is wrong, as a line being typed is', () => {
 		expect(read('print("I am stu')).toEqual([
 			['function', 'print'],

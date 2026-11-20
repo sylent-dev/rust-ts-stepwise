@@ -20,11 +20,17 @@
         clippy::unimplemented
     )
 )]
+// What the core makes public is what the bridge uses (see Language core in
+// docs/technical-choices.md): an item declared `pub` that nothing outside the crate can reach
+// is written `pub(crate)`, so that the compiler refuses it in a public signature. Outside the
+// tests, whose helpers are public to each other.
+#![cfg_attr(not(test), warn(unreachable_pub))]
 
 mod ast;
 pub mod builtin;
 pub mod checker;
 pub mod color;
+pub mod foreign_word;
 pub mod interpreter;
 pub mod level;
 pub mod lexer;

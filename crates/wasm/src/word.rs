@@ -4,11 +4,12 @@
 //! word, and a word added to the core is refused there until it is placed.
 //!
 //! Each enum is the one of the same name in the core, and each variant the word of the same
-//! name: the conversion names them all, and a test compares what the interface reads with
-//! what the core writes. The colors have theirs with the world (`world.rs`).
+//! name: the conversion names them all, and two tests compare what the interface reads with
+//! what the core writes, the words then their conversion. The colors have their enum with the
+//! world (`world.rs`), and are held by the same tests.
 
 use serde::Serialize;
-use stepwise_core::{builtin, lexer, parser};
+use stepwise_core::{builtin, foreign_word, lexer};
 use tsify::Tsify;
 
 /// A keyword of the language.
@@ -68,9 +69,9 @@ pub enum ForeignWord {
     Null,
 }
 
-impl From<parser::ForeignWord> for ForeignWord {
-    fn from(word: parser::ForeignWord) -> Self {
-        use parser::ForeignWord as W;
+impl From<foreign_word::ForeignWord> for ForeignWord {
+    fn from(word: foreign_word::ForeignWord) -> Self {
+        use foreign_word::ForeignWord as W;
         match word {
             W::Elif => Self::Elif,
             W::Def => Self::Def,
@@ -145,10 +146,11 @@ impl From<builtin::Builtin> for Builtin {
 
 #[cfg(test)]
 mod tests {
-    use stepwise_core::{builtin, lexer, parser};
+    use stepwise_core::{builtin, color, foreign_word, lexer};
     use tsify::Tsify;
 
     use super::{Builtin, ForeignWord, Keyword};
+    use crate::world::Color;
 
     /// The words of a TypeScript union of texts, in its order: what its declaration holds
     /// between quotes.
@@ -157,7 +159,8 @@ mod tests {
     }
 
     /// The interface reads a word by the name that `serde` gives its variant, which is also
-    /// the one of its TypeScript type: each list must be the one of the core, word for word.
+    /// the one of its TypeScript type: each list must be the one of the core, word for word
+    /// and in its order.
     #[test]
     fn each_union_holds_the_words_of_the_core_as_they_are_written() {
         assert_eq!(
@@ -166,12 +169,35 @@ mod tests {
         );
         assert_eq!(
             union(ForeignWord::DECL),
-            parser::ForeignWord::ALL.map(parser::ForeignWord::as_str)
+            foreign_word::ForeignWord::ALL.map(foreign_word::ForeignWord::as_str)
         );
         assert_eq!(
             union(Builtin::DECL),
             builtin::Builtin::ALL.map(builtin::Builtin::as_str)
         );
+        assert_eq!(
+            union(Color::DECL),
+            color::Color::ALL.map(color::Color::as_str)
+        );
+    }
+
+    /// A conversion that names every word may still cross two of them. The unions are in the
+    /// order of the core (the test above): a word that keeps its rank through its conversion
+    /// is then the variant written the same.
+    #[test]
+    fn each_word_of_the_core_becomes_the_variant_written_the_same() {
+        for (rank, word) in lexer::Keyword::ALL.into_iter().enumerate() {
+            assert_eq!(Keyword::from(word) as usize, rank, "{word:?}");
+        }
+        for (rank, word) in foreign_word::ForeignWord::ALL.into_iter().enumerate() {
+            assert_eq!(ForeignWord::from(word) as usize, rank, "{word:?}");
+        }
+        for (rank, word) in builtin::Builtin::ALL.into_iter().enumerate() {
+            assert_eq!(Builtin::from(word) as usize, rank, "{word:?}");
+        }
+        for (rank, word) in color::Color::ALL.into_iter().enumerate() {
+            assert_eq!(Color::from(word) as usize, rank, "{word:?}");
+        }
     }
 
     #[test]

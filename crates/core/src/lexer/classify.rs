@@ -10,6 +10,7 @@ use super::token::{Keyword, TokenKind};
 use super::{Cursor, Piece};
 use crate::builtin::Builtin;
 use crate::color::Color;
+use crate::foreign_word::ForeignWord;
 
 /// A stretch of a line of code, and what it is.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -36,10 +37,11 @@ pub enum StretchKind {
     Text,
     /// A color: `red`.
     Color,
-    /// The name of a function: a built-in function wherever it is written, or any other name
-    /// followed by a `(`, which is called or defined there.
+    /// The name of a function: a built-in function wherever it is written, or a name that
+    /// isn't reserved followed by a `(`, which is called or defined there.
     Function,
-    /// Any other name: a variable, a parameter, a word of another language.
+    /// Any other name: a variable, a parameter, a word of another language wherever it is
+    /// written.
     Name,
     /// A symbol of the language: an operator, a parenthesis, a comma, a `:`.
     Symbol,
@@ -51,27 +53,27 @@ pub enum StretchKind {
 }
 
 /// The stretches of `line`, a line of code without its line break, from left to right: what
-/// the lexer reads on it, the blank characters left out.
+/// the lexer reads on it, the spaces left out, and any blank character before the first
+/// stretch.
 ///
 /// It never fails, and gives nothing for an empty line. The stretches follow each other
 /// without overlapping, and each holds one character at least.
+///
+/// A `\r` at the end of the line belongs to its line break, as for the lexer (`\r\n`): a
+/// text cut on `\n` alone gives the same stretches. Any other line break left in `line` is a
+/// character that the language doesn't read.
 #[must_use]
 pub fn classify_line(line: &str) -> Vec<Stretch> {
-    let mut cursor = Cursor::new(line, 1);
-    // Blank characters of any kind before the first piece, as the lexer skips them before a
-    // comment.
+    let mut cursor = Cursor::new(line.strip_suffix('\r').unwrap_or(line), 1);
+    // Blank characters of any kind before the first piece: an indentation has no color, and
+    // the checks say what is wrong in it.
     while cursor.bump_if(char::is_whitespace).is_some() {}
-    let mut pieces = Vec::new();
-    while let Some(piece) = cursor.piece() {
-        pieces.push(piece);
-    }
-
-    let mut stretches = Vec::with_capacity(pieces.len());
-    let mut following = pieces.iter().map(|(piece, _)| piece).skip(1);
-    for (piece, span) in &pieces {
-        let called = matches!(following.next(), Some(Piece::Token(TokenKind::LeftParen)));
+    let mut pieces = std::iter::from_fn(|| cursor.piece()).peekable();
+    let mut stretches = Vec::new();
+    while let Some((piece, span)) = pieces.next() {
+        let called = matches!(pieces.peek(), Some((Piece::Token(TokenKind::LeftParen), _)));
         stretches.push(Stretch {
-            kind: kind_of(piece, called),
+            kind: kind_of(&piece, called),
             start: span.start.column,
             end: span.end.column,
         });
@@ -125,13 +127,16 @@ fn kind_of(piece: &Piece, called: bool) -> StretchKind {
     }
 }
 
-/// What a name is: the reserved words first, which stay what they are wherever they are
-/// written, then a name followed by a `(`.
+/// What a name is: the reserved words first, each list of them, which stay what they are
+/// wherever they are written, then a name followed by a `(`.
 fn name_kind(name: &str, called: bool) -> StretchKind {
     if Builtin::from_word(name).is_some() {
         StretchKind::Function
     } else if Color::from_word(name).is_some() {
         StretchKind::Color
+    } else if ForeignWord::from_word(name).is_some() {
+        // Never a function of the program, even before a `(`: `for (…)`, `none()`.
+        StretchKind::Name
     } else if called {
         StretchKind::Function
     } else {

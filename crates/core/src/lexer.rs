@@ -351,7 +351,7 @@ impl<'a> Cursor<'a> {
                     Some('n') => text.push('\n'),
                     Some(character) => {
                         let kind = LexErrorKind::UnknownEscape { escape: character };
-                        refused = refused.or_else(|| Some(self.error(kind, escape)));
+                        refused.get_or_insert_with(|| self.error(kind, escape));
                     }
                     None => break,
                 },

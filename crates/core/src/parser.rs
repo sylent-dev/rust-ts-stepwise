@@ -19,12 +19,13 @@ mod expression;
 #[cfg(test)]
 mod tests;
 
-pub use error::{ForeignWord, ParseError, ParseErrorKind, SyntaxError};
+pub use error::{ParseError, ParseErrorKind, SyntaxError};
 
 use std::iter::Peekable;
 use std::vec::IntoIter;
 
 use crate::ast::{Name, Program, Statement, StatementKind};
+use crate::foreign_word::ForeignWord;
 use crate::lexer::{Keyword, Lexed, Token, TokenKind, tokenize};
 use crate::span::{Position, Span};
 
