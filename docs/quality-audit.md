@@ -154,18 +154,13 @@ export type MenuRow =
 
 ### Step 16: where the words of the language come out
 
-The four lists are written once in the core (`word_enum!`), but nothing typed comes out: a word crosses only in an error, as a `String` (`crates/wasm/src/check.rs:99-122`), and `Color` alone has a TypeScript union. The highlighting (16), Ctrl+click and F1 on a word, the command menu (20), the manual (22) and the nine messages of the words of other languages would each list the words again in TypeScript, with nothing to keep them in step: a tenth `ForeignWord` would fail no check.
+Settled at step 16a (2026-11-20): the lists of words cross as types that the bridge generates from mirror enums, as `Color` (`crates/wasm/src/word.rs`; see Words of the language in `docs/technical-choices.md`). The finding was that nothing typed came out of the four lists of the core (`word_enum!`), so each table of the interface would have listed the words again, with nothing to keep them in step.
 
-One exported function of the bridge, built from `ALL`, decided once for the three steps: `vocabulary() -> { keywords, foreignWords, builtins: { name, parameters }[], colors, indentWidth }`, with the depths of 15c. Then either the TypeScript tables stay keyed by a text and a test compares their keys with the lists (cheap), or mirror enums with `Tsify`, as `Color`, give unions and exhaustive tables at compile time (44 variants written a second time in Rust, kept in step by the compiler). The category of a built-in function stays in the interface, with the structure of the menu.
+Left to step 20, with its first reader: one exported function of the bridge, built from `ALL`, `vocabulary() -> { keywords, foreignWords, builtins: { name, parameters }[], colors, indentWidth }`. The category of a built-in function stays in the interface, with the structure of the menu.
 
 ### Step 16: where the highlighting comes from
 
-`docs/technical-choices.md` leaves it open ("can come from the Rust lexer"). As it is, it can't: `tokenize` gives no token at the first error (`crates/core/src/lexer.rs:67`), so a quote not closed yet would take every color off the page; a comment at the end of a line leaves no token nor place (`:251`); a color and a built-in function are a `TokenKind::Name` as any other. Two ways:
-
-- in the core, a tolerant function per line, which never fails and reuses `Cursor`: `classify_line(line: &str) -> Vec<Stretch>`, a stretch being a class (`Keyword`, `Name`, `Number`, `Text`, `Color`, `Comment`, `Symbol`, `Invalid`) and two columns; its cost per line is to measure;
-- in TypeScript, a `StreamLanguage` of CodeMirror fed with the lists above, and a test that compares its tokens with those of `tokenize` on a corpus. The rule of a name (`is_word`, `char::is_alphanumeric`) is then written twice.
-
-Once chosen, close what 15b left public for this choice: `parse` and `checker::check` have no caller outside the core, and `tokenize` only a test of the bridge (`crates/wasm/src/position.rs`); the tree of `ast` stays public only because `parse` and `checker::check` name `Program`. It closes with them, down to its two operators, which the runtime errors carry.
+Settled at step 16a (2026-11-20): in the core, by a reading of one line that never fails, `lexer::classify_line` (see Colors of the code in `docs/technical-choices.md`). With it, what 15b had left public for this choice is closed: `tokenize`, `parse`, `checker::check` and the tree of `ast`, down to its two operators, which the runtime errors carry and `interpreter` gives.
 
 ### Step 16: what a cleanup reads of `fromCore`
 
