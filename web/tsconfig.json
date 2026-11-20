@@ -2,6 +2,15 @@
 	"extends": "$app/tsconfig",
 	"compilerOptions": {
 		"strict": true,
+		// Beyond `strict` (see Strictness of the interface code in docs/technical-choices.md):
+		// `list[0]` and `table[key]` may be `undefined`, as the core forbids indexing.
+		"noUncheckedIndexedAccess": true,
+		"noImplicitOverride": true,
+		"noImplicitReturns": true,
+		"noFallthroughCasesInSwitch": true,
+		// An error, where the compiler only greys the code out by default: ESLint leaves the code
+		// that nothing reaches to the compiler in a TypeScript file.
+		"allowUnreachableCode": false,
 		// Only types that can be erased (no enum, no namespace): Node.js runs the scripts by
 		// stripping their types, without compiling them.
 		"erasableSyntaxOnly": true,

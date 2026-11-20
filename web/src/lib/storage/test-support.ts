@@ -17,6 +17,7 @@ export function memoryBackend(
 			held[key] = value;
 		},
 		removeItem: (key) => {
+			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete -- a test hands and reads what is held as an object, key by key, as `localStorage` shows it
 			delete held[key];
 		}
 	};

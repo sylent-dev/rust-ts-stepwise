@@ -11,6 +11,7 @@ export function worldOf(
 	robot: Robot = { position: { x: 0, y: 0 }, direction: 'east', carrying: false }
 ): World {
 	const cells = rows.flatMap((row) =>
+		// eslint-disable-next-line @typescript-eslint/no-misused-spread -- a row is written in ASCII: one character, one cell
 		[...row].map((char): Cell =>
 			char === '#' ? { type: 'wall' } : { type: 'floor', item: char === 'o' }
 		)

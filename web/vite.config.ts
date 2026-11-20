@@ -6,6 +6,7 @@ import { sveltekit } from '@sveltejs/kit/vite';
 // domain (`https://stepwise.sylent.tools/`), `/rust-ts-stepwise` at the default address of GitHub
 // Pages. Never hard-coded, so that the domain can change without changing the code.
 // SvelteKit refuses a value that doesn't start with `/` or ends with it.
+// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- SvelteKit checks the value itself, and says what is wrong with it
 const base = (process.env.BASE_PATH ?? '') as '' | `/${string}`;
 
 export default defineConfig({

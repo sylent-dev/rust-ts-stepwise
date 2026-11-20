@@ -50,8 +50,11 @@ export interface PlaybackOptions {
 
 /** Whether the system asks for less motion, at each call; never where there is no window. */
 function systemLessMotion(): () => boolean {
-	const query = globalThis.matchMedia?.('(prefers-reduced-motion: reduce)');
-	return () => query?.matches ?? false;
+	// The types of a browser say that `matchMedia` is always there: it isn't where a page is built
+	// ahead nor in a test, which Node runs.
+	if (!('matchMedia' in globalThis)) return () => false;
+	const query = matchMedia('(prefers-reduced-motion: reduce)');
+	return () => query.matches;
 }
 
 export class Playback implements Scene {

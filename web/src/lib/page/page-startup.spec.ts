@@ -4,12 +4,10 @@
 
 import { describe, expect, it } from 'vitest';
 import page from '../../app.html?raw';
+import { pageScripts, runPageScript } from './test-support.ts';
 
 /** The scripts written in the page itself; this one hands `stepwisePage` to the application. */
-const script =
-	[...page.matchAll(/<script>([\s\S]*?)<\/script>/g)]
-		.map((match) => match[1])
-		.find((text) => text.includes('stepwisePage')) ?? '';
+const script = pageScripts(page).find((text) => text.includes('stepwisePage')) ?? '';
 
 /** An element of the page, as much of it as the script uses. */
 function element() {
@@ -75,7 +73,7 @@ function openPage({
 		// Named even when it is missing: the script would find the one of Node.js otherwise.
 		WebAssembly: webAssembly ? {} : undefined
 	};
-	new Function('browser', `with (browser) { ${script} }`)(browser);
+	runPageScript(script, browser);
 
 	return {
 		/** The message that shows: `old`, `failed`, or none. */
@@ -99,8 +97,8 @@ function openPage({
 			elements['page-application'] = application;
 			return application;
 		},
-		error: (reason: Reason) => listeners['error']?.({ error: reason }),
-		rejection: (reason: Reason) => listeners['unhandledrejection']?.({ reason }),
+		error: (reason: Reason) => listeners.error?.({ error: reason }),
+		rejection: (reason: Reason) => listeners.unhandledrejection?.({ reason }),
 		/** Time passes: what the page waited for happens. */
 		wait() {
 			const pending = [...timers.values()];

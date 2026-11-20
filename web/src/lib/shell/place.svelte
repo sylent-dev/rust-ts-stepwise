@@ -2,7 +2,8 @@
      level, or the sandbox with its mark. It is the title of the page. The chapter of a level, its
      number and the bubble of its goal come with the list of the levels (step 21). -->
 <script lang="ts">
-	import Icon, { type IconName } from '#lib/icon.svelte';
+	import type { IconName } from '#lib/icon-name.ts';
+	import Icon from '#lib/icon.svelte';
 
 	interface Props {
 		title: string;

@@ -77,7 +77,7 @@ describe('the page', () => {
 	it('carries every design token that the look of a message uses', () => {
 		const carried = pageParts.styles.join('\n');
 		const used = new Set(
-			[...screenMessage.matchAll(/var\((--[a-z0-9-]+)/g)].map((match) => match[1])
+			[...screenMessage.matchAll(/var\((--[a-z0-9-]+)/g)].map((match) => match[1] ?? '')
 		);
 		expect(used.size).toBeGreaterThan(0);
 		for (const token of used) expect(carried, token).toContain(`${token}:`);
