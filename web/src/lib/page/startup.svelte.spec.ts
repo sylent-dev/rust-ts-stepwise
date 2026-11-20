@@ -16,6 +16,8 @@ afterEach(() => {
 	vi.unstubAllGlobals();
 });
 
+// The tests tell one story, in their order: the module is loaded once for this file, and what it
+// remembers never goes back.
 describe('what the application tells the page', () => {
 	it('says that it runs', () => {
 		const page = openPage();
@@ -25,9 +27,8 @@ describe('what the application tells the page', () => {
 		expect(currentPage.failed).toBe(false);
 	});
 
-	// One test for the whole story: what the module remembers never goes back.
-	it('asks for the message of the page, and what follows it knows at once', () => {
-		const page = openPage();
+	it('remembers that it asked, in a page without its script too, and tells what follows it', () => {
+		vi.stubGlobal('window', {});
 		const seen: boolean[] = [];
 		const leave = $effect.root(() => {
 			$effect(() => {
@@ -37,16 +38,16 @@ describe('what the application tells the page', () => {
 		flushSync();
 		expect(seen).toEqual([false]);
 
-		loadFailed();
+		expect(loadFailed).not.toThrow();
 		flushSync();
-		expect(page.failed).toHaveBeenCalledOnce();
 		expect(seen).toEqual([false, true]);
 		leave();
 	});
 
-	it('remembers that it asked, even in a page without its script', () => {
-		vi.stubGlobal('window', {});
-		expect(loadFailed).not.toThrow();
-		expect(currentPage.failed).toBe(true);
+	it('asks the page for its message', () => {
+		const page = openPage();
+		loadFailed();
+		expect(page.failed).toHaveBeenCalledOnce();
+		expect(page.started).not.toHaveBeenCalled();
 	});
 });

@@ -4,7 +4,9 @@
 
 /**
  * Whether the application asked the page for its message. The page keeps that message until it
- * is loaded again, so this never goes back.
+ * is loaded again, so this never goes back. The page may also keep a message of its own, in a
+ * browser without WebAssembly: the application is then out of reach from its start, and nothing
+ * tells it so unless it asks for its core.
  */
 let failed = $state(false);
 
@@ -26,9 +28,9 @@ export function loadFailed(): void {
 /** The page, as the application left it. */
 export const currentPage = {
 	/**
-	 * Whether its message took the place of the application, for good. The page puts the
-	 * application out of reach under it, but for what the browser draws over everything, a panel:
-	 * that one follows this, and closes.
+	 * Whether the application asked for its message, which took the place of the application for
+	 * good. The page puts the application out of reach under it, but for what the browser draws
+	 * over everything, a panel: that one follows this, and closes.
 	 */
 	get failed(): boolean {
 		return failed;
