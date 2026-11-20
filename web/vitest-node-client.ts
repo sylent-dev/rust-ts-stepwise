@@ -3,7 +3,7 @@
 // lives in a component (an `$effect`, a `$derived` that follows a `$state`) needs the second,
 // without a page (see vite.config.ts).
 
-import type { Environment } from 'vitest/environments';
+import type { Environment } from 'vitest/runtime';
 
 export default {
 	name: 'node-client',

@@ -16,3 +16,12 @@ updates:
     groups:
       web:
         patterns: ["*"]
+    ignore:
+      # TypeScript 7 is refused by svelte-check (5 and 6) and by typescript-eslint (under 6.1):
+      # to remove once both accept it (see the backlog).
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
+      # The types of Node.js stay those of the oldest Node.js the project runs on (`engines` in
+      # web/package.json): raised by hand, with it.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
