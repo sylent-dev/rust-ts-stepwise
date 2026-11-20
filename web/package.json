@@ -16,7 +16,7 @@
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "npm run wasm && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "npm run wasm && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-		"lint": "prettier --check . && eslint .",
+		"lint": "prettier --check . && npm run wasm && svelte-kit sync && eslint .",
 		"format": "prettier --write .",
 		"test:unit": "npm run wasm && vitest",
 		"test": "npm run wasm && vitest --run"

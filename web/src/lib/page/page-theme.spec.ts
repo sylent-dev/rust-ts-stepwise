@@ -8,6 +8,7 @@ import { THEMES } from '#lib/settings/settings.ts';
 import { openStore, type Backend } from '#lib/storage/store.ts';
 import { memoryBackend } from '#lib/storage/test-support.ts';
 import page from '../../app.html?raw';
+import { runPageScript } from './test-support.ts';
 
 /** The theme the page is written with: the one it keeps when the script changes nothing. */
 const WRITTEN = /<html[^>]* data-theme="([^"]+)"/.exec(page)?.[1];
@@ -39,9 +40,7 @@ function themeAfter(storage: Backend | Error): string | undefined {
 			}
 		}
 	};
-	// The script names `localStorage` and `document` as a page does: they are looked up in
-	// `browser`, so that the storage can throw when it is asked for.
-	new Function('browser', `with (browser) { ${scripts[0]} }`)(browser);
+	runPageScript(scripts[0] ?? '', browser);
 	return theme;
 }
 

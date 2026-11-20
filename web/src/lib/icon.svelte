@@ -1,13 +1,9 @@
 <!-- An icon: lines in the color of the text around it, drawn in a square of 16 units. An icon is
-     added to the list with the first block that shows it: its name, then its shapes, as the
-     ones of `docs/mockups/interface/icons.js`. -->
-<script lang="ts" module>
-	/** The name of an icon. */
-	export type IconName = 'close' | 'diamond' | 'gear';
-</script>
-
+     added to the list with the first block that shows it: its name (`icon-name.ts`), then its
+     shapes, as the ones of `docs/mockups/interface/icons.js`. -->
 <script lang="ts">
 	import type { Snippet } from 'svelte';
+	import type { IconName } from './icon-name.ts';
 
 	interface Props {
 		name: IconName;

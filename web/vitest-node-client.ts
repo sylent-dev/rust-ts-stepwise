@@ -8,5 +8,9 @@ import type { Environment } from 'vitest/environments';
 export default {
 	name: 'node-client',
 	viteEnvironment: 'client',
-	setup: () => ({ teardown() {} })
+	setup: () => ({
+		teardown() {
+			// Nothing to undo: Node stays as it was.
+		}
+	})
 } satisfies Environment;

@@ -6,6 +6,7 @@ function menu(name: string, rows: string): Menu {
 	return {
 		id: name.toLowerCase(),
 		name,
+		// eslint-disable-next-line @typescript-eslint/no-misused-spread -- the rows are written in ASCII: one letter, one row
 		rows: [...rows].map((label) =>
 			label === label.toUpperCase()
 				? { id: label, label, here: true }

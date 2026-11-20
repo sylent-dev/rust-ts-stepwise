@@ -109,27 +109,61 @@ function refuse(...patterns) {
 export default defineConfig(
 	includeIgnoreFile(gitignorePath),
 	js.configs.recommended,
-	ts.configs.recommended,
+	// The rules that read the types, for every file: what the compiler doesn't refuse and a review
+	// held before (see Strictness of the interface code in docs/technical-choices.md). A rule too
+	// noisy is tuned or turned off below, with its reason.
+	ts.configs.strictTypeChecked,
+	ts.configs.stylisticTypeChecked,
 	svelte.configs.recommended,
 	prettier,
 	svelte.configs.prettier,
 	{
-		languageOptions: { globals: { ...globals.browser, ...globals.node } },
-		rules: {
-			// typescript-eslint strongly recommend that you do not use the no-undef lint rule on TypeScript projects.
-			// see: https://typescript-eslint.io/troubleshooting/faqs/eslint/#i-get-errors-from-the-no-undef-rule-about-global-variables-not-being-defined-even-though-there-are-no-typescript-errors
-			'no-undef': 'off'
-		}
-	},
-	{
-		files: ['**/*.svelte', '**/*.svelte.ts', '**/*.svelte.js'],
+		// A comment that turns a rule off for nothing is removed with what it excused.
+		linterOptions: { reportUnusedDisableDirectives: 'error' },
 		languageOptions: {
+			globals: { ...globals.browser, ...globals.node },
 			parserOptions: {
 				projectService: true,
+				tsconfigRootDir: import.meta.dirname,
 				extraFileExtensions: ['.svelte'],
 				parser: ts.parser
 			}
+		},
+		rules: {
+			// typescript-eslint strongly recommend that you do not use the no-undef lint rule on TypeScript projects.
+			// see: https://typescript-eslint.io/troubleshooting/faqs/eslint/#i-get-errors-from-the-no-undef-rule-about-global-variables-not-being-defined-even-though-there-are-no-typescript-errors
+			'no-undef': 'off',
+			// A number is written in a text as it is (a coordinate of the map, the number of a
+			// level); anything else is turned into a text by the code that knows how.
+			'@typescript-eslint/restrict-template-expressions': [
+				'error',
+				{
+					allowNumber: true,
+					allowAny: false,
+					allowBoolean: false,
+					allowNever: false,
+					allowNullish: false,
+					allowRegExp: false
+				}
+			],
+			// A function of one line may call one that gives nothing (`onclick={() => menu.close()}`):
+			// nothing is taken for a value there. The narrower option, which lets through only a
+			// callback typed as giving nothing, doesn't see the handlers written in the markup of a
+			// component, whose types ESLint doesn't read.
+			'@typescript-eslint/no-confusing-void-expression': ['error', { ignoreArrowShorthand: true }],
+			// In no set of typescript-eslint. A `switch` without `default` names every value: a new
+			// event or a new code of an error of the core must then be placed. A `default` says
+			// that the others are handled alike, as `_` does in a `match` of the core.
+			'@typescript-eslint/switch-exhaustiveness-check': [
+				'error',
+				{ considerDefaultExhaustiveForUnions: true, requireDefaultForNonUnion: true }
+			]
 		}
+	},
+	{
+		// A test replaces a function by one that does nothing (a spy, a callback left unused).
+		files: ['**/*.spec.ts', '**/test-support.ts'],
+		rules: { '@typescript-eslint/no-empty-function': 'off' }
 	},
 	// The last entry that names a file gives it its imports refused: each one lists them all.
 	{
