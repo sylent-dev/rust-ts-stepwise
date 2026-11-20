@@ -19,9 +19,16 @@ runs:
     - uses: taiki-e/install-action@v2
       with:
         tool: wasm-bindgen@${{ steps.wasm-bindgen.outputs.version }}
+    # The oldest Node.js the project runs on, as the job `Rust minimum version` reads
+    # `rust-version`: given the range of `engines` itself, the runner would install the newest
+    # version it holds, and nothing would try the oldest one any more.
+    - name: Read the minimum Node.js from web/package.json
+      id: node
+      shell: bash
+      run: echo "version=$(sed -n 's/.*"node": ">=\([0-9.]*\)".*/\1/p' web/package.json)" >> "$GITHUB_OUTPUT"
     - uses: actions/setup-node@v7
       with:
-        node-version-file: web/package.json
+        node-version: ${{ steps.node.outputs.version }}
         cache: npm
         cache-dependency-path: web/package-lock.json
     - name: Install the packages
