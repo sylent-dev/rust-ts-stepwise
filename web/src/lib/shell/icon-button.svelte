@@ -14,10 +14,14 @@
 	 */
 	type Zone = 'band' | 'pop' | 'banner';
 
-	/** What the component writes itself is left out: a caller can't give it twice. */
+	/**
+	 * What the component writes itself is left out, so that a caller can't give it twice, and what
+	 * would go around it: a look or a place of its own (`style`), a name that a screen reader
+	 * would read in place of the tip (`aria-labelledby`).
+	 */
 	type ButtonAttributes = Omit<
 		HTMLButtonAttributes,
-		'type' | 'class' | 'title' | 'aria-label' | 'children'
+		'type' | 'class' | 'style' | 'title' | 'aria-label' | 'aria-labelledby' | 'children'
 	>;
 
 	interface Props extends ButtonAttributes {
@@ -29,17 +33,37 @@
 
 	let { icon, label, zone, ...attributes }: Props = $props();
 
-	/** The size of the icon in each zone, in pixels: a zone without its size doesn't compile. */
-	const ICON_SIZES = { band: 18, pop: 16, banner: 14 } as const satisfies Record<Zone, number>;
+	/**
+	 * The look of each zone: the size of its icon, in pixels, the side of its square and its fill
+	 * under the pointer. A zone without one of them doesn't compile.
+	 */
+	const LOOKS = {
+		// As high as the names of the menus beside it.
+		band: { icon: 18, side: 'var(--band-item-height)', fill: 'var(--band-hover)' },
+		// The cross of a panel: 26 pixels, the size of its drawing in the mock-up.
+		pop: { icon: 16, side: '26px', fill: 'var(--hover)' },
+		// The cross of the banner: 24 pixels, as in the mock-up.
+		banner: { icon: 14, side: '24px', fill: 'var(--shade)' }
+	} as const satisfies Record<Zone, { icon: number; side: string; fill: string }>;
+
+	const look = $derived(LOOKS[zone]);
 </script>
 
-<button {...attributes} type="button" class={zone} title={label} aria-label={label}>
-	<Icon name={icon} size={ICON_SIZES[zone]} />
+<button
+	{...attributes}
+	type="button"
+	class={zone}
+	style:--side={look.side}
+	style:--fill={look.fill}
+	title={label}
+	aria-label={label}
+>
+	<Icon name={icon} size={look.icon} />
 </button>
 
 <style>
-	/* `--side` and `--fill` are set by the zone, below: the side of the square, and its fill
-	   under the pointer. */
+	/* `--side` and `--fill` come from the look of the zone, above: the side of the square, and
+	   its fill under the pointer. */
 	button {
 		display: grid;
 		place-items: center;
@@ -58,24 +82,10 @@
 		color: var(--text);
 	}
 
-	/* As high as the names of the menus beside it. */
-	.band {
-		--side: var(--band-item-height);
-		--fill: var(--band-hover);
-	}
-
-	/* The cross of a panel: 26 pixels, the size of its drawing in the mock-up. */
-	.pop {
-		--side: 26px;
-		--fill: var(--hover);
-	}
-
-	/* The cross of the banner: 24 pixels, as in the mock-up. On the amber of the banner, it takes
-	   the color of the text, at 70 % until the pointer is over it: the gray of a weak text is
-	   made for the zones, and would be hard to see there. */
+	/* What a zone doesn't share with the others is a class of its name. On the amber of the
+	   banner, the cross takes the color of the text, at 70 % until the pointer is over it: the
+	   gray of a weak text is made for the zones, and would be hard to see there. */
 	.banner {
-		--side: 24px;
-		--fill: var(--shade);
 		color: inherit;
 		opacity: 0.7;
 	}

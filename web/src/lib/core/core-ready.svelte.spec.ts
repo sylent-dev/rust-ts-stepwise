@@ -2,12 +2,12 @@
 
 import { flushSync } from 'svelte';
 import { describe, expect, it, vi } from 'vitest';
-import { loadFailed } from '#lib/page/startup.ts';
+import { loadFailed } from '#lib/page/startup.svelte.ts';
 import { loadCore } from './core.ts';
 import { coreReady, fromCore } from './core-ready.svelte.ts';
 
 vi.mock('./core.ts', () => ({ loadCore: vi.fn() }));
-vi.mock('#lib/page/startup.ts', () => ({ loadFailed: vi.fn() }));
+vi.mock('#lib/page/startup.svelte.ts', () => ({ loadFailed: vi.fn() }));
 
 describe('coreReady', () => {
 	it('says that the core is ready once it has loaded', async () => {

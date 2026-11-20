@@ -12,7 +12,7 @@ declare global {
 	interface Window {
 		/**
 		 * What the script of the page (src/app.html) hands to the application; see
-		 * src/lib/page/startup.ts, the one module that calls it.
+		 * src/lib/page/startup.svelte.ts, the one module that calls it.
 		 */
 		stepwisePage?: {
 			/** The application runs. */

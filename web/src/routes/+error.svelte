@@ -6,7 +6,7 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { t } from '#lib/i18n.ts';
-	import { loadFailed } from '#lib/page/startup.ts';
+	import { loadFailed } from '#lib/page/startup.svelte.ts';
 	import ScreenMessage from '#lib/shell/screen-message.svelte';
 
 	const missing = $derived(page.status === 404);

@@ -3,7 +3,7 @@
 // the units of the drawings (geometry.ts); the reference is the mock-up,
 // `docs/mockups/world-elements/motion.js`.
 
-import type { Color, Direction, Paint, Point, World } from '#lib/core/core.ts';
+import type { Color, Direction, Paint, Point, Tool, World } from '#lib/core/core.ts';
 import { CELL, MIDDLE, STEPS, cellAt, placedFloors } from './geometry.ts';
 import type { Rect } from './ground.ts';
 import type { Motion, Pose } from './motion.ts';
@@ -205,6 +205,16 @@ export interface Ring extends Point {
 	opacity: number;
 }
 
+/** What the ring of a tool is drawn with. A tool that the core adds is refused until placed. */
+function ringTool(tool: Tool): Ring['tool'] {
+	switch (tool.type) {
+		case 'brush':
+			return tool.color;
+		case 'eraser':
+			return 'eraser';
+	}
+}
+
 /**
  * The ring of a tool put down at `t` of the step: it grows from under the robot as it fades, at
  * an even pace from the first frame, since the robot covers the paint of its cell. Nothing for
@@ -220,7 +230,7 @@ export function ringAt(before: World, motion: Motion, t: number): Ring | undefin
 	return {
 		x: x * CELL + MIDDLE,
 		y: y * CELL + MIDDLE,
-		tool: tool.type === 'brush' ? tool.color : 'eraser',
+		tool: ringTool(tool),
 		radius: ROBOT_HALF + 16 * t,
 		width: 5 * (1 - t) + 1,
 		opacity: 1 - t

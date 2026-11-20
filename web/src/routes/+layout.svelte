@@ -3,7 +3,7 @@
 <script lang="ts">
 	import '#lib/styles/app.css';
 	import { onMount } from 'svelte';
-	import { applicationStarted } from '#lib/page/startup.ts';
+	import { applicationStarted } from '#lib/page/startup.svelte.ts';
 	import { followSavedSettings, settings } from '#lib/settings/current-settings.svelte.ts';
 	import { SETTINGS_KEY } from '#lib/settings/saved-settings.ts';
 	import { currentWindow } from '#lib/shell/current-window.svelte.ts';
