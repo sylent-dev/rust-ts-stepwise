@@ -244,9 +244,9 @@ describe('the script that watches the application start', () => {
 	});
 
 	it.each([
-		[{ host: 'stepwise.example', pathname: '/' }, 'stepwise.example'],
-		[{ host: 'name.github.io', pathname: '/rust-ts-stepwise/' }, 'name.github.io/rust-ts-stepwise']
-	])('writes the address of the website, %o', (home, address) => {
+		['stepwise.example', { host: 'stepwise.example', pathname: '/' }],
+		['name.github.io/rust-ts-stepwise', { host: 'name.github.io', pathname: '/rust-ts-stepwise/' }]
+	])('writes the address of the website, %s', (address, home) => {
 		expect(openPage({ home }).address).toBe(address);
 	});
 
