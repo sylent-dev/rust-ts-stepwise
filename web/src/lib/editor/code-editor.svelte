@@ -8,6 +8,7 @@
 	import { EditorView } from '@codemirror/view';
 	import { untrack } from 'svelte';
 	import { t } from '#lib/i18n.ts';
+	import type { Explain } from './checks.ts';
 	import { followEditing } from './editing.svelte.ts';
 	import type { Editing } from './edits.ts';
 	import { editorSetup } from './setup.ts';
@@ -15,6 +16,8 @@
 	interface Props {
 		/** The code that the editor opens on; a change of it later is not followed. */
 		text: string;
+		/** Writes the sentences of an error of the checks, which the editor underlines. */
+		explain: Explain;
 		/** The editor shown, for the commands of the screen; nothing once it has gone. */
 		editing?: Editing;
 		/**
@@ -25,12 +28,15 @@
 		onchange?: () => void;
 	}
 
-	let { text, editing = $bindable(), onchange }: Props = $props();
+	let { text, explain, editing = $bindable(), onchange }: Props = $props();
 
 	/** Makes the editor in its block, and takes it away with it. */
 	function mount(block: HTMLElement): () => void {
 		const extensions = [
-			editorSetup(t('editor-name')),
+			editorSetup(
+				t('editor-name'),
+				untrack(() => explain)
+			),
 			// What the screen reads of the editor follows each of its changes. `follow` is made
 			// just under, with the editor: CodeMirror calls a listener at the end of an update or
 			// of a measure, never while it makes the editor (read in `@codemirror/view` 6.43), nor
@@ -135,6 +141,81 @@
 			background: var(--hover);
 			outline: 1px solid var(--gutter-text);
 			outline-offset: -1px;
+		}
+
+		/* The underlines of the checks (checks.ts), drawn as in the mock-up, under the letters of
+		   their stretch, 4 pixels high at the bottom of the line: a layer of their own, since a
+		   mask on the stretch would cut its letters too. Its bottom stands 2 pixels under the
+		   letters of the stretch, which leave the rest of the line to its height: tuned by eye on
+		   the mock-up, as the code is in one font and one size. */
+		.cm-editor .underline-error,
+		.cm-editor .underline-missing,
+		.cm-editor .underline-long {
+			position: relative;
+		}
+
+		.cm-editor .underline-error::after,
+		.cm-editor .underline-missing::after,
+		.cm-editor .underline-long::after {
+			content: '';
+			position: absolute;
+			bottom: -2px;
+			left: 0;
+			height: 4px;
+			pointer-events: none;
+		}
+
+		/* An error: a red wave, its path the one of the mock-up. */
+		.cm-editor .underline-error::after,
+		.cm-editor .underline-missing::after {
+			background: var(--error);
+			mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='4'%3E%3Cpath d='M0 3 Q1.5 0 3 2 T6 3' fill='none' stroke='black' stroke-width='1.3'/%3E%3C/svg%3E")
+				repeat-x;
+		}
+
+		.cm-editor .underline-error::after,
+		.cm-editor .underline-long::after {
+			right: 0;
+		}
+
+		/* Where something is missing, between two characters: the wave of one character, after
+		   the place, where the missing piece would go. */
+		.cm-editor .underline-missing::after {
+			width: 1ch;
+		}
+
+		/* A line too long, from its 81st character: grey dots, an advice and not an error. */
+		.cm-editor .underline-long::after {
+			background: radial-gradient(circle at 1.5px 2px, var(--weak) 1.1px, transparent 1.4px) 0 0 /
+				4px 4px repeat-x;
+		}
+
+		/* What the underlines say under the pointer, under the line: on one line, and on several
+		   once it is longer than 60 characters. */
+		.cm-editor .cm-tooltip {
+			border: var(--pop-border);
+			background: var(--pop);
+			color: var(--text);
+			box-shadow: var(--pop-shadow);
+		}
+
+		.cm-editor .underline-tip {
+			max-width: 60ch;
+			padding: var(--space-6) var(--space-12);
+			font: var(--weight-code) var(--size-code-small) / var(--line-code-small) var(--font-code);
+		}
+
+		.cm-editor .underline-tip p {
+			margin: 0;
+		}
+
+		.cm-editor .underline-tip p + p {
+			margin-top: var(--space-8);
+		}
+
+		.cm-editor .underline-tip strong {
+			display: block;
+			font-weight: var(--weight-code-strong);
 		}
 
 		/* The selection keeps its color while the keyboard is elsewhere. */

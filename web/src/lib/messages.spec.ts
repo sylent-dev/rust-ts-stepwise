@@ -16,6 +16,7 @@ import {
 } from '@fluent/syntax';
 import { describe, expect, it } from 'vitest';
 import { benchPrograms, programMessage } from '#lib/bench/bench-programs.ts';
+import { ERROR_PARTS, ERROR_SUBJECTS, errorMessage } from '#lib/errors/error-text.ts';
 import { commandMessage, LEVEL_COMMANDS } from '#lib/level-screen/level-commands.ts';
 import { LEVEL_PARTS, levelMessage, levels, SANDBOX } from '#lib/levels/levels.ts';
 import { themeMessage, THEMES } from '#lib/settings/settings.ts';
@@ -39,6 +40,12 @@ const FAMILIES: Readonly<Record<string, { prefix: string; names: readonly string
 	adviceMessage: { prefix: 'window-advice-', names: WINDOW_ADVICES.map(adviceMessage) },
 	commandMessage: { prefix: 'command-', names: LEVEL_COMMANDS.map(commandMessage) },
 	keyMessage: { prefix: 'key-', names: KEY_NAMES.map(keyMessage) },
+	errorMessage: {
+		prefix: 'error-',
+		names: ERROR_SUBJECTS.flatMap((subject) =>
+			ERROR_PARTS.map((part) => errorMessage(subject, part))
+		)
+	},
 	programMessage: {
 		prefix: 'bench-program-',
 		// A program of the bench may play on several maps: its message is counted once.

@@ -5,6 +5,7 @@
 import { history, standardKeymap } from '@codemirror/commands';
 import { type Extension, Prec } from '@codemirror/state';
 import { drawSelection, dropCursor, EditorView, keymap, lineNumbers } from '@codemirror/view';
+import { checks, type Explain } from './checks.ts';
 import { codeColors } from './code-colors.ts';
 import { comments } from './edits.ts';
 import { matchingParentheses } from './matching.ts';
@@ -32,7 +33,8 @@ const browserHistory: Extension = Prec.highest(
 /**
  * The editor: the rules of typing, the signs that close by themselves, the history, the keys of
  * every text field (the arrows, Home and End, Backspace, select all), the numbers of the lines,
- * the colors of the code, the pair of parentheses at the cursor. A key is tried in the order of
+ * the colors of the code, the pair of parentheses at the cursor, the checks as the learner types
+ * (whose errors `explain` writes). A key is tried in the order of
  * the list: Backspace takes a pair of signs before it takes an indentation or a character, and
  * Enter is ours before it is the one of every text field. The selection and the cursor are
  * drawn by the editor rather than by the browser, so that they take our look. `label` names the
@@ -42,7 +44,7 @@ const browserHistory: Extension = Prec.highest(
  * heard by the screen, wherever the keyboard is on it, and run by its name (edits.ts): the
  * editor keeps the history and the sign of a comment that those commands read.
  */
-export function editorSetup(label: string): Extension {
+export function editorSetup(label: string, explain: Explain): Extension {
 	return [
 		indentation,
 		pairs,
@@ -55,6 +57,7 @@ export function editorSetup(label: string): Extension {
 		dropCursor(),
 		codeColors,
 		matchingParentheses,
+		checks(explain),
 		EditorView.contentAttributes.of({ 'aria-label': label })
 	];
 }

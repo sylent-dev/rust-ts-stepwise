@@ -7,13 +7,13 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { check } from '#lib/core/core.ts';
 import { loadTestCore } from '#lib/core/test-support.ts';
 import { editorSetup } from './setup.ts';
-import { press, shown, stateOf as markedState, type } from './test-support.ts';
+import { explainByCode, press, shown, stateOf as markedState, type } from './test-support.ts';
 
 beforeAll(loadTestCore);
 
 /** A state of the whole editor, from a text where `|` marks the cursor. */
 function stateOf(marked: string): EditorState {
-	return markedState(marked, editorSetup('Your code'));
+	return markedState(marked, editorSetup('Your code', explainByCode));
 }
 
 const pressed = (marked: string, key: string, shift = false): string =>

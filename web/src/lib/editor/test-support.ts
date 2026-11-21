@@ -10,6 +10,7 @@ import {
 	type Transaction
 } from '@codemirror/state';
 import { EditorView, keymap } from '@codemirror/view';
+import type { Explain } from './checks.ts';
 
 /**
  * A state of the editor from a text where `|` marks the cursor, or the two ends of the
@@ -104,3 +105,9 @@ export function type(
 	}
 	return typed;
 }
+
+/**
+ * Writes an error as its code alone, where the screen writes its sentences: the tests of the
+ * editor read which error it underlines, not what it says.
+ */
+export const explainByCode: Explain = ({ kind }) => ({ title: kind.code });
