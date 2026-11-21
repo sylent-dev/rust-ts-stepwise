@@ -7,7 +7,7 @@
      code** puts the level back in its first state (see Code editor in specs.md). -->
 <script lang="ts">
 	import Bench from '#lib/bench/bench.svelte';
-	import { hasChanged, type LevelCode } from '#lib/code/code.ts';
+	import { differsFromStart, type LevelCode } from '#lib/code/code.ts';
 	import { keepCode, openingCode, restoreCode } from '#lib/code/current-code.ts';
 	import CodeEditor from '#lib/editor/code-editor.svelte';
 	import type { Editing } from '#lib/editor/edits.ts';
@@ -71,9 +71,11 @@
 			editing: () => editing,
 			canRestore: () => {
 				const code = shownCode();
-				return code !== undefined && playground !== undefined
-					? hasChanged(code, playground.startingCode)
-					: false;
+				return (
+					code !== undefined &&
+					playground !== undefined &&
+					differsFromStart(code, playground.startingCode)
+				);
 			},
 			confirmRestore: () => {
 				restoring = true;

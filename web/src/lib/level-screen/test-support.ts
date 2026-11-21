@@ -22,12 +22,12 @@ export function editorFor(able: readonly Edit[] = EDITS): Editing & { asked: Edi
  */
 export function screenWith(
 	editing: () => Editing | undefined = () => undefined,
-	canRestore = false
+	restorable = false
 ): CommandTarget & { confirmations: number } {
 	const screen = {
 		confirmations: 0,
 		editing,
-		canRestore: () => canRestore,
+		canRestore: () => restorable,
 		confirmRestore: () => {
 			screen.confirmations += 1;
 		}

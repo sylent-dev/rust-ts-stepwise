@@ -15,9 +15,10 @@ export function codeToOpen(saved: LevelCode | undefined, startingCode: string): 
 }
 
 /**
- * Whether the code has left the first state of its level, its starting code: **Restore starting
- * code** would then change it. A code that the learner changed, then changed back, hasn't.
+ * Whether the code differs from the first state of its level, its starting code: **Restore
+ * starting code** would then change it. A code that the learner changed, then changed back, is
+ * the starting code again.
  */
-export function hasChanged(code: LevelCode, startingCode: string): boolean {
+export function differsFromStart(code: LevelCode, startingCode: string): boolean {
 	return code.text !== startingCode;
 }
