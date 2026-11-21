@@ -76,6 +76,11 @@ const MAP_IMPORTS_MORE = otherFolders(
 	['core'],
 	'`map/` imports `core/` and the root of `src/lib` alone: no screen, no run.'
 );
+const EDITOR_IMPORTS_MORE = otherFolders(
+	'editor',
+	['core'],
+	'`editor/` imports `core/` and the root of `src/lib` alone: the level screen imports it, and gives it what it needs of the other folders.'
+);
 const CORE_IMPORTS_MORE = otherFolders(
 	'core',
 	['page'],
@@ -266,6 +271,12 @@ export default defineConfig(
 	{
 		files: ['src/lib/map/**'],
 		rules: refuse(LEAVES_ITS_FOLDER, GENERATED_MODULE, itsOwnFolder('map'), MAP_IMPORTS_MORE)
+	},
+	{
+		// Its tests read the style sheet of the colors of the code.
+		files: ['src/lib/editor/**'],
+		ignores: ['**/*.spec.ts'],
+		rules: refuse(LEAVES_ITS_FOLDER, GENERATED_MODULE, itsOwnFolder('editor'), EDITOR_IMPORTS_MORE)
 	},
 	{
 		files: ['src/lib/core/**'],

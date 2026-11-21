@@ -2,9 +2,11 @@
      specs.md): under its header, the code on the left on the whole height, the map on top on the
      right, the console and the variables under it. The blocks meet without any line, each zone in
      its own tone; the panels come with the running (step 17). A route gives it what it plays on,
-     and it wires the rest: the same for a level and for the sandbox. -->
+     and it wires the rest: the same for a level and for the sandbox. The code isn't saved yet
+     (step 16d): the editor opens on the starting code of the level. -->
 <script lang="ts">
 	import Bench from '#lib/bench/bench.svelte';
+	import CodeEditor from '#lib/editor/code-editor.svelte';
 	import type { Scene } from '#lib/map/scene.ts';
 	import type { Playback } from '#lib/run/playback.svelte.ts';
 	import SettingsButton from '#lib/settings/settings-button.svelte';
@@ -41,18 +43,26 @@
 		<SettingsButton gear />
 	</Header>
 	<main>
-		<!-- Until the editor (step 16) and the running (step 17), the column of the code holds the
-		     bench of the animations: short programs played by the core on the map of the screen. A
-		     bench of its own for each map, whose runs start on it. -->
 		<div class="code">
+			{#if playground}
+				<!-- One editor per level, whichever of its maps is shown: the code belongs to the
+				     level, which its name tells from the others. -->
+				{#key playground.name}
+					<CodeEditor text={playground.startingCode} />
+				{/key}
+			{/if}
+		</div>
+		<div class="map"><MapBlock {scene} goals={playground?.goals} /></div>
+		<!-- Until the running (step 17), the zone of the panels holds the bench of the animations:
+		     short programs of its own, not the code of the editor, played by the core on the map
+		     of the screen. A bench of its own for each map, whose runs start on it. -->
+		<div class="panels">
 			{#if playground}
 				{#key playground}
 					<Bench {playground} bind:playback />
 				{/key}
 			{/if}
 		</div>
-		<div class="map"><MapBlock {scene} goals={playground?.goals} /></div>
-		<div class="panels"></div>
 	</main>
 </div>
 
@@ -84,10 +94,11 @@
 		}
 	}
 
+	/* The editor scrolls its code by itself. */
 	.code {
 		grid-row: 1 / 3;
 		min-width: 0;
-		overflow: auto;
+		min-height: 0;
 		background: var(--surface);
 	}
 
@@ -99,6 +110,8 @@
 	}
 
 	.panels {
+		min-height: 0;
+		overflow: auto;
 		background: var(--band);
 	}
 </style>

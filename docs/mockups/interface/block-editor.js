@@ -36,8 +36,9 @@ function appControls({ main = "run", stepOff = false, pale = false, tip } = {}) 
 // dots past the 80th column; `hint` is the message shown on hover, { line, col, title, help }.
 // `controls` gives appControls. `state` and `tone` give the status bar (paused, failed, flash, passed),
 // `errors` the number of errors, `steps` its counter, `cursor` its position. `selected` lists the lines
-// selected and `caret` the place of the text cursor, { line, col }.
-function appEditor({ lines, next, error, breakpoints = [], underlines = [], hint, controls, state, tone = "", errors, steps, cursor, selected = [], caret }) {
+// selected and `caret` the place of the text cursor, { line, col }. `matches` lists the two
+// parentheses of the pair that the cursor touches, { line, col }.
+function appEditor({ lines, next, error, breakpoints = [], underlines = [], hint, controls, state, tone = "", errors, steps, cursor, selected = [], caret, matches = [] }) {
   const row = (text, index) => {
     const number = index + 1;
     const dot = breakpoints.includes(number) ? '<span class="app-breakpoint"></span>' : "";
@@ -48,7 +49,9 @@ function appEditor({ lines, next, error, breakpoints = [], underlines = [], hint
     const note = hint?.line === number ? `<div class="app-popup app-hover-note" style="left:calc(14px + ${hint.col - 1}ch)"><b>${hint.title}</b>${hint.help ? `<br>${hint.help}` : ""}</div>` : "";
     const selection = selected.includes(number) ? `<span class="app-selection" style="width:${text.length + 1}ch"></span>` : "";
     const textCursor = caret?.line === number ? `<span class="app-caret" style="left:calc(14px + ${caret.col - 1}ch)"></span>` : "";
-    return `<div class="app-line ${kind}"><div class="app-margin"><span class="app-mark ${dot && number === next ? "has-both" : ""}">${mark}</span><span class="app-number">${number}</span></div><div class="app-text">${selection}${highlightCode(text)}${marks}${note}${textCursor}</div></div>`;
+    const pair = matches.filter(match => match.line === number).map(match =>
+      `<span class="app-match" style="left:calc(var(--space-12) + ${match.col - 1}ch)"></span>`).join("");
+    return `<div class="app-line ${kind}"><div class="app-margin"><span class="app-mark ${dot && number === next ? "has-both" : ""}">${mark}</span><span class="app-number">${number}</span></div><div class="app-text">${selection}${pair}${highlightCode(text)}${marks}${note}${textCursor}</div></div>`;
   };
   return `<div class="app-editor">
     <div class="app-code">

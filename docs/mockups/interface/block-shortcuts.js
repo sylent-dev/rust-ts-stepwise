@@ -8,7 +8,7 @@ function appShortcutsPanel() {
         ${group("Run", [["Run, Pause, Resume", KEYS.run], ["Step", KEYS.step], ["Reset", KEYS.reset], ["Toggle breakpoint", KEYS.breakpoint]])}
         ${group("Manual", [["Look up the word at the cursor", KEYS.lookUp], ["Look up with the mouse", "Ctrl+click"]])}
       </div>
-      ${group("Edit", [["Undo", KEYS.undo], ["Redo", KEYS.redo], ["Indent the lines", "Tab"], ["Unindent the lines", "Shift+Tab"], ["Comment the lines", KEYS.comment], ["Move the line up", KEYS.lineUp], ["Move the line down", KEYS.lineDown], ["Commands", KEYS.commands]])}
+      ${group("Edit", [["Undo", KEYS.undo], ["Redo", KEYS.redo], ["Indent the lines", "Tab"], ["Unindent the lines", "Shift+Tab"], ["Comment the lines", KEYS.comment], ["Move the line up", KEYS.lineUp], ["Move the line down", KEYS.lineDown], ["Commands", KEYS.commands], ["Leave the editor", KEYS.leaveEditor]])}
     </div>
   </div></div>`;
 }

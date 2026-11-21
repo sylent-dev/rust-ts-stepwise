@@ -3,4 +3,6 @@
 const KEYS = {
   run: "Ctrl+Enter", step: "F10", reset: "Ctrl+Shift+Enter", breakpoint: "F9",
   undo: "Ctrl+Z", redo: "Ctrl+Y", comment: "Ctrl+:", lineUp: "Alt+↑", lineDown: "Alt+↓", commands: "Ctrl+Space", lookUp: "F1",
+  // Tab belongs to the code: Escape first, then Tab to go on, or Shift+Tab to go back.
+  leaveEditor: "Esc, then Tab",
 };

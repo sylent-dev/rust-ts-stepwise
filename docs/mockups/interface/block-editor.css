@@ -52,6 +52,9 @@
 .app-text { isolation: isolate; }
 .app-selection { position: absolute; left: var(--space-12); top: 0; height: var(--line-code); background: var(--select); z-index: -1; }
 .app-caret { position: absolute; top: 2px; bottom: 2px; width: 2px; margin-left: -1px; background: var(--text); }
+/* The pair of parentheses that the cursor touches: a quiet fill in a thin frame, behind the letters,
+   inside the place of the character so that nothing moves. */
+.app-match { position: absolute; top: 0; width: 1ch; height: var(--line-code); box-sizing: border-box; background: var(--hover); border: 1px solid var(--gutter-text); z-index: -1; }
 /* The message of an error under the pointer: on one line, and on several once it is longer than 60 characters. */
 .app-hover-note { top: calc(var(--line-code) + 2px); width: max-content; max-width: 60ch; padding: var(--space-6) var(--space-12); font: var(--weight-code) var(--size-code-small)/var(--line-code-small) var(--font-code); }
 .app-hover-note b { font-weight: var(--weight-code-strong); }

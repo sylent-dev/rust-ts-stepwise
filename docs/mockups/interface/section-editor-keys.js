@@ -1,4 +1,5 @@
-// Section: the shortcuts of comfort of the editor, on a small program, each one after its key.
+// Section: the shortcuts of comfort of the editor, on a small program, each one after its key, and
+// the pair of parentheses that the cursor touches.
 const COMFORT_SAMPLE = ["repeat 4:", "    forward()", "    turn_right()", "print(\"Done\")"];
 
 const comfortBoards = () => [
@@ -8,6 +9,7 @@ const comfortBoards = () => [
   [`${KEYS.comment} comments the lines, or uncomments them`, { lines: ["repeat 4:", "    # forward()", "    # turn_right()", "print(\"Done\")"], selected: [2, 3], cursor: "Ln 3, Col 19" }],
   [`${appKeyLabel(KEYS.lineDown)}: the line goes down, and ${appKeyLabel(KEYS.lineUp)} up`, { lines: ["repeat 4:", "    turn_right()", "    forward()", "print(\"Done\")"], caret: { line: 3, col: 14 }, cursor: "Ln 3, Col 14" }],
   ["Ctrl held: the name under the mouse underlined", { lines: COMFORT_SAMPLE, underlines: [{ line: 2, col: 5, length: 7, kind: "link" }], caret: { line: 4, col: 14 }, cursor: "Ln 4, Col 14" }],
+  ["The cursor beside a parenthesis: its pair lit", { lines: ["repeat 4:", "    forward()", "    turn_right()", "print(count(red))"], matches: [{ line: 4, col: 12 }, { line: 4, col: 16 }], caret: { line: 4, col: 17 }, cursor: "Ln 4, Col 17" }],
 ];
 
 SECTIONS.push(["Shortcuts of comfort of the editor", () => `<div class="comfort-boards">${comfortBoards().map(([title, editor]) => `

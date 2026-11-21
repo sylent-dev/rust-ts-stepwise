@@ -1,7 +1,7 @@
-<!-- The bench of the animations (step 14b), in the column of the code until the running of step 17
+<!-- The bench of the animations (step 14b), in the zone of the panels until the running of step 17
      replaces it: a short program made for the map of the screen, played on that map with Run,
-     Pause, Step, Reset and the five speeds, the line of its next step marked. Created once the
-     core has loaded. -->
+     Pause, Step, Reset and the five speeds, the line of its next step marked. Its programs are
+     its own: the code of the editor isn't run yet. Created once the core has loaded. -->
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import type { Run } from '#lib/core/core.ts';
@@ -78,75 +78,86 @@
 </script>
 
 <section>
-	<h2>{t('bench-title')}</h2>
+	<div class="board">
+		<h2>{t('bench-title')}</h2>
 
-	<label>
-		{t('bench-program')}
-		<select bind:value={chosen}>
-			{#each programs as { name }, index (name)}
-				<option value={index}>{t(programMessage(name))}</option>
-			{/each}
-		</select>
-	</label>
+		<label>
+			{t('bench-program')}
+			<select bind:value={chosen}>
+				{#each programs as { name }, index (name)}
+					<option value={index}>{t(programMessage(name))}</option>
+				{/each}
+			</select>
+		</label>
 
-	<!-- The line of the next step is marked, as the editor of step 16 will highlight it. -->
+		{#if playback}
+			<p class="controls">
+				<!-- One button whose label changes, so that it keeps the focus of the keyboard. -->
+				<button type="button" onclick={toggle}>
+					{playback.status === 'running'
+						? t('bench-pause')
+						: playback.status === 'paused'
+							? t('bench-resume')
+							: t('bench-run')}
+				</button>
+				<button type="button" onclick={step} disabled={playback.status === 'running'}>
+					{t('bench-step')}
+				</button>
+				<button type="button" onclick={() => playback?.reset()}>{t('bench-reset')}</button>
+			</p>
+
+			<!-- A list rather than five buttons: the zone of the panels is low. -->
+			<label>
+				{t('bench-speed')}
+				<select bind:value={() => rate, chooseSpeed}>
+					{#each SPEEDS as speed (speed)}
+						<option value={speed}>
+							{Number.isFinite(speed)
+								? t('bench-speed-rate', { rate: speed })
+								: t('bench-speed-instant')}
+						</option>
+					{/each}
+				</select>
+			</label>
+
+			<p>{t('bench-steps', { count: playback.steps })}</p>
+			{#if playback.outcome?.type === 'failed'}
+				<p role="status">{t('bench-failed', { line: playback.outcome.error.span.line })}</p>
+			{:else if playback.outcome?.type === 'passed'}
+				<p role="status">{t('bench-passed')}</p>
+			{:else if playback.outcome?.type === 'goals-not-met'}
+				<p role="status">{t('bench-goals-not-met')}</p>
+			{:else if playback.ended}
+				<p role="status">{t('bench-ended')}</p>
+			{/if}
+		{/if}
+	</div>
+
+	<!-- The line of the next step is marked, as the editor will highlight it (step 17). -->
 	<ol aria-label={t('bench-lines')}>
 		{#each lines as text, index (index)}
 			<li aria-current={index + 1 === playback?.line ? 'step' : undefined}><code>{text}</code></li>
 		{/each}
 	</ol>
-
-	{#if playback}
-		<p class="controls">
-			<!-- One button whose label changes, so that it keeps the focus of the keyboard. -->
-			<button type="button" onclick={toggle}>
-				{playback.status === 'running'
-					? t('bench-pause')
-					: playback.status === 'paused'
-						? t('bench-resume')
-						: t('bench-run')}
-			</button>
-			<button type="button" onclick={step} disabled={playback.status === 'running'}>
-				{t('bench-step')}
-			</button>
-			<button type="button" onclick={() => playback?.reset()}>{t('bench-reset')}</button>
-		</p>
-
-		<fieldset>
-			<legend>{t('bench-speed')}</legend>
-			{#each SPEEDS as speed (speed)}
-				<button type="button" aria-pressed={speed === rate} onclick={() => chooseSpeed(speed)}>
-					{Number.isFinite(speed)
-						? t('bench-speed-rate', { rate: speed })
-						: t('bench-speed-instant')}
-				</button>
-			{/each}
-		</fieldset>
-
-		<p>{t('bench-steps', { count: playback.steps })}</p>
-		{#if playback.outcome?.type === 'failed'}
-			<p role="status">{t('bench-failed', { line: playback.outcome.error.span.line })}</p>
-		{:else if playback.outcome?.type === 'passed'}
-			<p role="status">{t('bench-passed')}</p>
-		{:else if playback.outcome?.type === 'goals-not-met'}
-			<p role="status">{t('bench-goals-not-met')}</p>
-		{:else if playback.ended}
-			<p role="status">{t('bench-ended')}</p>
-		{/if}
-	{/if}
 </section>
 
 <style>
+	/* Two columns in the low zone of the panels: the controls, then the lines of the program. */
 	section {
 		display: flex;
+		gap: var(--space-24);
+		padding: var(--space-12) var(--space-24);
+	}
+
+	.board {
+		display: flex;
 		flex-direction: column;
-		gap: var(--space-12);
-		padding: var(--space-24);
+		gap: var(--space-8);
 	}
 
 	h2 {
 		margin: 0;
-		font-size: var(--size-lead);
+		font-size: var(--size-text);
 	}
 
 	ol {
@@ -168,17 +179,6 @@
 		display: flex;
 		gap: var(--space-8);
 		margin: 0;
-	}
-
-	fieldset {
-		display: flex;
-		flex-wrap: wrap;
-		gap: var(--space-8);
-		margin: 0;
-	}
-
-	button[aria-pressed='true'] {
-		font-weight: var(--weight-strong);
 	}
 
 	p {
