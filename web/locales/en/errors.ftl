@@ -2,8 +2,8 @@
 ### names, and Checks before running in specs.md). Each has two sentences: `-title`, what
 ### happened in this program, written in extra-bold, then `-rule`, the rule, true of every
 ### program (see An error in docs/design-system.md). The rule never becomes an order nor a
-### guess: no fix, no "Did you mean". The words of other languages are the one exception: their
-### rule shows the way of Stepwise.
+### guess: no fix, no "Did you mean". The words and the signs of other languages are the one
+### exception: their rule shows the way of Stepwise.
 ###
 ### The family `error-<subject>-<part>` (`errorMessage`): the subject is the code of the error,
 ### or `foreign-word-<word>` for a word of another language (src/lib/errors/error-text.ts). No
@@ -56,7 +56,7 @@ error-unexpected-character-rule = Outside a text or a comment, code uses letters
 ## The order of the words.
 
 error-expected-value-title = A value is missing here.
-error-expected-value-rule = A value comes after an operator, a ',' or a '='.
+error-expected-value-rule = A value is expected after an operator, a ',' or a '=', and after if, while and repeat.
 
 error-trailing-comma-title = A ',' comes after the last value.
 error-trailing-comma-rule = A ',' separates two values, or two parameters, and never ends their list.
@@ -181,7 +181,7 @@ error-undeclared-variable-changed-title = { $name } is changed, but no variable 
 error-undeclared-variable-changed-rule = A variable is declared with let, then '=' alone changes its value.
 
 # $name (String): the variable. $declared (Number): the line of its `let`.
-error-variable-before-let-title = { $name } is used here, but declared further down, on line { $declared }.
+error-variable-before-let-title = { $name } is used before its let, on line { $declared }.
 error-variable-before-let-rule = A variable exists from its let to the end of its block.
 
 # $name (String): the variable. $declared (Number): the line of its `let`.

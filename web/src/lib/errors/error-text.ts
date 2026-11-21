@@ -36,8 +36,9 @@ export function errorMessage(subject: ErrorSubject, part: ErrorPart): string {
 
 /**
  * Each word of another language has its own two sentences, which show the way of Stepwise
- * (`elif` is written `else if`): the one exception to the rule that an error suggests nothing
- * (see Names in specs.md). A word added to the core is refused here until it is placed.
+ * (`elif` is written `else if`): with the signs of other languages (`&&`), the one exception to
+ * the rule that an error suggests nothing (see Names in specs.md). A word added to the core is
+ * refused here until it is placed.
  */
 const FOREIGN_WORDS = {
 	elif: 'foreign-word-elif',
@@ -70,6 +71,11 @@ function lineOf(span: Span): number {
  * The values that the messages of each error take, by its code: every value the core gives,
  * a place by its line. A code added to the core is refused here until it is placed, and the
  * test of the messages then asks for its two sentences.
+ *
+ * Annotated rather than `satisfies`: `valuesOf` calls the function of a code only when the type
+ * of the table is the mapped type itself, which ties each code to the error that carries it; with
+ * `satisfies`, the table keeps the type of its object, and the call is refused. A code missing or
+ * one too many is refused all the same.
  */
 const VALUES: { [C in ErrorCode]: (kind: KindOf[C]) => MessageArguments } = {
 	// The characters of the source: the lexer.

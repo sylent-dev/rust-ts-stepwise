@@ -148,8 +148,9 @@ describe('errorText', () => {
 			'walk is called on line 1 but defined on line 3.'
 		);
 		expect(textOf('print(sides)\nlet sides = 4\n')[0]).toBe(
-			'sides is used here, but declared further down, on line 2.'
+			'sides is used before its let, on line 2.'
 		);
+		expect(textOf('let sides = sides + 1\n')[0]).toBe('sides is used before its let, on line 1.');
 		expect(textOf('let sides = 4\n\nlet sides = 5\n')[0]).toBe(
 			'sides is already declared, on line 1.'
 		);
@@ -169,6 +170,13 @@ describe('errorText', () => {
 			'Stepwise writes else if.'
 		]);
 		expect(textOf('def\n')[1]).toBe('Stepwise defines a function with function.');
+	});
+
+	it('names every place where a value is missing, a count of repeat included', () => {
+		expect(textOf('repeat:\n    forward()\n')).toEqual([
+			'A value is missing here.',
+			"A value is expected after an operator, a ',' or a '=', and after if, while and repeat."
+		]);
 	});
 
 	it('says that the blocks around an expression count in its depth', () => {

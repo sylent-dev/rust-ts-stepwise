@@ -398,5 +398,5 @@ A message that replaces the screen (see [Error handling](../specs.md#error-handl
 
 - Code is written as in the editor: a function with its parentheses, `forward()`; a keyword alone, `while`; a name of the learner as they typed it, `sids`. Never translated.
 - It is in the font of the code, at 0.92 em, where the text around it is in Manrope: a goal, the manual, the command menu. In the console and under the pointer in the editor, where every text is in that font already, nothing marks it.
-- A sign alone is between straight quotes, so that it is seen: *"Expected ':' at the end of the `while` line."*
+- A sign alone is between straight quotes, so that it is seen: *"Expected ':' at the end of the line."*
 - A key is named as on the keyboard, the keys held together joined by `+`: **Ctrl+Space**, **Shift+Tab**.

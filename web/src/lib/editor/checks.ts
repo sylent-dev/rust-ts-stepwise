@@ -157,7 +157,10 @@ const underlines = StateField.define<DecorationSet>({
 		}
 		return transaction.docChanged ? drawn.map(transaction.changes) : drawn;
 	},
-	provide: (field) => EditorView.decorations.from(field)
+	// At the bottom of the order of the marks, so that another mark over the same letters (a color
+	// of the code, the pair of parentheses) is drawn inside it, and the stretch of an underline stays
+	// one piece: each piece would start its wave again.
+	provide: (field) => EditorView.outerDecorations.from(field)
 });
 
 /** Checks the code again once it hasn't changed for `CHECK_DELAY`. */
@@ -234,7 +237,10 @@ function tipOf(notes: readonly Note[]): HTMLElement {
 	return tip;
 }
 
-/** Shows what the underlines say under the pointer, under the line; hidden at a change. */
+/**
+ * Shows what the underlines say under the pointer, under the line; hidden at a change, and at the
+ * next check, which replaces what the underlines moved with the text said.
+ */
 const tips = hoverTooltip(
 	(view, place, side) => {
 		const found = notesAt(view.state, place, side);
@@ -246,7 +252,10 @@ const tips = hoverTooltip(
 			create: () => ({ dom: tipOf(found.notes) })
 		};
 	},
-	{ hideOnChange: true }
+	{
+		hideOnChange: true,
+		hideOn: (transaction) => transaction.effects.some((effect) => effect.is(checkAgain))
+	}
 );
 
 /**

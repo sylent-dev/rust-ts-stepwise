@@ -16,7 +16,10 @@
 	interface Props {
 		/** The code that the editor opens on; a change of it later is not followed. */
 		text: string;
-		/** Writes the sentences of an error of the checks, which the editor underlines. */
+		/**
+		 * Writes the sentences of an error of the checks, which the editor underlines; read once,
+		 * as the editor is made.
+		 */
 		explain: Explain;
 		/** The editor shown, for the commands of the screen; nothing once it has gone. */
 		editing?: Editing;
