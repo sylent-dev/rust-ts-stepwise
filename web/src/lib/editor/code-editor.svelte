@@ -3,24 +3,18 @@
      screen shows one editor per level, made again when the level changes. Made once the core
      has loaded, which gives the code its colors. -->
 <script lang="ts">
-	import { Compartment, EditorState } from '@codemirror/state';
+	import { EditorState } from '@codemirror/state';
 	import { EditorView } from '@codemirror/view';
 	import { untrack } from 'svelte';
 	import { t } from '#lib/i18n.ts';
 	import { editorSetup } from './setup.ts';
-	import { type EnterInPair, trialSetup } from './trial.ts';
 
 	interface Props {
 		/** The code that the editor opens on; a change of it later is not followed. */
 		text: string;
-		/** TRIAL: what Enter does between a sign and the one that closes it. */
-		enter: EnterInPair;
 	}
 
-	let { text, enter }: Props = $props();
-
-	/** TRIAL: the part of the editor that follows the choice. */
-	const trialPart = new Compartment();
+	let { text }: Props = $props();
 
 	/** Makes the editor in its block, and takes it away with it. */
 	function mount(block: HTMLElement): () => void {
@@ -28,12 +22,8 @@
 			parent: block,
 			state: EditorState.create({
 				doc: untrack(() => text),
-				extensions: [trialPart.of(untrack(() => trialSetup(enter))), editorSetup(t('editor-name'))]
+				extensions: editorSetup(t('editor-name'))
 			})
-		});
-		// TRIAL: the choice changes the editor in place, with its code.
-		$effect(() => {
-			view.dispatch({ effects: trialPart.reconfigure(trialSetup(enter)) });
 		});
 		return () => {
 			view.destroy();

@@ -7,8 +7,6 @@
 <script lang="ts">
 	import Bench from '#lib/bench/bench.svelte';
 	import CodeEditor from '#lib/editor/code-editor.svelte';
-	import TrialSwitches from '#lib/editor/trial-switches.svelte';
-	import type { EnterInPair } from '#lib/editor/trial.ts';
 	import type { Scene } from '#lib/map/scene.ts';
 	import type { Playback } from '#lib/run/playback.svelte.ts';
 	import SettingsButton from '#lib/settings/settings-button.svelte';
@@ -30,9 +28,6 @@
 
 	let { screen, title, playground }: Props = $props();
 
-	/** TRIAL: what Enter does between a sign and the one that closes it. */
-	let enter = $state<EnterInPair>('finish');
-
 	/** The program played on the map. */
 	let playback = $state.raw<Playback>();
 
@@ -53,10 +48,9 @@
 				<!-- One editor per level, whichever of its maps is shown: the code belongs to the
 				     level, which its name tells from the others. -->
 				{#key playground.name}
-					<div class="editor-room"><CodeEditor text={playground.startingCode} {enter} /></div>
+					<CodeEditor text={playground.startingCode} />
 				{/key}
 			{/if}
-			<TrialSwitches bind:enter />
 		</div>
 		<div class="map"><MapBlock {scene} goals={playground?.goals} /></div>
 		<!-- Until the running (step 17), the zone of the panels holds the bench of the animations:
@@ -102,18 +96,10 @@
 
 	/* The editor scrolls its code by itself. */
 	.code {
-		display: flex;
-		flex-direction: column;
 		grid-row: 1 / 3;
 		min-width: 0;
 		min-height: 0;
 		background: var(--surface);
-	}
-
-	/* TRIAL: the editor above the choice. */
-	.editor-room {
-		flex: 1;
-		min-height: 0;
 	}
 
 	.map {

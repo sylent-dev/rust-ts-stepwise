@@ -1,4 +1,4 @@
-import { deleteCharBackward, indentLess, insertNewlineAndIndent } from '@codemirror/commands';
+import { deleteCharBackward, indentLess } from '@codemirror/commands';
 import { getIndentUnit } from '@codemirror/language';
 import { EditorState, type Transaction } from '@codemirror/state';
 import type { EditorView } from '@codemirror/view';
@@ -6,7 +6,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { check } from '#lib/core/core.ts';
 import { loadTestCore } from '#lib/core/test-support.ts';
 import { after, shown, stateOf as markedState } from './test-support.ts';
-import { indentation, indentOrInsertSpaces, opensBlock } from './typing.ts';
+import { indentation, indentOrInsertSpaces, insertNewLine, opensBlock } from './typing.ts';
 
 beforeAll(loadTestCore);
 
@@ -15,7 +15,7 @@ function stateOf(marked: string, readOnly = false): EditorState {
 	return markedState(marked, [indentation, EditorState.readOnly.of(readOnly)]);
 }
 
-const enter = (marked: string): string => shown(after(insertNewlineAndIndent, stateOf(marked)));
+const enter = (marked: string): string => shown(after(insertNewLine, stateOf(marked)));
 const tab = (marked: string): string => shown(after(indentOrInsertSpaces, stateOf(marked)));
 const shiftTab = (marked: string): string => shown(after(indentLess, stateOf(marked)));
 
@@ -90,14 +90,62 @@ describe('Enter', () => {
 		expect(enter('repeat 4:\n    |')).toBe('repeat 4:\n\n    |');
 	});
 
+	it('replaces a selection by the break', () => {
+		expect(enter('repeat 4:\n    for|ward()\n    turn|_right()')).toBe(
+			'repeat 4:\n    for\n    |_right()'
+		);
+	});
+
+	it('does nothing while the code cannot be changed', () => {
+		const state = stateOf('forward()|', true);
+
+		expect(after(insertNewLine, state)).toBe(state);
+	});
+
 	it('types under a line that opens a block what the core reads as its block', () => {
-		const opened = after(insertNewlineAndIndent, stateOf('repeat 2:|'));
+		const opened = after(insertNewLine, stateOf('repeat 2:|'));
 		const typed = opened.update(opened.replaceSelection('forward()')).state;
 
 		expect(typed.doc.toString()).toBe('repeat 2:\n    forward()');
 		expect(check(typed.doc.toString())).toStrictEqual([]);
 		// The check does see an indentation that is wrong.
 		expect(check('repeat 2:\n   forward()')).not.toHaveLength(0);
+	});
+});
+
+describe('Enter before the signs that close', () => {
+	it('finishes the line of a parenthesis that the editor closed', () => {
+		expect(enter('forward(|)')).toBe('forward()\n|');
+		expect(enter('    print(count(red|))')).toBe('    print(count(red))\n    |');
+		expect(enter('if here_is(red|)')).toBe('if here_is(red)\n|');
+	});
+
+	it('finishes the line of a text, with its quote and its parenthesis', () => {
+		expect(enter('print("Hi|")')).toBe('print("Hi")\n|');
+		expect(enter('let name = "Robot|"')).toBe('let name = "Robot"\n|');
+	});
+
+	it('breaks the line before a colon, which closes nothing', () => {
+		expect(enter('repeat count(red|):')).toBe('repeat count(red\n|):');
+	});
+
+	it('keeps the spaces that end the line', () => {
+		expect(enter('forward(|)  ')).toBe('forward()  \n|');
+	});
+
+	it('breaks the line when anything else follows the cursor', () => {
+		expect(enter('print(|"Hi")')).toBe('print(\n|"Hi")');
+		expect(enter('print("Hi|", 3)')).toBe('print("Hi\n|", 3)');
+		expect(enter('forward(|)  # go')).toBe('forward(\n|)  # go');
+		expect(enter('for|ward()')).toBe('for\n|ward()');
+	});
+
+	it('breaks the line in a comment, where a parenthesis closes nothing', () => {
+		expect(enter('# call (|)')).toBe('# call (\n|)');
+	});
+
+	it('breaks the line in a text whose parenthesis is none of the code', () => {
+		expect(enter('print("smile (|)")')).toBe('print("smile (\n|)")');
 	});
 });
 
