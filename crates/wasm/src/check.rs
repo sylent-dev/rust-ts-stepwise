@@ -148,7 +148,9 @@ pub enum ProgramErrorKind {
     BreakOutsideLoop,
     ReturnOutsideFunction,
     NestedFunction,
-    NotSnakeCase,
+    NotSnakeCase {
+        name: String,
+    },
     ReservedName {
         word: String,
         belongs_to: ReservedKind,
@@ -285,7 +287,7 @@ impl ProgramErrorKind {
             K::BreakOutsideLoop => Self::BreakOutsideLoop,
             K::ReturnOutsideFunction => Self::ReturnOutsideFunction,
             K::NestedFunction => Self::NestedFunction,
-            K::NotSnakeCase => Self::NotSnakeCase,
+            K::NotSnakeCase { name } => Self::NotSnakeCase { name },
             K::ReservedName { word } => Self::ReservedName {
                 word: word.as_str().to_owned(),
                 belongs_to: match word {
@@ -467,6 +469,9 @@ mod tests {
             name: "côté".to_owned(),
             declared: at(2, 16, 20),
         };
+        let not_snake_case = Kind::NotSnakeCase {
+            name: "côté".to_owned(),
+        };
         let wrong_count = Kind::WrongValueCount {
             name: "forward".to_owned(),
             expected: 0,
@@ -476,7 +481,7 @@ mod tests {
             errors(source),
             [
                 error(1, 6, 10, before_let),
-                error(2, 16, 20, Kind::NotSnakeCase),
+                error(2, 16, 20, not_snake_case),
                 error(3, 28, 35, wrong_count),
             ]
         );
@@ -737,7 +742,7 @@ mod tests {
             CheckErrorKind::BreakOutsideLoop,
             CheckErrorKind::ReturnOutsideFunction,
             CheckErrorKind::NestedFunction,
-            CheckErrorKind::NotSnakeCase,
+            CheckErrorKind::NotSnakeCase { name: name() },
             CheckErrorKind::ReservedName {
                 word: ReservedWord::Builtin(Builtin::Forward),
             },

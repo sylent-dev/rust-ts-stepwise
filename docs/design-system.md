@@ -111,7 +111,7 @@ Two themes, chosen in the settings: **Day Desk**, light, by default, and **Night
 | `--code-number` | `#b34c1c` | `#ffa98a` | A number, `true`, `false`, a color. |
 
 - The pair of parentheses that the cursor touches is lit while the keyboard is in the code: each on `--hover`, in a frame of 1 pixel in `--gutter-text` drawn inside the place of its character, so that nothing moves around it (decided on 2026-11-21, tried in the editor; section *Shortcuts of comfort of the editor* of the mock-up). A parenthesis without its match takes no look: the checks underline it.
-- The three underlines of the editor differ by their shape, and not only by their color: a wave in `--error` under an error, a thin line in `--text` under the name pointed with Ctrl held, dots in `--weak` under the end of a line past 80 characters.
+- The three underlines of the editor differ by their shape, and not only by their color: a wave in `--error` under an error, a thin line in `--text` under the name pointed with Ctrl held, dots in `--weak` under the end of a line past 80 characters. An error where something is missing, at the end of a line, has no stretch of its own: its wave is one character wide, just after the place, where the missing piece would go (decided on 2026-11-22). What an underline says shows under its line while the pointer rests on it, in the bubble of the mock-up, the sentence of what happened in extra-bold and the rule under it; several underlines at one place say theirs one under the other.
 - The wave stays under an error (decided on 2026-11-17, compared in tabs of the mock-up): an error is what must catch the eye first, the wave is read without its color, and the learner finds it in every code editor. Rejected: squares and dots, read as the dots of a long line but for their color; dashes, which say *more on hover* as on a web page; a straight line, too close to the one of Ctrl; a soft red behind the word, the tone of the line of an error while running.
 
 ### Goal and home screen
@@ -398,5 +398,5 @@ A message that replaces the screen (see [Error handling](../specs.md#error-handl
 
 - Code is written as in the editor: a function with its parentheses, `forward()`; a keyword alone, `while`; a name of the learner as they typed it, `sids`. Never translated.
 - It is in the font of the code, at 0.92 em, where the text around it is in Manrope: a goal, the manual, the command menu. In the console and under the pointer in the editor, where every text is in that font already, nothing marks it.
-- A sign alone is between straight quotes, so that it is seen: *"Expected ':' at the end of the `while` line."*
+- A sign alone is between straight quotes, so that it is seen: *"Expected ':' at the end of the line."*
 - A key is named as on the keyboard, the keys held together joined by `+`: **Ctrl+Space**, **Shift+Tab**.

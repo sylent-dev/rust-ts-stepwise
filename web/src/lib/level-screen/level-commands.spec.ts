@@ -4,6 +4,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { loadTestCore } from '#lib/core/test-support.ts';
 import { type Edit, type Editing, EDITS } from '#lib/editor/edits.ts';
 import { editorSetup } from '#lib/editor/setup.ts';
+import { errorText } from '#lib/errors/error-text.ts';
 import type { Platform } from '#lib/platform.ts';
 import {
 	commandFor,
@@ -244,11 +245,11 @@ describe('levelCommands', () => {
 });
 
 describe('the keys of the editor', () => {
-	// The editor asks the core what its code is as soon as it is made.
+	// The editor asks the core what its code is, and checks it, as soon as it is made.
 	beforeAll(loadTestCore);
 
 	it('are none of the shortcuts of the commands, which the screen alone hears', () => {
-		const bindings = EditorState.create({ extensions: editorSetup('Your code') })
+		const bindings = EditorState.create({ extensions: editorSetup('Your code', errorText) })
 			.facet(keymap)
 			.flat();
 		// A binding names its key for every computer, or for one; with `shift`, it takes the key

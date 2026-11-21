@@ -27,7 +27,10 @@ pub enum CheckErrorKind {
     NestedFunction,
     /// The name of a new variable, function or parameter that isn't in `snake_case`
     /// (`paintSide`, `côté`, `_sides`). The span is the name.
-    NotSnakeCase,
+    NotSnakeCase {
+        /// The name.
+        name: String,
+    },
     /// A variable, a function or a parameter that takes the name of a built-in function or of
     /// a color (`let red = 3`, `forward = 3`, `function print():`). The span is the name.
     ReservedName {

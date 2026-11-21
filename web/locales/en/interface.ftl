@@ -3,7 +3,8 @@
 ### https://projectfluent.org/fluent/guide/
 ###
 ### One file per domain, all read into one bundle (src/lib/i18n.ts): this one for the interface,
-### `levels.ftl` for what the levels say, `bench.ftl` for the bench of the animations.
+### `levels.ftl` for what the levels say, `errors.ftl` for the errors of the checks, `bench.ftl`
+### for the bench of the animations.
 ###
 ### The names. A test reads the code and these files, and holds what follows
 ### (src/lib/messages.spec.ts).
@@ -155,3 +156,6 @@ window-phone-text = It is made for a large window.
 map-name = The map
 # The name of the code in the editor, for a screen reader.
 editor-name = Your code
+# Under the pointer, on a line too long, underlined with dots: an advice, not an error.
+# $length (Number): the longest line that reads well, in characters.
+editor-long-line = Lines are easier to read under { $length } characters.

@@ -7,11 +7,11 @@ const consoleBoards = () => [
   ["The lines of print", { content: consolePrints(...CONSOLE_PRINTS) }],
   ["Every kind of value, and a long line", { content: consolePrints("3 true red", "x: 12 y: 4", "A long line goes on to the next one without leaving the block, and nothing has to scroll sideways to read it.") }],
   ["A long output: the last lines in sight", { content: consoleLast(consolePrints(...CONSOLE_LONG)) }],
-  ["A syntax error, before running", { content: appConsoleError("Ln 9", "Expected ':' at the end of the while line.", "A line that opens a block ends with ':'.") + consoleFix(1) }],
+  ["A syntax error, before running", { content: appConsoleError("Ln 9", "Expected ':' at the end of the line.", "A line that opens a block, with if, else, while, repeat or function, ends with ':'.") + consoleFix(1) }],
   ["Several errors, before running", { content: [
     appConsoleError("Ln 8", "The name sids doesn’t exist.", "A variable is declared with let before it is used."),
     appConsoleError("Ln 10", "paint_side takes 1 value, not 2.", "A call gives one value for each parameter of the function."),
-    appConsoleError("Ln 14", "paintSide isn’t in snake_case.", "Names use lowercase letters, digits and underscores."),
+    appConsoleError("Ln 14", "paintSide isn’t in snake_case.", "Names use lowercase letters from a to z, digits and underscores, and start with a letter."),
     consoleFix(3),
   ].join("") }],
   ["An error while running, after some lines", { dot: true, content: consolePrints("Sides done: 1") + appConsoleError("Ln 5", "The robot bumped into a wall.", "forward() needs a free cell in front of the robot.") }],

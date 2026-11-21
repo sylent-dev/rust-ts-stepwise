@@ -11,6 +11,7 @@
 	import { keepCode, openingCode, restoreCode } from '#lib/code/current-code.ts';
 	import CodeEditor from '#lib/editor/code-editor.svelte';
 	import type { Editing } from '#lib/editor/edits.ts';
+	import { errorText } from '#lib/errors/error-text.ts';
 	import { t } from '#lib/i18n.ts';
 	import type { Scene } from '#lib/map/scene.ts';
 	import { currentPlatform } from '#lib/platform.ts';
@@ -130,6 +131,7 @@
 				{#key playground.name}
 					<CodeEditor
 						text={openingCode(playground.name, playground.startingCode).text}
+						explain={errorText}
 						bind:editing
 						onchange={keep}
 					/>
