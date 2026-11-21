@@ -76,7 +76,9 @@ describe('the shortcut of a command of the screen', () => {
 	it('is no key of the editor, which leaves it to the screen', () => {
 		const changed = type(stateOf('|'), 'forward');
 
-		// The screen hears these keys and runs each command by its name (edits.ts).
+		// The screen hears these keys and runs each command by its name (edits.ts). Read here
+		// under one name each; level-commands.spec.ts compares every binding of the editor,
+		// however it is written, with the shortcuts of the screen.
 		for (const key of ['Mod-z', 'Mod-y', 'Mod-Shift-z', 'Mod-/', 'Alt-ArrowUp', 'Alt-ArrowDown']) {
 			expect(shown(press(changed, key)), key).toBe('forward|');
 		}

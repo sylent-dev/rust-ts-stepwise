@@ -18,7 +18,10 @@ interface Held {
 	ctrl?: true;
 	/**
 	 * Never written beside a sign or a digit: the keyboard decides whether writing it takes
-	 * Shift (`:` alone on an AZERTY keyboard, with Shift on a QWERTY one).
+	 * Shift (`:` alone on an AZERTY keyboard, with Shift on a QWERTY one), and a press is
+	 * compared by the character it writes. A limit, read and not tried: with Cmd held, a
+	 * computer of Apple gives the character of the key without Shift, so a sign that its
+	 * keyboard writes with Shift isn't heard there (see docs/backlog.md).
 	 */
 	shift?: true;
 	alt?: true;
@@ -31,7 +34,11 @@ interface Held {
  */
 export type Shortcut = Held & ({ character: string } | { key: NamedKey });
 
-/** A command of a screen. */
+/**
+ * A command of a screen. What changes with the screen (`enabled`, and later a text that follows
+ * the run) is a getter, read each time: a command is given as it is, never copied, since a copy
+ * (`{ ...command }`) would keep the values of the moment.
+ */
 export interface ScreenCommand {
 	/** Its name in the code, the same in every language: `undo`. */
 	id: string;
@@ -41,7 +48,10 @@ export interface ScreenCommand {
 	shortcut?: Shortcut;
 	/** The shortcuts that run it too, shown nowhere: a habit from another editor. */
 	alsoHeard?: readonly Shortcut[];
-	/** Whether it can run now: a row greyed otherwise, and a shortcut that does nothing. */
+	/**
+	 * Whether it can run now: a row greyed otherwise, and a shortcut that does nothing. It
+	 * follows the state of the screen: what shows it reads it again.
+	 */
 	readonly enabled: boolean;
 	run(): void;
 }

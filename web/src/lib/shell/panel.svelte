@@ -10,8 +10,7 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import { t } from '#lib/i18n.ts';
-	import { currentPage } from '#lib/page/startup.svelte.ts';
-	import { currentWindow } from './current-window.svelte.ts';
+	import { currentScreen } from './current-screen.svelte.ts';
 	import IconButton from './icon-button.svelte';
 
 	interface Props {
@@ -33,7 +32,7 @@
 	 * Whether the dialog shows: the panel is open, on a screen that shows. A message has taken
 	 * its place in a window too small, and once the page shows its own.
 	 */
-	const shown = $derived(open && currentWindow.fit === 'screen' && !currentPage.failed);
+	const shown = $derived(open && currentScreen.shows);
 
 	// The dialog follows `shown`, once what it holds is in the page: the first thing that takes
 	// the keys, the cross, gets the focus.

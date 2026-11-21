@@ -139,6 +139,17 @@ describe('comment-lines', () => {
 		expect(edited('for|ward()\n|back()', 'comment-lines')).toBe('# for|ward()\n|back()');
 	});
 
+	it('shows the cursor, which may be out of sight when the shortcut is pressed', () => {
+		const state = stateOf('for|ward()');
+		const asked: boolean[] = [];
+		applyEdit('comment-lines', {
+			state,
+			dispatch: (transaction) => asked.push(transaction.scrollIntoView)
+		});
+
+		expect(asked).toEqual([true]);
+	});
+
 	it('writes lines that are comments for the core, which then reads the rest alone', () => {
 		const commented = edit(
 			stateOf('repeat 4:\n    |forward()\n    print("# no comment")|\nturn_left()'),

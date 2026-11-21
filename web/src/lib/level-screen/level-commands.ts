@@ -32,17 +32,17 @@ const CTRL_Y: Shortcut = { character: 'y', ctrl: true };
 const CTRL_SHIFT_Z: Shortcut = { character: 'z', ctrl: true, shift: true };
 
 /**
- * The keys of each edit, those of a code editor (see Code editor in specs.md). Both shortcuts
- * of **Redo** work everywhere, and the one shown is the habit of the computer: Cmd+Shift+Z on
- * one of Apple, where Cmd+Y opens the history of the browser. Ctrl+: is the one shortcut with a
- * sign, the one of an AZERTY keyboard; Ctrl+/ is heard for those who have the habit.
+ * The keys of each edit, those of a code editor (see Code editor in specs.md). **Redo** is
+ * Ctrl+Y, and Ctrl+Shift+Z for those who have the habit. On a computer of Apple it is
+ * Cmd+Shift+Z alone: Cmd+Y opens the history of the browser there, and is left to it. Ctrl+: is
+ * the one shortcut with a sign, the one of an AZERTY keyboard; Ctrl+/ is heard too.
  */
 function editKeys(platform: Platform): Record<Edit, Keys> {
 	return {
 		undo: { shortcut: { character: 'z', ctrl: true } },
 		redo:
 			platform === 'mac'
-				? { shortcut: CTRL_SHIFT_Z, alsoHeard: [CTRL_Y] }
+				? { shortcut: CTRL_SHIFT_Z }
 				: { shortcut: CTRL_Y, alsoHeard: [CTRL_SHIFT_Z] },
 		'comment-lines': {
 			shortcut: { character: ':', ctrl: true },

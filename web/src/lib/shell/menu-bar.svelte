@@ -13,7 +13,15 @@
 	import { t } from '#lib/i18n.ts';
 	import { currentPlatform } from '#lib/platform.ts';
 	import { spokenShortcut, type ScreenCommand } from './commands.ts';
-	import { canChoose, closedOn, openOn, pressKey, type BarState, type Menu } from './menus.ts';
+	import {
+		canChoose,
+		closedOn,
+		openOn,
+		pressKey,
+		type BarState,
+		type Menu,
+		type SeparatorRow
+	} from './menus.ts';
 	import ShortcutKeys from './shortcut-keys.svelte';
 
 	let { menus }: { menus: readonly Menu[] } = $props();
@@ -40,18 +48,18 @@
 	let swap = $state(false);
 
 	/**
-	 * What held the focus of the keyboard when the pointer opened a menu: the code, most often.
-	 * A command run from that menu gives the focus back to it, as the menu of a code editor does,
-	 * so that the learner goes on typing. Nothing once the menu has closed, nor when the keyboard
-	 * came to the bar by itself (Tab): the focus then stays on the name of the menu, as after
-	 * Escape.
+	 * What held the focus of the keyboard when the pointer brought it into the bar: the code, most
+	 * often. A command run from a menu, or a second click on the name of the open menu, gives the
+	 * focus back to it, as the menu of a code editor does, so that the learner goes on typing. It
+	 * is remembered as long as the focus stays in the bar, a menu open or not, and forgotten once
+	 * the focus leaves. Nothing when the keyboard came to the bar by itself (Tab): the focus then
+	 * stays on the name of the menu, as after Escape.
 	 */
 	let cameFrom: HTMLElement | undefined;
 
 	/** Puts the bar in a state. */
 	function set(next: BarState) {
 		swap = bar.open && next.open && bar.menu !== next.menu;
-		if (!next.open) cameFrom = undefined;
 		bar = next;
 	}
 
@@ -106,10 +114,27 @@
 		if (keys || bar.row !== row) point({ menu, open: true, row });
 	}
 
+	/**
+	 * Closes the menu and leaves the bar: the focus goes back to what the pointer took it from.
+	 * When there is no such thing, or when it can't take the focus any more, the focus stays in
+	 * the bar, on the name of the menu.
+	 */
+	function leave(menu: number) {
+		const back = cameFrom;
+		if (back?.isConnected) {
+			set(closedOn(menu));
+			// Without a scroll: the code would jump to its first line, and a command shows its own
+			// place.
+			back.focus({ preventScroll: true });
+		}
+		// `focus` never says that it failed: where the focus is tells it.
+		if (!back || document.activeElement !== back) go(closedOn(menu));
+	}
+
 	/** A click on the name of a menu opens it, or closes it when it is open. */
 	function toggle(menu: number, open: boolean) {
 		if (open) {
-			go(closedOn(menu));
+			leave(menu);
 			return;
 		}
 		// The press of the mouse moved no focus (see the bar below): what holds it still does.
@@ -119,20 +144,11 @@
 		if (outside) cameFrom = holder === document.body ? undefined : holder;
 	}
 
-	/**
-	 * Runs the command of a row: its menu closes, and the focus goes back to what the pointer
-	 * took it from, or else to the name of the menu.
-	 */
+	/** Runs the command of a row, as a click on it does: the menu closes first. */
 	function run(menu: number, command: ScreenCommand) {
 		// A greyed row runs nothing, and its menu stays open.
 		if (!command.enabled) return;
-		const back = cameFrom;
-		if (back?.isConnected) {
-			set(closedOn(menu));
-			// Without a scroll: the code would jump to its first line, and the command shows its
-			// own place.
-			back.focus({ preventScroll: true });
-		} else go(closedOn(menu));
+		leave(menu);
 		command.run();
 	}
 
@@ -150,10 +166,14 @@
 		}
 	}
 
-	/** The focus has left the bar: its menu closes, and the focus stays where it went. */
+	/**
+	 * The focus has left the bar: its menu closes, the focus stays where it went, and the bar
+	 * forgets where the pointer had taken it from.
+	 */
 	function onfocusout(event: FocusEvent & { currentTarget: HTMLElement }) {
 		const next = event.relatedTarget;
 		if (next instanceof Node && event.currentTarget.contains(next)) return;
+		cameFrom = undefined;
 		set(closedOn(bar.menu));
 	}
 
@@ -275,6 +295,8 @@
 							{row.label}
 						</span>
 					{:else}
+						<!-- Every kind of row is placed above: a new one is refused here until it is. -->
+						{(row satisfies SeparatorRow, '')}
 						<div class="line" role="separator"></div>
 					{/if}
 				{/each}
@@ -394,5 +416,10 @@
 	.row:focus,
 	.here {
 		background: var(--hover);
+	}
+
+	/* But for a row greyed while it was lit, which keeps the focus: a greyed row is never filled. */
+	.row.off:focus {
+		background: none;
 	}
 </style>

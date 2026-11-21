@@ -82,7 +82,7 @@ Two themes, chosen in the settings: **Day Desk**, light, by default, and **Night
 | `--progress-track` | `#dde2e8` | `#2a313b` | The track of the progress, under the header. |
 
 - The shortcut of a command is written beside it in `--weak`, at `--size-small`, in the font of the interface: its keys from the ones held to the last, a `+` between two of them (`Ctrl+Shift+Z`). An arrow key is drawn, at 13 pixels, as the arrow printed on its key: the character `↑` reads as a circumflex accent at that size.
-- A row of a menu whose command can't run now is greyed: its text and its shortcut in `--weak`, the whole row at 55% of opacity, a value of the mock-up tuned by eye, in both themes. It never fills under the pointer and the keys skip it. Greyed means *not now*, never *not yet built* (see `roadmap.md`).
+- A row of a menu whose command can't run now is greyed: its text and its shortcut in `--weak`, the whole row at 55% of opacity, a value of the mock-up tuned by eye, in both themes. It never fills, under the pointer nor when it was greyed while lit, the focus still on it, and the keys skip it. Greyed means *not now*, never *not yet built* (see `roadmap.md`).
 
 ### States
 

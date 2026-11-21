@@ -215,4 +215,19 @@ describe('pressKey, a menu of commands', () => {
 	it.each(['Enter', ' '])('runs the command of the lit row with %j', (key) => {
 		expect(pressKey(on(0, 3), key, bar)).toEqual({ runs: 3 });
 	});
+
+	it.each(['Enter', ' '])(
+		'runs nothing with %j on a row greyed while it was lit, and stays open on it',
+		(key) => {
+			expect(pressKey(on(0, 0), key, bar)).toEqual({ state: on(0, 0) });
+			expect(pressKey(on(0, 4), key, bar)).toEqual({ state: on(0, 4) });
+		}
+	);
+
+	it('goes on from the place of a row greyed while it was lit', () => {
+		expect(pressKey(on(0, 0), 'ArrowDown', bar)).toEqual({ state: on(0, 1) });
+		expect(pressKey(on(0, 0), 'ArrowUp', bar)).toEqual({ state: on(0, 3) });
+		expect(pressKey(on(0, 4), 'ArrowUp', bar)).toEqual({ state: on(0, 3) });
+		expect(pressKey(on(0, 4), 'ArrowDown', bar)).toEqual({ state: on(0, 1) });
+	});
 });

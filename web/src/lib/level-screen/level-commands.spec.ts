@@ -150,16 +150,22 @@ describe('levelCommands', () => {
 		]);
 	});
 
-	it('shows for Redo the habit of the computer, and hears both everywhere', () => {
-		const mac = levelCommands(() => undefined, 'mac');
-		const other = levelCommands(() => undefined, 'other');
+	it('hears Ctrl+Y and Ctrl+Shift+Z for Redo', () => {
+		const commands = levelCommands(() => undefined, 'other');
+		const all = Object.values(commands);
 
-		expect(shownKeys(mac.redo, 'mac')).toBe('Cmd+Shift+Z');
-		expect(shownKeys(mac.undo, 'mac')).toBe('Cmd+Z');
-		expect(commandFor(press('y', 'meta'), Object.values(mac), 'mac')).toBe(mac.redo);
-		expect(commandFor(press('z', 'meta', 'shift'), Object.values(mac), 'mac')).toBe(mac.redo);
-		expect(commandFor(press('y', 'ctrl'), Object.values(other), 'other')).toBe(other.redo);
-		expect(commandFor(press('Z', 'ctrl', 'shift'), Object.values(other), 'other')).toBe(other.redo);
+		expect(commandFor(press('y', 'ctrl'), all, 'other')).toBe(commands.redo);
+		expect(commandFor(press('Z', 'ctrl', 'shift'), all, 'other')).toBe(commands.redo);
+	});
+
+	it('shows Cmd+Shift+Z for Redo on a computer of Apple, and leaves Cmd+Y to its browser', () => {
+		const commands = levelCommands(() => undefined, 'mac');
+		const all = Object.values(commands);
+
+		expect(shownKeys(commands.undo, 'mac')).toBe('Cmd+Z');
+		expect(shownKeys(commands.redo, 'mac')).toBe('Cmd+Shift+Z');
+		expect(commandFor(press('z', 'meta', 'shift'), all, 'mac')).toBe(commands.redo);
+		expect(commandFor(press('y', 'meta'), all, 'mac')).toBeUndefined();
 	});
 
 	it('hears Ctrl+/ for Comment lines, without showing it', () => {
@@ -175,6 +181,28 @@ describe('levelCommands', () => {
 		const names = shortcuts.map(written);
 
 		expect(new Set(names).size).toBe(names.length);
+	});
+
+	it.each(PLATFORMS)('writes Shift beside no sign nor digit on %s', (platform) => {
+		// The keyboard decides whether writing a sign takes Shift: a shortcut can't ask for it.
+		const shortcuts = Object.values(levelCommands(() => undefined, platform)).flatMap(heard);
+		const signs = shortcuts.filter(
+			(shortcut) =>
+				'character' in shortcut &&
+				shortcut.character.toLowerCase() === shortcut.character.toUpperCase()
+		);
+
+		expect(signs.length).toBeGreaterThan(0);
+		expect(signs.filter(({ shift }) => shift)).toEqual([]);
+	});
+
+	it.each(PLATFORMS)('writes a letter in lowercase on %s, as a press is compared', (platform) => {
+		const shortcuts = Object.values(levelCommands(() => undefined, platform)).flatMap(heard);
+		const characters = shortcuts.flatMap((shortcut) =>
+			'character' in shortcut ? [shortcut.character] : []
+		);
+
+		expect(characters.filter((character) => character !== character.toLowerCase())).toEqual([]);
 	});
 
 	it.each(PLATFORMS)('uses Ctrl and Alt together in no shortcut on %s: AltGr', (platform) => {
