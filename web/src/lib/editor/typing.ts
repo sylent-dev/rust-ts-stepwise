@@ -5,9 +5,9 @@
 // parenthesis or a text open behind it when only their closing signs follow the cursor. They
 // read and change the state of the editor alone, so they are tested without a page.
 
-import { indentLess, indentMore } from '@codemirror/commands';
 import { indentUnit } from '@codemirror/language';
 import {
+	type ChangeSpec,
 	countColumn,
 	EditorSelection,
 	EditorState,
@@ -80,13 +80,62 @@ export const insertNewLine: StateCommand = ({ state, dispatch }) => {
 };
 
 /**
- * Tab. On a selection, its lines are indented once more. At the cursor, spaces up to the next
- * stop of four: four of them where the indentation is right, fewer where it isn't, so that Tab
+ * Moves the indentation of the lines that the selection touches to the next stop of four
+ * (`toward` 1) or to the one before (-1): a line that isn't aligned is put right rather than
+ * moved by four. The spaces that start a line are written again as spaces, whatever they were.
+ * A line that the selection only reaches the start of is left, and so is, toward the next stop,
+ * a line that holds nothing.
+ */
+function moveIndentation(toward: 1 | -1): StateCommand {
+	return ({ state, dispatch }) => {
+		if (state.readOnly) return false;
+		const change = state.changeByRange((range) => {
+			const changes: ChangeSpec[] = [];
+			for (let at = range.from; at <= range.to;) {
+				const line = state.doc.lineAt(at);
+				at = line.to + 1;
+				if (!range.empty && range.to === line.from && range.from < line.from) continue;
+				if (toward === 1 && line.text.trim() === '') continue;
+				const spaces = /^\s*/.exec(line.text)?.[0] ?? '';
+				const column = countColumn(spaces, state.tabSize);
+				const stop =
+					toward === 1
+						? (Math.floor(column / INDENT_WIDTH) + 1) * INDENT_WIDTH
+						: Math.max(0, (Math.ceil(column / INDENT_WIDTH) - 1) * INDENT_WIDTH);
+				const wanted = ' '.repeat(stop);
+				// What both start with stays, so that the cursor keeps its place in the line.
+				let kept = 0;
+				while (kept < spaces.length && kept < stop && spaces.charAt(kept) === ' ') kept++;
+				changes.push({
+					from: line.from + kept,
+					to: line.from + spaces.length,
+					insert: wanted.slice(kept)
+				});
+			}
+			const moved = state.changes(changes);
+			return {
+				changes: moved,
+				range: EditorSelection.range(moved.mapPos(range.anchor, 1), moved.mapPos(range.head, 1))
+			};
+		});
+		dispatch(state.update(change, { scrollIntoView: true, userEvent: 'input.indent' }));
+		return true;
+	};
+}
+
+/** Shift+Tab: the selected lines, or the line of the cursor, back to the stop of four before. */
+export const unindentLines = moveIndentation(-1);
+
+const indentLines = moveIndentation(1);
+
+/**
+ * Tab. On a selection, its lines go to the next stop of four. At the cursor, spaces up to the
+ * next stop: four of them where the indentation is right, fewer where it isn't, so that Tab
  * never writes an indentation that the language refuses.
  */
 export const indentOrInsertSpaces: StateCommand = ({ state, dispatch }) => {
 	if (state.readOnly) return false;
-	if (!state.selection.main.empty) return indentMore({ state, dispatch });
+	if (!state.selection.main.empty) return indentLines({ state, dispatch });
 	const change = state.changeByRange(({ head }) => {
 		const line = state.doc.lineAt(head);
 		const column = countColumn(line.text, state.tabSize, head - line.from);
@@ -101,13 +150,12 @@ export const indentOrInsertSpaces: StateCommand = ({ state, dispatch }) => {
 };
 
 /**
- * The keys of the indentation, tried before those of every editor (`standardKeymap`). Shift+Tab
- * takes one indentation off the selected lines, or off the line of the cursor. Backspace keeps
- * the key of every editor, which reads the indentation set here: in the spaces that start a
- * line, it goes back to the stop of four before it.
+ * The keys of the indentation, tried before those of every editor (`standardKeymap`). Backspace
+ * keeps the key of every editor, which reads the indentation set here: in the spaces that start
+ * a line, it goes back to the stop of four before it.
  */
 export const indentationKeys: readonly KeyBinding[] = [
-	{ key: 'Tab', run: indentOrInsertSpaces, shift: indentLess },
+	{ key: 'Tab', run: indentOrInsertSpaces, shift: unindentLines },
 	{ key: 'Enter', run: insertNewLine, shift: insertNewLine }
 ];
 

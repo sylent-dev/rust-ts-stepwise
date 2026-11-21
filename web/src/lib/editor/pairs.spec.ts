@@ -1,8 +1,7 @@
-import { deleteBracketPair } from '@codemirror/autocomplete';
 import type { EditorState } from '@codemirror/state';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { loadTestCore } from '#lib/core/test-support.ts';
-import { insideTextOrComment, pairs, typedSign } from './pairs.ts';
+import { deletePair, insideTextOrComment, pairs, typedSign } from './pairs.ts';
 import { after, shown, stateOf as markedState } from './test-support.ts';
 
 beforeAll(loadTestCore);
@@ -111,6 +110,10 @@ describe('a quote', () => {
 		expect(typedSign(stateOf('print("Hi|)'), '"')?.state.doc.toString()).toBe('print("Hi")');
 	});
 
+	it('is one more character of its text after a backslash, and ends nothing', () => {
+		expect(typed(String.raw`print("say \|")`, '"')).toBe(String.raw`print("say \"|")`);
+	});
+
 	it('follows a backslash into its text', () => {
 		expect(typed('|', String.raw`print("say \"hi\"")`)).toBe(String.raw`print("say \"hi\"")|`);
 	});
@@ -135,13 +138,25 @@ describe('any other sign', () => {
 
 describe('Backspace between a sign and the one that closes it', () => {
 	it('takes both', () => {
-		expect(shown(after(deleteBracketPair, stateOf('forward(|)')))).toBe('forward|');
-		expect(shown(after(deleteBracketPair, stateOf('print("|")')))).toBe('print(|)');
+		expect(shown(after(deletePair, stateOf('forward(|)')))).toBe('forward|');
+		expect(shown(after(deletePair, stateOf('print("|")')))).toBe('print(|)');
+		expect(shown(after(deletePair, stateOf('(|)')))).toBe('|');
 	});
 
 	it('is left to the other keys anywhere else', () => {
 		const state = stateOf('forward()|');
 
-		expect(after(deleteBracketPair, state)).toBe(state);
+		expect(after(deletePair, state)).toBe(state);
+	});
+
+	it.each([
+		['the quote that ends a text and the one that opens the next', 'print("a"|"b")'],
+		['two parentheses in a text', 'print("smile (|)")'],
+		['two parentheses in a comment', '# call (|)'],
+		['two quotes in a comment', '# say "|"']
+	])('leaves %s, which are no pair', (_, marked) => {
+		const state = stateOf(marked);
+
+		expect(after(deletePair, state)).toBe(state);
 	});
 });

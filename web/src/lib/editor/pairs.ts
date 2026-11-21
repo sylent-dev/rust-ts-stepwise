@@ -7,12 +7,13 @@
 // text that has lost its own would come with one too many. The core knows what a line is made
 // of, so the editor asks it first: inside a text or a comment, nothing closes by itself.
 
-import { closeBrackets, closeBracketsKeymap, insertBracket } from '@codemirror/autocomplete';
+import { closeBrackets, deleteBracketPair, insertBracket } from '@codemirror/autocomplete';
 import {
 	EditorSelection,
 	EditorState,
 	type Extension,
 	Prec,
+	type StateCommand,
 	type Transaction,
 	type TransactionSpec
 } from '@codemirror/state';
@@ -36,18 +37,23 @@ export function insideTextOrComment(before: string): 'text' | 'comment' | undefi
 
 /**
  * What typing a sign does inside a text or a comment, where nothing closes by itself: the sign
- * is written alone, and the quote that ends a text passes over the one that is there. Nothing
- * for any other character, on a selection, or anywhere else in the code, which is left to
- * CodeMirror.
+ * is written alone, and the quote that ends a text passes over the one that is there. A quote
+ * ends its text when the core says so: after a backslash it is one more character of the text,
+ * written as it is. Nothing for any other character, on a selection, or anywhere else in the
+ * code, which is left to CodeMirror.
  */
 function typedInTextOrComment(state: EditorState, typed: string): TransactionSpec | undefined {
 	const { main } = state.selection;
 	if (!main.empty || !OPENING_SIGNS.includes(typed)) return undefined;
 	const line = state.doc.lineAt(main.head);
-	const inside = insideTextOrComment(line.text.slice(0, main.head - line.from));
+	const before = line.text.slice(0, main.head - line.from);
+	const inside = insideTextOrComment(before);
 	if (inside === undefined) return undefined;
 	const endsItsText =
-		inside === 'text' && typed === '"' && state.sliceDoc(main.head, main.head + 1) === '"';
+		inside === 'text' &&
+		typed === '"' &&
+		state.sliceDoc(main.head, main.head + 1) === '"' &&
+		insideTextOrComment(`${before}"`) !== 'text';
 	return endsItsText
 		? { selection: EditorSelection.cursor(main.head + 1), scrollIntoView: true }
 		: { ...state.replaceSelection(typed), scrollIntoView: true, userEvent: 'input.type' };
@@ -77,8 +83,21 @@ const closeSigns = EditorView.inputHandler.of((view, from, to, text) => {
 	return true;
 });
 
-/** Backspace between a sign and the one that closes it takes both: before the other keys. */
-export const pairKeys: readonly KeyBinding[] = closeBracketsKeymap;
+/**
+ * Backspace between a sign and the one that closes it takes both, where the first one is code:
+ * the quote that ends a text and the one that opens the next are no pair, nor two parentheses
+ * in a text or in a comment, where nothing closed by itself. CodeMirror compares the two
+ * characters around the cursor (`deleteBracketPair`), so the core is asked before it.
+ */
+export const deletePair: StateCommand = (target) => {
+	const { head } = target.state.selection.main;
+	const line = target.state.doc.lineAt(head);
+	const beforeSign = line.text.slice(0, Math.max(0, head - line.from - 1));
+	return insideTextOrComment(beforeSign) === undefined && deleteBracketPair(target);
+};
+
+/** The key of the pairs, tried before the other keys of Backspace. */
+export const pairKeys: readonly KeyBinding[] = [{ key: 'Backspace', run: deletePair }];
 
 /**
  * The signs that close by themselves. CodeMirror keeps which closing signs it wrote

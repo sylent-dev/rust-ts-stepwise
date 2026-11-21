@@ -1,12 +1,18 @@
-import { deleteCharBackward, indentLess } from '@codemirror/commands';
+import { standardKeymap } from '@codemirror/commands';
 import { getIndentUnit } from '@codemirror/language';
-import { EditorState, type Transaction } from '@codemirror/state';
-import type { EditorView } from '@codemirror/view';
+import { EditorState } from '@codemirror/state';
+import { keymap } from '@codemirror/view';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { check } from '#lib/core/core.ts';
 import { loadTestCore } from '#lib/core/test-support.ts';
-import { after, shown, stateOf as markedState } from './test-support.ts';
-import { indentation, indentOrInsertSpaces, insertNewLine, opensBlock } from './typing.ts';
+import { after, press, shown, stateOf as markedState } from './test-support.ts';
+import {
+	indentation,
+	indentOrInsertSpaces,
+	insertNewLine,
+	opensBlock,
+	unindentLines
+} from './typing.ts';
 
 beforeAll(loadTestCore);
 
@@ -17,24 +23,15 @@ function stateOf(marked: string, readOnly = false): EditorState {
 
 const enter = (marked: string): string => shown(after(insertNewLine, stateOf(marked)));
 const tab = (marked: string): string => shown(after(indentOrInsertSpaces, stateOf(marked)));
-const shiftTab = (marked: string): string => shown(after(indentLess, stateOf(marked)));
+const shiftTab = (marked: string): string => shown(after(unindentLines, stateOf(marked)));
 
 /**
- * Backspace, as every editor binds it (`standardKeymap`). The command asks for the editor on its
- * page, which a test doesn't have: it reads its state and gives it a change, nothing else.
+ * Backspace, as every editor binds it (`standardKeymap`), on a state that holds the rules of the
+ * indentation: the key reads the width that they set.
  */
 function backspace(marked: string): string {
-	const state = stateOf(marked);
-	let next = state;
-	const target = {
-		state,
-		dispatch: (transaction: Transaction) => {
-			next = transaction.state;
-		}
-	};
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- a test has no page to make the editor on, and the command reads the state of the editor alone
-	deleteCharBackward(target as unknown as EditorView);
-	return shown(next);
+	const state = markedState(marked, [indentation, keymap.of(standardKeymap)]);
+	return shown(press(state, 'Backspace'));
 }
 
 describe('a line that opens a block', () => {
@@ -168,6 +165,20 @@ describe('Tab', () => {
 		expect(tab('repeat 4:\n  |')).toBe('repeat 4:\n    |');
 	});
 
+	it('puts the lines of a selection on the next stop of four', () => {
+		expect(tab('repeat 4:\n  for|ward()\n      turn|_right()')).toBe(
+			'repeat 4:\n    for|ward()\n        turn|_right()'
+		);
+	});
+
+	it('leaves empty a line of a selection that holds nothing', () => {
+		expect(tab('|forward()\n\n  \nback()|')).toBe('    |forward()\n\n  \n    back()|');
+	});
+
+	it('writes as spaces a tab that starts a selected line', () => {
+		expect(tab('|\tforward()|')).toBe('|        forward()|');
+	});
+
 	it('indents the lines of a selection once more', () => {
 		expect(tab('repeat 4:\n    for|ward()\n    turn|_right()\nback()')).toBe(
 			'repeat 4:\n        for|ward()\n        turn|_right()\nback()'
@@ -203,6 +214,25 @@ describe('Shift+Tab', () => {
 	it('takes what there is off a line indented by less', () => {
 		expect(shiftTab('  forward()|')).toBe('forward()|');
 		expect(shiftTab('forward()|')).toBe('forward()|');
+	});
+
+	it('goes back to the stop of four before, on a line that is not aligned', () => {
+		expect(shiftTab('      forward()|')).toBe('    forward()|');
+		expect(shiftTab('     forward()|')).toBe('    forward()|');
+	});
+
+	it('takes the spaces of a line that holds nothing else', () => {
+		expect(shiftTab('repeat 2:\n      |')).toBe('repeat 2:\n    |');
+	});
+
+	it('leaves a line that the selection only reaches the start of', () => {
+		expect(shiftTab('    |forward()\n|    back()')).toBe('|forward()\n|    back()');
+	});
+
+	it('does nothing while the code cannot be changed', () => {
+		const state = stateOf('    forward()|', true);
+
+		expect(after(unindentLines, state)).toBe(state);
 	});
 });
 

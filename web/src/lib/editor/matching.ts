@@ -57,7 +57,10 @@ function marksOf(state: EditorState): DecorationSet {
 	return Decoration.set(litParentheses(state).map((at) => MARK.range(at, at + 1)));
 }
 
-/** Lights the pair of parentheses that the cursor touches, as the cursor moves and the code changes. */
+/**
+ * Lights the pair of parentheses that the cursor touches, as the cursor moves and the code
+ * changes.
+ */
 export const matchingParentheses = StateField.define<DecorationSet>({
 	create: marksOf,
 	update: (marks, transaction) =>

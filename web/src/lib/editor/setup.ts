@@ -30,11 +30,12 @@ const historyKeys: readonly KeyBinding[] = [
 
 /**
  * The editor: the rules of typing, the signs that close by themselves, the history, the keys of
- * every text field (the arrows, Home and End, Enter, Backspace, select all), the numbers of the
- * lines, the colors of the code, the pair of parentheses at the cursor. A key is tried in the order of the list: Backspace takes a pair
- * of signs before it takes an indentation or a character.
- * The selection and the cursor are drawn by the editor rather than by the browser, so that
- * they take our look. `label` names the code for a screen reader.
+ * every text field (the arrows, Home and End, Backspace, select all), the numbers of the lines,
+ * the colors of the code, the pair of parentheses at the cursor. A key is tried in the order of
+ * the list: Backspace takes a pair of signs before it takes an indentation or a character, and
+ * Enter is ours before it is the one of every text field. The selection and the cursor are
+ * drawn by the editor rather than by the browser, so that they take our look. `label` names the
+ * code for a screen reader.
  */
 export function editorSetup(label: string): Extension {
 	return [
