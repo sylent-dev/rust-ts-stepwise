@@ -43,6 +43,11 @@ fn duplicate(name: &str) -> E {
     E::DuplicateParameter { name }
 }
 
+fn not_snake_case(name: &str) -> E {
+    let name = name.to_owned();
+    E::NotSnakeCase { name }
+}
+
 fn unknown(name: &str) -> E {
     let name = name.to_owned();
     E::UnknownName { name }
@@ -178,7 +183,7 @@ function later():
                     span: span(1, 1, 6),
                 },
                 CheckError {
-                    kind: E::NotSnakeCase,
+                    kind: not_snake_case("Sides"),
                     span: span(2, 5, 10),
                 },
                 CheckError {
@@ -467,7 +472,7 @@ mod snake_case {
         assert_eq!(
             error("let paintSide = 3\n"),
             CheckError {
-                kind: E::NotSnakeCase,
+                kind: not_snake_case("paintSide"),
                 span: span(1, 5, 14),
             }
         );
@@ -478,7 +483,7 @@ mod snake_case {
         assert_eq!(
             error("function PaintSide():\n    forward()\n"),
             CheckError {
-                kind: E::NotSnakeCase,
+                kind: not_snake_case("PaintSide"),
                 span: span(1, 10, 19),
             }
         );
@@ -489,7 +494,7 @@ mod snake_case {
         assert_eq!(
             error("function paint_side(length, côté):\n    forward()\n"),
             CheckError {
-                kind: E::NotSnakeCase,
+                kind: not_snake_case("côté"),
                 span: span(1, 29, 33),
             }
         );
@@ -497,13 +502,14 @@ mod snake_case {
 
     #[test]
     fn a_name_starting_with_an_underscore_is_not_in_snake_case() {
-        assert_eq!(kinds("let _sides = 3\n"), [E::NotSnakeCase]);
+        assert_eq!(kinds("let _sides = 3\n"), [not_snake_case("_sides")]);
     }
 
     #[test]
     fn the_form_of_a_name_is_checked_where_it_is_declared_only() {
-        assert!(!kinds("Sides = 3\n").contains(&E::NotSnakeCase));
-        assert!(!kinds("print(paintSide)\n").contains(&E::NotSnakeCase));
+        let refused = |kind: &E| matches!(kind, E::NotSnakeCase { .. });
+        assert!(!kinds("Sides = 3\n").iter().any(refused));
+        assert!(!kinds("print(paintSide)\n").iter().any(refused));
     }
 
     #[test]
@@ -665,7 +671,11 @@ function erase(side):
         let source = "function paint(Side, Side):\n    forward()\n";
         assert_eq!(
             kinds(source),
-            [E::NotSnakeCase, E::NotSnakeCase, duplicate("Side")]
+            [
+                not_snake_case("Side"),
+                not_snake_case("Side"),
+                duplicate("Side")
+            ]
         );
     }
 }
@@ -720,7 +730,10 @@ let last = h
 
     #[test]
     fn a_name_that_is_refused_is_still_declared() {
-        assert_eq!(kinds("let Sides = 0\nprint(Sides)\n"), [E::NotSnakeCase]);
+        assert_eq!(
+            kinds("let Sides = 0\nprint(Sides)\n"),
+            [not_snake_case("Sides")]
+        );
     }
 }
 
@@ -853,7 +866,7 @@ print(count)
         );
         assert_eq!(
             kinds("let Sides = sidse\n"),
-            [E::NotSnakeCase, unknown("sidse")]
+            [not_snake_case("Sides"), unknown("sidse")]
         );
     }
 
@@ -867,7 +880,7 @@ else if sidsa:
 ";
         assert_eq!(
             kinds(source),
-            [unknown("sidse"), E::NotSnakeCase, unknown("sidsa")]
+            [unknown("sidse"), not_snake_case("Sides"), unknown("sidsa")]
         );
     }
 
@@ -1319,8 +1332,8 @@ function walk(length):
         assert_eq!(
             kinds("let Sides = 0\nlet Sides = 1\n"),
             [
-                E::NotSnakeCase,
-                E::NotSnakeCase,
+                not_snake_case("Sides"),
+                not_snake_case("Sides"),
                 already_declared("Sides", span(1, 5, 10))
             ]
         );
@@ -1416,7 +1429,7 @@ in_repeat()
     #[test]
     fn a_function_whose_name_is_not_in_snake_case_is_known() {
         let source = "function Walk():\n    forward()\nWalk()\n";
-        assert_eq!(kinds(source), [E::NotSnakeCase]);
+        assert_eq!(kinds(source), [not_snake_case("Walk")]);
     }
 }
 
@@ -1718,8 +1731,8 @@ function walk():
         assert_eq!(
             kinds(source),
             [
-                E::NotSnakeCase,
-                E::NotSnakeCase,
+                not_snake_case("Walk"),
+                not_snake_case("Walk"),
                 duplicate_function("Walk", span(1, 10, 14))
             ]
         );
@@ -2351,7 +2364,7 @@ mod robustness {
     fn a_program_with_the_deepest_expression_is_checked() {
         let depth = usize::try_from(MAX_DEPTH).unwrap() - 2;
         let source = format!("let Deep = {}1{}\n", "(".repeat(depth), ")".repeat(depth));
-        assert_eq!(kinds(&source), [E::NotSnakeCase]);
+        assert_eq!(kinds(&source), [not_snake_case("Deep")]);
     }
 
     #[test]

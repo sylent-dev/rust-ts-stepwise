@@ -378,7 +378,10 @@ impl<'a> Checker<'a> {
     /// the names of the language.
     fn check_snake_case(&mut self, name: &Name) {
         if !is_snake_case(&name.text) {
-            self.report(CheckErrorKind::NotSnakeCase, name.span);
+            let kind = CheckErrorKind::NotSnakeCase {
+                name: name.text.clone(),
+            };
+            self.report(kind, name.span);
         }
     }
 
