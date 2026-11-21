@@ -1,0 +1,24 @@
+/* The colors of the code (docs/design-system.md, Editor and code), wherever it is written: the
+   editor, later the examples of the manual and of the command menu. They are classes, not a
+   component: the editor writes its own markup, which the styles of a component can't reach. The
+   core says what each stretch of a line is, and `editor/code-colors.ts` which class it takes. */
+.code-comment {
+	color: var(--code-comment);
+}
+
+.code-keyword {
+	color: var(--code-keyword);
+}
+
+.code-function {
+	color: var(--code-function);
+}
+
+.code-string {
+	color: var(--code-string);
+}
+
+/* A number, `true`, `false`, a color. */
+.code-number {
+	color: var(--code-number);
+}

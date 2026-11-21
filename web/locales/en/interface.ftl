@@ -118,3 +118,5 @@ window-phone-text = It is made for a large window.
 
 # The name of the map, for a screen reader.
 map-name = The map
+# The name of the code in the editor, for a screen reader.
+editor-name = Your code
