@@ -3,18 +3,24 @@
      screen shows one editor per level, made again when the level changes. Made once the core
      has loaded, which gives the code its colors. -->
 <script lang="ts">
-	import { EditorState } from '@codemirror/state';
+	import { Compartment, EditorState } from '@codemirror/state';
 	import { EditorView } from '@codemirror/view';
 	import { untrack } from 'svelte';
 	import { t } from '#lib/i18n.ts';
 	import { editorSetup } from './setup.ts';
+	import { type Trial, trialSetup } from './trial.ts';
 
 	interface Props {
 		/** The code that the editor opens on; a change of it later is not followed. */
 		text: string;
+		/** TRIAL: what the switches turn on. */
+		trial: Trial;
 	}
 
-	let { text }: Props = $props();
+	let { text, trial }: Props = $props();
+
+	/** TRIAL: the part of the editor that follows the switches. */
+	const trialPart = new Compartment();
 
 	/** Makes the editor in its block, and takes it away with it. */
 	function mount(block: HTMLElement): () => void {
@@ -22,8 +28,12 @@
 			parent: block,
 			state: EditorState.create({
 				doc: untrack(() => text),
-				extensions: editorSetup(t('editor-name'))
+				extensions: [trialPart.of(untrack(() => trialSetup(trial))), editorSetup(t('editor-name'))]
 			})
+		});
+		// TRIAL: a switch changes the editor in place, with its code.
+		$effect(() => {
+			view.dispatch({ effects: trialPart.reconfigure(trialSetup({ ...trial })) });
 		});
 		return () => {
 			view.destroy();
@@ -100,6 +110,16 @@
 		.cm-editor .cm-dropCursor {
 			margin-left: -1px;
 			border-left: 2px solid var(--text);
+		}
+
+		/* TRIAL: the parenthesis that matches the one at the cursor. */
+		.cm-editor.cm-focused .cm-matchingBracket {
+			background: var(--hover);
+			outline: 1px solid var(--gutter-text);
+		}
+
+		.cm-editor.cm-focused .cm-nonmatchingBracket {
+			background: none;
 		}
 
 		/* The selection keeps its color while the keyboard is elsewhere. */
