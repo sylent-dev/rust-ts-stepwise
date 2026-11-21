@@ -13,6 +13,7 @@ import {
 	lineNumbers
 } from '@codemirror/view';
 import { codeColors } from './code-colors.ts';
+import { pairKeys, pairs } from './pairs.ts';
 import { indentation, indentationKeys } from './typing.ts';
 
 /**
@@ -27,16 +28,19 @@ const historyKeys: readonly KeyBinding[] = [
 ];
 
 /**
- * The editor: the rules of typing, the history, the keys of every text field (the arrows, Home
- * and End, Enter, Backspace, select all), the numbers of the lines, the colors of the code.
+ * The editor: the rules of typing, the signs that close by themselves, the history, the keys of
+ * every text field (the arrows, Home and End, Enter, Backspace, select all), the numbers of the
+ * lines, the colors of the code. A key is tried in the order of the list: Backspace takes a pair
+ * of signs before it takes an indentation or a character.
  * The selection and the cursor are drawn by the editor rather than by the browser, so that
  * they take our look. `label` names the code for a screen reader.
  */
 export function editorSetup(label: string): Extension {
 	return [
 		indentation,
+		pairs,
 		history(),
-		keymap.of([...indentationKeys, ...historyKeys, ...standardKeymap]),
+		keymap.of([...pairKeys, ...indentationKeys, ...historyKeys, ...standardKeymap]),
 		lineNumbers(),
 		drawSelection(),
 		dropCursor(),

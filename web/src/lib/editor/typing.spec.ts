@@ -1,51 +1,18 @@
 import { deleteCharBackward, indentLess, insertNewlineAndIndent } from '@codemirror/commands';
 import { getIndentUnit } from '@codemirror/language';
-import {
-	EditorSelection,
-	EditorState,
-	type StateCommand,
-	type Transaction
-} from '@codemirror/state';
+import { EditorState, type Transaction } from '@codemirror/state';
 import type { EditorView } from '@codemirror/view';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { check } from '#lib/core/core.ts';
 import { loadTestCore } from '#lib/core/test-support.ts';
+import { after, shown, stateOf as markedState } from './test-support.ts';
 import { indentation, indentOrInsertSpaces, opensBlock } from './typing.ts';
 
 beforeAll(loadTestCore);
 
-/**
- * A state of the editor from a text where `|` marks the cursor, or the two ends of the
- * selection.
- */
+/** A state with the rules of the indentation, from a text where `|` marks the cursor. */
 function stateOf(marked: string, readOnly = false): EditorState {
-	const [before = '', ...rest] = marked.split('|');
-	const selected = rest.length > 1 ? (rest[0] ?? '') : '';
-	return EditorState.create({
-		doc: before + rest.join(''),
-		selection: EditorSelection.single(before.length, before.length + selected.length),
-		extensions: [indentation, EditorState.readOnly.of(readOnly)]
-	});
-}
-
-/** The text of a state, with `|` at the cursor, or at the two ends of the selection. */
-function shown(state: EditorState): string {
-	const { from, to } = state.selection.main;
-	const text = state.doc.toString();
-	const mark = from === to ? '' : '|';
-	return `${text.slice(0, from)}|${text.slice(from, to)}${mark}${text.slice(to)}`;
-}
-
-/** The state after a command, or the same state when the command does nothing. */
-function after(command: StateCommand, state: EditorState): EditorState {
-	let next = state;
-	command({
-		state,
-		dispatch: (transaction) => {
-			next = transaction.state;
-		}
-	});
-	return next;
+	return markedState(marked, [indentation, EditorState.readOnly.of(readOnly)]);
 }
 
 const enter = (marked: string): string => shown(after(insertNewlineAndIndent, stateOf(marked)));

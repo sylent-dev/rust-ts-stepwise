@@ -1,4 +1,4 @@
-<!-- TRIAL, to remove before the pull request of step 16b: the switches of the three behaviors
+<!-- TRIAL, to remove before the pull request of step 16b: the switches of the two behaviors
      that the owner decides by trying them (see trial.ts). Its texts are written here, in
      English, since they never reach a learner. -->
 <script lang="ts">
@@ -13,10 +13,6 @@
 
 <fieldset>
 	<legend>To decide by trying</legend>
-	<label>
-		<input type="checkbox" bind:checked={trial.closePairs} />
-		( and " close by themselves
-	</label>
 	<label>
 		<input type="checkbox" bind:checked={trial.matchPairs} />
 		The matching parenthesis is lit

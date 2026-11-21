@@ -31,7 +31,7 @@
 	let { screen, title, playground }: Props = $props();
 
 	/** TRIAL: the behaviors of the editor to decide by trying, all on at first. */
-	let trial = $state<Trial>({ closePairs: true, matchPairs: true, tabStops: true });
+	let trial = $state<Trial>({ matchPairs: true, tabStops: true });
 
 	/** The program played on the map. */
 	let playback = $state.raw<Playback>();
