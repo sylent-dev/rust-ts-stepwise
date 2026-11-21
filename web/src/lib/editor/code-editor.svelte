@@ -7,14 +7,18 @@
 	import { EditorView } from '@codemirror/view';
 	import { untrack } from 'svelte';
 	import { t } from '#lib/i18n.ts';
+	import { followEditing } from './editing.svelte.ts';
+	import type { Editing } from './edits.ts';
 	import { editorSetup } from './setup.ts';
 
 	interface Props {
 		/** The code that the editor opens on; a change of it later is not followed. */
 		text: string;
+		/** The editor shown, for the commands of the screen; nothing once it has gone. */
+		editing?: Editing;
 	}
 
-	let { text }: Props = $props();
+	let { text, editing = $bindable() }: Props = $props();
 
 	/** Makes the editor in its block, and takes it away with it. */
 	function mount(block: HTMLElement): () => void {
@@ -22,10 +26,23 @@
 			parent: block,
 			state: EditorState.create({
 				doc: untrack(() => text),
-				extensions: editorSetup(t('editor-name'))
+				extensions: [
+					editorSetup(t('editor-name')),
+					// What the screen reads of the editor follows each of its changes. `follow` is
+					// made just under, with the editor: CodeMirror calls a listener at the end of
+					// an update or of a measure, never while it makes the editor (read in
+					// `@codemirror/view` 6.43).
+					EditorView.updateListener.of((update) => {
+						follow(update.state);
+					})
+				]
 			})
 		});
+		const { editing: own, follow } = followEditing(view);
+		editing = own;
 		return () => {
+			// The editor of the next level may have taken its place already.
+			if (editing === own) editing = undefined;
 			view.destroy();
 		};
 	}

@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { canChoose, closedOn, openOn, pressKey, type BarState, type Menu } from './menus.ts';
+import type { ScreenCommand } from './commands.ts';
+import {
+	canChoose,
+	closedOn,
+	openOn,
+	pressKey,
+	type BarState,
+	type Menu,
+	type MenuRow
+} from './menus.ts';
 
 /** A menu of rows named by their letters: an uppercase one can't be chosen. */
 function menu(name: string, rows: string): Menu {
@@ -9,8 +18,8 @@ function menu(name: string, rows: string): Menu {
 		// eslint-disable-next-line @typescript-eslint/no-misused-spread -- the rows are written in ASCII: one letter, one row
 		rows: [...rows].map((label) =>
 			label === label.toUpperCase()
-				? { id: label, label, here: true }
-				: { id: label, label, to: 'sandbox' }
+				? { kind: 'here', id: label, label }
+				: { kind: 'link', id: label, label, to: 'sandbox' }
 		)
 	};
 }
@@ -30,10 +39,44 @@ function press(state: BarState, ...keys: string[]): BarState {
 	}, state);
 }
 
+/** A row that runs a command, which can run or not. */
+function commandRow(id: string, enabled = true): MenuRow {
+	const command: ScreenCommand = { id, label: id, enabled, run: () => {} };
+	return { kind: 'command', command };
+}
+
 describe('canChoose', () => {
 	it('tells a row that leads to a page from the row of the screen already shown', () => {
-		expect(canChoose({ id: 'sandbox', label: 'Sandbox', to: 'sandbox' })).toBe(true);
-		expect(canChoose({ id: 'sandbox', label: 'Sandbox', here: true })).toBe(false);
+		expect(canChoose({ kind: 'link', id: 'sandbox', label: 'Sandbox', to: 'sandbox' })).toBe(true);
+		expect(canChoose({ kind: 'here', id: 'sandbox', label: 'Sandbox' })).toBe(false);
+	});
+
+	it('tells a row whose command can run from a greyed one', () => {
+		expect(canChoose(commandRow('undo'))).toBe(true);
+		expect(canChoose(commandRow('undo', false))).toBe(false);
+	});
+
+	it('follows the command as its state changes', () => {
+		let enabled = false;
+		const row: MenuRow = {
+			kind: 'command',
+			command: {
+				id: 'undo',
+				label: 'Undo',
+				get enabled() {
+					return enabled;
+				},
+				run: () => {}
+			}
+		};
+
+		expect(canChoose(row)).toBe(false);
+		enabled = true;
+		expect(canChoose(row)).toBe(true);
+	});
+
+	it('never chooses the line between two groups of rows', () => {
+		expect(canChoose({ kind: 'separator' })).toBe(false);
 	});
 });
 
@@ -138,5 +181,62 @@ describe('pressKey, a menu open', () => {
 		expect(press(closedOn(0), 'ArrowRight', 'ArrowDown', 'ArrowDown', 'Escape')).toEqual(
 			closedOn(1)
 		);
+	});
+});
+
+describe('pressKey, a menu of commands', () => {
+	// Undo greyed, Redo, a line, Comment lines, then a greyed row at the end.
+	const edit: Menu = {
+		id: 'edit',
+		name: 'Edit',
+		rows: [
+			commandRow('undo', false),
+			commandRow('redo'),
+			{ kind: 'separator' },
+			commandRow('comment-lines'),
+			commandRow('move-line-up', false)
+		]
+	};
+	const bar = [edit];
+
+	it('opens on the first row whose command can run, and on the last one going up', () => {
+		expect(pressKey(closedOn(0), 'ArrowDown', bar)).toEqual({ state: on(0, 1) });
+		expect(pressKey(closedOn(0), 'ArrowUp', bar)).toEqual({ state: on(0, 3) });
+	});
+
+	it('skips the line and the greyed rows, the last row to choose before the first', () => {
+		expect(pressKey(on(0, 1), 'ArrowDown', bar)).toEqual({ state: on(0, 3) });
+		expect(pressKey(on(0, 3), 'ArrowDown', bar)).toEqual({ state: on(0, 1) });
+		expect(pressKey(on(0, 1), 'ArrowUp', bar)).toEqual({ state: on(0, 3) });
+		expect(pressKey(on(0, 3), 'Home', bar)).toEqual({ state: on(0, 1) });
+		expect(pressKey(on(0, 1), 'End', bar)).toEqual({ state: on(0, 3) });
+	});
+
+	it.each(['Enter', ' '])('runs the command of the lit row with %j', (key) => {
+		expect(pressKey(on(0, 3), key, bar)).toEqual({ runs: 3 });
+	});
+
+	it.each(['Enter', ' '])(
+		'runs nothing with %j on a row greyed while it was lit, and stays open on it',
+		(key) => {
+			expect(pressKey(on(0, 0), key, bar)).toEqual({ state: on(0, 0) });
+			expect(pressKey(on(0, 4), key, bar)).toEqual({ state: on(0, 4) });
+		}
+	);
+
+	it('goes on from the place of a row greyed while it was lit', () => {
+		expect(pressKey(on(0, 0), 'ArrowDown', bar)).toEqual({ state: on(0, 1) });
+		expect(pressKey(on(0, 0), 'ArrowUp', bar)).toEqual({ state: on(0, 3) });
+		expect(pressKey(on(0, 4), 'ArrowUp', bar)).toEqual({ state: on(0, 3) });
+		expect(pressKey(on(0, 4), 'ArrowDown', bar)).toEqual({ state: on(0, 1) });
+	});
+
+	it('goes on from a row greyed between two rows to choose, not from an end of the menu', () => {
+		const between: Menu[] = [
+			{ id: 'run', name: 'Run', rows: [commandRow('a'), commandRow('b', false), commandRow('c')] }
+		];
+
+		expect(pressKey(on(0, 1), 'ArrowDown', between)).toEqual({ state: on(0, 2) });
+		expect(pressKey(on(0, 1), 'ArrowUp', between)).toEqual({ state: on(0, 0) });
 	});
 });

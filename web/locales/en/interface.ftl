@@ -41,7 +41,27 @@ screen-manual = Manual
 # The name of the bar of the menus, for a screen reader.
 menus-name = Menus
 menu-level = Level
+menu-edit = Edit
 menu-help = Help
+
+## The commands of the level screen and of the sandbox, as a row of a menu names them, and later
+## the tip of a button and the panel of the keyboard shortcuts: `command-<name>`
+## (`commandMessage`).
+
+command-undo = Undo
+command-redo = Redo
+command-comment-lines = Comment lines
+command-move-line-up = Move line up
+command-move-line-down = Move line down
+
+## The keys that a shortcut names by a word, written beside its command: `key-<name>`
+## (`keyMessage`). A letter, a sign and an arrow are shown as they are.
+
+key-ctrl = Ctrl
+# The key of the shortcuts on a computer of Apple, in place of Ctrl.
+key-cmd = Cmd
+key-shift = Shift
+key-alt = Alt
 
 ## The settings: the panel, which a header opens by its name or by a gear.
 

@@ -2,31 +2,32 @@
 // parts of CodeMirror that it takes, one by one, rather than its ready-made set, which brings
 // what the specifications leave out (several cursors, find and replace, folding).
 
-import { history, redo, standardKeymap, undo } from '@codemirror/commands';
-import type { Extension } from '@codemirror/state';
-import {
-	drawSelection,
-	dropCursor,
-	EditorView,
-	type KeyBinding,
-	keymap,
-	lineNumbers
-} from '@codemirror/view';
+import { history, standardKeymap } from '@codemirror/commands';
+import { type Extension, Prec } from '@codemirror/state';
+import { drawSelection, dropCursor, EditorView, keymap, lineNumbers } from '@codemirror/view';
 import { codeColors } from './code-colors.ts';
+import { comments } from './edits.ts';
 import { matchingParentheses } from './matching.ts';
 import { pairKeys, pairs } from './pairs.ts';
 import { indentation, indentationKeys } from './typing.ts';
 
 /**
- * Undo and redo, until the commands of the screen bring their shortcuts (step 16c): Ctrl+Z,
- * then Ctrl+Y, and Ctrl+Shift+Z, the habit of a Mac; Ctrl is Cmd there. The other keys of the
- * history of CodeMirror are left out: Ctrl+U shows the source of the page in a browser.
+ * The undo and the redo of the browser itself (its menu, the menu of a right click) reach the
+ * code through the history of the editor. A browser also sends them for Ctrl+Z pressed anywhere
+ * on the page, to the code out of reach under a panel or a message in place of the screen
+ * (Chromium): they are followed only while the keyboard is in the code. Anywhere else, the screen
+ * hears the shortcut, or nothing does.
  */
-const historyKeys: readonly KeyBinding[] = [
-	{ key: 'Mod-z', run: undo, preventDefault: true },
-	{ key: 'Mod-y', run: redo, preventDefault: true },
-	{ key: 'Mod-Shift-z', run: redo, preventDefault: true }
-];
+const browserHistory: Extension = Prec.highest(
+	EditorView.domEventHandlers({
+		beforeinput(event, view) {
+			if (event.inputType !== 'historyUndo' && event.inputType !== 'historyRedo') return false;
+			if (view.hasFocus) return false;
+			event.preventDefault();
+			return true;
+		}
+	})
+);
 
 /**
  * The editor: the rules of typing, the signs that close by themselves, the history, the keys of
@@ -36,13 +37,19 @@ const historyKeys: readonly KeyBinding[] = [
  * Enter is ours before it is the one of every text field. The selection and the cursor are
  * drawn by the editor rather than by the browser, so that they take our look. `label` names the
  * code for a screen reader.
+ *
+ * The editor has the keys of typing alone. The shortcut of a command (Ctrl+Z, Ctrl+:, Alt+↑) is
+ * heard by the screen, wherever the keyboard is on it, and run by its name (edits.ts): the
+ * editor keeps the history and the sign of a comment that those commands read.
  */
 export function editorSetup(label: string): Extension {
 	return [
 		indentation,
 		pairs,
+		browserHistory,
 		history(),
-		keymap.of([...pairKeys, ...indentationKeys, ...historyKeys, ...standardKeymap]),
+		comments,
+		keymap.of([...pairKeys, ...indentationKeys, ...standardKeymap]),
 		lineNumbers(),
 		drawSelection(),
 		dropCursor(),

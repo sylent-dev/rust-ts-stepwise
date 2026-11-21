@@ -126,31 +126,11 @@ These findings are true today, but what fixes them depends on code that doesn't 
 
 ### Step 16: the command of a screen
 
-Nowhere do a command, its label, its shortcut and its state live together. `MenuRow` is `LinkRow | HereRow` (`web/src/lib/shell/menus.ts:33`), `canChoose` tells a row that can be chosen by `'to' in row` (`:46`), and a row runs by the `click()` of its link. The mock-up has the one place (`docs/mockups/interface/keys.js`). The first command arrives with **Edit** (Undo, Redo…), and each will show in four places: the row of a menu, the shortcut heard on the whole screen, the hover of its control, the panel **Keyboard shortcuts**. A panel also opens one way only, from the button that owns its `open` (`settings/settings-button.svelte`), while **Help › Keyboard shortcuts** opens from a row.
+Settled at step 16c (2026-11-21): a command of a screen is written once, a `ScreenCommand` (`web/src/lib/shell/commands.ts`), which its row of a menu and the one listener of the screen read (see Commands of a screen in `docs/technical-choices.md`). The finding was that nowhere did a command, its label, its shortcut and its state live together: `MenuRow` was `LinkRow | HereRow`, `canChoose` told a row that can be chosen by `'to' in row`, and a row ran by the `click()` of its link, while each command will show in four places (the row of a menu, the shortcut heard on the whole screen, the hover of its control, the panel **Keyboard shortcuts**).
 
-```ts
-// shell/commands.ts
-export interface Shortcut { key: string; ctrl?: true; shift?: true; alt?: true } // ctrl: Cmd on a Mac
-/** A command of the screen, not one of the language (step 20). */
-export interface ScreenCommand {
-	id: string; // 'run', 'step', 'undo'…
-	label: string; // a getter when it changes: Run, Pause, Resume
-	shortcut?: Shortcut;
-	enabled: boolean; // a getter on the state of the screen
-	run(): void;
-}
-export function commandFor(event: KeyLike, commands: readonly ScreenCommand[]): ScreenCommand | undefined;
+What the sketch of the audit became, proved with the commands of the menu **Edit**: a row has a `kind` (`link`, `here`, `command`, `separator`); a shortcut is a character or a named key, each with its rule for Shift, rather than one text; `commandFor` is pure and takes the computer; CodeMirror keeps no key of a command, rather than a keymap built from the same shortcuts, so that no key runs twice; the editor names its edits as a closed list, since it may not import `shell/`.
 
-// shell/menus.ts
-export type MenuRow =
-	| { kind: 'link'; id: string; label: string; to: Path; tab?: string }
-	| { kind: 'here'; id: string; label: string }
-	| { kind: 'command'; command: ScreenCommand }
-	| { kind: 'submenu'; id: string; label: string; rows: readonly MenuRow[] } // Speed, step 17
-	| { kind: 'separator' };
-```
-
-`commandFor` is pure and tested as `pressKey`; one `<svelte:window onkeydown>` per screen calls it, the one place that reads `currentWindow.fit`; the keymap of CodeMirror is built from the same `Shortcut`. A panel opened by a command is a state of the screen that the command sets. "Command" names two things in `specs.md`, those of the screen and those of the language, and `Action` is taken by `map/motion.ts`. The shape is a sketch: prove it with a real command.
+Left to step 17, with their first use: the row that opens a menu beside it (`submenu`, for **Speed**); a panel opened by a command (**Help › Keyboard shortcuts**), as a state of the screen that the command sets, since a panel opens one way only today, from the button that owns its `open` (`settings/settings-button.svelte`); whether a key held down runs a command again; a key named by a word (Enter, Space); the editor locked while a program runs; the tip of a control, which reads the same command. "Command" names two things in `specs.md`, those of the screen and those of the language, and `Action` is taken by `map/motion.ts`.
 
 ### Step 16: where the words of the language come out
 

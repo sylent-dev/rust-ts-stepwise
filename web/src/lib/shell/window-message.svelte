@@ -4,7 +4,7 @@
      width of a phone. -->
 <script lang="ts">
 	import { t, tAround } from '#lib/i18n.ts';
-	import { platformOf } from '#lib/platform.ts';
+	import { currentPlatform } from '#lib/platform.ts';
 	import { currentWindow } from './current-window.svelte.ts';
 	import ScreenMessage from './screen-message.svelte';
 	import { adviceMessage, SMALLEST_WINDOW, windowAdvice } from './window-size.ts';
@@ -18,7 +18,7 @@
 	const [before, after] = tAround('window-small-size', 'size', {
 		least: size(SMALLEST_WINDOW.width, SMALLEST_WINDOW.height)
 	});
-	const platform = platformOf(navigator.platform, navigator.userAgent);
+	const platform = currentPlatform();
 
 	/** What to do about it, and only what can work. */
 	const advice = $derived(windowAdvice(currentWindow.place, platform));

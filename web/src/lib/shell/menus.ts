@@ -3,12 +3,13 @@
 // the focus of the keyboard after it.
 
 import type { Path } from '$app/types';
+import type { ScreenCommand } from './commands.ts';
 
-/** What every row has. */
-interface Row {
+/** What a row that names a screen has. */
+interface ScreenRow {
 	/**
 	 * Its name in the code, the same in every language and whatever its text says: `all-levels`.
-	 * It is what the page knows the row by.
+	 * A test knows the row by it; a row that runs a command takes the name of its command.
 	 */
 	id: string;
 	/** Its text. */
@@ -16,7 +17,8 @@ interface Row {
 }
 
 /** A row that leads to a page. */
-export interface LinkRow extends Row {
+export interface LinkRow extends ScreenRow {
+	kind: 'link';
 	/** The page, as every address is written: what follows the root of the website, `sandbox`. */
 	to: Path;
 	/** The tab of the browser that shows the page, when it isn't this one. */
@@ -24,12 +26,26 @@ export interface LinkRow extends Row {
 }
 
 /** The row of the screen already shown: lit as if already chosen, it can't be chosen again. */
-export interface HereRow extends Row {
-	here: true;
+export interface HereRow extends ScreenRow {
+	kind: 'here';
+}
+
+/**
+ * A row that runs a command of the screen (commands.ts), which gives it its text, its shortcut
+ * and its state: greyed while the command can't run.
+ */
+export interface CommandRow {
+	kind: 'command';
+	command: ScreenCommand;
+}
+
+/** A thin line between two groups of rows. */
+export interface SeparatorRow {
+	kind: 'separator';
 }
 
 /** A row of a menu. */
-export type MenuRow = LinkRow | HereRow;
+export type MenuRow = LinkRow | HereRow | CommandRow | SeparatorRow;
 
 /** A menu of the bar: its name, and its rows from top to bottom. */
 export interface Menu {
@@ -40,9 +56,21 @@ export interface Menu {
 	rows: readonly MenuRow[];
 }
 
-/** Whether a row can be chosen. The keys skip the others. */
-export function canChoose(row: MenuRow): row is LinkRow {
-	return 'to' in row;
+/**
+ * Whether a row can be chosen now: one that leads to a page, or whose command can run. The keys
+ * skip the others. It says nothing of the kind of the row, which `kind` tells: a row that runs
+ * a command can be chosen at one moment and not at the next.
+ */
+export function canChoose(row: MenuRow): boolean {
+	switch (row.kind) {
+		case 'link':
+			return true;
+		case 'command':
+			return row.command.enabled;
+		case 'here':
+		case 'separator':
+			return false;
+	}
 }
 
 /** Where the bar is. The focus of the keyboard follows it: on the lit row, or on the name. */
@@ -51,7 +79,10 @@ export interface BarState {
 	menu: number;
 	/** Whether this menu shows its rows. */
 	open: boolean;
-	/** Its lit row, from 0: under the pointer, or chosen with the keys. Always a row to choose. */
+	/**
+	 * Its lit row, from 0: under the pointer, or chosen with the keys. A row to choose when it
+	 * was lit; the command of a row may stop being able to run while its row is lit.
+	 */
 	row: number | null;
 }
 
@@ -88,14 +119,19 @@ function edgeRow(menu: Menu | undefined, edge: 'first' | 'last'): number | null 
 }
 
 /**
- * The row to choose `step` rows after `row`, the last one before the first. With no row lit, the
- * first one going down and the last one going up.
+ * The next row to choose after `row` going down (`step` 1) or up (-1), the last one before the
+ * first. With no row lit, the first one going down and the last one going up. The lit row itself
+ * may have been greyed since: the search starts from its place.
  */
 function rowAfter(menu: Menu | undefined, row: number | null, step: 1 | -1): number | null {
 	const rows = choices(menu);
-	const at = row === null ? -1 : rows.indexOf(row);
-	if (at === -1) return edgeRow(menu, step === 1 ? 'first' : 'last');
-	return rows[(at + step + rows.length) % rows.length] ?? null;
+	const next =
+		row === null
+			? undefined
+			: step === 1
+				? rows.find((index) => index > row)
+				: rows.findLast((index) => index < row);
+	return next ?? edgeRow(menu, step === 1 ? 'first' : 'last');
 }
 
 /**
@@ -144,6 +180,8 @@ export function pressKey(
 		case ' ':
 			// With no row lit, the keys enter the menu, as they open it from its name.
 			if (state.row === null) return openOnRow(state.menu, edgeRow(menu, 'first'));
+			// A row greyed while lit runs nothing, and its menu stays open, as under a click.
+			if (!choices(menu).includes(state.row)) return { state };
 			return { runs: state.row };
 		case 'Escape':
 			return { state: closedOn(state.menu) };

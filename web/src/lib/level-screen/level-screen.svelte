@@ -7,12 +7,16 @@
 <script lang="ts">
 	import Bench from '#lib/bench/bench.svelte';
 	import CodeEditor from '#lib/editor/code-editor.svelte';
+	import type { Editing } from '#lib/editor/edits.ts';
 	import type { Scene } from '#lib/map/scene.ts';
+	import { currentPlatform } from '#lib/platform.ts';
 	import type { Playback } from '#lib/run/playback.svelte.ts';
 	import SettingsButton from '#lib/settings/settings-button.svelte';
 	import Header from '#lib/shell/header.svelte';
 	import MenuBar from '#lib/shell/menu-bar.svelte';
 	import Place from '#lib/shell/place.svelte';
+	import ScreenShortcuts from '#lib/shell/screen-shortcuts.svelte';
+	import { levelCommands } from './level-commands.ts';
 	import { levelMenus, type LevelScreenKind } from './level-menus.ts';
 	import MapBlock from './map-block.svelte';
 	import type { Playground } from './playground.ts';
@@ -33,11 +37,18 @@
 
 	/** What the map draws: the program played, or the world at rest before any program. */
 	const scene = $derived<Scene | undefined>(playback ?? playground);
+
+	/** The editor shown; nothing until the core is ready. */
+	let editing = $state.raw<Editing>();
+
+	/** The commands of the screen: the rows of its menus run them, and its shortcuts. */
+	const commands = levelCommands(() => editing, currentPlatform());
 </script>
 
+<ScreenShortcuts commands={Object.values(commands)} />
 <div class="level-screen">
 	<Header>
-		<MenuBar menus={levelMenus(screen)} />
+		<MenuBar menus={levelMenus(screen, commands)} />
 		<!-- The diamond is the mark of the sandbox. -->
 		<Place {title} icon={screen === 'sandbox' ? 'diamond' : undefined} />
 		<SettingsButton gear />
@@ -48,7 +59,7 @@
 				<!-- One editor per level, whichever of its maps is shown: the code belongs to the
 				     level, which its name tells from the others. -->
 				{#key playground.name}
-					<CodeEditor text={playground.startingCode} />
+					<CodeEditor text={playground.startingCode} bind:editing />
 				{/key}
 			{/if}
 		</div>
