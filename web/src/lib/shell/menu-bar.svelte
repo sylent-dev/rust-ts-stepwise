@@ -49,11 +49,17 @@
 
 	/**
 	 * What held the focus of the keyboard when the pointer brought it into the bar: the code, most
-	 * often. A command run from a menu, or a second click on the name of the open menu, gives the
-	 * focus back to it, as the menu of a code editor does, so that the learner goes on typing. It
-	 * is remembered as long as the focus stays in the bar, a menu open or not, and forgotten once
+	 * often. A row chosen in a menu, or a second click on the name of the open menu, gives the
+	 * focus back to it, as the menu of a code editor does, so that the learner goes on typing:
+	 * back from the manual, which a row opens in another tab, the cursor is in the code. It is
+	 * remembered as long as the focus stays in the bar, a menu open or not, and forgotten once
 	 * the focus leaves. Nothing when the keyboard came to the bar by itself (Tab): the focus then
 	 * stays on the name of the menu, as after Escape.
+	 *
+	 * A limit: the browser also says that the focus leaves when the window loses it (another
+	 * tab, another window) or when the screen goes out of reach under the message of a window too
+	 * small. Back there, the focus is on the name of the menu again, and the bar has forgotten
+	 * (see docs/backlog.md).
 	 */
 	let cameFrom: HTMLElement | undefined;
 
@@ -115,16 +121,16 @@
 	}
 
 	/**
-	 * Closes the menu and leaves the bar: the focus goes back to what the pointer took it from.
-	 * When there is no such thing, or when it can't take the focus any more, the focus stays in
-	 * the bar, on the name of the menu.
+	 * Closes the menu and leaves the bar, once a row is chosen or its name clicked again: the
+	 * focus goes back to what the pointer took it from. When there is no such thing, or when it
+	 * can't take the focus any more, the focus stays in the bar, on the name of the menu.
 	 */
 	function leave(menu: number) {
 		const back = cameFrom;
 		if (back?.isConnected) {
 			set(closedOn(menu));
 			// Without a scroll: the code would jump to its first line, and a command shows its own
-			// place.
+			// place there.
 			back.focus({ preventScroll: true });
 		}
 		// `focus` never says that it failed: where the focus is tells it.
@@ -255,7 +261,7 @@
 							tabindex="-1"
 							href={resolve(row.to)}
 							target={row.tab}
-							onclick={() => go(closedOn(m))}
+							onclick={() => leave(m)}
 							onpointermove={() => hover(m, r)}
 							onfocus={() => arrive(m, r)}
 							{onkeydown}

@@ -28,8 +28,10 @@
 				doc: untrack(() => text),
 				extensions: [
 					editorSetup(t('editor-name')),
-					// What the screen reads of the editor follows each of its changes: the editor
-					// says the first one once it is made, and followed.
+					// What the screen reads of the editor follows each of its changes. `follow` is
+					// made just under, with the editor: CodeMirror calls a listener at the end of
+					// an update or of a measure, never while it makes the editor (read in
+					// `@codemirror/view` 6.43).
 					EditorView.updateListener.of((update) => {
 						follow(update.state);
 					})

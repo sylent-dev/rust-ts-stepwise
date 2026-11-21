@@ -230,4 +230,13 @@ describe('pressKey, a menu of commands', () => {
 		expect(pressKey(on(0, 4), 'ArrowUp', bar)).toEqual({ state: on(0, 3) });
 		expect(pressKey(on(0, 4), 'ArrowDown', bar)).toEqual({ state: on(0, 1) });
 	});
+
+	it('goes on from a row greyed between two rows to choose, not from an end of the menu', () => {
+		const between: Menu[] = [
+			{ id: 'run', name: 'Run', rows: [commandRow('a'), commandRow('b', false), commandRow('c')] }
+		];
+
+		expect(pressKey(on(0, 1), 'ArrowDown', between)).toEqual({ state: on(0, 2) });
+		expect(pressKey(on(0, 1), 'ArrowUp', between)).toEqual({ state: on(0, 0) });
+	});
 });
