@@ -77,25 +77,12 @@
 	font: var(--weight-code) var(--size-title) var(--font-code);
 }
 
-/* What a message offers to do, a button or a link: amber, as the main button of a screen. */
+/* What a message offers to do, a button or a link: the main button of a screen (`button is-main`,
+   styles/button.css, which comes before this file), larger, under the sentences. */
 .screen-message-action {
-	display: inline-block;
 	margin-top: var(--space-16);
 	padding: var(--space-8) var(--space-24);
-	border: 0;
-	border-radius: var(--radius);
-	background: var(--accent);
-	box-shadow: var(--control-shadow);
-	color: var(--on-accent);
-	font: inherit;
 	font-size: var(--size-lead);
-	font-weight: var(--weight-strong);
-	text-decoration: none;
-	cursor: pointer;
-}
-
-.screen-message-action:hover {
-	background: var(--accent-hover);
 }
 
 /* Behind a message, what it is about, in two or three signs (JS, 404), in the font of the name:

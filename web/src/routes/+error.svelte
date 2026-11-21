@@ -23,6 +23,6 @@
 {#if missing}
 	<ScreenMessage title={t('missing-title')} mark={t('missing-mark')}>
 		<p>{t('missing-text')}</p>
-		<a class="screen-message-action" href={resolve('')}>{t('screen-home')}</a>
+		<a class="button is-main screen-message-action" href={resolve('')}>{t('screen-home')}</a>
 	</ScreenMessage>
 {/if}
