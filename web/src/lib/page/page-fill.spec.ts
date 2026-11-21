@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { t } from '#lib/i18n.ts';
+import button from '#lib/styles/button.css?raw';
 import fonts from '#lib/styles/fonts.css?raw';
 import screenMessage from '#lib/styles/screen-message.css?raw';
 import page from '../../app.html?raw';
@@ -87,7 +88,7 @@ describe('the page', () => {
 	// page would only show where nothing else could load, which no one tries.
 	it('carries every design token that the look of a message uses', () => {
 		const carried = pageParts.styles.join('\n');
-		const used = captured(screenMessage, /var\((--[a-z0-9-]+)/g);
+		const used = captured(button + screenMessage, /var\((--[a-z0-9-]+)/g);
 		expect(used.size).toBeGreaterThan(0);
 		for (const token of used) expect(carried, token).toContain(`${token}:`);
 	});

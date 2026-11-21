@@ -2,16 +2,21 @@
      specs.md): under its header, the code on the left on the whole height, the map on top on the
      right, the console and the variables under it. The blocks meet without any line, each zone in
      its own tone; the panels come with the running (step 17). A route gives it what it plays on,
-     and it wires the rest: the same for a level and for the sandbox. The code isn't saved yet
-     (step 16d): the editor opens on the starting code of the level. -->
+     and it wires the rest: the same for a level and for the sandbox. The code of each level is
+     saved as the learner changes it, and comes back with the level, until **Restore starting
+     code** puts the level back in its first state (see Code editor in specs.md). -->
 <script lang="ts">
 	import Bench from '#lib/bench/bench.svelte';
+	import { differsFromStart, type LevelCode } from '#lib/code/code.ts';
+	import { keepCode, openingCode, restoreCode } from '#lib/code/current-code.ts';
 	import CodeEditor from '#lib/editor/code-editor.svelte';
 	import type { Editing } from '#lib/editor/edits.ts';
+	import { t } from '#lib/i18n.ts';
 	import type { Scene } from '#lib/map/scene.ts';
 	import { currentPlatform } from '#lib/platform.ts';
 	import type { Playback } from '#lib/run/playback.svelte.ts';
 	import SettingsButton from '#lib/settings/settings-button.svelte';
+	import Confirmation from '#lib/shell/confirmation.svelte';
 	import Header from '#lib/shell/header.svelte';
 	import MenuBar from '#lib/shell/menu-bar.svelte';
 	import Place from '#lib/shell/place.svelte';
@@ -21,16 +26,24 @@
 	import MapBlock from './map-block.svelte';
 	import type { Playground } from './playground.ts';
 
-	interface Props {
+	/** A level has a number, the sandbox none. */
+	type Props = {
 		/** Which screen it is: its menus, and the mark of the sandbox in its header. */
 		screen: LevelScreenKind;
 		/** The place of the screen, in its header: the title of the level, or the sandbox. */
 		title: string;
 		/** What the screen plays on; nothing until the core is ready. */
 		playground?: Playground;
-	}
+	} & (
+		| {
+				screen: 'level';
+				/** The number of the level, before its title where a sentence names it. */
+				number: number;
+		  }
+		| { screen: 'sandbox'; number?: undefined }
+	);
 
-	let { screen, title, playground }: Props = $props();
+	let { screen, title, playground, number }: Props = $props();
 
 	/** The program played on the map. */
 	let playback = $state.raw<Playback>();
@@ -41,8 +54,63 @@
 	/** The editor shown; nothing until the core is ready. */
 	let editing = $state.raw<Editing>();
 
+	/** Whether the confirmation of **Restore starting code** shows. */
+	let restoring = $state(false);
+
+	/**
+	 * The code of the level shown, as the editor holds it: what is saved, and what is compared
+	 * with the starting code. Nothing while the screen has no editor.
+	 */
+	function shownCode(): LevelCode | undefined {
+		return editing && { text: editing.text };
+	}
+
 	/** The commands of the screen: the rows of its menus run them, and its shortcuts. */
-	const commands = levelCommands(() => editing, currentPlatform());
+	const commands = levelCommands(
+		{
+			editing: () => editing,
+			canRestore: () => {
+				const code = shownCode();
+				return (
+					code !== undefined &&
+					playground !== undefined &&
+					differsFromStart(code, playground.startingCode)
+				);
+			},
+			confirmRestore: () => {
+				restoring = true;
+			}
+		},
+		currentPlatform()
+	);
+
+	/** Keeps the code of the level shown, at each change that the learner makes to it. */
+	function keep() {
+		const code = shownCode();
+		if (playground && code) keepCode(playground.name, code);
+	}
+
+	/**
+	 * Puts the level shown back in its first state, once the learner has confirmed: its code is
+	 * forgotten, and the editor opens again on its starting code, with nothing to undo.
+	 */
+	function restore() {
+		if (!playground) return;
+		restoreCode(playground.name);
+		editing?.reopen(playground.startingCode);
+	}
+
+	/** What the confirmation asks: a level is named by its number and its title. */
+	const restoreQuestion = $derived(
+		number === undefined
+			? t('restore-question-sandbox')
+			: t('restore-question-level', { level: t('screen-level', { number, title }) })
+	);
+
+	/** What the confirmation says is lost. */
+	const restoreLost = $derived(
+		number === undefined ? t('restore-lost-sandbox') : t('restore-lost-level')
+	);
 </script>
 
 <ScreenShortcuts commands={Object.values(commands)} />
@@ -57,9 +125,14 @@
 		<div class="code">
 			{#if playground}
 				<!-- One editor per level, whichever of its maps is shown: the code belongs to the
-				     level, which its name tells from the others. -->
+				     level, which its name tells from the others. It opens on the code saved for the
+				     level, read once as the editor is made. -->
 				{#key playground.name}
-					<CodeEditor text={playground.startingCode} bind:editing />
+					<CodeEditor
+						text={openingCode(playground.name, playground.startingCode).text}
+						bind:editing
+						onchange={keep}
+					/>
 				{/key}
 			{/if}
 		</div>
@@ -76,6 +149,13 @@
 		</div>
 	</main>
 </div>
+<Confirmation
+	bind:open={restoring}
+	question={restoreQuestion}
+	lost={restoreLost}
+	action={t('restore-action')}
+	onconfirm={restore}
+/>
 
 <style>
 	/* The crossing of the two columns: the code takes half the window and stops growing at about

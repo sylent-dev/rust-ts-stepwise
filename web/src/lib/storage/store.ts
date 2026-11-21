@@ -7,8 +7,11 @@
 /** What a store needs of `localStorage`; a test gives its own. */
 export type Backend = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
 
+/** An object read from a store, its fields not checked yet. */
+export type Fields = Readonly<Record<string, unknown>>;
+
 /** What is saved under a name: its fields, beside the version of their shape. */
-export type Saved = Readonly<Record<string, unknown>>;
+export type Saved = Fields;
 
 /** The data of Stepwise in a browser, each kind under its name: `settings`. */
 export interface Store {
@@ -33,8 +36,11 @@ export function keyOf(name: string): string {
 /** A key written then removed when the store opens, to know whether the browser saves. */
 const PROBE = keyOf('probe');
 
-/** Whether a value read is an object with fields, as every value saved is. */
-function isSaved(value: unknown): value is Saved {
+/**
+ * Whether a value read is an object with fields, as every value saved is. A kind of data checks
+ * an object that it keeps in a field the same way (lib/code/saved-code.ts).
+ */
+export function hasFields(value: unknown): value is Fields {
 	return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
@@ -57,7 +63,7 @@ export function openStore(open: () => Backend, onRefused: () => void): Store {
 		read(name, version) {
 			try {
 				const saved: unknown = JSON.parse(backend?.getItem(keyOf(name)) ?? 'null');
-				return isSaved(saved) && saved.version === version ? saved : undefined;
+				return hasFields(saved) && saved.version === version ? saved : undefined;
 			} catch {
 				return undefined;
 			}

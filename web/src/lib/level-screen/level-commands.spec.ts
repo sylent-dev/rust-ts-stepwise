@@ -13,12 +13,7 @@ import {
 	type Shortcut
 } from '#lib/shell/commands.ts';
 import { commandMessage, LEVEL_COMMANDS, levelCommands } from './level-commands.ts';
-
-/** An editor that can do the given edits, and remembers the ones it was asked. */
-function editorFor(able: readonly Edit[] = EDITS): Editing & { asked: Edit[] } {
-	const asked: Edit[] = [];
-	return { asked, can: (edit) => able.includes(edit), apply: (edit) => asked.push(edit) };
-}
+import { editorFor, screenWith } from './test-support.ts';
 
 /** A press of a key, with the keys held written as a keyboard event has them. */
 function press(key: string, ...held: ('ctrl' | 'shift' | 'alt' | 'meta')[]): KeyPress {
@@ -76,13 +71,14 @@ function written(shortcut: Shortcut): string {
 
 describe('levelCommands', () => {
 	it('gives each command of the screen under its name, with its text', () => {
-		const commands = levelCommands(() => undefined, 'other');
+		const commands = levelCommands(screenWith(), 'other');
 
 		expect(Object.keys(commands)).toEqual([...LEVEL_COMMANDS]);
 		expect(Object.entries(commands).map(([name, { id }]) => [name, id])).toEqual(
 			LEVEL_COMMANDS.map((name) => [name, name])
 		);
 		expect(Object.values(commands).map(({ label }) => label)).toEqual([
+			'Restore starting code…',
 			'Undo',
 			'Redo',
 			'Comment lines',
@@ -97,7 +93,10 @@ describe('levelCommands', () => {
 
 	it.each(EDITS)('asks the editor shown for %s', (name) => {
 		const editor = editorFor();
-		const commands = levelCommands(() => editor, 'other');
+		const commands = levelCommands(
+			screenWith(() => editor),
+			'other'
+		);
 
 		commands[name].run();
 
@@ -105,7 +104,10 @@ describe('levelCommands', () => {
 	});
 
 	it('can run what the editor has something to do for, and nothing else', () => {
-		const commands = levelCommands(() => editorFor(['redo', 'comment-lines']), 'other');
+		const commands = levelCommands(
+			screenWith(() => editorFor(['redo', 'comment-lines'])),
+			'other'
+		);
 
 		expect(LEVEL_COMMANDS.filter((name) => commands[name].enabled)).toEqual([
 			'redo',
@@ -114,7 +116,7 @@ describe('levelCommands', () => {
 	});
 
 	it('can run nothing while the screen has no editor, and asks nothing', () => {
-		const commands = levelCommands(() => undefined, 'other');
+		const commands = levelCommands(screenWith(), 'other');
 
 		expect(LEVEL_COMMANDS.filter((name) => commands[name].enabled)).toEqual([]);
 		expect(() => {
@@ -124,7 +126,10 @@ describe('levelCommands', () => {
 
 	it('follows the editor of the level shown', () => {
 		let shown: (Editing & { asked: Edit[] }) | undefined;
-		const commands = levelCommands(() => shown, 'other');
+		const commands = levelCommands(
+			screenWith(() => shown),
+			'other'
+		);
 		const first = editorFor(['undo']);
 		const second = editorFor([]);
 
@@ -138,10 +143,36 @@ describe('levelCommands', () => {
 		expect(second.asked).toEqual(['undo']);
 	});
 
+	it('can restore the starting code while the code shown is another one', () => {
+		let canRestore = false;
+		const screen = { ...screenWith(), canRestore: () => canRestore };
+		const commands = levelCommands(screen, 'other');
+
+		expect(commands['restore-starting-code'].enabled).toBe(false);
+		canRestore = true;
+		expect(commands['restore-starting-code'].enabled).toBe(true);
+	});
+
+	it('asks the learner to confirm before it restores the starting code', () => {
+		const screen = screenWith(() => editorFor(), true);
+		const commands = levelCommands(screen, 'other');
+
+		commands['restore-starting-code'].run();
+
+		expect(screen.confirmations).toBe(1);
+	});
+
+	it('gives Restore starting code no shortcut, since it asks before it acts', () => {
+		const restore = levelCommands(screenWith(), 'other')['restore-starting-code'];
+
+		expect([restore.shortcut, restore.alsoHeard]).toEqual([undefined, undefined]);
+	});
+
 	it('shows the shortcuts of a code editor', () => {
-		const commands = levelCommands(() => undefined, 'other');
+		const commands = levelCommands(screenWith(), 'other');
 
 		expect(LEVEL_COMMANDS.map((name) => shownKeys(commands[name], 'other'))).toEqual([
+			undefined,
 			'Ctrl+Z',
 			'Ctrl+Y',
 			'Ctrl+:',
@@ -151,7 +182,7 @@ describe('levelCommands', () => {
 	});
 
 	it('hears Ctrl+Y and Ctrl+Shift+Z for Redo', () => {
-		const commands = levelCommands(() => undefined, 'other');
+		const commands = levelCommands(screenWith(), 'other');
 		const all = Object.values(commands);
 
 		expect(commandFor(press('y', 'ctrl'), all, 'other')).toBe(commands.redo);
@@ -159,7 +190,7 @@ describe('levelCommands', () => {
 	});
 
 	it('shows Cmd+Shift+Z for Redo on a computer of Apple, and leaves Cmd+Y to its browser', () => {
-		const commands = levelCommands(() => undefined, 'mac');
+		const commands = levelCommands(screenWith(), 'mac');
 		const all = Object.values(commands);
 
 		expect(shownKeys(commands.undo, 'mac')).toBe('Cmd+Z');
@@ -169,7 +200,7 @@ describe('levelCommands', () => {
 	});
 
 	it('hears Ctrl+/ for Comment lines, without showing it', () => {
-		const commands = levelCommands(() => undefined, 'other');
+		const commands = levelCommands(screenWith(), 'other');
 		const all = Object.values(commands);
 
 		expect(commandFor(press(':', 'ctrl'), all, 'other')).toBe(commands['comment-lines']);
@@ -177,7 +208,7 @@ describe('levelCommands', () => {
 	});
 
 	it.each(PLATFORMS)('gives no shortcut to two commands on %s', (platform) => {
-		const shortcuts = Object.values(levelCommands(() => undefined, platform)).flatMap(heard);
+		const shortcuts = Object.values(levelCommands(screenWith(), platform)).flatMap(heard);
 		const names = shortcuts.map(written);
 
 		expect(new Set(names).size).toBe(names.length);
@@ -185,7 +216,7 @@ describe('levelCommands', () => {
 
 	it.each(PLATFORMS)('writes Shift beside no sign nor digit on %s', (platform) => {
 		// The keyboard decides whether writing a sign takes Shift: a shortcut can't ask for it.
-		const shortcuts = Object.values(levelCommands(() => undefined, platform)).flatMap(heard);
+		const shortcuts = Object.values(levelCommands(screenWith(), platform)).flatMap(heard);
 		const signs = shortcuts.filter(
 			(shortcut) =>
 				'character' in shortcut &&
@@ -197,7 +228,7 @@ describe('levelCommands', () => {
 	});
 
 	it.each(PLATFORMS)('writes a letter in lowercase on %s, as a press is compared', (platform) => {
-		const shortcuts = Object.values(levelCommands(() => undefined, platform)).flatMap(heard);
+		const shortcuts = Object.values(levelCommands(screenWith(), platform)).flatMap(heard);
 		const characters = shortcuts.flatMap((shortcut) =>
 			'character' in shortcut ? [shortcut.character] : []
 		);
@@ -206,7 +237,7 @@ describe('levelCommands', () => {
 	});
 
 	it.each(PLATFORMS)('uses Ctrl and Alt together in no shortcut on %s: AltGr', (platform) => {
-		const shortcuts = Object.values(levelCommands(() => undefined, platform)).flatMap(heard);
+		const shortcuts = Object.values(levelCommands(screenWith(), platform)).flatMap(heard);
 
 		expect(shortcuts.filter(({ ctrl, alt }) => ctrl && alt)).toEqual([]);
 	});
@@ -231,7 +262,7 @@ describe('the keys of the editor', () => {
 			)
 		);
 		const shortcuts = PLATFORMS.flatMap((platform) =>
-			Object.values(levelCommands(() => undefined, platform)).flatMap(heard)
+			Object.values(levelCommands(screenWith(), platform)).flatMap(heard)
 		);
 
 		expect(taken.size).toBeGreaterThan(10);

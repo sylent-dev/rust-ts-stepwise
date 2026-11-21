@@ -1,0 +1,40 @@
+/* A button with a text (see docs/design-system.md): gray at rest, as **Cancel**; amber when it is
+   the main button of a screen or of a panel, what to do (`is-main`); red when that main button
+   does what can't be undone (`is-danger`), as the confirmation of **Restore starting code**. It is
+   a class, not a component: a link and a button share this look, and the page itself writes one
+   (src/app.html), for its message of a file that couldn't load, so the page carries this file
+   (lib/page/page-parts.ts). A component that uses it never styles `a` or `button` by its tag. */
+.button {
+	display: inline-block;
+	padding: var(--space-6) var(--space-16);
+	border: 0;
+	border-radius: var(--radius);
+	background: var(--chip);
+	color: var(--text);
+	font: inherit;
+	font-weight: var(--weight-control);
+	text-decoration: none;
+	white-space: nowrap;
+	cursor: pointer;
+}
+
+.button.is-main,
+.button.is-danger {
+	box-shadow: var(--control-shadow);
+	font-weight: var(--weight-strong);
+}
+
+.button.is-main {
+	background: var(--accent);
+	color: var(--on-accent);
+}
+
+.button.is-main:hover {
+	background: var(--accent-hover);
+}
+
+/* The red paint of the robot, with a white text. */
+.button.is-danger {
+	background: var(--danger);
+	color: var(--on-danger);
+}

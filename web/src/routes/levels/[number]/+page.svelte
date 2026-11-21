@@ -24,4 +24,4 @@
 	<title>{t('tab-title', { page: t('screen-level', { number: data.number, title }) })}</title>
 </svelte:head>
 
-<LevelScreen screen="level" {title} {playground} />
+<LevelScreen screen="level" number={data.number} {title} {playground} />

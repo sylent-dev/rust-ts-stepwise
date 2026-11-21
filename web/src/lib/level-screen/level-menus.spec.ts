@@ -2,9 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { canChoose, type MenuRow } from '#lib/shell/menus.ts';
 import { LEVEL_COMMANDS, levelCommands } from './level-commands.ts';
 import { levelMenus, type LevelScreenKind } from './level-menus.ts';
+import { screenWith } from './test-support.ts';
 
 /** The commands of a screen without an editor: none can run. */
-const commands = levelCommands(() => undefined, 'other');
+const commands = levelCommands(screenWith(), 'other');
 
 /** The name of a row in the code; `-` for the line between two groups. */
 function nameOf(row: MenuRow): string {
@@ -31,7 +32,7 @@ describe('levelMenus', () => {
 		const names = (screen: LevelScreenKind) =>
 			levelMenus(screen, commands).map((menu) => [menu.id, ...menu.rows.map(nameOf)]);
 		expect(names('level')).toEqual([
-			['level', 'all-levels', 'sandbox'],
+			['level', 'all-levels', 'sandbox', '-', 'restore-starting-code'],
 			['edit', 'undo', 'redo', '-', 'comment-lines', 'move-line-up', 'move-line-down'],
 			['help', 'manual']
 		]);

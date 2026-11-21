@@ -10,7 +10,7 @@ import { followEditing } from './editing.svelte.ts';
 
 /**
  * What stands for the editor on its page: it keeps its state, and says each change to what
- * follows it, as the editor does.
+ * follows it, as the editor does. Opened again, it takes a new state, which it says to nothing.
  */
 function editorOf(text: string) {
 	let state = EditorState.create({ doc: text, extensions: history() });
@@ -23,7 +23,9 @@ function editorOf(text: string) {
 			follow(state);
 		}
 	};
-	const { editing, follow } = followEditing(editor);
+	const { editing, follow } = followEditing(editor, (reopened) => {
+		state = EditorState.create({ doc: reopened, extensions: history() });
+	});
 	return {
 		editing,
 		text: () => state.doc.toString(),
@@ -74,6 +76,45 @@ describe('followEditing', () => {
 		flushSync();
 
 		expect(seen).toEqual([false, true, false]);
+		leave();
+	});
+
+	it('gives the code as it is now', () => {
+		const editor = editorOf('forward()');
+
+		expect(editor.editing.text).toBe('forward()');
+		editor.type('\nback()');
+		expect(editor.editing.text).toBe('forward()\nback()');
+	});
+
+	it('opens the editor again on a text, with nothing to undo', () => {
+		const editor = editorOf('forward()');
+		editor.type('\nback()');
+
+		editor.editing.reopen('turn_left()');
+
+		expect(editor.text()).toBe('turn_left()');
+		expect(editor.editing.text).toBe('turn_left()');
+		expect(editor.editing.can('undo')).toBe(false);
+		expect(editor.editing.can('redo')).toBe(false);
+	});
+
+	it('has what read the code read it again once the editor has opened again', () => {
+		const editor = editorOf('forward()');
+		const seen: string[] = [];
+		const leave = $effect.root(() => {
+			$effect(() => {
+				seen.push(editor.editing.text);
+			});
+		});
+		flushSync();
+
+		editor.type('\nback()');
+		flushSync();
+		editor.editing.reopen('forward()');
+		flushSync();
+
+		expect(seen).toEqual(['forward()', 'forward()\nback()', 'forward()']);
 		leave();
 	});
 });

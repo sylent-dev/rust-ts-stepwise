@@ -1,10 +1,11 @@
 /* The styles that every page of the application shares, loaded once by the root layout: the
    design tokens, the fonts, the base styles, then the looks that are classes (what is clicked in
-   a band, a message in place of the screen, the colors of the code). A new style sheet of this
-   folder is added here. */
+   a band, a button with a text, a message in place of the screen, the colors of the code). A new
+   style sheet of this folder is added here. */
 @import './tokens.css';
 @import './fonts.css';
 @import './base.css';
 @import './band.css';
+@import './button.css';
 @import './screen-message.css';
 @import './code.css';
