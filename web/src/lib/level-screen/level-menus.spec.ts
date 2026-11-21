@@ -2,12 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { canChoose, type MenuRow } from '#lib/shell/menus.ts';
 import { LEVEL_COMMANDS, levelCommands } from './level-commands.ts';
 import { levelMenus, type LevelScreenKind } from './level-menus.ts';
+import { screenWith } from './test-support.ts';
 
 /** The commands of a screen without an editor: none can run. */
-const commands = levelCommands(
-	{ editing: () => undefined, canRestore: () => false, confirmRestore: () => {} },
-	'other'
-);
+const commands = levelCommands(screenWith(), 'other');
 
 /** The name of a row in the code; `-` for the line between two groups. */
 function nameOf(row: MenuRow): string {

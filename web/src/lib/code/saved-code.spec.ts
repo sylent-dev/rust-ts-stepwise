@@ -104,6 +104,24 @@ describe('the code saved', () => {
 		expect(loadCode(store, 'sandbox')).toEqual({ text: 'forward()' });
 	});
 
+	// A version of the website may add a field to a level, as its breakpoints, without a new
+	// version of the shape: a tab still open on the version before keeps it.
+	it('keeps what it doesn’t know of a level beside its text', () => {
+		const { store, held } = storeWith(
+			'{"levels":{"paint-a-square":{"text":"forward()","breakpoints":[2]}},"version":1}'
+		);
+
+		expect(loadCode(store, 'paint-a-square')).toEqual({ text: 'forward()' });
+		saveCode(store, 'sandbox', { text: 'turn_left()' });
+		expect(heldCode(held)).toEqual({
+			levels: {
+				'paint-a-square': { text: 'forward()', breakpoints: [2] },
+				sandbox: { text: 'turn_left()' }
+			},
+			version: 1
+		});
+	});
+
 	it('takes the place of what can’t be read at the next save', () => {
 		const { store, held } = storeWith('{"levels":{"paint-a-squ');
 		saveCode(store, 'paint-a-square', { text: 'forward()' });

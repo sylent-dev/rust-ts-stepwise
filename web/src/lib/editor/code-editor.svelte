@@ -18,10 +18,11 @@
 		/** The editor shown, for the commands of the screen; nothing once it has gone. */
 		editing?: Editing;
 		/**
-		 * Says the code after each change made in the editor: typed, or by a command of the
-		 * screen. Never when the editor opens, nor when the screen opens it again.
+		 * Says that the code has changed in the editor, typed or by a command of the screen, once
+		 * `editing` holds the code changed. Never when the editor opens, nor when the screen opens
+		 * it again.
 		 */
-		onchange?: (text: string) => void;
+		onchange?: () => void;
 	}
 
 	let { text, editing = $bindable(), onchange }: Props = $props();
@@ -36,7 +37,7 @@
 			// when it is given a new state (`setState`).
 			EditorView.updateListener.of((update) => {
 				follow(update.state);
-				if (update.docChanged) onchange?.(update.state.doc.toString());
+				if (update.docChanged) onchange?.();
 			})
 		];
 		const view = new EditorView({

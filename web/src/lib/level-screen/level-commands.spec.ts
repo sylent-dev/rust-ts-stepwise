@@ -12,43 +12,8 @@ import {
 	type ScreenCommand,
 	type Shortcut
 } from '#lib/shell/commands.ts';
-import {
-	type CommandTarget,
-	commandMessage,
-	LEVEL_COMMANDS,
-	levelCommands
-} from './level-commands.ts';
-
-/** An editor that can do the given edits, and remembers the ones it was asked. */
-function editorFor(able: readonly Edit[] = EDITS): Editing & { asked: Edit[] } {
-	const asked: Edit[] = [];
-	return {
-		asked,
-		can: (edit) => able.includes(edit),
-		apply: (edit) => asked.push(edit),
-		text: '',
-		reopen: () => {}
-	};
-}
-
-/**
- * What a screen gives its commands: the editor shown, if any, and whether its code has something
- * to restore. It counts the confirmations it was asked to open.
- */
-function screenWith(
-	editing: () => Editing | undefined = () => undefined,
-	canRestore = false
-): CommandTarget & { confirmations: number } {
-	const screen = {
-		confirmations: 0,
-		editing,
-		canRestore: () => canRestore,
-		confirmRestore: () => {
-			screen.confirmations += 1;
-		}
-	};
-	return screen;
-}
+import { commandMessage, LEVEL_COMMANDS, levelCommands } from './level-commands.ts';
+import { editorFor, screenWith } from './test-support.ts';
 
 /** A press of a key, with the keys held written as a keyboard event has them. */
 function press(key: string, ...held: ('ctrl' | 'shift' | 'alt' | 'meta')[]): KeyPress {

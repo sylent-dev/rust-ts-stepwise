@@ -2,7 +2,9 @@
      a veil, which asks before an action that can't be undone, as **Restore starting code**. The
      question is its title; under it, what is lost for good; then **Cancel** and the action, the
      main button, red since it can't be undone. The action holds the focus as the panel opens, so
-     Enter confirms, and Escape cancels, as everywhere. It has no ×: **Cancel** says it. -->
+     Enter confirms, and Escape cancels, as everywhere; a key held down since the row that opened
+     it confirms nothing. It has no ×: **Cancel** says it. A screen reader announces it as an
+     alert, and reads what is lost. -->
 <script lang="ts">
 	import { t } from '#lib/i18n.ts';
 	import Panel from './panel.svelte';
@@ -28,9 +30,19 @@
 		onconfirm();
 		open = false;
 	}
+
+	/**
+	 * A key held down repeats, and its repeats reach the action, which has the focus as soon as
+	 * the panel opens: Enter held on the row of a menu would confirm, Space once let go. Only a
+	 * new press confirms. (Whether a key held down runs a command again is a question of step 17
+	 * for every command; here, what can't be undone answers it.)
+	 */
+	function refuseHeld(event: KeyboardEvent) {
+		if (event.repeat && (event.key === 'Enter' || event.key === ' ')) event.preventDefault();
+	}
 </script>
 
-<Panel title={question} bind:open width={440} cross={false} describedby="{id}-lost">
+<Panel title={question} bind:open width={440} cross={false} describedby="{id}-lost" alert>
 	<p id="{id}-lost">{lost}</p>
 	<div class="buttons">
 		<button type="button" class="button" onclick={() => (open = false)}>
@@ -39,7 +51,15 @@
 		<!-- The browser gives the focus of a panel that opens to the button that asks for it
 		     (`autofocus`), here the action: Enter confirms (see Code editor in specs.md). -->
 		<!-- svelte-ignore a11y_autofocus (the focus moves into a panel that the learner just opened, never into a page that loads) -->
-		<button type="button" class="button is-danger" autofocus onclick={confirm}>{action}</button>
+		<button
+			type="button"
+			class="button is-danger"
+			autofocus
+			onkeydown={refuseHeld}
+			onclick={confirm}
+		>
+			{action}
+		</button>
 	</div>
 </Panel>
 

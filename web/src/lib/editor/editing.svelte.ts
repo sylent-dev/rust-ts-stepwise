@@ -20,12 +20,12 @@ export interface FollowedEditing {
  * Follows an editor for the screen: the editor on its page, or what stands for it in a test.
  * `can` and `text` read the state last said to `follow`, kept as a signal, never the editor
  * itself: a row of a menu that read it is then drawn again once the code has changed, greyed or
- * not. `reopen` gives the editor a new state, made from a text with the parts of the editor; the
- * editor says no change then, so its state is followed here.
+ * not. `restart` gives the editor a new state, made from a text with the parts of the editor;
+ * the editor says no change then, so `reopen` follows its state itself.
  */
 export function followEditing(
 	editor: Parameters<StateCommand>[0],
-	reopen: (text: string) => void
+	restart: (text: string) => void
 ): FollowedEditing {
 	let latest = $state.raw(editor.state);
 	return {
@@ -38,7 +38,7 @@ export function followEditing(
 				return latest.doc.toString();
 			},
 			reopen: (text) => {
-				reopen(text);
+				restart(text);
 				latest = editor.state;
 			}
 		},

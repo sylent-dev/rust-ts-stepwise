@@ -7,7 +7,7 @@
      code** puts the level back in its first state (see Code editor in specs.md). -->
 <script lang="ts">
 	import Bench from '#lib/bench/bench.svelte';
-	import { canRestore } from '#lib/code/code.ts';
+	import { hasChanged, type LevelCode } from '#lib/code/code.ts';
 	import { keepCode, openingCode, restoreCode } from '#lib/code/current-code.ts';
 	import CodeEditor from '#lib/editor/code-editor.svelte';
 	import type { Editing } from '#lib/editor/edits.ts';
@@ -22,19 +22,20 @@
 	import Place from '#lib/shell/place.svelte';
 	import ScreenShortcuts from '#lib/shell/screen-shortcuts.svelte';
 	import { levelCommands } from './level-commands.ts';
-	import { levelMenus } from './level-menus.ts';
+	import { levelMenus, type LevelScreenKind } from './level-menus.ts';
 	import MapBlock from './map-block.svelte';
 	import type { Playground } from './playground.ts';
 
 	/** A level has a number, the sandbox none. */
 	type Props = {
+		/** Which screen it is: its menus, and the mark of the sandbox in its header. */
+		screen: LevelScreenKind;
 		/** The place of the screen, in its header: the title of the level, or the sandbox. */
 		title: string;
 		/** What the screen plays on; nothing until the core is ready. */
 		playground?: Playground;
 	} & (
 		| {
-				/** Which screen it is: its menus, and the mark of the sandbox in its header. */
 				screen: 'level';
 				/** The number of the level, before its title where a sentence names it. */
 				number: number;
@@ -56,14 +57,24 @@
 	/** Whether the confirmation of **Restore starting code** shows. */
 	let restoring = $state(false);
 
+	/**
+	 * The code of the level shown, as the editor holds it: what is saved, and what is compared
+	 * with the starting code. Nothing while the screen has no editor.
+	 */
+	function shownCode(): LevelCode | undefined {
+		return editing && { text: editing.text };
+	}
+
 	/** The commands of the screen: the rows of its menus run them, and its shortcuts. */
 	const commands = levelCommands(
 		{
 			editing: () => editing,
-			canRestore: () =>
-				editing !== undefined &&
-				playground !== undefined &&
-				canRestore({ text: editing.text }, playground.startingCode),
+			canRestore: () => {
+				const code = shownCode();
+				return code !== undefined && playground !== undefined
+					? hasChanged(code, playground.startingCode)
+					: false;
+			},
 			confirmRestore: () => {
 				restoring = true;
 			}
@@ -72,8 +83,9 @@
 	);
 
 	/** Keeps the code of the level shown, at each change that the learner makes to it. */
-	function keep(text: string) {
-		if (playground) keepCode(playground.name, { text });
+	function keep() {
+		const code = shownCode();
+		if (playground && code) keepCode(playground.name, code);
 	}
 
 	/**

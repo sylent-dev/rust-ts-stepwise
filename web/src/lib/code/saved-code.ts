@@ -4,8 +4,16 @@
 // name, as a level. Each save reads what is there first: another tab that saved the code of
 // another level keeps it. A level whose code can't be read opens on its starting code, and the
 // code of the others stays where it is.
+//
+// The shape is a contract between the versions of the website: what a browser keeps outlives a
+// new version, and a tab open on the one before goes on saving. A field added to a level later,
+// as its breakpoints (step 19), is read alone and takes its default when it is missing: no new
+// version. A save writes back the code of the other levels as it was, with the fields that this
+// version doesn't know. A new version comes only with the reading of the one before it here,
+// since the store gives nothing for another version, and the next save would clear the code of
+// every other level.
 
-import { hasFields, type Saved, type Store } from '#lib/storage/store.ts';
+import { type Fields, hasFields, type Store } from '#lib/storage/store.ts';
 import type { LevelCode } from './code.ts';
 
 /** The name the code of the levels is saved under. */
@@ -15,7 +23,7 @@ const NAME = 'code';
 const VERSION = 1;
 
 /** What is saved for each level, by its stable name: nothing when it can't be read. */
-function savedLevels(store: Store): Saved {
+function savedLevels(store: Store): Fields {
 	const levels = store.read(NAME, VERSION)?.levels;
 	return hasFields(levels) ? levels : {};
 }
