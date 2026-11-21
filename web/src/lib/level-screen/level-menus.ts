@@ -3,6 +3,7 @@
 
 import { t } from '#lib/i18n.ts';
 import type { Menu, MenuRow } from '#lib/shell/menus.ts';
+import type { LevelCommand, LevelCommands } from './level-commands.ts';
 
 /**
  * The tab of the browser that shows the manual when a level opens it: always the same one, so
@@ -17,22 +18,48 @@ const MANUAL_TAB = 'stepwise-manual';
  */
 export type LevelScreenKind = 'level' | 'sandbox';
 
-/** The menus of the header of a level, or of the sandbox. */
-export function levelMenus(screen: LevelScreenKind): Menu[] {
+const SEPARATOR: MenuRow = { kind: 'separator' };
+
+/**
+ * The menus of the header of a level, or of the sandbox. A row that runs a command takes it
+ * from the commands of the screen, which the shortcuts read too.
+ */
+export function levelMenus(screen: LevelScreenKind, commands: LevelCommands): Menu[] {
+	const command = (name: LevelCommand): MenuRow => ({ kind: 'command', command: commands[name] });
 	const sandbox: MenuRow =
 		screen === 'sandbox'
-			? { id: 'sandbox', label: t('screen-sandbox'), here: true }
-			: { id: 'sandbox', label: t('screen-sandbox'), to: 'sandbox' };
+			? { kind: 'here', id: 'sandbox', label: t('screen-sandbox') }
+			: { kind: 'link', id: 'sandbox', label: t('screen-sandbox'), to: 'sandbox' };
 	return [
 		{
 			id: 'level',
 			name: t('menu-level'),
-			rows: [{ id: 'all-levels', label: t('screen-home'), to: '' }, sandbox]
+			rows: [{ kind: 'link', id: 'all-levels', label: t('screen-home'), to: '' }, sandbox]
+		},
+		{
+			id: 'edit',
+			name: t('menu-edit'),
+			rows: [
+				command('undo'),
+				command('redo'),
+				SEPARATOR,
+				command('comment-lines'),
+				command('move-line-up'),
+				command('move-line-down')
+			]
 		},
 		{
 			id: 'help',
 			name: t('menu-help'),
-			rows: [{ id: 'manual', label: t('screen-manual'), to: 'manual', tab: MANUAL_TAB }]
+			rows: [
+				{
+					kind: 'link',
+					id: 'manual',
+					label: t('screen-manual'),
+					to: 'manual',
+					tab: MANUAL_TAB
+				}
+			]
 		}
 	];
 }

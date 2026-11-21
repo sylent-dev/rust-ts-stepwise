@@ -72,14 +72,14 @@ describe('Enter', () => {
 	});
 });
 
-describe('the history', () => {
-	it('undoes with Ctrl+Z, and redoes with Ctrl+Y or Ctrl+Shift+Z', () => {
+describe('the shortcut of a command of the screen', () => {
+	it('is no key of the editor, which leaves it to the screen', () => {
 		const changed = type(stateOf('|'), 'forward');
-		const undone = press(changed, 'Mod-z');
 
-		expect(shown(undone)).toBe('|');
-		expect(shown(press(undone, 'Mod-y'))).toBe('forward|');
-		expect(shown(press(undone, 'Mod-Shift-z'))).toBe('forward|');
+		// The screen hears these keys and runs each command by its name (edits.ts).
+		for (const key of ['Mod-z', 'Mod-y', 'Mod-Shift-z', 'Mod-/', 'Alt-ArrowUp', 'Alt-ArrowDown']) {
+			expect(shown(press(changed, key)), key).toBe('forward|');
+		}
 	});
 });
 

@@ -14,8 +14,22 @@
 	let { name, size }: Props = $props();
 
 	/** The shapes of each icon: a name without shapes doesn't compile. */
-	const shapes: Record<IconName, Snippet> = { close, diamond, gear };
+	const shapes: Record<IconName, Snippet> = {
+		'arrow-down': arrowDown,
+		'arrow-up': arrowUp,
+		close,
+		diamond,
+		gear
+	};
 </script>
+
+{#snippet arrowDown()}
+	<path d="M8 2.8v10.4M3.8 9 8 13.2 12.2 9" />
+{/snippet}
+
+{#snippet arrowUp()}
+	<path d="M8 13.2V2.8M3.8 7 8 2.8 12.2 7" />
+{/snippet}
 
 {#snippet close()}
 	<path d="m4 4 8 8M12 4l-8 8" />

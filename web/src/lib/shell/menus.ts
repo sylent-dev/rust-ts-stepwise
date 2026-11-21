@@ -3,9 +3,10 @@
 // the focus of the keyboard after it.
 
 import type { Path } from '$app/types';
+import type { ScreenCommand } from './commands.ts';
 
-/** What every row has. */
-interface Row {
+/** What a row that names a screen has. */
+interface ScreenRow {
 	/**
 	 * Its name in the code, the same in every language and whatever its text says: `all-levels`.
 	 * It is what the page knows the row by.
@@ -16,7 +17,8 @@ interface Row {
 }
 
 /** A row that leads to a page. */
-export interface LinkRow extends Row {
+export interface LinkRow extends ScreenRow {
+	kind: 'link';
 	/** The page, as every address is written: what follows the root of the website, `sandbox`. */
 	to: Path;
 	/** The tab of the browser that shows the page, when it isn't this one. */
@@ -24,12 +26,26 @@ export interface LinkRow extends Row {
 }
 
 /** The row of the screen already shown: lit as if already chosen, it can't be chosen again. */
-export interface HereRow extends Row {
-	here: true;
+export interface HereRow extends ScreenRow {
+	kind: 'here';
+}
+
+/**
+ * A row that runs a command of the screen (commands.ts), which gives it its text, its shortcut
+ * and its state: greyed while the command can't run.
+ */
+export interface CommandRow {
+	kind: 'command';
+	command: ScreenCommand;
+}
+
+/** A thin line between two groups of rows. */
+export interface SeparatorRow {
+	kind: 'separator';
 }
 
 /** A row of a menu. */
-export type MenuRow = LinkRow | HereRow;
+export type MenuRow = LinkRow | HereRow | CommandRow | SeparatorRow;
 
 /** A menu of the bar: its name, and its rows from top to bottom. */
 export interface Menu {
@@ -40,9 +56,20 @@ export interface Menu {
 	rows: readonly MenuRow[];
 }
 
-/** Whether a row can be chosen. The keys skip the others. */
-export function canChoose(row: MenuRow): row is LinkRow {
-	return 'to' in row;
+/**
+ * Whether a row can be chosen now: one that leads to a page, or whose command can run. The keys
+ * skip the others.
+ */
+export function canChoose(row: MenuRow): row is LinkRow | CommandRow {
+	switch (row.kind) {
+		case 'link':
+			return true;
+		case 'command':
+			return row.command.enabled;
+		case 'here':
+		case 'separator':
+			return false;
+	}
 }
 
 /** Where the bar is. The focus of the keyboard follows it: on the lit row, or on the name. */

@@ -9,7 +9,7 @@ const menuBoards = () => [
 SECTIONS.push(["The four menus", () => `
   <div class="page-row">
     <div class="page-slot"><span>Level: Next level greyed until the level is done</span>${readyWindow({ header: { menu: "Level" }, overlay: appMenu("Level") })}</div>
-    <div class="page-slot"><span>Edit</span>${readyWindow({ header: { menu: "Edit" }, overlay: appMenu("Edit", { hovered: 3 }) })}</div>
+    <div class="page-slot"><span>Edit: Redo greyed while nothing is undone, Undo while nothing is typed</span>${readyWindow({ header: { menu: "Edit" }, overlay: appMenu("Edit", { hovered: 3 }) })}</div>
     <div class="page-slot"><span>Run, paused, with its speeds</span>${pausedWindow({ header: { menu: "Run" }, overlay: appMenu("Run", { run: "paused", hovered: 4 }) + appSpeedMenu() })}</div>
     <div class="page-slot"><span>Help</span>${readyWindow({ header: { menu: "Help" }, overlay: appMenu("Help") })}</div>
   </div>

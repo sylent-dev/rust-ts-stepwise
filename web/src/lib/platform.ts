@@ -15,3 +15,8 @@ export function platformOf(platform: string, userAgent: string): Platform {
 	if (/\bCrOS\b/.test(userAgent)) return 'chromeos';
 	return 'other';
 }
+
+/** The computer that the page runs on: the one place that asks the browser. */
+export function currentPlatform(): Platform {
+	return platformOf(navigator.platform, navigator.userAgent);
+}

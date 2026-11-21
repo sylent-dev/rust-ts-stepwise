@@ -1,0 +1,212 @@
+import { EditorState } from '@codemirror/state';
+import { keymap } from '@codemirror/view';
+import { beforeAll, describe, expect, it } from 'vitest';
+import { loadTestCore } from '#lib/core/test-support.ts';
+import { type Edit, type Editing, EDITS } from '#lib/editor/edits.ts';
+import { editorSetup } from '#lib/editor/setup.ts';
+import type { Platform } from '#lib/platform.ts';
+import {
+	commandFor,
+	type KeyPress,
+	keyParts,
+	type ScreenCommand,
+	type Shortcut
+} from '#lib/shell/commands.ts';
+import { commandMessage, LEVEL_COMMANDS, levelCommands } from './level-commands.ts';
+
+/** An editor that can do the given edits, and remembers the ones it was asked. */
+function editorFor(able: readonly Edit[] = EDITS): Editing & { asked: Edit[] } {
+	const asked: Edit[] = [];
+	return { asked, can: (edit) => able.includes(edit), apply: (edit) => asked.push(edit) };
+}
+
+/** A press of a key, with the keys held written as a keyboard event has them. */
+function press(key: string, ...held: ('ctrl' | 'shift' | 'alt' | 'meta')[]): KeyPress {
+	return {
+		key,
+		ctrlKey: held.includes('ctrl'),
+		shiftKey: held.includes('shift'),
+		altKey: held.includes('alt'),
+		metaKey: held.includes('meta')
+	};
+}
+
+const PLATFORMS: readonly Platform[] = ['other', 'chromeos', 'mac'];
+
+/** The shortcut of a command as its row shows it: `Ctrl+Z`, an arrow by the name of its icon. */
+function shownKeys(command: ScreenCommand, platform: Platform): string | undefined {
+	return (
+		command.shortcut &&
+		keyParts(command.shortcut, platform)
+			.map((part) => ('icon' in part ? part.icon : part.text))
+			.join('+')
+	);
+}
+
+/** Every shortcut that a command hears, shown or not. */
+const heard = ({ shortcut, alsoHeard = [] }: ScreenCommand): Shortcut[] => [
+	...(shortcut ? [shortcut] : []),
+	...alsoHeard
+];
+
+/**
+ * A key as CodeMirror names it in a binding, its held keys in one order and the key of the
+ * shortcuts under one name: `Mod-Shift-z`, `Cmd-z` and `Ctrl-z` name it three ways.
+ */
+function normalized(name: string): string {
+	const parts = name.split(/-(?!$)/);
+	const key = parts.pop() ?? '';
+	const held = new Set(
+		parts.map((part) => (/^(mod|cmd|meta|ctrl|control)$/i.test(part) ? 'main' : part.toLowerCase()))
+	);
+	return [...['main', 'shift', 'alt'].filter((part) => held.has(part)), key.toLowerCase()].join(
+		'-'
+	);
+}
+
+/** A shortcut of the screen, written the same way. */
+function written(shortcut: Shortcut): string {
+	const key = 'key' in shortcut ? shortcut.key : shortcut.character;
+	return normalized(
+		[shortcut.ctrl && 'Mod', shortcut.shift && 'Shift', shortcut.alt && 'Alt', key]
+			.filter(Boolean)
+			.join('-')
+	);
+}
+
+describe('levelCommands', () => {
+	it('gives each command of the screen under its name, with its text', () => {
+		const commands = levelCommands(() => undefined, 'other');
+
+		expect(Object.keys(commands)).toEqual([...LEVEL_COMMANDS]);
+		expect(Object.entries(commands).map(([name, { id }]) => [name, id])).toEqual(
+			LEVEL_COMMANDS.map((name) => [name, name])
+		);
+		expect(Object.values(commands).map(({ label }) => label)).toEqual([
+			'Undo',
+			'Redo',
+			'Comment lines',
+			'Move line up',
+			'Move line down'
+		]);
+	});
+
+	it('names the message of a command', () => {
+		expect(commandMessage('move-line-up')).toBe('command-move-line-up');
+	});
+
+	it.each(EDITS)('asks the editor shown for %s', (name) => {
+		const editor = editorFor();
+		const commands = levelCommands(() => editor, 'other');
+
+		commands[name].run();
+
+		expect(editor.asked).toEqual([name]);
+	});
+
+	it('can run what the editor has something to do for, and nothing else', () => {
+		const commands = levelCommands(() => editorFor(['redo', 'comment-lines']), 'other');
+
+		expect(LEVEL_COMMANDS.filter((name) => commands[name].enabled)).toEqual([
+			'redo',
+			'comment-lines'
+		]);
+	});
+
+	it('can run nothing while the screen has no editor, and asks nothing', () => {
+		const commands = levelCommands(() => undefined, 'other');
+
+		expect(LEVEL_COMMANDS.filter((name) => commands[name].enabled)).toEqual([]);
+		expect(() => {
+			commands.undo.run();
+		}).not.toThrow();
+	});
+
+	it('follows the editor of the level shown', () => {
+		let shown: (Editing & { asked: Edit[] }) | undefined;
+		const commands = levelCommands(() => shown, 'other');
+		const first = editorFor(['undo']);
+		const second = editorFor([]);
+
+		shown = first;
+		expect(commands.undo.enabled).toBe(true);
+		shown = second;
+		expect(commands.undo.enabled).toBe(false);
+		commands.undo.run();
+
+		expect(first.asked).toEqual([]);
+		expect(second.asked).toEqual(['undo']);
+	});
+
+	it('shows the shortcuts of a code editor', () => {
+		const commands = levelCommands(() => undefined, 'other');
+
+		expect(LEVEL_COMMANDS.map((name) => shownKeys(commands[name], 'other'))).toEqual([
+			'Ctrl+Z',
+			'Ctrl+Y',
+			'Ctrl+:',
+			'Alt+arrow-up',
+			'Alt+arrow-down'
+		]);
+	});
+
+	it('shows for Redo the habit of the computer, and hears both everywhere', () => {
+		const mac = levelCommands(() => undefined, 'mac');
+		const other = levelCommands(() => undefined, 'other');
+
+		expect(shownKeys(mac.redo, 'mac')).toBe('Cmd+Shift+Z');
+		expect(shownKeys(mac.undo, 'mac')).toBe('Cmd+Z');
+		expect(commandFor(press('y', 'meta'), Object.values(mac), 'mac')).toBe(mac.redo);
+		expect(commandFor(press('z', 'meta', 'shift'), Object.values(mac), 'mac')).toBe(mac.redo);
+		expect(commandFor(press('y', 'ctrl'), Object.values(other), 'other')).toBe(other.redo);
+		expect(commandFor(press('Z', 'ctrl', 'shift'), Object.values(other), 'other')).toBe(other.redo);
+	});
+
+	it('hears Ctrl+/ for Comment lines, without showing it', () => {
+		const commands = levelCommands(() => undefined, 'other');
+		const all = Object.values(commands);
+
+		expect(commandFor(press(':', 'ctrl'), all, 'other')).toBe(commands['comment-lines']);
+		expect(commandFor(press('/', 'ctrl'), all, 'other')).toBe(commands['comment-lines']);
+	});
+
+	it.each(PLATFORMS)('gives no shortcut to two commands on %s', (platform) => {
+		const shortcuts = Object.values(levelCommands(() => undefined, platform)).flatMap(heard);
+		const names = shortcuts.map(written);
+
+		expect(new Set(names).size).toBe(names.length);
+	});
+
+	it.each(PLATFORMS)('uses Ctrl and Alt together in no shortcut on %s: AltGr', (platform) => {
+		const shortcuts = Object.values(levelCommands(() => undefined, platform)).flatMap(heard);
+
+		expect(shortcuts.filter(({ ctrl, alt }) => ctrl && alt)).toEqual([]);
+	});
+});
+
+describe('the keys of the editor', () => {
+	// The editor asks the core what its code is as soon as it is made.
+	beforeAll(loadTestCore);
+
+	it('are none of the shortcuts of the commands, which the screen alone hears', () => {
+		const bindings = EditorState.create({ extensions: editorSetup('Your code') })
+			.facet(keymap)
+			.flat();
+		// A binding names its key for every computer, or for one; with `shift`, it takes the key
+		// with Shift held too.
+		const taken = new Set(
+			bindings.flatMap((binding) =>
+				[binding.key, binding.mac, binding.win, binding.linux]
+					.filter((name) => name !== undefined)
+					.flatMap((name) => (binding.shift ? [name, `Shift-${name}`] : [name]))
+					.map(normalized)
+			)
+		);
+		const shortcuts = PLATFORMS.flatMap((platform) =>
+			Object.values(levelCommands(() => undefined, platform)).flatMap(heard)
+		);
+
+		expect(taken.size).toBeGreaterThan(10);
+		expect(shortcuts.map(written).filter((shortcut) => taken.has(shortcut))).toEqual([]);
+	});
+});

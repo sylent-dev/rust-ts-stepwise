@@ -7,14 +7,20 @@
 	import { EditorView } from '@codemirror/view';
 	import { untrack } from 'svelte';
 	import { t } from '#lib/i18n.ts';
+	import { applyEdit, canEdit, type Editing } from './edits.ts';
 	import { editorSetup } from './setup.ts';
 
 	interface Props {
 		/** The code that the editor opens on; a change of it later is not followed. */
 		text: string;
+		/** The editor shown, for the commands of the screen; nothing once it has gone. */
+		editing?: Editing;
 	}
 
-	let { text }: Props = $props();
+	let { text, editing = $bindable() }: Props = $props();
+
+	/** The state of the editor after its last change: what an edit can do follows it. */
+	let latest = $state.raw<EditorState>();
 
 	/** Makes the editor in its block, and takes it away with it. */
 	function mount(block: HTMLElement): () => void {
@@ -22,10 +28,25 @@
 			parent: block,
 			state: EditorState.create({
 				doc: untrack(() => text),
-				extensions: editorSetup(t('editor-name'))
+				extensions: [
+					editorSetup(t('editor-name')),
+					EditorView.updateListener.of((update) => {
+						latest = update.state;
+					})
+				]
 			})
 		});
+		latest = view.state;
+		const own: Editing = {
+			can: (edit) => latest !== undefined && canEdit(edit, latest),
+			apply: (edit) => {
+				applyEdit(edit, view);
+			}
+		};
+		editing = own;
 		return () => {
+			// The editor of the next level may have taken its place already.
+			if (editing === own) editing = undefined;
 			view.destroy();
 		};
 	}
