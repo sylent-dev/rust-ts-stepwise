@@ -33,8 +33,11 @@ export function keyOf(name: string): string {
 /** A key written then removed when the store opens, to know whether the browser saves. */
 const PROBE = keyOf('probe');
 
-/** Whether a value read is an object with fields, as every value saved is. */
-function isSaved(value: unknown): value is Saved {
+/**
+ * Whether a value read is an object with fields, as every value saved is. A kind of data checks
+ * an object that it keeps in a field the same way (lib/code/saved-code.ts).
+ */
+export function hasFields(value: unknown): value is Saved {
 	return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
@@ -57,7 +60,7 @@ export function openStore(open: () => Backend, onRefused: () => void): Store {
 		read(name, version) {
 			try {
 				const saved: unknown = JSON.parse(backend?.getItem(keyOf(name)) ?? 'null');
-				return isSaved(saved) && saved.version === version ? saved : undefined;
+				return hasFields(saved) && saved.version === version ? saved : undefined;
 			} catch {
 				return undefined;
 			}

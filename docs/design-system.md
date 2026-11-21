@@ -32,7 +32,7 @@ Two themes, chosen in the settings: **Day Desk**, light, by default, and **Night
 | `--passed` | `#5fd0b0` | The teal of the item, what has passed: a level done, a map passed, the status bar once a map has passed, the progress under the header. It is the only color of what has passed: a green of its own for the progress and the console was rejected, two greens side by side that didn't go together (decided on 2026-11-16). |
 | `--on-passed` | `#222935` | The text on the teal, the ink of the world. |
 | `--passed-soft` | `--passed` at 28 % over `--band` | The tab of a map that has passed, on the level screen and on the home screen. |
-| `--danger` | `--paint-red` | The red of the paint: **Clear all progress** as it fills. |
+| `--danger` | `--paint-red` | The red of the paint, what can't be undone: **Clear all progress** as it fills, the main button of a confirmation (**Restore starting code**). |
 | `--on-danger` | `#ffffff` | The text on it. |
 | `--chosen` | `--text` | What is chosen in a list is filled with the color of the text: the theme in the settings, a command, a result of the search. |
 | `--veil` | `#0007` | The veil over the screen under a panel. |
@@ -75,7 +75,7 @@ Two themes, chosen in the settings: **Day Desk**, light, by default, and **Night
 |---|---|---|---|
 | `--control` | `#ffffff` | `#2f3641` | The controls that float over the editor, **Step** and **Reset**; the main one, **Run** or **Pause**, is in amber. |
 | `--control-shadow` | `0 1px 5px #22293538` | `0 2px 8px #0006` | Their shadow, the one of a main button too. |
-| `--chip` | `#e3e7ec` | `#2f3641` | A small button with a text (**Legend**, a map of the home screen), the track of a choice between two values. |
+| `--chip` | `#e3e7ec` | `#2f3641` | A button with a text that isn't the main one (**Legend**, a map of the home screen, **Cancel**), the track of a choice between two values. |
 | `--on-chosen` | `#f6f7f9` | `#171b21` | The text on `--chosen`. |
 | `--chosen-soft` | `#d3d9e1` | `#2f3641` | The quiet tone of what is shown or pointed: the tab shown, the section open in the manual, the category chosen in the command menu, the call in progress, a message of the console under the pointer. |
 | `--idle` | `#c3cad3` | `#4b5564` | A map not passed yet, under a level of the home screen. |

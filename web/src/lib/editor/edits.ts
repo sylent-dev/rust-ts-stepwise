@@ -82,4 +82,12 @@ export interface Editing {
 	/** Whether the edit has something to do now. It follows the code as it changes. */
 	can(edit: Edit): boolean;
 	apply(edit: Edit): void;
+	/** The code as it is now. It follows the code as it changes. */
+	readonly text: string;
+	/**
+	 * Opens the editor again on a text, as the first time: the code is replaced for good, and its
+	 * history starts again, with nothing to undo. It isn't a change that the learner made: the
+	 * editor doesn't say it as one (`onchange` of code-editor.svelte).
+	 */
+	reopen(text: string): void;
 }

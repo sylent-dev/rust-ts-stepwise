@@ -1,7 +1,8 @@
 <!-- The code editor (see Code editor in specs.md): CodeMirror, made of the parts listed in
-     setup.ts, with our look. It opens on a text and keeps its own document from then on: the
-     screen shows one editor per level, made again when the level changes. Made once the core
-     has loaded, which gives the code its colors. -->
+     setup.ts, with our look. It opens on a text and keeps its own document from then on, until
+     the screen opens it again on another (`reopen` of `Editing`): the screen shows one editor
+     per level, made again when the level changes. Made once the core has loaded, which gives the
+     code its colors. -->
 <script lang="ts">
 	import { EditorState } from '@codemirror/state';
 	import { EditorView } from '@codemirror/view';
@@ -16,29 +17,37 @@
 		text: string;
 		/** The editor shown, for the commands of the screen; nothing once it has gone. */
 		editing?: Editing;
+		/**
+		 * Says the code after each change made in the editor: typed, or by a command of the
+		 * screen. Never when the editor opens, nor when the screen opens it again.
+		 */
+		onchange?: (text: string) => void;
 	}
 
-	let { text, editing = $bindable() }: Props = $props();
+	let { text, editing = $bindable(), onchange }: Props = $props();
 
 	/** Makes the editor in its block, and takes it away with it. */
 	function mount(block: HTMLElement): () => void {
+		const extensions = [
+			editorSetup(t('editor-name')),
+			// What the screen reads of the editor follows each of its changes. `follow` is made
+			// just under, with the editor: CodeMirror calls a listener at the end of an update or
+			// of a measure, never while it makes the editor (read in `@codemirror/view` 6.43), nor
+			// when it is given a new state (`setState`).
+			EditorView.updateListener.of((update) => {
+				follow(update.state);
+				if (update.docChanged) onchange?.(update.state.doc.toString());
+			})
+		];
 		const view = new EditorView({
 			parent: block,
-			state: EditorState.create({
-				doc: untrack(() => text),
-				extensions: [
-					editorSetup(t('editor-name')),
-					// What the screen reads of the editor follows each of its changes. `follow` is
-					// made just under, with the editor: CodeMirror calls a listener at the end of
-					// an update or of a measure, never while it makes the editor (read in
-					// `@codemirror/view` 6.43).
-					EditorView.updateListener.of((update) => {
-						follow(update.state);
-					})
-				]
-			})
+			state: EditorState.create({ doc: untrack(() => text), extensions })
 		});
-		const { editing: own, follow } = followEditing(view);
+		// A new state, rather than a change of the text: the history starts again with it. The
+		// editor keeps its page, so the keyboard stays in the code if it was there.
+		const { editing: own, follow } = followEditing(view, (reopened) => {
+			view.setState(EditorState.create({ doc: reopened, extensions }));
+		});
 		editing = own;
 		return () => {
 			// The editor of the next level may have taken its place already.

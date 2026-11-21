@@ -118,7 +118,7 @@ The rule of `CLAUDE.md` holds: no color, text size, radius nor duration outside 
 - **Three buttons made of an icon alone**, each with its square, its hover and its pair `title` and `aria-label` (`shell/panel.svelte:79`, `shell/storage-banner.svelte:27`, `settings/settings-button.svelte:19`): one component, `shell/icon-button.svelte`. The rule of `CLAUDE.md` then says when a look is a component (the same markup and the same look) and when it is a class of `styles/` (the same look on different elements, or one that `app.html` needs).
 - **The colors of the paint are written two ways** (`map/paint-stroke.svelte:49-59` with a class per color, `map/moving-paint.svelte:80`, `:92` with a template), and a fourth color would be drawn without paint, without an error: one table, `satisfies Record<Color, string>`. The same for the events animated: `EVENT_TIMES` as a `Record<StepEvent, number | undefined>`, so that a new event of the core must be placed (`map/motion.ts:47-55`, and the list of `run/playback.svelte.ts:258`).
 - Small: values without their reason in their block (`shell/place.svelte:28`, `:44`, `shell/storage-banner.svelte:66`), a size shared by two blocks (`settings/settings-button.svelte:34`, `styles/band.css:9`); the three files of the fonts named in `app.html:39-53` and in `styles/fonts.css`, compared by nothing: a test in `page/page-fill.spec.ts`; a `styles/app.css` that imports the style sheets, as `tokens.css` does, rather than a line each in `+layout.svelte`.
-- Left to step 16, with its first button outside a message: `styles/button.css`, the main button being today `.screen-message-action`, in the style sheet of the messages.
+- Left to step 16, with its first button outside a message: `styles/button.css`, the main button being today `.screen-message-action`, in the style sheet of the messages. Done at step 16d (2026-11-21), with the buttons of the confirmation of **Restore starting code**: the class `button`, and `is-main` and `is-danger`.
 
 ## To settle first, by step
 
@@ -130,7 +130,7 @@ Settled at step 16c (2026-11-21): a command of a screen is written once, a `Scre
 
 What the sketch of the audit became, proved with the commands of the menu **Edit**: a row has a `kind` (`link`, `here`, `command`, `separator`); a shortcut is a character or a named key, each with its rule for Shift, rather than one text; `commandFor` is pure and takes the computer; CodeMirror keeps no key of a command, rather than a keymap built from the same shortcuts, so that no key runs twice; the editor names its edits as a closed list, since it may not import `shell/`.
 
-Left to step 17, with their first use: the row that opens a menu beside it (`submenu`, for **Speed**); a panel opened by a command (**Help › Keyboard shortcuts**), as a state of the screen that the command sets, since a panel opens one way only today, from the button that owns its `open` (`settings/settings-button.svelte`); whether a key held down runs a command again; a key named by a word (Enter, Space); the editor locked while a program runs; the tip of a control, which reads the same command. "Command" names two things in `specs.md`, those of the screen and those of the language, and `Action` is taken by `map/motion.ts`.
+Left to step 17, with their first use: the row that opens a menu beside it (`submenu`, for **Speed**); a panel opened by a command (**Help › Keyboard shortcuts**), as a state of the screen that the command sets (came first at step 16d, with the confirmation of **Restore starting code…**: the level screen holds whether it is open, and the command sets it), since a panel opens one way only today, from the button that owns its `open` (`settings/settings-button.svelte`); whether a key held down runs a command again; a key named by a word (Enter, Space); the editor locked while a program runs; the tip of a control, which reads the same command. "Command" names two things in `specs.md`, those of the screen and those of the language, and `Action` is taken by `map/motion.ts`.
 
 ### Step 16: where the words of the language come out
 
@@ -165,6 +165,8 @@ Two ways, to choose in the proposal of the step:
 - **Make the object in the `$effect`** and keep it in a `$state.raw`: the trap goes away, but the object arrives a pass later, and during that pass the screen sees the name of the new level with the `Level` of the one before.
 
 The first, unless a cleanup needs more of the playground than a value. Whatever is chosen gets its test in `core-ready.svelte.spec.ts`, where the effects run as in a browser.
+
+Settled at step 16d (2026-11-21): the code is saved at each change, in the handler of the change, rather than grouped, so no cleanup reads the playground. `fromCore` keeps its rule, written in its doc comment, and the test of the rule, added at step 15f (*makes nothing more for an effect whose cleanup uses what the effect read first*).
 
 ### Step 17: the edges of `Playback`
 

@@ -1,5 +1,6 @@
 <!-- A panel in the middle of the screen, over a veil that covers it (see Settings in specs.md).
-     Escape, × or a click on the veil closes it. It is the `dialog` of the browser, shown as a
+     Escape, × or a click on the veil closes it; a confirmation has no ×, its **Cancel** does it
+     (confirmation.svelte). It is the `dialog` of the browser, shown as a
      modal: the keys stay in the panel, the screen under the veil can't be clicked, and the focus
      goes back to what opened the panel when it closes. It is there at once, without a motion
      (see Motion in docs/design-system.md). While a message takes the place of the screen, the
@@ -19,10 +20,14 @@
 		open: boolean;
 		/** Its width, in pixels: the one of its drawing in the mock-up. */
 		width: number;
+		/** Whether × closes it, in its corner: not on a confirmation, which has **Cancel**. */
+		cross?: boolean;
+		/** The element that says what the panel is about, under its title, for a screen reader. */
+		describedby?: string;
 		children: Snippet;
 	}
 
-	let { title, open = $bindable(), width, children }: Props = $props();
+	let { title, open = $bindable(), width, cross = true, describedby, children }: Props = $props();
 
 	const id = $props.id();
 
@@ -70,6 +75,7 @@
 <dialog
 	bind:this={dialog}
 	aria-labelledby="{id}-title"
+	aria-describedby={describedby}
 	onpointerdown={(event) => (pressedVeil = event.target === event.currentTarget)}
 	{onclick}
 	oncancel={() => (open = false)}
@@ -78,14 +84,16 @@
 	{#if open}
 		<div class="panel" style:width="{width}px">
 			<h2 id="{id}-title">{title}</h2>
-			<div class="close">
-				<IconButton
-					icon="close"
-					label={t('panel-close')}
-					zone="pop"
-					onclick={() => (open = false)}
-				/>
-			</div>
+			{#if cross}
+				<div class="close">
+					<IconButton
+						icon="close"
+						label={t('panel-close')}
+						zone="pop"
+						onclick={() => (open = false)}
+					/>
+				</div>
+			{/if}
 			{@render children()}
 		</div>
 	{/if}
@@ -127,9 +135,11 @@
 		box-shadow: var(--pop-shadow);
 	}
 
+	/* A title on two lines, as a long question, has two lines of about the same length. */
 	h2 {
 		margin: 0;
 		font: var(--weight-strong) var(--size-title) / var(--line-title) var(--font-text);
+		text-wrap: balance;
 	}
 
 	/* The cross stands at the same distance from the top and the right borders. */

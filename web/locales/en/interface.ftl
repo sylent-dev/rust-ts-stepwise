@@ -48,6 +48,8 @@ menu-help = Help
 ## the tip of a button and the panel of the keyboard shortcuts: `command-<name>`
 ## (`commandMessage`).
 
+# It asks before it acts: `…` ends its text (see Messages in docs/design-system.md).
+command-restore-starting-code = Restore starting code…
 command-undo = Undo
 command-redo = Redo
 command-comment-lines = Comment lines
@@ -77,6 +79,19 @@ theme-night-desk = Night Desk
 
 # The tip of the cross that closes a panel.
 panel-close = Close
+# The button that closes a confirmation without doing what it asks.
+panel-cancel = Cancel
+
+## The confirmation of **Restore starting code** (see Code editor in specs.md): the question,
+## what is lost for good, then the button that restores, the only one that acts. A level is named
+## by its number and its title, the sandbox by its name.
+
+# $level (String): the level, as `screen-level` writes it: `18. Paint a square`.
+restore-question-level = Restore the starting code of { $level }?
+restore-question-sandbox = Restore the starting code of the sandbox?
+restore-lost-level = Your code will be replaced for good by the starting code of the level, as the first time.
+restore-lost-sandbox = Your code will be replaced for good by the starting code of the sandbox, as the first time.
+restore-action = Restore starting code
 
 ## The banner of a browser that refuses to save.
 

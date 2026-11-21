@@ -34,7 +34,12 @@ export function levelMenus(screen: LevelScreenKind, commands: LevelCommands): Me
 		{
 			id: 'level',
 			name: t('menu-level'),
-			rows: [{ kind: 'link', id: 'all-levels', label: t('screen-home'), to: '' }, sandbox]
+			rows: [
+				{ kind: 'link', id: 'all-levels', label: t('screen-home'), to: '' },
+				sandbox,
+				SEPARATOR,
+				command('restore-starting-code')
+			]
 		},
 		{
 			id: 'edit',
