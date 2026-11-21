@@ -41,6 +41,12 @@ describe('Backspace', () => {
 		expect(pressed('print("smile (|)")', 'Backspace')).toBe('print("smile |)")');
 		expect(pressed('# call (|)', 'Backspace')).toBe('# call |)');
 	});
+
+	it('does the same with Shift held, as after a sign typed with it', () => {
+		expect(pressed('forward(|)', 'Backspace', true)).toBe('forward|');
+		expect(pressed('print("a"|"b")', 'Backspace', true)).toBe('print("a|"b")');
+		expect(pressed('        |forward()', 'Backspace', true)).toBe('    |forward()');
+	});
 });
 
 describe('Tab', () => {

@@ -51,8 +51,8 @@ function onlyClosingSignsAfter(line: string, cursor: number): boolean {
  * Enter. A new line at the indentation of the line it is broken from, and four spaces more
  * under a line that opens a block. Where only closing signs follow the cursor (`forward(|)`,
  * `print("Hi|")`, as the editor leaves it once it has closed a sign by itself), the line is
- * finished rather than broken: the new line opens under it. The spaces around the break go, so
- * a line of spaces alone is left empty.
+ * finished rather than broken: the new line opens under it. The spaces after the break go, and
+ * those before it when nothing else is on their line, so a line of spaces alone is left empty.
  *
  * The command of CodeMirror (`insertNewlineAndIndent`) isn't used: between two parentheses it
  * spreads them over three lines, as a language whose calls span several lines wants it.
@@ -67,9 +67,13 @@ export const insertNewLine: StateCommand = ({ state, dispatch }) => {
 			to = line.to;
 		}
 		const before = line.text.slice(0, from - line.from);
-		const column = countColumn(before, state.tabSize, before.search(/\S|$/));
+		const inSpaces = before.trim() === '';
+		// In the spaces that start its line, the cursor breaks nothing: the indentation is the one
+		// of the whole line, which the text before the cursor holds only a part of.
+		const indented = inSpaces ? line.text : before;
+		const column = countColumn(indented, state.tabSize, indented.search(/\S|$/));
 		const indentation = opensBlock(before) ? column + INDENT_WIDTH : column;
-		if (before.trim() === '') from = line.from;
+		if (inSpaces) from = line.from;
 		const last = state.doc.lineAt(to);
 		while (to < last.to && /\s/.test(last.text.charAt(to - last.from))) to++;
 		const insert = `\n${' '.repeat(indentation)}`;

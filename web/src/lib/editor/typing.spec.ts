@@ -85,6 +85,18 @@ describe('Enter', () => {
 
 	it('leaves no spaces behind on a line of spaces alone', () => {
 		expect(enter('repeat 4:\n    |')).toBe('repeat 4:\n\n    |');
+		expect(enter('repeat 4:\n  |  ')).toBe('repeat 4:\n\n    |');
+	});
+
+	it('keeps the indentation of a line broken in the spaces that start it', () => {
+		expect(enter('repeat 4:\n|    forward()')).toBe('repeat 4:\n\n    |forward()');
+		expect(enter('repeat 4:\n  |  forward()')).toBe('repeat 4:\n\n    |forward()');
+		expect(enter('|forward()')).toBe('\n|forward()');
+	});
+
+	it('counts a tab that starts the line as the columns it fills', () => {
+		expect(enter('\tforward()|')).toBe('\tforward()\n    |');
+		expect(enter('|\tforward()')).toBe('\n    |forward()');
 	});
 
 	it('replaces a selection by the break', () => {
@@ -135,6 +147,10 @@ describe('Enter before the signs that close', () => {
 		expect(enter('print("Hi|", 3)')).toBe('print("Hi\n|", 3)');
 		expect(enter('forward(|)  # go')).toBe('forward(\n|)  # go');
 		expect(enter('for|ward()')).toBe('for\n|ward()');
+	});
+
+	it('replaces a selection by the break, even one of closing signs alone', () => {
+		expect(enter('forward(|)|')).toBe('forward(\n|');
 	});
 
 	it('breaks the line in a comment, where a parenthesis closes nothing', () => {
@@ -223,6 +239,10 @@ describe('Shift+Tab', () => {
 
 	it('takes the spaces of a line that holds nothing else', () => {
 		expect(shiftTab('repeat 2:\n      |')).toBe('repeat 2:\n    |');
+	});
+
+	it('keeps the place of a cursor in the spaces that start its line', () => {
+		expect(shiftTab('  |      forward()')).toBe('  |  forward()');
 	});
 
 	it('leaves a line that the selection only reaches the start of', () => {

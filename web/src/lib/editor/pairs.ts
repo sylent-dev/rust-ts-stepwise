@@ -96,8 +96,14 @@ export const deletePair: StateCommand = (target) => {
 	return insideTextOrComment(beforeSign) === undefined && deleteBracketPair(target);
 };
 
-/** The key of the pairs, tried before the other keys of Backspace. */
-export const pairKeys: readonly KeyBinding[] = [{ key: 'Backspace', run: deletePair }];
+/**
+ * The key of the pairs, tried before the other keys of Backspace. With Shift too, which is still
+ * held just after a sign typed with it: for CodeMirror, a key with Shift is another key, which
+ * doesn't fall back on the one without.
+ */
+export const pairKeys: readonly KeyBinding[] = [
+	{ key: 'Backspace', run: deletePair, shift: deletePair }
+];
 
 /**
  * The signs that close by themselves. CodeMirror keeps which closing signs it wrote
