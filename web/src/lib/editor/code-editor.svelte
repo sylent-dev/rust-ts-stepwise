@@ -112,14 +112,12 @@
 			border-left: 2px solid var(--text);
 		}
 
-		/* TRIAL: the parenthesis that matches the one at the cursor. */
-		.cm-editor.cm-focused .cm-matchingBracket {
+		/* The pair of parentheses that the cursor touches, while the keyboard is in the code:
+		   a quiet fill in a thin frame, drawn inside the place of the character. */
+		.cm-editor.cm-focused .matching-parenthesis {
 			background: var(--hover);
 			outline: 1px solid var(--gutter-text);
-		}
-
-		.cm-editor.cm-focused .cm-nonmatchingBracket {
-			background: none;
+			outline-offset: -1px;
 		}
 
 		/* The selection keeps its color while the keyboard is elsewhere. */

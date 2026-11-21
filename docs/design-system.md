@@ -52,7 +52,7 @@ Two themes, chosen in the settings: **Day Desk**, light, by default, and **Night
 | `--band` | `#eceff3` | `#171b21` | The header, the status bar, the rows of tabs, the sides of the manual and its examples of code. |
 | `--band-hover` | `#dde2e8` | `#2a313b` | A button of a band under the pointer. |
 | `--surface` | `#fafbfc` | `#1e232b` | The editor and the content of a screen. |
-| `--hover` | `#e4e8ed` | `#333b47` | A row under the pointer, on a surface or in what opens over the screen; in a menu, the row chosen with the keys and the row of the screen already shown, lit as if already chosen; a thin line between two rows; the track of a scroll bar. |
+| `--hover` | `#e4e8ed` | `#333b47` | A row under the pointer, on a surface or in what opens over the screen; in a menu, the row chosen with the keys and the row of the screen already shown, lit as if already chosen; a thin line between two rows, and the one at the 80th column of the editor; the fill of the pair of parentheses at the cursor; the track of a scroll bar. |
 | `--map-block` | `#d3d8df` | `#262c35` | The block around the map, darker than the map in Day Desk so that it stands out. |
 | `--map-shadow` | `0 8px 26px #22293540` | `0 10px 34px #0008` | The shadow of the map on its block. |
 | `--field` | `#e4e8ee` | `#14181e` | A field to type in: the search of the manual, the code of a level. |
@@ -67,7 +67,7 @@ Two themes, chosen in the settings: **Day Desk**, light, by default, and **Night
 | `--text` | `#1b2028` | `#e8ecf1` | Everything that is read, the code included. |
 | `--weak` | `#5c6675` | `#98a3b2` | What comes second: a sentence under a title, a tab that isn't shown, a shortcut. |
 | `--on-status` | `#4f5968` | `#a7b1bf` | The text of the status bar. |
-| `--gutter-text` | `#939daa` | `#677282` | The line numbers. |
+| `--gutter-text` | `#939daa` | `#677282` | The line numbers; the frame of the pair of parentheses at the cursor. |
 
 ### Controls
 
@@ -107,6 +107,7 @@ Two themes, chosen in the settings: **Day Desk**, light, by default, and **Night
 | `--code-string` | `#8f5f06` | `#ffd27a` | A text between quotes. |
 | `--code-number` | `#b34c1c` | `#ffa98a` | A number, `true`, `false`, a color. |
 
+- The pair of parentheses that the cursor touches is lit while the keyboard is in the code: each on `--hover`, in a frame of 1 pixel in `--gutter-text` drawn inside the place of its character, so that nothing moves around it (decided on 2026-11-21, tried in the editor; section *Shortcuts of comfort of the editor* of the mock-up). A parenthesis without its match takes no look: the checks underline it.
 - The three underlines of the editor differ by their shape, and not only by their color: a wave in `--error` under an error, a thin line in `--text` under the name pointed with Ctrl held, dots in `--weak` under the end of a line past 80 characters.
 - The wave stays under an error (decided on 2026-11-17, compared in tabs of the mock-up): an error is what must catch the eye first, the wave is read without its color, and the learner finds it in every code editor. Rejected: squares and dots, read as the dots of a long line but for their color; dashes, which say *more on hover* as on a web page; a straight line, too close to the one of Ctrl; a soft red behind the word, the tone of the line of an error while running.
 
