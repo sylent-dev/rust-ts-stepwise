@@ -61,8 +61,15 @@ export function paceFrame(
  * usual program, 0.6 ms when each line prints twenty values, and up to 9 ms for lines nobody
  * writes by hand (190 values printed, a hundred texts joined on one line). The page then draws
  * one frame in two at worst and still answers: the batch stays as it is.
+ *
+ * A prime number, so that a loop without end is seen running: a frame stops on a whole number
+ * of batches, and with a round one (1,000 until step 17b) every frame stopped on the same step
+ * of any loop whose turn takes 2, 4, 5, 8 or 10 steps, the robot never seen moving while it
+ * turned thousands of times (measured by the review of the animations of step 17b). With a
+ * prime, where a frame stops in the loop follows the number of its batches, which the clock
+ * makes different from a frame to the next.
  */
-const BATCH = 1000;
+export const BATCH = 997;
 
 /**
  * At **Instant**, runs steps until `budget` milliseconds have passed since `start`, so that the

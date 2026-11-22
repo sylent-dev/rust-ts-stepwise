@@ -347,6 +347,20 @@ describe('a program played on the map', () => {
 		});
 	});
 
+	it('shows a loop without end running at Instant: the robot is seen turning', () => {
+		// A turn of the loop takes two steps, and the robot faces the same way every eight: frames
+		// that each ran a number of steps that eight divides would show it still.
+		using playback = play('while true:\n    turn_left()\n', { now: ticking() });
+		rate = Infinity;
+		playback.play();
+		const seen = new Set<string>();
+		for (let frame = 0; frame < 4; frame += 1) {
+			playback.tick(frame * 16);
+			seen.add(playback.world.robot.direction);
+		}
+		expect(seen.size).toBeGreaterThan(1);
+	});
+
 	it('puts the map back to its start on Reset, and on Run once ended', () => {
 		using playback = play('forward()\n');
 		const start = playback.world;

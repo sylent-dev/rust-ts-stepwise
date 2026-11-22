@@ -132,6 +132,26 @@ export function choicesOn(menu: number, row: number, choice: number | null): Bar
 	return { menu, open: true, row, choice };
 }
 
+/** Whether the lit row shows its choices beside it, one of them lit or none. */
+export function showsChoices(state: BarState): boolean {
+	return state.open && state.row !== null && state.choice !== undefined;
+}
+
+/** The choice lit among those that show, which holds the focus; nothing when none is. */
+export function litChoice(state: BarState): number | undefined {
+	return showsChoices(state) ? (state.choice ?? undefined) : undefined;
+}
+
+/**
+ * Where the bar is once the pointer has left its menu: no row stays lit, but the one whose
+ * choices show, which stay open with none of them lit. The same state when nothing changes.
+ */
+export function pointerLeft(state: BarState): BarState {
+	if (!state.open || state.row === null) return state;
+	if (!showsChoices(state)) return openOn(state.menu);
+	return litChoice(state) === undefined ? state : choicesOn(state.menu, state.row, null);
+}
+
 /** What a key does on the bar: it moves the bar, or it runs a row. */
 export type KeyOutcome =
 	/** Where the bar is after the key. With `passes`, the browser still handles the key: Tab. */
@@ -251,8 +271,9 @@ export function pressKey(
 
 	const choices = choicesOf(menu, state.row);
 	if (choices && state.row !== null) {
-		if (typeof state.choice === 'number') {
-			const outcome = pressAmongChoices(state.menu, state.row, state.choice, choices, key);
+		const lit = litChoice(state);
+		if (lit !== undefined) {
+			const outcome = pressAmongChoices(state.menu, state.row, lit, choices, key);
 			if (outcome) return outcome;
 		} else if (key === 'ArrowRight' || key === 'Enter' || key === ' ') {
 			// The keys enter the choices on the one in use, as a list opens on its value.

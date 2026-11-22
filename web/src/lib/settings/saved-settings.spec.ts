@@ -48,6 +48,29 @@ describe('the settings saved', () => {
 		});
 	});
 
+	it('keep beside them a field that a later version saved', () => {
+		const { store, held } = storeWith('{"theme":"day-desk","sounds":true,"version":1}');
+		saveSettings(store, { theme: 'night-desk', speed: 5 });
+		expect(JSON.parse(held[SETTINGS_KEY] ?? '')).toEqual({
+			theme: 'night-desk',
+			sounds: true,
+			speed: 5,
+			version: 1
+		});
+	});
+
+	it('replace what they can’t read, and what another version saved', () => {
+		for (const value of ['{"theme":"night-de', '{"theme":"day-desk","sounds":true,"version":2}']) {
+			const { store, held } = storeWith(value);
+			saveSettings(store, { theme: 'night-desk', speed: 5 });
+			expect(JSON.parse(held[SETTINGS_KEY] ?? '')).toEqual({
+				theme: 'night-desk',
+				speed: 5,
+				version: 1
+			});
+		}
+	});
+
 	it('are saved with Instant by its name, which JSON has no number for', () => {
 		const { store, held } = storeWith();
 		saveSettings(store, { theme: 'day-desk', speed: Infinity });

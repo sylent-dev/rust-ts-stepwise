@@ -1,8 +1,10 @@
 // The settings as a browser keeps them (see Local files in specs.md): under one name, their
 // fields beside the version of their shape, `{"theme":"night-desk","speed":5,"version":1}`. A
 // field that is missing, or that can't be read, takes its default: a setting added later needs
-// no new version. The script of `src/app.html` reads the same value before the first paint: a
-// test keeps the two in step (lib/page/page-theme.spec.ts).
+// no new version. A save keeps the fields that it doesn't know: a tab still open on the version
+// before, which goes on saving, drops no setting added since. The script of `src/app.html` reads
+// the same value before the first paint: a test keeps the two in step
+// (lib/page/page-theme.spec.ts).
 
 import { isInstant, nearestSpeed } from '#lib/run/pace.ts';
 import { keyOf, type Store } from '#lib/storage/store.ts';
@@ -39,8 +41,11 @@ export function loadSettings(store: Store): Settings {
 	};
 }
 
-/** Saves the settings in a store. */
+/**
+ * Saves the settings in a store, over what it holds: a field that a later version of the
+ * website saved beside them stays as it is.
+ */
 export function saveSettings(store: Store, settings: Settings): void {
 	const speed = isInstant(settings.speed) ? INSTANT : settings.speed;
-	store.write(NAME, VERSION, { ...settings, speed });
+	store.write(NAME, VERSION, { ...store.read(NAME, VERSION), ...settings, speed });
 }

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+	BATCH,
 	isInstant,
 	nearestSpeed,
 	NORMAL_SPEED,
@@ -105,7 +106,16 @@ describe('runInstant', () => {
 			2,
 			() => time++
 		);
-		expect(count).toBe(2000);
+		expect(count).toBe(2 * BATCH);
+	});
+
+	it('runs batches that are no whole number of turns of a loop', () => {
+		// A loop whose turn takes `period` steps is back where it was after a number of steps that
+		// `period` divides. A frame runs whole batches: were a batch such a number, every frame
+		// would stop on the same step of the loop, and the robot would never be seen moving.
+		for (let period = 2; period < BATCH; period += 1) {
+			expect(BATCH % period, `a loop of ${String(period)} steps`).not.toBe(0);
+		}
 	});
 
 	it('stops at the end of the program', () => {

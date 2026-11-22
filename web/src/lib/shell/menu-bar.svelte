@@ -20,8 +20,11 @@
 		canChoose,
 		choicesOn,
 		closedOn,
+		litChoice,
 		openOn,
+		pointerLeft,
 		pressKey,
+		showsChoices,
 		type BarState,
 		type Choice,
 		type Menu,
@@ -85,12 +88,13 @@
 		set(next);
 		// The rows of a menu that opens must show before one of them can take the focus.
 		flushSync();
+		const lit = litChoice(bar);
 		const holder =
 			!bar.open || bar.row === null
 				? nameId(bar.menu)
-				: typeof bar.choice === 'number'
-					? choiceId(bar.menu, bar.row, bar.choice)
-					: rowId(bar.menu, bar.row);
+				: lit === undefined
+					? rowId(bar.menu, bar.row)
+					: choiceId(bar.menu, bar.row, lit);
 		moving = true;
 		try {
 			document.getElementById(holder)?.focus();
@@ -124,7 +128,7 @@
 	 */
 	function arriveAtChoice(menu: number, row: number, choice: number) {
 		if (moving) return;
-		const shown = bar.open && bar.menu === menu && bar.row === row && bar.choice !== undefined;
+		const shown = bar.menu === menu && bar.row === row && showsChoices(bar);
 		if (shown) set(choicesOn(menu, row, choice));
 		else go(closedOn(menu));
 	}
@@ -149,22 +153,19 @@
 	 * lit, and stay there until another row is lit.
 	 */
 	function showChoices(menu: number, row: number) {
-		if (keys || bar.row !== row || bar.choice !== null) point(choicesOn(menu, row, null));
+		const alone = bar.row === row && showsChoices(bar) && litChoice(bar) === undefined;
+		if (keys || !alone) point(choicesOn(menu, row, null));
 	}
 
 	/** The pointer moves over a choice: it is lit. */
 	function hoverChoice(menu: number, row: number, choice: number) {
-		if (keys || bar.choice !== choice) point(choicesOn(menu, row, choice));
+		if (keys || litChoice(bar) !== choice) point(choicesOn(menu, row, choice));
 	}
 
-	/**
-	 * The pointer leaves a menu: no row stays lit, but the one whose choices show, which stay
-	 * open with none of them lit.
-	 */
-	function unlight(menu: number) {
-		if (bar.row === null) return;
-		if (bar.choice === undefined) point(openOn(menu));
-		else if (bar.choice !== null) point(choicesOn(menu, bar.row, null));
+	/** The pointer leaves the open menu: what stays lit is a rule of the bar (`pointerLeft`). */
+	function unlight() {
+		const next = pointerLeft(bar);
+		if (next !== bar) point(next);
 	}
 
 	/**
@@ -205,6 +206,14 @@
 		command.run();
 	}
 
+	/**
+	 * The key that has just run a row, while it may still be down. The row gave the focus back,
+	 * to the code most often, and the keyboard sends each repeat of a key to what holds the focus
+	 * by then: Enter held down on a row would write lines in the code. Forgotten at the next
+	 * press of a key.
+	 */
+	let ranBy: string | undefined;
+
 	/** Takes a choice, as a click on it does: the menu closes first. */
 	function choose(menu: number, choice: Choice) {
 		leave(menu);
@@ -217,6 +226,7 @@
 		if (!outcome) return;
 		if ('runs' in outcome) {
 			event.preventDefault();
+			ranBy = event.key;
 			// A row runs by its own click, which also closes its menu, as under the mouse.
 			const { runs, choice } = outcome;
 			const ran = choice === undefined ? rowId(bar.menu, runs) : choiceId(bar.menu, runs, choice);
@@ -240,9 +250,15 @@
 
 	/**
 	 * A key of the window: the learner is on the keyboard. A modifier alone, or a shortcut, doesn't
-	 * say so.
+	 * say so. Heard before what holds the focus hears it: the repeats of the key that ran a row do
+	 * nothing there, wherever the focus went, since a key held down runs its row once.
 	 */
 	function onwindowkey(event: KeyboardEvent) {
+		if (event.repeat && event.key === ranBy) {
+			event.preventDefault();
+			return;
+		}
+		ranBy = undefined;
 		if (!(event.ctrlKey || event.altKey || event.metaKey) && event.key !== 'Shift') keys = true;
 	}
 
@@ -304,7 +320,7 @@
 				aria-labelledby={nameId(m)}
 				hidden={!open}
 				onpointerleave={() => {
-					if (open) unlight(m);
+					if (open) unlight();
 				}}
 			>
 				{#each menu.rows as row, r (r)}
@@ -346,7 +362,7 @@
 							{/if}
 						</button>
 					{:else if row.kind === 'choices'}
-						{@const shown = open && bar.row === r && bar.choice !== undefined}
+						{@const shown = open && bar.row === r && showsChoices(bar)}
 						<!-- The row and its choices in one box, which places them beside it. -->
 						<div class="beside" role="none">
 							<!-- It stays lit while one of its choices holds the focus. -->

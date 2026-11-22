@@ -4,8 +4,11 @@ import {
 	canChoose,
 	choicesOn,
 	closedOn,
+	litChoice,
 	openOn,
+	pointerLeft,
 	pressKey,
+	showsChoices,
 	type BarState,
 	type Choice,
 	type Menu,
@@ -394,5 +397,45 @@ describe('pressKey, a row of choices', () => {
 
 		expect(states).toEqual(choicesOn(0, SPEED, 3));
 		expect(pressKey(states, 'Enter', bar)).toEqual({ runs: SPEED, choice: 3 });
+	});
+});
+
+describe('the choices of a row, as the bar holds them', () => {
+	it('show once their row is lit with them, one of them lit or none', () => {
+		expect(showsChoices(choicesOn(0, 2, null))).toBe(true);
+		expect(showsChoices(choicesOn(0, 2, 0))).toBe(true);
+		expect(showsChoices(on(0, 2))).toBe(false);
+		expect(showsChoices(openOn(0))).toBe(false);
+		expect(showsChoices(closedOn(0))).toBe(false);
+	});
+
+	it('never show on a bar that is closed, or without a lit row', () => {
+		expect(showsChoices({ menu: 0, open: false, row: null, choice: 1 })).toBe(false);
+		expect(showsChoices({ menu: 0, open: true, row: null, choice: 1 })).toBe(false);
+	});
+
+	it('have one lit, the first one too, or none', () => {
+		expect(litChoice(choicesOn(0, 2, 0))).toBe(0);
+		expect(litChoice(choicesOn(0, 2, 3))).toBe(3);
+		expect(litChoice(choicesOn(0, 2, null))).toBeUndefined();
+		expect(litChoice(on(0, 2))).toBeUndefined();
+		expect(litChoice({ menu: 0, open: false, row: null, choice: 1 })).toBeUndefined();
+	});
+});
+
+describe('pointerLeft', () => {
+	it('leaves no row lit in a menu', () => {
+		expect(pointerLeft(on(1, 2))).toEqual(openOn(1));
+	});
+
+	it('keeps the choices open, their row lit and none of them lit', () => {
+		expect(pointerLeft(choicesOn(0, 2, 3))).toEqual(choicesOn(0, 2, null));
+		expect(pointerLeft(choicesOn(0, 2, 0))).toEqual(choicesOn(0, 2, null));
+	});
+
+	it('changes nothing where nothing is lit to put out: the same state', () => {
+		for (const state of [closedOn(1), openOn(1), choicesOn(0, 2, null)]) {
+			expect(pointerLeft(state)).toBe(state);
+		}
 	});
 });
