@@ -5,6 +5,9 @@
 /** The five speeds, in steps per second; the last one, **Instant**, runs without animation. */
 export const SPEEDS = [1, 2, 5, 20, Infinity] as const;
 
+/** The speed of a first visit, the normal speed, in steps per second. */
+export const NORMAL_SPEED = 2;
+
 /**
  * The share of a step owed at an animated speed, carried from a frame to the next. A run starts
  * with a whole step owed, so that its first step runs at its first frame.

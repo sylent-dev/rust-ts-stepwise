@@ -2,7 +2,8 @@
      over it, which says what it does in a tip and to a screen reader. The zone it stands on gives
      its size and its fill, as the mock-up draws each. It places nothing: the block that shows it
      does, around it. Anything else a button takes (`onclick`, `aria-expanded`…) goes to it as it
-     is; one that opens something stays lit while it is open. -->
+     is; one that opens something stays lit while it is open. Enter held down presses it once,
+     as a shortcut held down runs its command once (see Level screen in specs.md). -->
 <script lang="ts">
 	import type { HTMLButtonAttributes } from 'svelte/elements';
 	import type { IconName } from '#lib/icon-name.ts';
@@ -47,10 +48,21 @@
 	} as const satisfies Record<Zone, { icon: number; side: string; fill: string }>;
 
 	const look = $derived(LOOKS[zone]);
+
+	/**
+	 * The browser presses a button again at each repeat of Enter held down: a button that opens
+	 * and closes, or runs and pauses, would do both many times a second. Space presses once by
+	 * itself, as it is let go.
+	 */
+	const onkeydown: ButtonAttributes['onkeydown'] = (event) => {
+		if (event.repeat && event.key === 'Enter') event.preventDefault();
+		attributes.onkeydown?.(event);
+	};
 </script>
 
 <button
 	{...attributes}
+	{onkeydown}
 	type="button"
 	class={zone}
 	style:--side={look.side}

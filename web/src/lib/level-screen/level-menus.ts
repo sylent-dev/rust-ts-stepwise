@@ -54,6 +54,11 @@ export function levelMenus(screen: LevelScreenKind, commands: LevelCommands): Me
 			]
 		},
 		{
+			id: 'run',
+			name: t('menu-run'),
+			rows: [command('run'), command('step'), command('reset')]
+		},
+		{
 			id: 'help',
 			name: t('menu-help'),
 			rows: [

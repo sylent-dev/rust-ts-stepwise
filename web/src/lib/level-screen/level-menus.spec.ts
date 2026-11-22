@@ -34,6 +34,7 @@ describe('levelMenus', () => {
 		expect(names('level')).toEqual([
 			['level', 'all-levels', 'sandbox', '-', 'restore-starting-code'],
 			['edit', 'undo', 'redo', '-', 'comment-lines', 'move-line-up', 'move-line-down'],
+			['run', 'run', 'step', 'reset'],
 			['help', 'manual']
 		]);
 		expect(names('sandbox')).toEqual(names('level'));

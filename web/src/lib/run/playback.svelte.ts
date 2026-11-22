@@ -1,9 +1,8 @@
 // A program played on the map (see Running a program and Animations in specs.md): its steps run
 // at the pace of the speed chosen, the action of each one is animated on the map, and the line
 // of the next step is highlighted once that action has ended, so that a line stays lit while the
-// robot does what it says; then the robot shows how the run ended. Written for the bench of step
-// 14b; the running of step 17 takes it over. It knows nothing of the clock: the page calls `tick`
-// at each animation frame.
+// robot does what it says; then the robot shows how the run ended. It asks the page for its own
+// animation frames, while something moves, and reads the speed at each of them.
 
 import type { Outcome, Run, StepEvent, World } from '#lib/core/core.ts';
 import {
@@ -16,24 +15,58 @@ import {
 	type Motion
 } from '#lib/map/motion.ts';
 import type { Scene } from '#lib/map/scene.ts';
-import { paceFrame, runInstant, SPEEDS, START_CARRY } from './pace.ts';
+import { NORMAL_SPEED, paceFrame, runInstant, SPEEDS, START_CARRY } from './pace.ts';
 
 /** The time an **Instant** frame spends running steps, so that the page still draws. */
 const INSTANT_BUDGET = 8;
-
-/** The speed of a first visit, the normal speed, in steps per second. */
-export const NORMAL_SPEED = 2;
 
 /** The slowest speed, at which **Step** plays its action, whatever the speed chosen. */
 const SLOWEST_SPEED = SPEEDS[0];
 
 /**
- * Where the program stands: waiting for its first step, running, paused between two steps, or
- * stopped at its end or on an error, its last action ended.
+ * Where the program stands. `ready`: nothing has started since the map was put back. `running`.
+ * `paused`: between two steps, the first one included. Then, once its last action has ended,
+ * `ended`: it ran to its end, without error, its goals met or not; or `failed`: an error stopped
+ * it. The code can be changed in every state but `running` and `paused`.
  */
-export type PlaybackStatus = 'ready' | 'running' | 'paused' | 'ended';
+export type PlaybackStatus = 'ready' | 'running' | 'paused' | 'ended' | 'failed';
+
+/** What a `Playback` plays: a map, and the program to run on it. */
+export interface PlaybackSource {
+	/** The world before any step: what the map shows at rest, the program valid or not. */
+	readonly world: World;
+	/**
+	 * Starts a run of the program as it is now, paused before its first line. The screen checks
+	 * the program before it asks for **Run** or **Step**: a program with errors throws.
+	 */
+	start(): Run;
+}
+
+/**
+ * Asks the page for one animation frame, which calls `frame` with its time, in milliseconds;
+ * returns what takes the request back.
+ */
+export type Frames = (frame: (time: number) => void) => () => void;
 
 export interface PlaybackOptions {
+	/**
+	 * The speed, in steps per second, `Infinity` for **Instant**: read at each frame, so that it
+	 * follows the setting while the program runs. The normal speed by default.
+	 */
+	rate?: () => number;
+	/** The frames of the page: `requestAnimationFrame` by default. A test gives its own. */
+	frames?: Frames;
+	/**
+	 * Told each line that the program prints, a text that may be empty, as its step runs: in
+	 * order, and at **Instant** too, where a frame runs thousands of steps.
+	 */
+	onPrinted?: (line: string) => void;
+	/**
+	 * Told that a frame threw, with what it threw. A step never throws: the errors of a program
+	 * are its outcome, so this is an error of the bridge, which the screen can only say. The
+	 * program has stopped by then, and the error goes on to the browser, which writes it.
+	 */
+	onBroken?: (error: unknown) => void;
 	/**
 	 * The time an action takes at a speed, in steps per second, with full motion or less of it:
 	 * `actionTime` by default.
@@ -47,6 +80,14 @@ export interface PlaybackOptions {
 	 */
 	lessMotion?: () => boolean;
 }
+
+/** The frames of the page. */
+const pageFrames: Frames = (frame) => {
+	const asked = requestAnimationFrame(frame);
+	return () => {
+		cancelAnimationFrame(asked);
+	};
+};
 
 /** Whether the system asks for less motion, at each call; never where there is no window. */
 function systemLessMotion(): () => boolean {
@@ -90,7 +131,10 @@ export class Playback implements Scene {
 	motion = $state.raw<Motion>();
 	/** How far the step under way, or the end of the run, has gone, from 0 to 1. */
 	progress = $state(0);
-	/** The line highlighted, the one of the next step; nothing once the program has stopped. */
+	/**
+	 * The line highlighted, the one of the next step; nothing before the program starts, nor once
+	 * it has stopped.
+	 */
 	line = $state<number>();
 	/**
 	 * How the program stopped, once its last action has ended; nothing until then, nor before **Run**
@@ -104,14 +148,23 @@ export class Playback implements Scene {
 	 * has ended, the end of the run playing afterwards.
 	 */
 	running = $state(false);
-	/** The speed, in steps per second; `Infinity` for **Instant**. */
-	rate = $state<number>(NORMAL_SPEED);
 
-	readonly #start: () => Run;
+	readonly #source: PlaybackSource;
+	readonly #rate: () => number;
+	readonly #frames: Frames;
+	readonly #onPrinted: ((line: string) => void) | undefined;
+	readonly #onBroken: ((error: unknown) => void) | undefined;
 	readonly #timeAt: (action: Action, rate: number, lessMotion: boolean) => number;
 	readonly #now: () => number;
 	readonly #lessMotion: () => boolean;
-	#run: Run;
+	/**
+	 * The run, from the **Run** or the **Step** that starts the program to the **Reset** that puts
+	 * the map back; nothing at rest, where the map shows the world of the source. A signal, since
+	 * `status` tells a program paused before its first step from one that hasn't started.
+	 */
+	#run = $state.raw<Run>();
+	/** Takes back the frame asked to the page; nothing while none is asked. */
+	#unasked: (() => void) | undefined;
 	/** The time of the frame before, for the pace; nothing before the first frame of a run. */
 	#last: number | undefined;
 	/** The share of a step owed, carried from a frame to the next (see `paceFrame`). */
@@ -121,52 +174,59 @@ export class Playback implements Scene {
 	/** When the step under way started: nothing until the frame that draws it first. */
 	#motionStart: number | undefined;
 	#motionTime = 0;
-	/**
-	 * Whether **Run** or **Step** has started the program since the map was put back: a program
-	 * without a step only ends then.
-	 */
-	#started = false;
 
-	/** Plays the run that `start` gives, paused before its first step. */
+	/** Shows the map of `source` at rest: nothing runs before **Run** or **Step**. */
 	constructor(
-		start: () => Run,
+		source: PlaybackSource,
 		{
+			rate = () => NORMAL_SPEED,
+			frames = pageFrames,
+			onPrinted,
+			onBroken,
 			timeAt = actionTime,
 			now = () => performance.now(),
 			lessMotion = systemLessMotion()
 		}: PlaybackOptions = {}
 	) {
-		this.#start = start;
+		this.#source = source;
+		this.#rate = rate;
+		this.#frames = frames;
+		this.#onPrinted = onPrinted;
+		this.#onBroken = onBroken;
 		this.#timeAt = timeAt;
 		this.#now = now;
 		this.#lessMotion = lessMotion;
-		this.#run = start();
-		this.world = $state.raw(this.#run.world());
-		this.#showLine();
-	}
-
-	/** Whether the program has stopped, at its end or on an error, and its last action ended. */
-	get ended(): boolean {
-		return this.outcome !== undefined;
-	}
-
-	/** Where the program stands, for the controls. */
-	get status(): PlaybackStatus {
-		if (this.running) return 'running';
-		if (this.ended) return 'ended';
-		return this.steps > 0 ? 'paused' : 'ready';
+		this.world = $state.raw(source.world);
 	}
 
 	/**
-	 * Runs the program, from its start once it has ended: its next step at once, or once the
-	 * action under way has ended, so that a click is answered at the slowest speed too.
+	 * Whether the program has stopped, at its end or on an error, and its last action ended:
+	 * `outcome` says how.
+	 */
+	get stopped(): boolean {
+		return this.outcome !== undefined;
+	}
+
+	/** Where the program stands, for the controls and the status bar. */
+	get status(): PlaybackStatus {
+		if (this.running) return 'running';
+		if (this.outcome) return this.outcome.type === 'failed' ? 'failed' : 'ended';
+		return this.#run ? 'paused' : 'ready';
+	}
+
+	/**
+	 * Runs the program: from its start, on the map put back, when it hasn't started or has
+	 * stopped; else its next step at once, or once the action under way has ended, so that a click
+	 * is answered at the slowest speed too.
 	 */
 	play(): void {
-		if (this.ended) this.reset();
+		const starts = !this.#run || this.stopped;
+		if (starts) this.#start();
 		this.running = true;
 		this.#last = undefined;
 		this.#carry = START_CARRY;
-		this.#begin();
+		if (starts) this.#endWithoutStep();
+		this.#wake();
 	}
 
 	/** Pauses the program before its next step: the action under way still ends. */
@@ -177,37 +237,36 @@ export class Playback implements Scene {
 	/**
 	 * Runs one step while the program waits, its action played as at the slowest speed, so that
 	 * it is seen whatever the speed. An action still under way ends at once, and nothing more runs
-	 * when it was the last one: the end of the run plays then. Once the program has ended, it puts
-	 * the map back and waits on the first step, as before the program started.
+	 * when it was the last one: the end of the run plays then. When the program hasn't started or
+	 * has stopped, it only starts it, on the map put back, paused before its first step: each line
+	 * is seen highlighted before it runs, the first one as the others.
 	 */
 	step(): void {
 		if (this.running) return;
-		if (this.ended) {
-			this.reset();
-			return;
+		if (!this.#run || this.stopped) {
+			this.#start();
+			this.#endWithoutStep();
+		} else {
+			this.#endMotion();
+			this.#runStep(undefined, SLOWEST_SPEED);
 		}
-		this.#endMotion();
-		this.#begin();
-		this.#runStep(undefined, SLOWEST_SPEED);
+		this.#wake();
 	}
 
-	/** Ends the program and puts the map back to its start, with a new run. */
+	/** Ends the program and puts the map back to its start: nothing runs until **Run** or **Step**. */
 	reset(): void {
-		// The new run first: the old one stays whole if it can't start.
-		const run = this.#start();
-		this.#run.free();
-		this.#run = run;
+		this.#sleep();
+		this.#run?.free();
+		this.#run = undefined;
 		this.running = false;
-		this.motion = undefined;
-		this.#carry = START_CARRY;
-		this.#waiting = false;
-		this.#started = false;
-		this.#rest(true);
+		this.#rewind();
 	}
 
-	/** Frees the run, once the page is done with it: nothing may be called afterwards. */
+	/** Frees the run, once the page is done with the program: nothing may be called afterwards. */
 	free(): void {
-		this.#run.free();
+		this.#sleep();
+		this.#run?.free();
+		this.#run = undefined;
 	}
 
 	[Symbol.dispose](): void {
@@ -216,10 +275,12 @@ export class Playback implements Scene {
 
 	/**
 	 * Moves the program on at the animation frame of `time`, in milliseconds: the action under
-	 * way, then the steps due at the speed. Returns whether another frame is needed.
+	 * way, then the steps due at the speed. Returns whether another frame is needed. The program
+	 * asks the page for its frames itself; a test calls this in their place.
 	 */
 	tick(time: number): boolean {
-		const instant = !Number.isFinite(this.rate);
+		const rate = this.#rate();
+		const instant = !Number.isFinite(rate);
 		// **Instant** draws no animation: while the program runs, the action under way ends at once,
 		// the last one too.
 		if (this.running && instant) this.#endMotion();
@@ -232,10 +293,10 @@ export class Playback implements Scene {
 				this.progress = progress;
 			}
 		}
-		if (this.running && this.#run.line !== undefined) {
+		if (this.running && this.#stepsLeft) {
 			if (!instant) {
 				const elapsed = this.#last === undefined ? 0 : time - this.#last;
-				const paced = paceFrame(this.rate, elapsed, this.#carry);
+				const paced = paceFrame(rate, elapsed, this.#carry);
 				if (!paced.step) {
 					this.#carry = paced.carry;
 				} else if (this.motion) {
@@ -249,7 +310,7 @@ export class Playback implements Scene {
 					// the next one.
 					this.#carry = this.#waiting ? 0 : paced.carry;
 					this.#waiting = false;
-					this.#runStep(time, this.rate);
+					this.#runStep(time, rate);
 				}
 			} else {
 				this.#runInstant();
@@ -257,8 +318,13 @@ export class Playback implements Scene {
 			this.#last = time;
 		}
 		// The program runs until its last action has ended; the end of the run plays afterwards.
-		if (this.running && this.#run.line === undefined && !this.#stepUnderWay) this.running = false;
+		if (this.running && !this.#stepsLeft && !this.#stepUnderWay) this.running = false;
 		return this.running || this.motion !== undefined;
+	}
+
+	/** Whether the program has a step left to run: it has started, and hasn't stopped. */
+	get #stepsLeft(): boolean {
+		return this.#run?.line !== undefined;
 	}
 
 	/** Whether the action of a step is under way, rather than the end of the run or nothing. */
@@ -266,25 +332,103 @@ export class Playback implements Scene {
 		return this.motion !== undefined && !isRunEnd(this.motion.action);
 	}
 
+	/** Asks the page for a frame, unless one is asked already, and for the next ones while needed. */
+	#wake(): void {
+		this.#unasked ??= this.#frames((time) => {
+			this.#unasked = undefined;
+			try {
+				if (this.tick(time)) this.#wake();
+			} catch (error) {
+				// No frame follows a frame that threw: the program stops there, rather than show
+				// as running for ever with nothing moving.
+				this.running = false;
+				this.motion = undefined;
+				this.#onBroken?.(error);
+				throw error;
+			}
+		});
+	}
+
+	/** Takes back the frame asked: a frame must never step a run freed since it was asked. */
+	#sleep(): void {
+		this.#unasked?.();
+		this.#unasked = undefined;
+	}
+
+	/**
+	 * Starts the program on the map put back, paused before its first step: a new run, the one
+	 * before freed.
+	 */
+	#start(): void {
+		// The new run first: the program stays as it was if it can't start.
+		const run = this.#source.start();
+		this.#run?.free();
+		this.#run = run;
+		this.#rewind();
+	}
+
+	/** Shows the map as it starts, nothing moving: before the first step, or at rest. */
+	#rewind(): void {
+		this.motion = undefined;
+		this.progress = 0;
+		this.#carry = START_CARRY;
+		this.#waiting = false;
+		this.world = this.#source.world;
+		this.steps = 0;
+		this.#showLine();
+	}
+
+	/**
+	 * Once the program has just started: one without a step, empty or made of comments, has ended
+	 * already. The end of the run plays, and it no longer runs, from this frame on.
+	 */
+	#endWithoutStep(): void {
+		if (this.#stepsLeft) return;
+		this.#showEnd(undefined);
+		this.running = false;
+	}
+
+	/**
+	 * Runs one step of the program, and gives what it showed. The one place where a step runs, at
+	 * every speed: what comes out of a step beside its action is read here, so that **Instant**
+	 * never loses it. A line printed today; a breakpoint and a sound come here too (steps 18 and
+	 * 19).
+	 */
+	#advance(run: Run): StepEvent {
+		const event = run.step();
+		if (event === 'printed') this.#onPrinted?.(run.printed() ?? '');
+		return event;
+	}
+
 	/**
 	 * Runs a step, and animates its action, or the error of the robot that stopped the program,
 	 * when it has one and a time to show it at `rate` steps per second.
 	 */
 	#runStep(start: number | undefined, rate: number): void {
+		const run = this.#run;
 		// A run that has stopped has no step left: its last action, or the error it stopped on, was
 		// shown already.
-		if (this.#run.line === undefined) return;
-		const event = this.#run.step();
-		this.steps = this.#run.steps;
-		const action = this.#actionOf(event);
+		if (run?.line === undefined) return;
+		const event = this.#advance(run);
+		this.steps = run.steps;
+		const action = this.#actionOf(run, event);
 		const lessMotion = this.#lessMotion();
 		const time = action ? this.#timeAt(action, rate, lessMotion) : 0;
 		if (action && time > 0) {
-			this.#animate({ action, after: this.#run.world(), lessMotion }, start, time);
+			this.#animate({ action, after: run.world(), lessMotion }, start, time);
 		} else {
-			this.#rest(changesWorld(event));
+			this.#rest(run, changesWorld(event));
 			this.#showEnd(start);
 		}
+	}
+
+	/**
+	 * What the map animates of the step that gave `event`: its action, or the error of the robot
+	 * that stopped the program there.
+	 */
+	#actionOf(run: Run, event: StepEvent): Action | undefined {
+		if (isAnimated(event)) return event;
+		return run.line === undefined ? robotFailure(run.outcome()) : undefined;
 	}
 
 	/** Animates `motion` for `time` milliseconds from `start`, or from the frame that draws it first. */
@@ -295,39 +439,17 @@ export class Playback implements Scene {
 		this.progress = 0;
 	}
 
-	/**
-	 * What the map animates of the step that gave `event`: its action, or the error of the robot
-	 * that stopped the program there.
-	 */
-	#actionOf(event: StepEvent): Action | undefined {
-		if (isAnimated(event)) return event;
-		return this.#run.line === undefined ? robotFailure(this.#run.outcome()) : undefined;
-	}
-
 	/** At **Instant**, runs the steps that a frame has the time for, with no animation. */
 	#runInstant(): void {
 		const run = this.#run;
+		if (!run) return;
 		const step = (): boolean => {
-			run.step();
+			this.#advance(run);
 			return run.line !== undefined;
 		};
 		runInstant(step, this.#now(), INSTANT_BUDGET, this.#now);
-		this.#rest(true);
+		this.#rest(run, true);
 		this.#showEnd(undefined);
-	}
-
-	/**
-	 * Starts the program, once since the map was put back: a program without a step, empty or made
-	 * of comments, ends at once, and the end of the run plays.
-	 */
-	#begin(): void {
-		if (this.#started) return;
-		this.#started = true;
-		if (this.#run.line !== undefined) return;
-		this.#showLine();
-		this.#showEnd(undefined);
-		// Ended, it no longer runs, from this frame on.
-		this.running = false;
 	}
 
 	/**
@@ -345,10 +467,10 @@ export class Playback implements Scene {
 	}
 
 	/** Shows the run at rest, the world read again when the step may have changed it. */
-	#rest(changed: boolean): void {
-		if (changed) this.world = this.#run.world();
+	#rest(run: Run, changed: boolean): void {
+		if (changed) this.world = run.world();
 		this.#showLine();
-		this.steps = this.#run.steps;
+		this.steps = run.steps;
 	}
 
 	/**
@@ -362,13 +484,17 @@ export class Playback implements Scene {
 		const end = runEnd(this.outcome);
 		if (!end) return;
 		const lessMotion = this.#lessMotion();
-		const time = this.#timeAt(end, this.running ? this.rate : SLOWEST_SPEED, lessMotion);
+		const time = this.#timeAt(end, this.running ? this.#rate() : SLOWEST_SPEED, lessMotion);
 		if (time > 0) this.#animate({ action: end, after: this.world, lessMotion }, start, time);
 	}
 
-	/** Highlights the line of the next step, or tells how the program stopped once started. */
+	/**
+	 * Highlights the line of the next step, or tells how the program stopped; neither before it
+	 * starts.
+	 */
 	#showLine(): void {
-		this.line = this.#run.line;
-		this.outcome = this.#started && this.line === undefined ? this.#run.outcome() : undefined;
+		const run = this.#run;
+		this.line = run?.line;
+		this.outcome = run && run.line === undefined ? run.outcome() : undefined;
 	}
 }

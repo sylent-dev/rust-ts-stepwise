@@ -1,18 +1,34 @@
-// The commands of the level screen and of the sandbox (see Level screen and Code editor in
-// specs.md): each one once, with its text, its shortcut, its state and what it runs. The rows of
-// the menus (level-menus.ts) and the shortcuts of the screen read them here. A command arrives
-// with the step that codes it: the edits of the editor first, then **Restore starting code**.
+// The commands of the level screen and of the sandbox (see Level screen, Code editor and Running
+// a program in specs.md): each one once, with its text, its shortcut, its state and what it
+// runs. The rows of the menus (level-menus.ts) and the shortcuts of the screen read them here. A
+// command arrives with the step that codes it: the edits of the editor first, then **Restore
+// starting code**, then the three of the program.
 
 import { EDITS, type Edit, type Editing } from '#lib/editor/edits.ts';
 import { t } from '#lib/i18n.ts';
 import type { Platform } from '#lib/platform.ts';
 import type { ScreenCommand, Shortcut } from '#lib/shell/commands.ts';
+import type { ProgramControls, RunAction } from './program.ts';
 
-/** The names of the commands of the screen. */
-export const LEVEL_COMMANDS = ['restore-starting-code', ...EDITS] as const;
+/**
+ * The names of the commands of the screen. `run` is **Run**, **Pause** and **Resume**: one
+ * command, which does what the program allows now.
+ */
+export const LEVEL_COMMANDS = ['restore-starting-code', ...EDITS, 'run', 'step', 'reset'] as const;
 
 /** A command of the level screen, by its name. */
 export type LevelCommand = (typeof LEVEL_COMMANDS)[number];
+
+/**
+ * What names a command: its own name, and for `run` what it does now. Each has its message
+ * (`commandMessage`).
+ */
+export const COMMAND_TEXTS = [...LEVEL_COMMANDS, 'pause', 'resume'] as const satisfies readonly (
+	LevelCommand | RunAction
+)[];
+
+/** What names a command. */
+export type CommandText = (typeof COMMAND_TEXTS)[number];
 
 /**
  * What the commands act on, which the screen gives them. Each is asked when a command runs or
@@ -25,21 +41,23 @@ export interface CommandTarget {
 	canRestore(): boolean;
 	/** Asks the learner to confirm, before the starting code takes the place of theirs. */
 	confirmRestore(): void;
+	/** The program of the screen; nothing until the core has given the map. */
+	program(): ProgramControls | undefined;
 }
 
 /** The commands of the screen, each under its name. */
 export type LevelCommands = Readonly<Record<LevelCommand, ScreenCommand>>;
 
-/** The name of the message that holds the text of a command: `command-undo`. */
-export function commandMessage(command: LevelCommand): string {
-	return `command-${command}`;
+/** The name of the message that holds a text of a command: `command-undo`, `command-pause`. */
+export function commandMessage(text: CommandText): string {
+	return `command-${text}`;
 }
 
-/** The keys of a command: the shortcut shown, and those that are heard without being shown. */
-interface Keys {
-	shortcut: Shortcut;
-	alsoHeard?: readonly Shortcut[];
-}
+/**
+ * The keys of a command: the shortcut shown, those that are heard without being shown, and
+ * whether the shortcut held down runs the command again.
+ */
+type Keys = Pick<ScreenCommand, 'alsoHeard' | 'repeats'> & { shortcut: Shortcut };
 
 const CTRL_Y: Shortcut = { character: 'y', ctrl: true };
 const CTRL_SHIFT_Z: Shortcut = { character: 'z', ctrl: true, shift: true };
@@ -48,21 +66,23 @@ const CTRL_SHIFT_Z: Shortcut = { character: 'z', ctrl: true, shift: true };
  * The keys of each edit, those of a code editor (see Code editor in specs.md). **Redo** is
  * Ctrl+Y, and Ctrl+Shift+Z for those who have the habit. On a computer of Apple it is
  * Cmd+Shift+Z alone: Cmd+Y opens the history of the browser there, and is left to it. Ctrl+: is
- * the one shortcut with a sign, the one of an AZERTY keyboard; Ctrl+/ is heard too.
+ * the one shortcut with a sign, the one of an AZERTY keyboard; Ctrl+/ is heard too. Held down,
+ * a key undoes, redoes or moves a line again and again, as in a code editor; a comment set and
+ * taken away at each repeat would only flicker.
  */
 function editKeys(platform: Platform): Record<Edit, Keys> {
 	return {
-		undo: { shortcut: { character: 'z', ctrl: true } },
+		undo: { shortcut: { character: 'z', ctrl: true }, repeats: true },
 		redo:
 			platform === 'mac'
-				? { shortcut: CTRL_SHIFT_Z }
-				: { shortcut: CTRL_Y, alsoHeard: [CTRL_SHIFT_Z] },
+				? { shortcut: CTRL_SHIFT_Z, repeats: true }
+				: { shortcut: CTRL_Y, alsoHeard: [CTRL_SHIFT_Z], repeats: true },
 		'comment-lines': {
 			shortcut: { character: ':', ctrl: true },
 			alsoHeard: [{ character: '/', ctrl: true }]
 		},
-		'move-line-up': { shortcut: { key: 'ArrowUp', alt: true } },
-		'move-line-down': { shortcut: { key: 'ArrowDown', alt: true } }
+		'move-line-up': { shortcut: { key: 'ArrowUp', alt: true }, repeats: true },
+		'move-line-down': { shortcut: { key: 'ArrowDown', alt: true }, repeats: true }
 	};
 }
 
@@ -97,6 +117,46 @@ export function levelCommands(target: CommandTarget, platform: Platform): LevelC
 		redo: edit('redo'),
 		'comment-lines': edit('comment-lines'),
 		'move-line-up': edit('move-line-up'),
-		'move-line-down': edit('move-line-down')
+		'move-line-down': edit('move-line-down'),
+		// The three of the program (see Running a program in specs.md). None is run again by a
+		// key held down: the program would start and pause many times a second, and each step is
+		// there to be looked at.
+		run: {
+			id: 'run',
+			get label() {
+				const action = target.program()?.action ?? 'run';
+				return t(commandMessage(action));
+			},
+			shortcut: { key: 'Enter', ctrl: true },
+			get enabled() {
+				return target.program() !== undefined;
+			},
+			run() {
+				target.program()?.runOrPause();
+			}
+		},
+		step: {
+			id: 'step',
+			label: t(commandMessage('step')),
+			shortcut: { key: 'F10' },
+			get enabled() {
+				return target.program()?.canStep ?? false;
+			},
+			run() {
+				target.program()?.step();
+			}
+		},
+		// Never greyed, as in the mock-up: at rest it changes nothing, and says so by doing it.
+		reset: {
+			id: 'reset',
+			label: t(commandMessage('reset')),
+			shortcut: { key: 'Enter', ctrl: true, shift: true },
+			get enabled() {
+				return target.program() !== undefined;
+			},
+			run() {
+				target.program()?.reset();
+			}
+		}
 	};
 }

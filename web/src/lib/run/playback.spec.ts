@@ -1,9 +1,15 @@
 // A program played on the map through the module the page loads, its frames given by the tests.
 
-import { afterAll, describe, expect, it } from 'vitest';
-import { Level, Sandbox } from '#lib/core/core.ts';
+import { afterAll, beforeEach, describe, expect, it } from 'vitest';
+import { Level, type Run, Sandbox, type World } from '#lib/core/core.ts';
 import { corridor, levelOf, loadTestCore, sandboxOf } from '#lib/core/test-support.ts';
-import { Playback, type PlaybackOptions } from './playback.svelte.ts';
+import { NORMAL_SPEED } from './pace.ts';
+import {
+	type Frames,
+	Playback,
+	type PlaybackOptions,
+	type PlaybackSource
+} from './playback.svelte.ts';
 
 loadTestCore();
 
@@ -19,14 +25,38 @@ afterAll(() => {
 	level.free();
 });
 
-/** Plays `program` in the corridor, at the normal speed: 2 steps per second, 300 ms a move. */
-function play(program: string, options?: PlaybackOptions): Playback {
-	return new Playback(() => sandbox.start(program), options);
+/** The map of the level as it starts. */
+function levelWorld(): World {
+	const [map] = level.maps();
+	if (!map) throw new Error('the level of the tests has a map');
+	return map.world;
 }
 
-/** Plays `program` on the map of the level, at the normal speed. */
+/**
+ * The speed, in steps per second, which a test changes while its program runs, as the setting
+ * does. The normal speed as each test starts: 2 steps per second, 300 ms a move.
+ */
+let rate: number;
+beforeEach(() => {
+	rate = NORMAL_SPEED;
+});
+
+/** No frame comes by itself: a test gives each one, by calling `tick`. */
+const noFrames: Frames = () => () => {};
+
+/** Plays what `source` gives, at the speed of the test, its frames given by the test. */
+function playOn(source: PlaybackSource, options?: PlaybackOptions): Playback {
+	return new Playback(source, { rate: () => rate, frames: noFrames, ...options });
+}
+
+/** Plays `program` in the corridor. */
+function play(program: string, options?: PlaybackOptions): Playback {
+	return playOn({ world: sandbox.world(), start: () => sandbox.start(program) }, options);
+}
+
+/** Plays `program` on the map of the level. */
 function playLevel(program: string, options?: PlaybackOptions): Playback {
-	return new Playback(() => level.start(0, program), options);
+	return playOn({ world: levelWorld(), start: () => level.start(0, program) }, options);
 }
 
 /** A clock for **Instant** that moves on a millisecond each time it is read. */
@@ -67,6 +97,19 @@ describe('a program played on the map', () => {
 		expect(playback.tick(826)).toBe(false);
 	});
 
+	it('shows the map at rest before any Run, no line lit, whatever the program', () => {
+		// A program with an error can't start: the map shows all the same, and can be put back.
+		using playback = play('forward(\n');
+		expect({
+			status: playback.status,
+			line: playback.line,
+			steps: playback.steps,
+			position: playback.world.robot.position
+		}).toEqual({ status: 'ready', line: undefined, steps: 0, position: { x: 0, y: 0 } });
+		playback.reset();
+		expect(playback.status).toBe('ready');
+	});
+
 	it('says where the program stands', () => {
 		using playback = play('forward()\nforward()\n');
 		expect(playback.status).toBe('ready');
@@ -75,6 +118,78 @@ describe('a program played on the map', () => {
 		expect(playback.status).toBe('running');
 		playback.pause();
 		expect(playback.status).toBe('paused');
+		playback.reset();
+		expect(playback.status).toBe('ready');
+	});
+
+	it('only starts the program on a Step at rest, paused before its first step', () => {
+		using playback = play('forward()\nforward()\n');
+		playback.step();
+		expect({
+			status: playback.status,
+			line: playback.line,
+			steps: playback.steps,
+			motion: playback.motion
+		}).toEqual({ status: 'paused', line: 1, steps: 0, motion: undefined });
+		expect(playback.tick(0)).toBe(false);
+		// The next one runs the line that was lit.
+		playback.step();
+		expect({ action: playback.motion?.action, steps: playback.steps }).toEqual({
+			action: 'moved',
+			steps: 1
+		});
+	});
+
+	it('runs the program as it is at each start', () => {
+		let program = 'forward()\n';
+		using playback = playOn({ world: sandbox.world(), start: () => sandbox.start(program) });
+		playback.play();
+		playback.tick(0);
+		playback.tick(300);
+		expect(playback.world.robot.position).toEqual({ x: 1, y: 0 });
+		program = 'turn_right()\n';
+		playback.play();
+		playback.tick(1000);
+		playback.tick(1300);
+		expect(playback.world.robot).toMatchObject({ position: { x: 0, y: 0 }, direction: 'south' });
+	});
+
+	it('stays as it was when the program can’t start', () => {
+		let program = 'forward()\n';
+		using playback = playOn({ world: sandbox.world(), start: () => sandbox.start(program) });
+		playback.play();
+		playback.tick(0);
+		playback.tick(300);
+		program = 'forward(\n';
+		expect(() => {
+			playback.play();
+		}).toThrow();
+		expect({ status: playback.status, position: playback.world.robot.position }).toEqual({
+			status: 'ended',
+			position: { x: 1, y: 0 }
+		});
+		playback.reset();
+		expect({ status: playback.status, position: playback.world.robot.position }).toEqual({
+			status: 'ready',
+			position: { x: 0, y: 0 }
+		});
+	});
+
+	it('tells each line printed, in order, at Instant too', () => {
+		const printed: string[] = [];
+		const onPrinted = (line: string) => printed.push(line);
+		using animated = play('print(1)\nforward()\nprint()\n', { onPrinted });
+		animated.play();
+		animated.tick(0);
+		expect(printed).toEqual(['1']);
+		animated.tick(500);
+		animated.tick(1000);
+		expect(printed).toEqual(['1', '']);
+		rate = Infinity;
+		using instant = play('repeat 3:\n    print("again")\n', { onPrinted, now: ticking() });
+		instant.play();
+		instant.tick(0);
+		expect(printed).toEqual(['1', '', 'again', 'again', 'again']);
 	});
 
 	it('moves the line on at once after a step without action', () => {
@@ -106,7 +221,8 @@ describe('a program played on the map', () => {
 
 	it('plays the action of Step as at the slowest speed, even at Instant', () => {
 		using playback = play('forward()\nforward()\n');
-		playback.rate = Infinity;
+		rate = Infinity;
+		playback.step();
 		playback.step();
 		expect(playback.motion?.action).toBe('moved');
 		// The action starts at the frame that draws it first.
@@ -119,7 +235,8 @@ describe('a program played on the map', () => {
 
 	it('resumes after a Step once its action has ended, a whole step before the next', () => {
 		using playback = play('forward()\nforward()\nforward()\n');
-		playback.rate = 5;
+		rate = 5;
+		playback.step();
 		playback.step();
 		playback.tick(0);
 		playback.play();
@@ -140,7 +257,7 @@ describe('a program played on the map', () => {
 
 	it('runs the next step at once on Resume after a pause', () => {
 		using playback = play('let a = 1\nlet b = 2\nlet c = 3\n');
-		playback.rate = 1;
+		rate = 1;
 		playback.play();
 		playback.tick(0);
 		playback.pause();
@@ -152,10 +269,10 @@ describe('a program played on the map', () => {
 
 	it('waits for the action under way when the speed is made faster', () => {
 		using playback = play('forward()\nforward()\n');
-		playback.rate = 1;
+		rate = 1;
 		playback.play();
 		playback.tick(0);
-		playback.rate = 20;
+		rate = 20;
 		playback.tick(100);
 		expect({ motion: playback.motion?.action, steps: playback.steps }).toEqual({
 			motion: 'moved',
@@ -173,7 +290,7 @@ describe('a program played on the map', () => {
 		expect(playback.status).toBe('ended');
 		playback.step();
 		expect({ status: playback.status, line: playback.line, motion: playback.motion }).toEqual({
-			status: 'ready',
+			status: 'paused',
 			line: 1,
 			motion: undefined
 		});
@@ -182,6 +299,7 @@ describe('a program played on the map', () => {
 
 	it('ends the action under way at once on another Step', () => {
 		using playback = play('forward()\nforward()\n');
+		playback.step();
 		playback.step();
 		playback.tick(0);
 		playback.step();
@@ -202,17 +320,20 @@ describe('a program played on the map', () => {
 
 	it('runs the steps at Instant without animation', () => {
 		using playback = play('repeat 3:\n    forward()\n', { now: ticking() });
-		playback.rate = Infinity;
+		rate = Infinity;
 		playback.play();
 		expect(playback.tick(0)).toBe(false);
 		expect(playback.motion).toBeUndefined();
 		expect(playback.world.robot.position).toEqual({ x: 3, y: 0 });
-		expect({ ended: playback.ended, steps: playback.steps }).toEqual({ ended: true, steps: 7 });
+		expect({ status: playback.status, steps: playback.steps }).toEqual({
+			status: 'ended',
+			steps: 7
+		});
 	});
 
 	it('keeps a program that never ends running at Instant, a frame at a time', () => {
 		using playback = play('while true:\n    turn_left()\n', { now: ticking() });
-		playback.rate = Infinity;
+		rate = Infinity;
 		playback.play();
 		expect(playback.tick(0)).toBe(true);
 		const steps = playback.steps;
@@ -233,14 +354,14 @@ describe('a program played on the map', () => {
 		playback.reset();
 		expect(playback.world).toEqual(start);
 		expect({ line: playback.line, steps: playback.steps, motion: playback.motion }).toEqual({
-			line: 1,
+			line: undefined,
 			steps: 0,
 			motion: undefined
 		});
 		playback.play();
 		playback.tick(0);
 		playback.tick(300);
-		expect(playback.ended).toBe(true);
+		expect(playback.stopped).toBe(true);
 		playback.play();
 		expect({ position: playback.world.robot.position, line: playback.line }).toEqual({
 			position: { x: 0, y: 0 },
@@ -249,7 +370,10 @@ describe('a program played on the map', () => {
 	});
 
 	it('animates an item picked up and dropped, longer than a move', () => {
-		using playback = new Playback(() => withItem.start('forward()\npick_up()\ndrop()\n'));
+		using playback = playOn({
+			world: withItem.world(),
+			start: () => withItem.start('forward()\npick_up()\ndrop()\n')
+		});
 		playback.play();
 		playback.tick(0);
 		playback.tick(300);
@@ -267,7 +391,7 @@ describe('a program played on the map', () => {
 
 	it('shows a bump whole, even at 20 steps per second, then tells the error', () => {
 		using playback = play('repeat 4:\n    forward()\n');
-		playback.rate = 20;
+		rate = 20;
 		playback.play();
 		let time = 0;
 		while (playback.motion?.action !== 'bump' && time < 1000) playback.tick((time += 50));
@@ -283,7 +407,7 @@ describe('a program played on the map', () => {
 		playback.tick(time + 450);
 		expect(playback.motion).toBeUndefined();
 		expect({ status: playback.status, outcome: playback.outcome }).toMatchObject({
-			status: 'ended',
+			status: 'failed',
 			outcome: { type: 'failed', error: { kind: { code: 'bump' }, span: { line: 2 } } }
 		});
 	});
@@ -305,11 +429,12 @@ describe('a program played on the map', () => {
 	it('ends an error of the robot at once on a second Step, without playing it again', () => {
 		using playback = play('pick_up()\n');
 		playback.step();
+		playback.step();
 		expect(playback.motion?.action).toBe('no-item-here');
 		playback.step();
 		expect({ motion: playback.motion, status: playback.status }).toEqual({
 			motion: undefined,
-			status: 'ended'
+			status: 'failed'
 		});
 		expect(playback.outcome?.type).toBe('failed');
 	});
@@ -319,17 +444,17 @@ describe('a program played on the map', () => {
 		playback.play();
 		playback.tick(0);
 		expect(playback.motion?.action).toBe('no-item-here');
-		playback.rate = Infinity;
+		rate = Infinity;
 		expect(playback.tick(16)).toBe(false);
 		expect({ motion: playback.motion, status: playback.status }).toEqual({
 			motion: undefined,
-			status: 'ended'
+			status: 'failed'
 		});
 	});
 
 	it('shows no bump at Instant, the error told at once', () => {
 		using playback = play('repeat 4:\n    forward()\n', { now: ticking() });
-		playback.rate = Infinity;
+		rate = Infinity;
 		playback.play();
 		expect(playback.tick(0)).toBe(false);
 		expect(playback.motion).toBeUndefined();
@@ -404,7 +529,7 @@ describe('the end of a run', () => {
 
 	it('keeps its whole time at 20 steps per second', () => {
 		using playback = playLevel('forward()\n');
-		playback.rate = 20;
+		rate = 20;
 		playback.play();
 		playback.tick(0);
 		playback.tick(40);
@@ -415,7 +540,7 @@ describe('the end of a run', () => {
 
 	it('shows at once at Instant, and as at the slowest speed after a Step', () => {
 		using instant = playLevel('forward()\n', { now: ticking() });
-		instant.rate = Infinity;
+		rate = Infinity;
 		instant.play();
 		expect(instant.tick(0)).toBe(false);
 		expect({ motion: instant.motion, type: instant.outcome?.type }).toEqual({
@@ -423,7 +548,8 @@ describe('the end of a run', () => {
 			type: 'passed'
 		});
 		using stepped = playLevel('forward()\n');
-		stepped.rate = Infinity;
+		rate = Infinity;
+		stepped.step();
 		stepped.step();
 		stepped.tick(0);
 		stepped.tick(300);
@@ -465,13 +591,15 @@ describe('the end of a run', () => {
 			expect({ motion: playback.motion, outcome: playback.outcome, line: playback.line }).toEqual({
 				motion: undefined,
 				outcome: undefined,
-				line: 1
+				// Run and Step start the program again; Reset leaves it at rest.
+				line: command === 'reset' ? undefined : 1
 			});
 		}
 	});
 
 	it('plays after the last action that a second Step ended at once', () => {
 		using playback = playLevel('forward()\n');
+		playback.step();
 		playback.step();
 		playback.tick(0);
 		playback.step();
@@ -485,7 +613,7 @@ describe('the end of a run', () => {
 		using playback = playLevel('forward()\n');
 		playback.play();
 		playback.tick(0);
-		playback.rate = Infinity;
+		rate = Infinity;
 		expect(playback.tick(16)).toBe(false);
 		expect({ motion: playback.motion, type: playback.outcome?.type }).toEqual({
 			motion: undefined,
@@ -498,16 +626,17 @@ describe('the end of a run', () => {
 		playback.play();
 		playback.tick(0);
 		playback.tick(300);
-		playback.rate = Infinity;
+		rate = Infinity;
 		expect(playback.tick(750)).toBe(true);
 		expect(playback.progress).toBe(0.5);
 	});
 
 	it('plays nothing after an error of the robot on a map of a level', () => {
 		using playback = playLevel('repeat 4:\n    forward()\n', { now: ticking() });
-		playback.rate = Infinity;
+		rate = Infinity;
 		playback.play();
 		expect(playback.tick(0)).toBe(false);
+		rate = NORMAL_SPEED;
 		using animated = playLevel('pick_up()\n');
 		animated.play();
 		animated.tick(0);
@@ -547,7 +676,7 @@ describe('the end of a run', () => {
 
 	it('shows the end of a program without a step at once at Instant', () => {
 		using playback = playLevel('# Nothing to run\n');
-		playback.rate = Infinity;
+		rate = Infinity;
 		playback.play();
 		expect({
 			motion: playback.motion,
@@ -576,5 +705,104 @@ describe('the end of a run', () => {
 		playback.tick(0);
 		expect(playback.tick(300)).toBe(false);
 		expect(playback.motion).toBeUndefined();
+	});
+});
+
+/**
+ * A page that draws a frame when the test says so. `draw` gives the frame asked its time, and
+ * tells whether one was asked.
+ */
+function pageOf(): { frames: Frames; draw: (time: number) => boolean; asked: () => boolean } {
+	let pending: ((time: number) => void) | undefined;
+	return {
+		frames: (frame) => {
+			if (pending) throw new Error('a frame is asked already');
+			pending = frame;
+			return () => {
+				pending = undefined;
+			};
+		},
+		draw: (time) => {
+			const frame = pending;
+			pending = undefined;
+			frame?.(time);
+			return frame !== undefined;
+		},
+		asked: () => pending !== undefined
+	};
+}
+
+describe('the frames of the page', () => {
+	it('asks for none at rest', () => {
+		const page = pageOf();
+		using playback = play('forward()\n', { frames: page.frames });
+		expect({ status: playback.status, asked: page.asked() }).toEqual({
+			status: 'ready',
+			asked: false
+		});
+	});
+
+	it('asks for one on Run, then for the next ones until the last action has ended', () => {
+		const page = pageOf();
+		using playback = play('forward()\n', { frames: page.frames });
+		playback.play();
+		expect(page.draw(0)).toBe(true);
+		expect(playback.motion?.action).toBe('moved');
+		expect(page.draw(150)).toBe(true);
+		expect(page.draw(300)).toBe(true);
+		expect({ status: playback.status, asked: page.asked() }).toEqual({
+			status: 'ended',
+			asked: false
+		});
+	});
+
+	it('asks for the frames of the action of a Step, and for one frame at a time', () => {
+		const page = pageOf();
+		using playback = play('forward()\nforward()\n', { frames: page.frames });
+		playback.step();
+		playback.step();
+		// A second request while one waits would throw.
+		playback.play();
+		playback.pause();
+		expect(page.draw(0)).toBe(true);
+		expect(page.draw(300)).toBe(true);
+		expect({ steps: playback.steps, asked: page.asked() }).toEqual({ steps: 1, asked: false });
+	});
+
+	it('stops, and tells it, when a frame throws, which the core never makes one do', () => {
+		const page = pageOf();
+		const broken: unknown[] = [];
+		let run: Run | undefined;
+		const playback = playOn(
+			{
+				world: sandbox.world(),
+				start: () => (run = sandbox.start('forward()\nforward()\n'))
+			},
+			{ frames: page.frames, onBroken: (error) => broken.push(error) }
+		);
+		playback.play();
+		page.draw(0);
+		// A run freed behind its back throws at its next step, as an error of the bridge would.
+		run?.free();
+		expect(() => page.draw(300)).toThrow();
+		expect({
+			running: playback.running,
+			motion: playback.motion,
+			asked: page.asked(),
+			told: broken.length
+		}).toEqual({ running: false, motion: undefined, asked: false, told: 1 });
+	});
+
+	it('takes its frame back on Reset, and once freed', () => {
+		const page = pageOf();
+		const playback = play('forward()\nforward()\n', { frames: page.frames });
+		playback.play();
+		page.draw(0);
+		playback.reset();
+		expect(page.asked()).toBe(false);
+		playback.play();
+		expect(page.asked()).toBe(true);
+		playback.free();
+		expect(page.asked()).toBe(false);
 	});
 });

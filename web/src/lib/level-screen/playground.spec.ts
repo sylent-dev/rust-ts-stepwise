@@ -106,7 +106,7 @@ describe('the playground of the sandbox', () => {
 	});
 
 	it('starts a program on its map, which ends without goal to meet', () => {
-		// On its own, as the bench calls it.
+		// On its own, as the program of the screen calls it.
 		const { start } = playground;
 		using run = start('forward()\n');
 		expect(finish(run)?.type).toBe('ended');

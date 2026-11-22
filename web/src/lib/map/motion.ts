@@ -136,7 +136,7 @@ export interface Motion {
 
 /**
  * The share of a step that an action takes at most, so that the robot rests between two: 160 ms
- * at 5 steps per second, 40 ms at 20 (tried on the bench, decided on 2026-11-18).
+ * at 5 steps per second, 40 ms at 20 (tried on the bench of step 14, decided on 2026-11-18).
  */
 const ACTION_SHARE = 0.8;
 
