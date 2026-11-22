@@ -349,7 +349,10 @@ describe('a program played on the map', () => {
 
 	it('shows a loop without end running at Instant: the robot is seen turning', () => {
 		// A turn of the loop takes two steps, and the robot faces the same way every eight: frames
-		// that each ran a number of steps that eight divides would show it still.
+		// that each ran a number of steps that eight divides would show it still. With `ticking()`
+		// every frame runs the same number of batches, 7 of 997 steps: this only checks that
+		// 7 × 997 isn't a multiple of 8, not the clock of a real browser, which varies from a
+		// frame to the next (see `BATCH` in pace.ts).
 		using playback = play('while true:\n    turn_left()\n', { now: ticking() });
 		rate = Infinity;
 		playback.play();

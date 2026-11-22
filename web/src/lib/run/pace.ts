@@ -67,7 +67,11 @@ export function paceFrame(
  * of any loop whose turn takes 2, 4, 5, 8 or 10 steps, the robot never seen moving while it
  * turned thousands of times (measured by the review of the animations of step 17b). With a
  * prime, where a frame stops in the loop follows the number of its batches, which the clock
- * makes different from a frame to the next.
+ * makes different from a frame to the next. Nothing guarantees it by construction: if every
+ * frame ran the same number of batches, a loop whose turn divides that number of steps would
+ * be seen still again. It is the clock of a real browser, which varies from a frame to the
+ * next, that makes two frames stop on different steps of a loop (see Execution in
+ * docs/technical-choices.md).
  */
 export const BATCH = 997;
 
