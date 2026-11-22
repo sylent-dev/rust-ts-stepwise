@@ -4,6 +4,7 @@
 // changed.
 
 import { check } from '#lib/core/core.ts';
+import type { Scene } from '#lib/map/scene.ts';
 import { Playback, type PlaybackOptions, type PlaybackStatus } from '#lib/run/playback.svelte.ts';
 import type { Playground } from './playground.ts';
 
@@ -12,6 +13,13 @@ import type { Playground } from './playground.ts';
  * one command, one button and one shortcut.
  */
 export type RunAction = 'run' | 'pause' | 'resume';
+
+/**
+ * What a screen reads of its program as it is played: what the map draws, the line of the next
+ * step and the steps run. It only reads: what starts and stops the program asks the `Program`,
+ * which checks the code first.
+ */
+export type PlayedProgram = Scene & Readonly<Pick<Playback, 'line' | 'steps'>>;
 
 /** The program of a screen, as its commands ask it. */
 export interface ProgramControls {
@@ -28,8 +36,9 @@ export interface ProgramControls {
 }
 
 export class Program implements ProgramControls {
-	/** The program played on the map: what the map draws, and where the program stands. */
-	readonly playback: Playback;
+	/** The program as it is played, for the screen to read. It follows the program. */
+	readonly played: PlayedProgram;
+	readonly #playback: Playback;
 	readonly #text: () => string | undefined;
 	/** The code as it was last checked, which a run starts on. */
 	#checked = '';
@@ -40,15 +49,16 @@ export class Program implements ProgramControls {
 	 */
 	constructor(playground: Playground, text: () => string | undefined, options?: PlaybackOptions) {
 		this.#text = text;
-		this.playback = new Playback(
+		this.#playback = new Playback(
 			{ world: playground.world, start: () => playground.start(this.#checked) },
 			options
 		);
+		this.played = this.#playback;
 	}
 
 	/** Where the program stands. */
 	get status(): PlaybackStatus {
-		return this.playback.status;
+		return this.#playback.status;
 	}
 
 	/**
@@ -79,13 +89,13 @@ export class Program implements ProgramControls {
 	runOrPause(): void {
 		switch (this.action) {
 			case 'pause':
-				this.playback.pause();
+				this.#playback.pause();
 				break;
 			case 'resume':
-				this.playback.play();
+				this.#playback.play();
 				break;
 			case 'run':
-				if (this.#check()) this.playback.play();
+				if (this.#check()) this.#playback.play();
 				break;
 		}
 	}
@@ -93,21 +103,25 @@ export class Program implements ProgramControls {
 	step(): void {
 		// A program that waits runs its next step; one that hasn't started, or has stopped, is
 		// checked as for **Run**, then only starts.
-		if (this.status === 'paused' || (this.canStep && this.#check())) this.playback.step();
+		if (this.status === 'paused' || (this.canStep && this.#check())) this.#playback.step();
 	}
 
 	reset(): void {
-		this.playback.reset();
+		this.#playback.reset();
 	}
 
 	/** Pauses the program, if it runs, as **Pause** does. */
 	pause(): void {
-		this.playback.pause();
+		this.#playback.pause();
 	}
 
-	/** Frees the program, once the screen is done with it: nothing may be called afterwards. */
+	/**
+	 * Frees the program, once the screen is done with it: nothing may be called afterwards. It
+	 * reads no signal, since the cleanup of an effect calls it (see `kept` in
+	 * core/core-ready.svelte.ts).
+	 */
 	free(): void {
-		this.playback.free();
+		this.#playback.free();
 	}
 
 	/**
@@ -119,7 +133,7 @@ export class Program implements ProgramControls {
 		const text = this.#text();
 		if (text === undefined) return false;
 		if (check(text).length > 0) {
-			this.playback.reset();
+			this.#playback.reset();
 			return false;
 		}
 		this.#checked = text;

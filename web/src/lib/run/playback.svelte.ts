@@ -62,9 +62,10 @@ export interface PlaybackOptions {
 	 */
 	onPrinted?: (line: string) => void;
 	/**
-	 * Told that a frame threw, with what it threw. A step never throws: the errors of a program
-	 * are its outcome, so this is an error of the bridge, which the screen can only say. The
-	 * program has stopped by then, and the error goes on to the browser, which writes it.
+	 * Told that a step threw, at a frame or at a **Step**, with what it threw. A step never
+	 * throws: the errors of a program are its outcome, so this is an error of the bridge, or of
+	 * what reads a step here, which the screen can only say. The program has stopped by then, and
+	 * the error goes on to who asked for the step, or to the browser, which writes it.
 	 */
 	onBroken?: (error: unknown) => void;
 	/**
@@ -159,10 +160,17 @@ export class Playback implements Scene {
 	readonly #lessMotion: () => boolean;
 	/**
 	 * The run, from the **Run** or the **Step** that starts the program to the **Reset** that puts
-	 * the map back; nothing at rest, where the map shows the world of the source. A signal, since
-	 * `status` tells a program paused before its first step from one that hasn't started.
+	 * the map back; nothing at rest, where the map shows the world of the source. A plain field,
+	 * never a signal: `free` reads it, and runs in the cleanup of an effect, where Svelte gives a
+	 * signal the value it had before the changes of the batch. A run isn't a value with a past:
+	 * read there, one would be freed twice, or never (see `kept` in core/core-ready.svelte.ts).
 	 */
-	#run = $state.raw<Run>();
+	#run: Run | undefined;
+	/**
+	 * Whether a run exists: what `status` follows, to tell a program paused before its first step
+	 * from one that hasn't started. Written wherever `#run` is.
+	 */
+	#started = $state(false);
 	/** Takes back the frame asked to the page; nothing while none is asked. */
 	#unasked: (() => void) | undefined;
 	/** The time of the frame before, for the pace; nothing before the first frame of a run. */
@@ -211,7 +219,7 @@ export class Playback implements Scene {
 	get status(): PlaybackStatus {
 		if (this.running) return 'running';
 		if (this.outcome) return this.outcome.type === 'failed' ? 'failed' : 'ended';
-		return this.#run ? 'paused' : 'ready';
+		return this.#started ? 'paused' : 'ready';
 	}
 
 	/**
@@ -247,8 +255,10 @@ export class Playback implements Scene {
 			this.#start();
 			this.#endWithoutStep();
 		} else {
-			this.#endMotion();
-			this.#runStep(undefined, SLOWEST_SPEED);
+			this.#guarded(() => {
+				this.#endMotion();
+				this.#runStep(undefined, SLOWEST_SPEED);
+			});
 		}
 		this.#wake();
 	}
@@ -258,15 +268,20 @@ export class Playback implements Scene {
 		this.#sleep();
 		this.#run?.free();
 		this.#run = undefined;
+		this.#started = false;
 		this.running = false;
 		this.#rewind();
 	}
 
-	/** Frees the run, once the page is done with the program: nothing may be called afterwards. */
+	/**
+	 * Frees the run, once the page is done with the program: nothing may be called afterwards.
+	 * It reads no signal, since the cleanup of an effect calls it.
+	 */
 	free(): void {
 		this.#sleep();
 		this.#run?.free();
 		this.#run = undefined;
+		this.#started = false;
 	}
 
 	[Symbol.dispose](): void {
@@ -336,17 +351,27 @@ export class Playback implements Scene {
 	#wake(): void {
 		this.#unasked ??= this.#frames((time) => {
 			this.#unasked = undefined;
-			try {
+			this.#guarded(() => {
 				if (this.tick(time)) this.#wake();
-			} catch (error) {
-				// No frame follows a frame that threw: the program stops there, rather than show
-				// as running for ever with nothing moving.
-				this.running = false;
-				this.motion = undefined;
-				this.#onBroken?.(error);
-				throw error;
-			}
+			});
 		});
+	}
+
+	/**
+	 * Runs what may run a step, at a frame or at a **Step**: both stop the same way if it throws.
+	 * No frame follows: the program stops there, rather than show as running for ever with
+	 * nothing moving; the screen is told, and the error goes on.
+	 */
+	#guarded(move: () => void): void {
+		try {
+			move();
+		} catch (error) {
+			this.#sleep();
+			this.running = false;
+			this.motion = undefined;
+			this.#onBroken?.(error);
+			throw error;
+		}
 	}
 
 	/** Takes back the frame asked: a frame must never step a run freed since it was asked. */
@@ -364,6 +389,7 @@ export class Playback implements Scene {
 		const run = this.#source.start();
 		this.#run?.free();
 		this.#run = run;
+		this.#started = true;
 		this.#rewind();
 	}
 

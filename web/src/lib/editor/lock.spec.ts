@@ -3,7 +3,7 @@ import { loadTestCore } from '#lib/core/test-support.ts';
 import { applyEdit, canEdit, EDITS } from './edits.ts';
 import { lockOf, setLock } from './lock.ts';
 import { editorSetup } from './setup.ts';
-import { explainByCode, press, shown, stateOf, type } from './test-support.ts';
+import { explainByCode, press, shown, stateOf, takes, type } from './test-support.ts';
 
 loadTestCore();
 
@@ -32,6 +32,14 @@ describe('a locked code', () => {
 		}
 		expect(shown(press(locked, 'Tab', true))).toBe(shown(locked));
 		expect(type(locked, 'x(').doc).toEqual(locked.doc);
+	});
+
+	it('keeps Tab and Shift+Tab, so that the keyboard stays in the code', () => {
+		const locked = editor('forward()|\n', true);
+		expect([takes(locked, 'Tab'), takes(locked, 'Tab', true)]).toEqual([true, true]);
+		// Given back, the code takes Tab by writing with it, as before.
+		const open = locked.update(setLock(false)).state;
+		expect(shown(press(open, 'Tab'))).toBe('forward()   |\n');
 	});
 
 	it('refuses every edit of the screen, which says that it can’t run', () => {

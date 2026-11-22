@@ -37,8 +37,8 @@
 	 * has the focus as soon as the panel opens, and confirm; Enter that confirms at once, then
 	 * stays down, would type its repeats in the code, which gets the focus back. So Enter
 	 * confirms once let go, as Space does, and only after it went down on the action itself.
-	 * (Whether a key held down runs a command again is a question of step 17 for every command;
-	 * here, what can't be undone answers it.)
+	 * (A shortcut held down runs its command once, `runsOn` in commands.ts, and so does Enter
+	 * on a button made of an icon; here, what can't be undone waits for the key to be let go.)
 	 */
 	let pressed = false;
 

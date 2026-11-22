@@ -10,6 +10,7 @@ import {
 	type PlaybackOptions,
 	type PlaybackSource
 } from './playback.svelte.ts';
+import { pageOf } from './test-support.ts';
 
 loadTestCore();
 
@@ -708,30 +709,6 @@ describe('the end of a run', () => {
 	});
 });
 
-/**
- * A page that draws a frame when the test says so. `draw` gives the frame asked its time, and
- * tells whether one was asked.
- */
-function pageOf(): { frames: Frames; draw: (time: number) => boolean; asked: () => boolean } {
-	let pending: ((time: number) => void) | undefined;
-	return {
-		frames: (frame) => {
-			if (pending) throw new Error('a frame is asked already');
-			pending = frame;
-			return () => {
-				pending = undefined;
-			};
-		},
-		draw: (time) => {
-			const frame = pending;
-			pending = undefined;
-			frame?.(time);
-			return frame !== undefined;
-		},
-		asked: () => pending !== undefined
-	};
-}
-
 describe('the frames of the page', () => {
 	it('asks for none at rest', () => {
 		const page = pageOf();
@@ -791,6 +768,29 @@ describe('the frames of the page', () => {
 			asked: page.asked(),
 			told: broken.length
 		}).toEqual({ running: false, motion: undefined, asked: false, told: 1 });
+	});
+
+	it('stops the same way, and tells it, when a Step throws', () => {
+		const page = pageOf();
+		const broken: unknown[] = [];
+		let run: Run | undefined;
+		const playback = playOn(
+			{
+				world: sandbox.world(),
+				start: () => (run = sandbox.start('forward()\nforward()\n'))
+			},
+			{ frames: page.frames, onBroken: (error) => broken.push(error) }
+		);
+		playback.step();
+		run?.free();
+		expect(() => {
+			playback.step();
+		}).toThrow();
+		expect({ running: playback.running, asked: page.asked(), told: broken.length }).toEqual({
+			running: false,
+			asked: false,
+			told: 1
+		});
 	});
 
 	it('takes its frame back on Reset, and once freed', () => {

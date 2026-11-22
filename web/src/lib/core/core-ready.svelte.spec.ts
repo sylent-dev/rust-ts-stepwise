@@ -4,7 +4,7 @@ import { flushSync } from 'svelte';
 import { describe, expect, it, vi } from 'vitest';
 import { loadFailed } from '#lib/page/startup.svelte.ts';
 import { loadCore } from './core.ts';
-import { coreReady, fromCore } from './core-ready.svelte.ts';
+import { coreReady, fromCore, kept as keep } from './core-ready.svelte.ts';
 
 vi.mock('./core.ts', () => ({ loadCore: vi.fn() }));
 vi.mock('#lib/page/startup.svelte.ts', () => ({ loadFailed: vi.fn() }));
@@ -39,6 +39,43 @@ class Kept {
 		this.freed += 1;
 	}
 }
+
+describe('kept', () => {
+	it('gives what `make` gives, and frees it once another replaces it and once the component leaves', () => {
+		let text = $state('one');
+		let kept: { readonly current: Kept | undefined } | undefined;
+		const leave = $effect.root(() => {
+			kept = keep(() => new Kept(text));
+		});
+		flushSync();
+		const first = kept?.current;
+		expect([first?.text, first?.freed]).toEqual(['one', 0]);
+
+		text = 'two';
+		flushSync();
+		const second = kept?.current;
+		expect([first?.freed, second?.text, second?.freed]).toEqual([1, 'two', 0]);
+
+		leave();
+		expect([first?.freed, second?.freed]).toEqual([1, 1]);
+	});
+
+	it('gives nothing while `make` gives nothing, and frees what it gave before', () => {
+		let shown = $state(true);
+		let kept: { readonly current: Kept | undefined } | undefined;
+		const leave = $effect.root(() => {
+			kept = keep(() => (shown ? new Kept('one') : undefined));
+		});
+		flushSync();
+		const first = kept?.current;
+
+		shown = false;
+		flushSync();
+		expect([kept?.current, first?.freed]).toEqual([undefined, 1]);
+		leave();
+		expect(first?.freed).toBe(1);
+	});
+});
 
 describe('fromCore', () => {
 	it('gives nothing until the core is ready, then what `make` gives', async () => {

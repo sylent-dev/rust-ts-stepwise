@@ -10,6 +10,7 @@
 	import { untrack } from 'svelte';
 	import { differsFromStart, type LevelCode } from '#lib/code/code.ts';
 	import { keepCode, openingCode, restoreCode } from '#lib/code/current-code.ts';
+	import { kept } from '#lib/core/core-ready.svelte.ts';
 	import CodeEditor from '#lib/editor/code-editor.svelte';
 	import type { Editing } from '#lib/editor/edits.ts';
 	import { errorText } from '#lib/errors/error-text.ts';
@@ -54,11 +55,12 @@
 	/**
 	 * The program of the screen: the code of the editor, played on the map shown. A program of
 	 * its own for each map, made with it, so that the map never draws the program of another
-	 * one; at rest until **Run** or **Step**. An error of the bridge while it runs is one that the
+	 * one, and freed with its run once another one has taken its place or the screen closes; at
+	 * rest until **Run** or **Step**. An error of the bridge while it runs is one that the
 	 * application didn't foresee: the page says it, in place of the screen (see Error handling in
 	 * specs.md).
 	 */
-	const program = $derived.by(() => {
+	const program = kept(() => {
 		const ground = playground;
 		// Made out of the reach of the signals: only another map makes another program.
 		return (
@@ -66,16 +68,10 @@
 		);
 	});
 
-	// A program is freed, with its run, once another one has taken its place or the screen closes.
-	$effect(() => {
-		const made = program;
-		return () => made?.free();
-	});
-
 	// A run is paused while a message takes the place of the screen, and stays so once the screen
 	// is back (see Error handling in specs.md).
 	$effect(() => {
-		if (!currentScreen.shows) program?.pause();
+		if (!currentScreen.shows) program.current?.pause();
 	});
 
 	/** Whether the confirmation of **Restore starting code** shows. */
@@ -104,7 +100,7 @@
 			confirmRestore: () => {
 				restoring = true;
 			},
-			program: () => program
+			program: () => program.current
 		},
 		currentPlatform()
 	);
@@ -122,7 +118,7 @@
 	 */
 	function restore() {
 		if (!playground) return;
-		program?.reset();
+		program.current?.reset();
 		restoreCode(playground.name);
 		editing?.reopen(playground.startingCode);
 	}
@@ -159,14 +155,14 @@
 					<CodeEditor
 						text={openingCode(playground.name, playground.startingCode).text}
 						explain={errorText}
-						locked={program?.locked}
+						locked={program.current?.locked}
 						bind:editing
 						onchange={keep}
 					/>
 				{/key}
 			{/if}
 		</div>
-		<div class="map"><MapBlock scene={program?.playback} goals={playground?.goals} /></div>
+		<div class="map"><MapBlock scene={program.current?.played} goals={playground?.goals} /></div>
 		<!-- The zone of the console and of the variables, empty until they come (steps 17e and
 		     19). -->
 		<div class="panels"></div>

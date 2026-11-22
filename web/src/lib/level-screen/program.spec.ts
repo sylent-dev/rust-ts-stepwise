@@ -1,9 +1,11 @@
 // The program of a level screen, on the sandbox of a corridor, through the module the page
-// loads. Its frames are those of the tests of `Playback`: here, only what starts and what stops.
+// loads. The pace of its frames is tested with `Playback`: here, only what starts and what stops,
+// read as the screen reads it.
 
 import { afterAll, describe, expect, it } from 'vitest';
 import { Sandbox } from '#lib/core/core.ts';
 import { corridor, loadTestCore, sandboxOf } from '#lib/core/test-support.ts';
+import { pageOf, type TestPage } from '#lib/run/test-support.ts';
 import { sandboxPlayground } from './playground.ts';
 import { Program } from './program.ts';
 
@@ -15,14 +17,18 @@ afterAll(() => {
 	sandbox.free();
 });
 
+/** The page whose frames the program of the test asks for. */
+let page: TestPage;
+
 /** The program of an editor that holds `code.text`, which a test changes as a learner would. */
 function programOf(code: { text: string | undefined }): Program {
-	return new Program(sandboxPlayground(sandbox), () => code.text, { frames: () => () => {} });
+	page = pageOf();
+	return new Program(sandboxPlayground(sandbox), () => code.text, { frames: page.frames });
 }
 
-/** Gives the program its frames until nothing moves, a frame every 100 ms. */
-function finish(program: Program): void {
-	for (let time = 0; program.playback.tick(time); time += 100);
+/** Draws the frames that the program asks for until nothing moves, one every 100 ms. */
+function finish(): void {
+	for (let time = 0; page.draw(time); time += 100);
 }
 
 describe('the program of a screen', () => {
@@ -33,11 +39,11 @@ describe('the program of a screen', () => {
 			action: 'run'
 		});
 		program.runOrPause();
-		program.playback.tick(0);
+		page.draw(0);
 		expect({
 			status: program.status,
 			action: program.action,
-			steps: program.playback.steps
+			steps: program.played.steps
 		}).toEqual({ status: 'running', action: 'pause', steps: 1 });
 		program.runOrPause();
 		expect({ status: program.status, action: program.action }).toEqual({
@@ -46,11 +52,11 @@ describe('the program of a screen', () => {
 		});
 		program.runOrPause();
 		expect(program.status).toBe('running');
-		finish(program);
+		finish();
 		expect({
 			status: program.status,
 			action: program.action,
-			steps: program.playback.steps
+			steps: program.played.steps
 		}).toEqual({ status: 'ended', action: 'run', steps: 2 });
 		program.free();
 	});
@@ -59,12 +65,12 @@ describe('the program of a screen', () => {
 		const code = { text: 'forward()\n' };
 		const program = programOf(code);
 		program.runOrPause();
-		finish(program);
-		expect(program.playback.world.robot.position).toEqual({ x: 1, y: 0 });
+		finish();
+		expect(program.played.world.robot.position).toEqual({ x: 1, y: 0 });
 		code.text = 'turn_left()\n';
 		program.runOrPause();
-		finish(program);
-		expect(program.playback.world.robot).toMatchObject({
+		finish();
+		expect(program.played.world.robot).toMatchObject({
 			position: { x: 0, y: 0 },
 			direction: 'north'
 		});
@@ -75,12 +81,12 @@ describe('the program of a screen', () => {
 		const code = { text: 'forward()\n' };
 		const program = programOf(code);
 		program.runOrPause();
-		finish(program);
+		finish();
 		code.text = 'foward()\n';
 		for (const command of ['runOrPause', 'step'] as const) {
 			program[command]();
 			expect(
-				{ status: program.status, position: program.playback.world.robot.position },
+				{ status: program.status, position: program.played.world.robot.position },
 				command
 			).toEqual({ status: 'ready', position: { x: 0, y: 0 } });
 		}
@@ -90,7 +96,7 @@ describe('the program of a screen', () => {
 	it('tells an error that stops the program from its end', () => {
 		const program = programOf({ text: 'pick_up()\n' });
 		program.runOrPause();
-		finish(program);
+		finish();
 		expect({ status: program.status, action: program.action }).toEqual({
 			status: 'failed',
 			action: 'run'
@@ -103,15 +109,15 @@ describe('the program of a screen', () => {
 		program.step();
 		expect({
 			status: program.status,
-			line: program.playback.line,
-			steps: program.playback.steps
+			line: program.played.line,
+			steps: program.played.steps
 		}).toEqual({ status: 'paused', line: 1, steps: 0 });
 		program.step();
-		finish(program);
+		finish();
 		expect({
 			status: program.status,
-			line: program.playback.line,
-			steps: program.playback.steps
+			line: program.played.line,
+			steps: program.played.steps
 		}).toEqual({ status: 'paused', line: 2, steps: 1 });
 		program.free();
 	});
@@ -120,10 +126,10 @@ describe('the program of a screen', () => {
 		const program = programOf({ text: 'forward()\nforward()\n' });
 		expect(program.canStep).toBe(true);
 		program.runOrPause();
-		program.playback.tick(0);
+		page.draw(0);
 		expect(program.canStep).toBe(false);
 		program.step();
-		expect({ status: program.status, steps: program.playback.steps }).toEqual({
+		expect({ status: program.status, steps: program.played.steps }).toEqual({
 			status: 'running',
 			steps: 1
 		});
@@ -137,7 +143,7 @@ describe('the program of a screen', () => {
 		expect(program.locked).toBe(true);
 		program.runOrPause();
 		expect(program.locked).toBe(true);
-		finish(program);
+		finish();
 		expect({ status: program.status, locked: program.locked }).toEqual({
 			status: 'ended',
 			locked: false
@@ -148,13 +154,13 @@ describe('the program of a screen', () => {
 	it('ends the program and puts the map back on Reset', () => {
 		const program = programOf({ text: 'forward()\nforward()\n' });
 		program.runOrPause();
-		program.playback.tick(0);
-		program.playback.tick(300);
+		page.draw(0);
+		page.draw(300);
 		program.reset();
 		expect({
 			status: program.status,
 			locked: program.locked,
-			position: program.playback.world.robot.position
+			position: program.played.world.robot.position
 		}).toEqual({ status: 'ready', locked: false, position: { x: 0, y: 0 } });
 		program.free();
 	});
@@ -164,7 +170,7 @@ describe('the program of a screen', () => {
 		program.pause();
 		expect(program.status).toBe('ready');
 		program.runOrPause();
-		program.playback.tick(0);
+		page.draw(0);
 		program.pause();
 		expect(program.status).toBe('paused');
 		program.free();
