@@ -2,10 +2,9 @@
      **Run**, **Pause** or **Resume** in one button, then **Step** and **Reset**, each made of an
      icon that names itself with its shortcut, under the pointer or the keyboard, as its command
      says (level-commands.ts); **Reset** says what it keeps. They grow pale while the learner
-     types, so that the code behind them is read, and come back as soon as the screen says so, or
-     once the keyboard reaches one. A click leaves the keyboard where it was, the code most often,
-     so that the learner goes on typing, as a row of a menu gives it back. The block that shows
-     them places them. -->
+     types, so that the code behind them is read, and come back as soon as the screen says so. A
+     click leaves the keyboard where it was, the code most often, so that the learner goes on
+     typing, as a row of a menu gives it back. The block that shows them places them. -->
 <script lang="ts">
 	import type { IconName } from '#lib/icon-name.ts';
 	import { t } from '#lib/i18n.ts';
@@ -82,8 +81,8 @@
 	}
 
 	/* At 30 % while the learner types, a value of the mock-up tuned by eye: the code behind is
-	   read, and the controls are still found. Whole as soon as the keyboard is on one. */
-	.pale:not(:focus-within) {
+	   read, and the controls are still found. */
+	.pale {
 		opacity: 0.3;
 	}
 </style>

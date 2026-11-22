@@ -6,7 +6,8 @@ import { EditorState, type Transaction } from '@codemirror/state';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { check } from '#lib/core/core.ts';
 import { loadTestCore } from '#lib/core/test-support.ts';
-import { applyEdit, type Edit } from './edits.ts';
+import { applyEdit, type Edit, EDITS } from './edits.ts';
+import { runLinesOf, showLine } from './run-lines.ts';
 import { editorSetup } from './setup.ts';
 import {
 	explainByCode,
@@ -144,22 +145,22 @@ describe('a program typed key by key', () => {
 	});
 });
 
+/** The change that an edit asked of the screen makes in a state, if any. */
+function editChange(state: EditorState, edit: Edit): Transaction | undefined {
+	let change: Transaction | undefined;
+	applyEdit(edit, {
+		state,
+		dispatch: (transaction) => {
+			change = transaction;
+		}
+	});
+	return change;
+}
+
 describe('a change typed', () => {
 	/** Whether a key pressed in a state makes a change that the editor says typed. */
 	const typedBy = (marked: string, key: string, shift = false): boolean => {
 		const change = pressedChange(stateOf(marked), key, shift);
-		return change !== undefined && isTyped(change);
-	};
-
-	/** Whether an edit asked of the screen makes a change that the editor says typed. */
-	const typedByEdit = (state: EditorState, edit: Edit): boolean => {
-		let change: Transaction | undefined;
-		applyEdit(edit, {
-			state,
-			dispatch: (transaction) => {
-				change = transaction;
-			}
-		});
 		return change !== undefined && isTyped(change);
 	};
 
@@ -172,10 +173,56 @@ describe('a change typed', () => {
 		expect(typedBy('|forward()', 'Delete')).toBe(true);
 	});
 
-	it('is no line moved nor a change undone, which the screen asks', () => {
-		const state = stateOf('forward()\n|turn_left()');
-		expect(typedByEdit(state, 'move-line-up')).toBe(false);
-		const changed = press(state, 'Enter');
-		expect(typedByEdit(changed, 'undo')).toBe(false);
+	/**
+	 * A state where each edit changes the code: a change made, then undone for **Redo**. Made by
+	 * the test, once the core has loaded.
+	 */
+	const EDITED = {
+		undo: () => press(stateOf('forward()|'), 'Enter'),
+		redo: () => {
+			const changed = press(stateOf('forward()|'), 'Enter');
+			return editChange(changed, 'undo')?.state ?? changed;
+		},
+		'comment-lines': () => stateOf('forward()|'),
+		'move-line-up': () => stateOf('forward()\n|turn_left()'),
+		'move-line-down': () => stateOf('|forward()\nturn_left()')
+	} satisfies Record<Edit, () => EditorState>;
+
+	it.each(EDITS)('is no %s, which the learner asks of the screen', (edit) => {
+		const change = editChange(EDITED[edit](), edit);
+		expect(change?.docChanged).toBe(true);
+		expect(change && isTyped(change)).toBe(false);
+	});
+});
+
+describe('the mark of an error, as the learner changes the code', () => {
+	/** The line of the mark of an error once a key is pressed, the mark on line `at` first. */
+	const markAfterKey = (marked: string, at: number, key: string): number | undefined => {
+		const state = stateOf(marked);
+		const shown = state.update(showLine(state, 'failed', at) ?? {}).state;
+		return runLinesOf(press(shown, key)).failed;
+	};
+
+	/** The line of the mark of an error once an edit is made, the mark on line `at` first. */
+	const markAfterEdit = (marked: string, at: number, edit: Edit): number | undefined => {
+		const state = stateOf(marked);
+		const shown = state.update(showLine(state, 'failed', at) ?? {}).state;
+		const change = editChange(shown, edit);
+		return runLinesOf(change?.state ?? shown).failed;
+	};
+
+	it('goes down with its text, Enter pressed in the spaces that start its line', () => {
+		expect(markAfterKey('repeat 2:\n|    forward()', 2, 'Enter')).toBe(3);
+		expect(markAfterKey('repeat 2:\n  |  forward()', 2, 'Enter')).toBe(3);
+		expect(markAfterKey('repeat 2:\n    |forward()', 2, 'Enter')).toBe(3);
+		expect(markAfterKey('repeat 2:\n    for|ward()', 2, 'Enter')).toBe(2);
+	});
+
+	it('follows its line moved, and stays on it when a line moves over it', () => {
+		const code = 'forward()\nturn_left()\nturn_right()\nforward()';
+		expect(markAfterEdit(code.replace('turn_left', '|turn_left'), 2, 'move-line-down')).toBe(3);
+		expect(markAfterEdit(code.replace('turn_left', '|turn_left'), 2, 'move-line-up')).toBe(1);
+		expect(markAfterEdit(`|${code}`, 2, 'move-line-down')).toBe(1);
+		expect(markAfterEdit(code.replace('turn_right', '|turn_right'), 2, 'move-line-up')).toBe(3);
 	});
 });

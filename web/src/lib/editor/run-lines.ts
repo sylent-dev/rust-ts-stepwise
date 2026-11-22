@@ -33,8 +33,9 @@ const show = StateEffect.define<{ line: RunLine; at: number | undefined }>();
  * Where a line stands once the code has changed: on the line that holds its text now, lines
  * added or taken away above it, and a line break typed at its start, which carries its text
  * down. Nothing once the line itself is gone: its text and one of its breaks deleted, which
- * Backspace at its start does to an empty line. A line joined to the one above it keeps its
- * text there, and the mark follows it.
+ * Backspace at its start does to an empty line, unless the same change writes it again
+ * elsewhere, as a line moved over it does. A line joined to the one above it keeps its text
+ * there, and the mark follows it.
  */
 export function followLine(transaction: Transaction, number: number): number | undefined {
 	const before = transaction.startState.doc;
@@ -49,9 +50,28 @@ export function followLine(transaction: Transaction, number: number): number | u
 			(number > 1 && from <= line.from - 1 && to >= line.to) ||
 			(number < before.lines && from <= line.from && to >= line.to + 1)
 	);
-	if (gone) return undefined;
-	// After what is written at its start: the text of the line goes on there.
-	return transaction.newDoc.lineAt(transaction.changes.mapPos(line.from, 1)).number;
+	if (gone) return writtenAgain(transaction, line.text);
+	// The first character of its text, and after what is written there: Enter in the spaces that
+	// start a line replaces them with a break and the same spaces (`insertNewLine`), a change
+	// that starts at the start of the line, where a place stays whatever its side.
+	const text = line.to - line.text.trimStart().length;
+	return transaction.newDoc.lineAt(transaction.changes.mapPos(text, 1)).number;
+}
+
+/**
+ * The line where a change writes the text of a line again, with its break: **Move line up**
+ * and **Move line down** delete the line that the lines moved pass over, and write it on their
+ * other side (`moveLineUp`, `moveLineDown` of CodeMirror), as their undo does. Nothing when the
+ * change doesn't write it again.
+ */
+function writtenAgain(transaction: Transaction, text: string): number | undefined {
+	const written: number[] = [];
+	transaction.changes.iterChanges((_fromA, _toA, fromB, toB, inserted) => {
+		const insert = inserted.toString();
+		if (insert === `${text}\n`) written.push(transaction.newDoc.lineAt(fromB).number);
+		else if (insert === `\n${text}`) written.push(transaction.newDoc.lineAt(toB).number);
+	});
+	return written[0];
 }
 
 /** The lines of the run, as the screen showed them and the changes of the code carried them. */
@@ -96,8 +116,8 @@ export function showLine(
 
 /**
  * The lines of a run that the code has, each at the start of its line, in the order of the
- * code. The line of the next step and the one of an error never show together; if they did, the
- * next step would be drawn over.
+ * code. The line of the next step and the one of an error never show together: the program has
+ * no next step once an error has stopped it.
  */
 function placed(state: EditorState): { line: RunLine; from: number }[] {
 	const lines = runLinesOf(state);
@@ -166,8 +186,14 @@ class LineMark extends GutterMarker {
 	}
 }
 
-const MARKS = { next: new LineMark('next'), failed: new LineMark('failed') } as const;
-const TONES = { next: new LineTone('next'), failed: new LineTone('failed') } as const;
+const MARKS = {
+	next: new LineMark('next'),
+	failed: new LineMark('failed')
+} as const satisfies Record<RunLine, LineMark>;
+const TONES = {
+	next: new LineTone('next'),
+	failed: new LineTone('failed')
+} as const satisfies Record<RunLine, LineTone>;
 const LINE_LOOKS = {
 	next: Decoration.line({ class: CLASSES.next }),
 	failed: Decoration.line({ class: CLASSES.failed })
@@ -180,10 +206,11 @@ const LINE_LOOKS = {
  */
 export const runLinesShown: Extension = [
 	runLines,
-	EditorView.decorations.compute([runLines], (state) =>
+	// Each reads where the lines of the code start, which the document says.
+	EditorView.decorations.compute(['doc', runLines], (state) =>
 		Decoration.set(placed(state).map(({ line, from }) => LINE_LOOKS[line].range(from)))
 	),
-	gutterLineClass.compute([runLines], (state) =>
+	gutterLineClass.compute(['doc', runLines], (state) =>
 		RangeSet.of(placed(state).map(({ line, from }) => TONES[line].range(from)))
 	),
 	gutter({

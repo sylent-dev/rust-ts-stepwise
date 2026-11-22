@@ -106,8 +106,9 @@
 	});
 
 	/**
-	 * Whether the learner is typing in the code: the controls grow pale, until the mouse moves.
-	 * A mouse that stays still gives no movement: a browser may tell that it moved when the code
+	 * Whether the learner is typing in the code: the controls grow pale, until the mouse moves,
+	 * the keyboard reaches one of them, or the program starts, whose code no one types in. A
+	 * mouse that stays still gives no movement: a browser may tell that it moved when the code
 	 * scrolls under it, as it does while the learner types.
 	 */
 	let typing = $state(false);
@@ -115,6 +116,10 @@
 	function onpointermove(event: PointerEvent) {
 		if (event.movementX !== 0 || event.movementY !== 0) typing = false;
 	}
+
+	$effect(() => {
+		if (program.current?.locked) typing = false;
+	});
 
 	/** Whether the confirmation of **Restore starting code** shows. */
 	let restoring = $state(false);
@@ -208,7 +213,9 @@
 						ontype={() => (typing = true)}
 					/>
 				{/key}
-				<div class="corner">
+				<!-- A click on a control keeps the focus where it was: only the keyboard brings it
+				     there. -->
+				<div class="corner" onfocusin={() => (typing = false)}>
 					<RunControls {commands} action={program.current?.action ?? 'run'} pale={typing} />
 				</div>
 			{/if}

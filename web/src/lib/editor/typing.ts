@@ -29,13 +29,15 @@ export const INDENT_WIDTH = 4;
 /**
  * Whether a change of the code was typed: a character written or erased, a line broken, an
  * indentation, a text pasted, as CodeMirror and the rules of typing name each one (`input`,
- * `delete`). Not a line moved nor a change undone, which the learner asks of the screen rather
- * than types.
+ * `delete`, and every name under them). Not an edit that the learner asks of the screen rather
+ * than types, by its shortcut or its row of the menu **Edit** (edits.ts): a line moved, a
+ * change undone, lines commented, whose change is named as an input (`input.comment`).
  */
 export function isTyped(transaction: Transaction): boolean {
 	return (
 		transaction.docChanged &&
-		(transaction.isUserEvent('input') || transaction.isUserEvent('delete'))
+		(transaction.isUserEvent('input') || transaction.isUserEvent('delete')) &&
+		!transaction.isUserEvent('input.comment')
 	);
 }
 

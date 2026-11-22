@@ -108,6 +108,13 @@ describe('the lines of a run', () => {
 		expect(litLines(changed)).toEqual([{ line: 5, look: 'run-failed' }]);
 	});
 
+	it('keeps a line in its place when a character is typed above it', () => {
+		const state = shown(stateOf(), 'failed', 4);
+		const changed = state.update({ changes: { from: 0, insert: '#' } }).state;
+		expect(litLines(changed)).toEqual([{ line: 4, look: 'run-failed' }]);
+		expect(tonedLines(changed)).toEqual([{ line: 4, look: 'run-failed' }]);
+	});
+
 	it('takes the mark of an error away with its line', () => {
 		const state = shown(stateOf(), 'failed', 2);
 		const line = state.doc.line(2);
@@ -132,6 +139,23 @@ describe('a line followed as the code changes', () => {
 	it('goes down with its text when a line break is typed at its start', () => {
 		expect(followed(2, { from: 10, insert: '\n' })).toBe(3);
 		expect(followed(1, { from: 0, insert: '\n' })).toBe(2);
+	});
+
+	it('goes down with its text when the spaces that start it give way to a break and the same spaces', () => {
+		const block = 'repeat 2:\n    forward()\n';
+		expect(followed(2, { from: 10, to: 14, insert: '\n    ' }, block)).toBe(3);
+		expect(followed(2, { from: 10, to: 12, insert: '\n  ' }, block)).toBe(3);
+	});
+
+	it('follows its text written again elsewhere by the same change, as a line moved over it', () => {
+		// `turn_left()` on line 2, and line 1 moved down over it as CodeMirror moves it: the line
+		// deleted with the break before it, then written again with a break before line 1.
+		const moved = [
+			{ from: 9, to: 21 },
+			{ from: 0, insert: 'turn_left()\n' }
+		];
+		expect(followed(2, { from: 9, to: 21 })).toBeUndefined();
+		expect(followed(2, moved)).toBe(1);
 	});
 
 	it('goes with its text onto the line above when it is joined to it', () => {

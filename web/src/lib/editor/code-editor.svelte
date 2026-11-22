@@ -16,7 +16,7 @@
 	import { followEditing } from './editing.svelte.ts';
 	import type { Editing } from './edits.ts';
 	import { lockOf, setLock } from './lock.ts';
-	import { showLine } from './run-lines.ts';
+	import { type RunLine, showLine } from './run-lines.ts';
 	import { editorSetup } from './setup.ts';
 	import { isTyped } from './typing.ts';
 
@@ -90,10 +90,20 @@
 		const stateOn = (doc: string) =>
 			EditorState.create({ doc, extensions: [extensions, lockOf(untrack(() => locked))] });
 		const view = new EditorView({ parent: block, state: stateOn(untrack(() => text)) });
+		/** Shows a line of the run as the screen gives it now, unless it stands there already. */
+		const showNow = (line: RunLine, at: number | undefined) => {
+			const shown = showLine(view.state, line, at);
+			if (shown) view.dispatch(shown);
+		};
 		// A new state, rather than a change of the text: the history starts again with it. The
-		// editor keeps its page, so the keyboard stays in the code if it was there.
+		// editor keeps its page, so the keyboard stays in the code if it was there. A new state
+		// has no line of a run: they come back as the screen gives them, whatever it did before.
 		const { editing: own, follow } = followEditing(view, (reopened) => {
 			view.setState(stateOn(reopened));
+			untrack(() => {
+				showNow('next', next);
+				showNow('failed', failed);
+			});
 		});
 		editing = own;
 		// The lock follows the screen, in an effect of its own: read here, it would make the
@@ -101,15 +111,14 @@
 		$effect(() => {
 			if (view.state.readOnly !== locked) view.dispatch(setLock(locked));
 		});
-		// The lines of the run too, each as it changes. A line that the code carried elsewhere
-		// stays there until the screen gives another one.
+		// The lines of the run too, each as the screen changes it. A line that the code carried
+		// elsewhere, or took away, stays so until the screen gives another one: the next **Run**
+		// or **Reset**, which always takes the line away before an error gives it again.
 		$effect(() => {
-			const shown = showLine(view.state, 'next', next);
-			if (shown) view.dispatch(shown);
+			showNow('next', next);
 		});
 		$effect(() => {
-			const shown = showLine(view.state, 'failed', failed);
-			if (shown) view.dispatch(shown);
+			showNow('failed', failed);
 		});
 		return () => {
 			// The editor of the next level may have taken its place already. Read in a cleanup,

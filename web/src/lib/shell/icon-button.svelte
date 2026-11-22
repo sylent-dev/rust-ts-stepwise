@@ -102,19 +102,72 @@
 		attributes.onkeydown?.(event);
 	};
 
-	/** A greyed button does nothing, by the pointer as by the keys, which click it too. */
+	/** The tip drawn by the button, if its zone draws one. */
+	let tip = $state<HTMLElement>();
+
+	/**
+	 * A greyed button does nothing, by the pointer as by the keys, which click it too, nor does
+	 * a click on its tip, which stands in it so that the pointer can rest on it.
+	 */
 	const onclick: ButtonAttributes['onclick'] = (event) => {
-		if (!greyed) attributes.onclick?.(event);
+		if (greyed || (event.target instanceof Node && tip?.contains(event.target))) return;
+		attributes.onclick?.(event);
+	};
+
+	/** Whether the pointer is over the button or its tip, and whether the keyboard is on it. */
+	let pointed = $state(false);
+	let focused = $state(false);
+
+	/**
+	 * Whether Escape has put the tip away, while it covers what is above it, until the pointer
+	 * and the keyboard have both left the button: a tip of our own is closed without moving
+	 * either, as the tip of the browser is (WCAG 1.4.13). Escape is heard on the window, since the
+	 * keyboard may be in the code while the pointer rests on the button; it does there what it
+	 * does anyway.
+	 */
+	let tipAway = $state(false);
+
+	function putTipAway(event: KeyboardEvent) {
+		if (event.key === 'Escape' && (pointed || focused)) tipAway = true;
+	}
+
+	const onpointerenter: ButtonAttributes['onpointerenter'] = (event) => {
+		pointed = true;
+		attributes.onpointerenter?.(event);
+	};
+
+	const onpointerleave: ButtonAttributes['onpointerleave'] = (event) => {
+		pointed = false;
+		if (!focused) tipAway = false;
+		attributes.onpointerleave?.(event);
+	};
+
+	const onfocus: ButtonAttributes['onfocus'] = (event) => {
+		focused = true;
+		attributes.onfocus?.(event);
+	};
+
+	const onblur: ButtonAttributes['onblur'] = (event) => {
+		focused = false;
+		if (!pointed) tipAway = false;
+		attributes.onblur?.(event);
 	};
 </script>
+
+<svelte:window onkeydown={look.ownTip ? putTipAway : undefined} />
 
 <button
 	{...attributes}
 	{onkeydown}
 	{onclick}
+	{onpointerenter}
+	{onpointerleave}
+	{onfocus}
+	{onblur}
 	type="button"
 	class={zone}
 	class:main
+	class:tip-away={tipAway}
 	style:--side={look.side}
 	style:--fill={look.fill}
 	title={look.ownTip ? undefined : label}
@@ -129,7 +182,7 @@
 	{#if look.ownTip}
 		<!-- Read by the eyes alone: the button gives its name and its shortcut to a screen reader
 		     itself, and its sentence by its place here. -->
-		<span class="tip" aria-hidden="true">
+		<span class="tip" aria-hidden="true" bind:this={tip}>
 			<span class="tip-name">
 				<strong>{label}</strong>
 				{#if shortcut}
@@ -206,8 +259,9 @@
 	}
 
 	/* The tip of a zone that draws its own, under the pointer or the keyboard: over the button,
-	   against its right edge, as the mock-up draws the controls in the corner of the code. It
-	   lets the pointer through, so that a click on it never presses the button. */
+	   against its right edge, as the mock-up draws the controls in the corner of the code. The
+	   pointer may rest on it, the room between them included, to read it closely; it presses
+	   nothing there. */
 	.tip {
 		display: none;
 		position: absolute;
@@ -222,11 +276,20 @@
 		font: var(--weight-text) var(--size-text) / var(--line-text) var(--font-text);
 		text-align: left;
 		white-space: nowrap;
-		pointer-events: none;
+		cursor: default;
 	}
 
-	button:hover > .tip,
-	button:focus-visible > .tip {
+	.tip::after {
+		content: '';
+		position: absolute;
+		top: 100%;
+		right: 0;
+		left: 0;
+		height: calc(var(--space-8) + 1px);
+	}
+
+	button:not(.tip-away):hover > .tip,
+	button:not(.tip-away):focus-visible > .tip {
 		display: block;
 	}
 
