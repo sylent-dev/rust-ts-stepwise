@@ -114,9 +114,12 @@
 		attributes.onclick?.(event);
 	};
 
-	/** Whether the pointer is over the button or its tip, and whether the keyboard is on it. */
-	let pointed = $state(false);
-	let focused = $state(false);
+	/**
+	 * Whether the pointer is over the button or its tip, and whether the keyboard is on it: read
+	 * by the handlers alone, so no signal.
+	 */
+	let pointed = false;
+	let focused = false;
 
 	/**
 	 * Whether Escape has put the tip away, while it covers what is above it, until the pointer
@@ -279,6 +282,8 @@
 		cursor: default;
 	}
 
+	/* The room between the tip and its button, where the pointer passes from one to the other:
+	   the distance of the tip and the 1 pixel of its border. */
 	.tip::after {
 		content: '';
 		position: absolute;

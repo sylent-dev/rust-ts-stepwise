@@ -158,6 +158,14 @@ describe('a line followed as the code changes', () => {
 		expect(followed(2, moved)).toBe(1);
 	});
 
+	it('never takes a line break written elsewhere for a line without text that is gone', () => {
+		// Line 3 is empty: deleted with the break before it, and a break written at the start.
+		const breakWritten = { from: 0, insert: '\n' };
+		expect(followed(3, [{ from: 21, to: 22 }, breakWritten])).toBeUndefined();
+		// Line 2 holds spaces alone, from 2 to 6: the same.
+		expect(followed(2, [{ from: 1, to: 6 }, breakWritten], 'a\n    \nb')).toBeUndefined();
+	});
+
 	it('goes with its text onto the line above when it is joined to it', () => {
 		expect(followed(2, { from: 9, to: 10 })).toBe(1);
 	});

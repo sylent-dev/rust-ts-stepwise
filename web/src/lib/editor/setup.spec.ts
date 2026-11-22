@@ -225,4 +225,17 @@ describe('the mark of an error, as the learner changes the code', () => {
 		expect(markAfterEdit(`|${code}`, 2, 'move-line-down')).toBe(1);
 		expect(markAfterEdit(code.replace('turn_right', '|turn_right'), 2, 'move-line-up')).toBe(3);
 	});
+
+	it('comes back to its line once a line moved over it is moved back by Undo', () => {
+		const state = stateOf('|forward()\nturn_left()\nturn_right()\nforward()');
+		const shown = state.update(showLine(state, 'failed', 2) ?? {}).state;
+		const moved = editChange(shown, 'move-line-down')?.state ?? shown;
+		expect(runLinesOf(moved).failed).toBe(1);
+		expect(runLinesOf(editChange(moved, 'undo')?.state ?? moved).failed).toBe(2);
+	});
+
+	it('never goes onto another line from a line without text', () => {
+		const code = 'forward()\n\n|turn_left()\nforward()';
+		expect(markAfterEdit(code, 2, 'move-line-up')).toBeUndefined();
+	});
 });

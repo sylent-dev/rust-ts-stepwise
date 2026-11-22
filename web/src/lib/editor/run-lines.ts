@@ -31,7 +31,7 @@ const show = StateEffect.define<{ line: RunLine; at: number | undefined }>();
 
 /**
  * Where a line stands once the code has changed: on the line that holds its text now, lines
- * added or taken away above it, and a line break typed at its start, which carries its text
+ * added or taken away above it, and a line break typed before its text, which carries its text
  * down. Nothing once the line itself is gone: its text and one of its breaks deleted, which
  * Backspace at its start does to an empty line, unless the same change writes it again
  * elsewhere, as a line moved over it does. A line joined to the one above it keeps its text
@@ -62,9 +62,11 @@ export function followLine(transaction: Transaction, number: number): number | u
  * The line where a change writes the text of a line again, with its break: **Move line up**
  * and **Move line down** delete the line that the lines moved pass over, and write it on their
  * other side (`moveLineUp`, `moveLineDown` of CodeMirror), as their undo does. Nothing when the
- * change doesn't write it again.
+ * change doesn't write it again, nor for a line without text: any line break written by the
+ * change would pass for it, and a mark on another line would be worse than none.
  */
 function writtenAgain(transaction: Transaction, text: string): number | undefined {
+	if (text.trim() === '') return undefined;
 	const written: number[] = [];
 	transaction.changes.iterChanges((_fromA, _toA, fromB, toB, inserted) => {
 		const insert = inserted.toString();
