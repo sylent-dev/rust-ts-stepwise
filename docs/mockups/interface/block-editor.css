@@ -27,14 +27,16 @@
 .app-controls { position: absolute; right: var(--space-12); bottom: var(--space-12); display: flex; gap: var(--space-8); }
 .app-window .app-control { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; background: var(--control); color: var(--text); border: 0; border-radius: var(--radius); box-shadow: var(--control-shadow); }
 .app-window .app-control.is-main { background: var(--accent); color: var(--on-accent); }
+/* The main one, lighter under the pointer as a main button (decided on 2026-11-22, step 17c). */
+.app-window .app-control.is-main:not(.is-off):hover { background: var(--accent-hover); }
 .app-window .app-control { position: relative; }
 .app-window .app-control.is-off > svg { opacity: .35; }
 .app-window .app-control.is-off { cursor: not-allowed; }
 /* While the learner types, so that they can read the code behind; the mouse brings them back. */
-.app-controls.is-pale { opacity: .3; }
+.app-controls.is-pale:not(:focus-within) { opacity: .3; }
 /* Each control names itself on hover, with its shortcut. */
 .app-tip { display: none; position: absolute; right: 0; bottom: calc(100% + var(--space-8)); padding: var(--space-6) var(--space-12); background: var(--pop); color: var(--text); border: var(--pop-border); border-radius: var(--radius); box-shadow: var(--pop-shadow); font: var(--weight-text) var(--size-text)/var(--line-text) var(--font-text); text-align: left; white-space: nowrap; }
-.app-control:hover .app-tip, .app-control.is-hovered .app-tip { display: block; }
+.app-control:hover .app-tip, .app-control:focus-visible .app-tip, .app-control.is-hovered .app-tip { display: block; }
 .app-tip b { font-weight: var(--weight-strong); }
 .app-tip kbd { margin-left: var(--space-12); color: var(--weak); font: var(--weight-text) var(--size-small) var(--font-text); }
 .app-tip small { display: block; color: var(--weak); font-size: var(--size-small); }
