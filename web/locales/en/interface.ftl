@@ -63,6 +63,13 @@ command-resume = Resume
 command-step = Step
 command-reset = Reset
 
+## The three controls of a program, in the corner of the editor: each names itself in its tip
+## by its command.
+
+# Under the name of Reset in the tip of its button, so that it is never confused with Restore
+# starting code, which replaces the code.
+control-reset-help = Puts the map back. Your code stays.
+
 ## The speed of a program, which the menu **Run** chooses, and later the status bar.
 
 # The row of the menu **Run** that opens the speeds.

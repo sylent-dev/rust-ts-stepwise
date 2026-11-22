@@ -6,7 +6,9 @@
      saved as the learner changes it, and comes back with the level, until **Restore starting
      code** puts the level back in its first state (see Code editor in specs.md). **Run** plays
      that code on the map shown, at the speed of the settings, which **Run › Speed** chooses
-     (see Running a program in specs.md). -->
+     (see Running a program in specs.md); the editor lights the line of its next step, and marks
+     the line where an error stopped it, and its three controls stand in the corner of the code.
+     -->
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import { differsFromStart, type LevelCode } from '#lib/code/code.ts';
@@ -31,6 +33,7 @@
 	import MapBlock from './map-block.svelte';
 	import type { Playground } from './playground.ts';
 	import { Program } from './program.ts';
+	import RunControls from './run-controls.svelte';
 	import type { SpeedSetting } from './speeds.ts';
 
 	/** A level has a number, the sandbox none. */
@@ -92,6 +95,26 @@
 	$effect(() => {
 		if (!currentScreen.shows) program.current?.pause();
 	});
+
+	/**
+	 * The line where an error stopped the program, once the robot has shown it; nothing until
+	 * the next **Run** or **Reset**, nor for a program that ended without error.
+	 */
+	const failedLine = $derived.by(() => {
+		const outcome = program.current?.played.outcome;
+		return outcome?.type === 'failed' ? outcome.error.span.line : undefined;
+	});
+
+	/**
+	 * Whether the learner is typing in the code: the controls grow pale, until the mouse moves.
+	 * A mouse that stays still gives no movement: a browser may tell that it moved when the code
+	 * scrolls under it, as it does while the learner types.
+	 */
+	let typing = $state(false);
+
+	function onpointermove(event: PointerEvent) {
+		if (event.movementX !== 0 || event.movementY !== 0) typing = false;
+	}
 
 	/** Whether the confirmation of **Restore starting code** shows. */
 	let restoring = $state(false);
@@ -156,6 +179,7 @@
 </script>
 
 <ScreenShortcuts commands={Object.values(commands)} />
+<svelte:window {onpointermove} />
 <div class="level-screen">
 	<Header>
 		<MenuBar menus={levelMenus(screen, commands, speed)} />
@@ -171,14 +195,22 @@
 				     level, read once as the editor is made. Its code can't be changed while its
 				     program runs or is paused. -->
 				{#key playground.name}
+					<!-- Room under the last line for the controls, and as much again above them. -->
 					<CodeEditor
+						--below="calc(var(--control-side) + 2 * var(--space-12))"
 						text={openingCode(playground.name, playground.startingCode).text}
 						explain={errorText}
 						locked={program.current?.locked}
+						next={program.current?.played.line}
+						failed={failedLine}
 						bind:editing
 						onchange={keep}
+						ontype={() => (typing = true)}
 					/>
 				{/key}
+				<div class="corner">
+					<RunControls {commands} action={program.current?.action ?? 'run'} pale={typing} />
+				</div>
 			{/if}
 		</div>
 		<div class="map"><MapBlock scene={program.current?.played} goals={playground?.goals} /></div>
@@ -223,12 +255,20 @@
 		}
 	}
 
-	/* The editor scrolls its code by itself. */
+	/* The editor scrolls its code by itself; the controls float in its corner, and don't scroll
+	   with it. */
 	.code {
+		position: relative;
 		grid-row: 1 / 3;
 		min-width: 0;
 		min-height: 0;
 		background: var(--surface);
+	}
+
+	.corner {
+		position: absolute;
+		right: var(--space-12);
+		bottom: var(--space-12);
 	}
 
 	.map {

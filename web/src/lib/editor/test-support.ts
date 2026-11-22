@@ -51,17 +51,34 @@ export function after(command: StateCommand, state: EditorState): EditorState {
  * ask for it, and read its state and give it a change, nothing else. `next` is the state after
  * the changes it was given.
  */
-function standIn(state: EditorState): { view: EditorView; next: () => EditorState } {
-	let next = state;
+function standIn(state: EditorState): {
+	view: EditorView;
+	next: () => EditorState;
+	last: () => Transaction | undefined;
+} {
+	let last: Transaction | undefined;
 	const target = {
 		state,
 		compositionStarted: false,
 		dispatch: (transaction: Transaction) => {
-			next = transaction.state;
+			last = transaction;
 		}
 	};
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- a test has no page to make the editor on, and its keys read the state of the editor alone
-	return { view: target as unknown as EditorView, next: () => next };
+	return {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- a test has no page to make the editor on, and its keys read the state of the editor alone
+		view: target as unknown as EditorView,
+		next: () => last?.state ?? state,
+		last: () => last
+	};
+}
+
+/** Tries the bindings of a key in the order of the editor until one takes it, as CodeMirror does. */
+function tryKey(state: EditorState, view: EditorView, key: string, shift: boolean): void {
+	for (const binding of state.facet(keymap).flat()) {
+		if (binding.key !== key) continue;
+		const command = shift ? binding.shift : binding.run;
+		if (command?.(view)) break;
+	}
 }
 
 /**
@@ -71,12 +88,22 @@ function standIn(state: EditorState): { view: EditorView; next: () => EditorStat
  */
 export function press(state: EditorState, key: string, shift = false): EditorState {
 	const { view, next } = standIn(state);
-	for (const binding of state.facet(keymap).flat()) {
-		if (binding.key !== key) continue;
-		const command = shift ? binding.shift : binding.run;
-		if (command?.(view)) break;
-	}
+	tryKey(state, view, key, shift);
 	return next();
+}
+
+/**
+ * The change that a key pressed gives the editor, as `press` makes it, or nothing when the key
+ * changes nothing: what the editor reads of a change besides its text (`isTyped`).
+ */
+export function pressedChange(
+	state: EditorState,
+	key: string,
+	shift = false
+): Transaction | undefined {
+	const { view, last } = standIn(state);
+	tryKey(state, view, key, shift);
+	return last();
 }
 
 /**

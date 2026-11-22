@@ -8,21 +8,36 @@
 	import type { HTMLButtonAttributes } from 'svelte/elements';
 	import type { IconName } from '#lib/icon-name.ts';
 	import Icon from '#lib/icon.svelte';
+	import { currentPlatform } from '#lib/platform.ts';
+	import { type Shortcut, spokenShortcut } from './commands.ts';
+	import ShortcutKeys from './shortcut-keys.svelte';
 
 	/**
-	 * Where the button stands: a band (the header), what opens over the screen (a panel), or the
-	 * banner of a browser that refuses to save.
+	 * Where the button stands: a band (the header), what opens over the screen (a panel), the
+	 * banner of a browser that refuses to save, or the corner of the code, where the controls of
+	 * a program float over it.
 	 */
-	type Zone = 'band' | 'pop' | 'banner';
+	type Zone = 'band' | 'pop' | 'banner' | 'code';
 
 	/**
 	 * What the component writes itself is left out, so that a caller can't give it twice, and what
 	 * would go around it: a look or a place of its own (`style`), a name that a screen reader
-	 * would read in place of the tip (`aria-labelledby`).
+	 * would read in place of the tip (`aria-labelledby`), a button that can't run taken out of
+	 * the keys of the page (`disabled`) rather than greyed.
 	 */
 	type ButtonAttributes = Omit<
 		HTMLButtonAttributes,
-		'type' | 'class' | 'style' | 'title' | 'aria-label' | 'aria-labelledby' | 'children'
+		| 'type'
+		| 'class'
+		| 'style'
+		| 'title'
+		| 'aria-label'
+		| 'aria-labelledby'
+		| 'aria-describedby'
+		| 'aria-keyshortcuts'
+		| 'aria-disabled'
+		| 'disabled'
+		| 'children'
 	>;
 
 	interface Props extends ButtonAttributes {
@@ -30,24 +45,52 @@
 		/** What it does, in a word or two: its tip under the pointer, its name for a screen reader. */
 		label: string;
 		zone: Zone;
+		/** The one in amber among its neighbors, what to do: **Run** among the controls. */
+		main?: boolean;
+		/**
+		 * Whether its command can't run now: its icon fades, it never fills under the pointer, and
+		 * a click on it, or Enter, does nothing. It keeps the focus of the keyboard, and its tip.
+		 */
+		greyed?: boolean;
+		/** The shortcut of its command, in its tip beside its name, where the zone draws a tip. */
+		shortcut?: Shortcut;
+		/** A sentence that says more than its name, under it in its tip, where the zone draws one. */
+		help?: string;
 	}
 
-	let { icon, label, zone, ...attributes }: Props = $props();
+	let {
+		icon,
+		label,
+		zone,
+		main = false,
+		greyed = false,
+		shortcut,
+		help,
+		...attributes
+	}: Props = $props();
 
 	/**
-	 * The look of each zone: the size of its icon, in pixels, the side of its square and its fill
-	 * under the pointer. A zone without one of them doesn't compile.
+	 * The look of each zone: the size of its icon, in pixels, the side of its square, its fill
+	 * under the pointer, and whether it draws its own tip, which gives the shortcut of its
+	 * command, where the tip of the browser gives a name alone. A zone without one of them
+	 * doesn't compile.
 	 */
 	const LOOKS = {
 		// As high as the names of the menus beside it.
-		band: { icon: 18, side: 'var(--band-item-height)', fill: 'var(--band-hover)' },
+		band: { icon: 18, side: 'var(--band-item-height)', fill: 'var(--band-hover)', ownTip: false },
 		// The cross of a panel: 26 pixels, the size of its drawing in the mock-up.
-		pop: { icon: 16, side: '26px', fill: 'var(--hover)' },
+		pop: { icon: 16, side: '26px', fill: 'var(--hover)', ownTip: false },
 		// The cross of the banner: 24 pixels, as in the mock-up.
-		banner: { icon: 14, side: '24px', fill: 'var(--shade)' }
-	} as const satisfies Record<Zone, { icon: number; side: string; fill: string }>;
+		banner: { icon: 14, side: '24px', fill: 'var(--shade)', ownTip: false },
+		// A control keeps its fill under the pointer, as in the mock-up: its tip answers there.
+		code: { icon: 20, side: 'var(--control-side)', fill: 'var(--control)', ownTip: true }
+	} as const satisfies Record<Zone, { icon: number; side: string; fill: string; ownTip: boolean }>;
 
 	const look = $derived(LOOKS[zone]);
+
+	const id = $props.id();
+	/** The sentence of the tip, for a screen reader, which reads it after the name. */
+	const helpId = `${id}-help`;
 
 	/**
 	 * The browser presses a button again at each repeat of Enter held down: a button that opens
@@ -58,25 +101,53 @@
 		if (event.repeat && event.key === 'Enter') event.preventDefault();
 		attributes.onkeydown?.(event);
 	};
+
+	/** A greyed button does nothing, by the pointer as by the keys, which click it too. */
+	const onclick: ButtonAttributes['onclick'] = (event) => {
+		if (!greyed) attributes.onclick?.(event);
+	};
 </script>
 
 <button
 	{...attributes}
 	{onkeydown}
+	{onclick}
 	type="button"
 	class={zone}
+	class:main
 	style:--side={look.side}
 	style:--fill={look.fill}
-	title={label}
+	title={look.ownTip ? undefined : label}
 	aria-label={label}
+	aria-keyshortcuts={look.ownTip && shortcut
+		? spokenShortcut(shortcut, currentPlatform())
+		: undefined}
+	aria-describedby={look.ownTip && help !== undefined ? helpId : undefined}
+	aria-disabled={greyed || undefined}
 >
 	<Icon name={icon} size={look.icon} />
+	{#if look.ownTip}
+		<!-- Read by the eyes alone: the button gives its name and its shortcut to a screen reader
+		     itself, and its sentence by its place here. -->
+		<span class="tip" aria-hidden="true">
+			<span class="tip-name">
+				<strong>{label}</strong>
+				{#if shortcut}
+					<ShortcutKeys {shortcut} />
+				{/if}
+			</span>
+			{#if help !== undefined}
+				<small id={helpId}>{help}</small>
+			{/if}
+		</span>
+	{/if}
 </button>
 
 <style>
 	/* `--side` and `--fill` come from the look of the zone, above: the side of the square, and
 	   its fill under the pointer. */
 	button {
+		position: relative;
 		display: grid;
 		place-items: center;
 		width: var(--side);
@@ -88,10 +159,19 @@
 		color: var(--weak);
 	}
 
-	button:hover,
+	button:not([aria-disabled='true']):hover,
 	button[aria-expanded='true'] {
 		background: var(--fill);
 		color: var(--text);
+	}
+
+	/* Greyed: its icon at 35 %, a value of the mock-up tuned by eye, its tip as it is. */
+	button[aria-disabled='true'] {
+		cursor: not-allowed;
+	}
+
+	button[aria-disabled='true'] > :global(svg) {
+		opacity: 0.35;
 	}
 
 	/* What a zone doesn't share with the others is a class of its name. On the amber of the
@@ -105,5 +185,64 @@
 	.banner:hover {
 		color: inherit;
 		opacity: 1;
+	}
+
+	/* A control floats over the code: filled and in the color of the text at rest, with its
+	   shadow; the main one in amber, lighter under the pointer as a main button. */
+	.code {
+		background: var(--control);
+		color: var(--text);
+		box-shadow: var(--control-shadow);
+	}
+
+	.code.main {
+		background: var(--accent);
+		color: var(--on-accent);
+	}
+
+	.code.main:not([aria-disabled='true']):hover {
+		background: var(--accent-hover);
+		color: var(--on-accent);
+	}
+
+	/* The tip of a zone that draws its own, under the pointer or the keyboard: over the button,
+	   against its right edge, as the mock-up draws the controls in the corner of the code. It
+	   lets the pointer through, so that a click on it never presses the button. */
+	.tip {
+		display: none;
+		position: absolute;
+		right: 0;
+		bottom: calc(100% + var(--space-8));
+		padding: var(--space-6) var(--space-12);
+		border: var(--pop-border);
+		border-radius: var(--radius);
+		background: var(--pop);
+		color: var(--text);
+		box-shadow: var(--pop-shadow);
+		font: var(--weight-text) var(--size-text) / var(--line-text) var(--font-text);
+		text-align: left;
+		white-space: nowrap;
+		pointer-events: none;
+	}
+
+	button:hover > .tip,
+	button:focus-visible > .tip {
+		display: block;
+	}
+
+	.tip-name {
+		display: flex;
+		align-items: center;
+		gap: var(--space-12);
+	}
+
+	.tip strong {
+		font-weight: var(--weight-strong);
+	}
+
+	.tip small {
+		display: block;
+		color: var(--weak);
+		font-size: var(--size-small);
 	}
 </style>

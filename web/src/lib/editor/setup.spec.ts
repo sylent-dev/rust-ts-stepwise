@@ -2,12 +2,21 @@
 // handlers, in their order. The rules themselves are tested with their commands (typing.spec.ts,
 // pairs.spec.ts); here, that each key reaches the right one.
 
-import { EditorState } from '@codemirror/state';
+import { EditorState, type Transaction } from '@codemirror/state';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { check } from '#lib/core/core.ts';
 import { loadTestCore } from '#lib/core/test-support.ts';
+import { applyEdit, type Edit } from './edits.ts';
 import { editorSetup } from './setup.ts';
-import { explainByCode, press, shown, stateOf as markedState, type } from './test-support.ts';
+import {
+	explainByCode,
+	press,
+	pressedChange,
+	shown,
+	stateOf as markedState,
+	type
+} from './test-support.ts';
+import { isTyped } from './typing.ts';
 
 beforeAll(loadTestCore);
 
@@ -132,5 +141,41 @@ describe('a program typed key by key', () => {
 			].join('\n')
 		);
 		expect(check(program)).toStrictEqual([]);
+	});
+});
+
+describe('a change typed', () => {
+	/** Whether a key pressed in a state makes a change that the editor says typed. */
+	const typedBy = (marked: string, key: string, shift = false): boolean => {
+		const change = pressedChange(stateOf(marked), key, shift);
+		return change !== undefined && isTyped(change);
+	};
+
+	/** Whether an edit asked of the screen makes a change that the editor says typed. */
+	const typedByEdit = (state: EditorState, edit: Edit): boolean => {
+		let change: Transaction | undefined;
+		applyEdit(edit, {
+			state,
+			dispatch: (transaction) => {
+				change = transaction;
+			}
+		});
+		return change !== undefined && isTyped(change);
+	};
+
+	it('is a line broken, an indentation, a character erased', () => {
+		expect(typedBy('forward()|', 'Enter')).toBe(true);
+		expect(typedBy('|forward()', 'Tab')).toBe(true);
+		expect(typedBy('    |forward()', 'Tab', true)).toBe(true);
+		expect(typedBy('forward()|', 'Backspace')).toBe(true);
+		expect(typedBy('forward(|)', 'Backspace')).toBe(true);
+		expect(typedBy('|forward()', 'Delete')).toBe(true);
+	});
+
+	it('is no line moved nor a change undone, which the screen asks', () => {
+		const state = stateOf('forward()\n|turn_left()');
+		expect(typedByEdit(state, 'move-line-up')).toBe(false);
+		const changed = press(state, 'Enter');
+		expect(typedByEdit(changed, 'undo')).toBe(false);
 	});
 });

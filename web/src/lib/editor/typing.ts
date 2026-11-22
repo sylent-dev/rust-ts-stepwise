@@ -12,7 +12,8 @@ import {
 	EditorSelection,
 	EditorState,
 	type Extension,
-	type StateCommand
+	type StateCommand,
+	type Transaction
 } from '@codemirror/state';
 import type { KeyBinding } from '@codemirror/view';
 import { classifyLine } from '#lib/core/core.ts';
@@ -24,6 +25,19 @@ import { classifyLine } from '#lib/core/core.ts';
  * `:` is a block for the core.
  */
 export const INDENT_WIDTH = 4;
+
+/**
+ * Whether a change of the code was typed: a character written or erased, a line broken, an
+ * indentation, a text pasted, as CodeMirror and the rules of typing name each one (`input`,
+ * `delete`). Not a line moved nor a change undone, which the learner asks of the screen rather
+ * than types.
+ */
+export function isTyped(transaction: Transaction): boolean {
+	return (
+		transaction.docChanged &&
+		(transaction.isUserEvent('input') || transaction.isUserEvent('delete'))
+	);
+}
 
 /**
  * Whether a line opens a block: its last piece, a comment aside, is `:`. The core says what the

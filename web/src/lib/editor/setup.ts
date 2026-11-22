@@ -10,6 +10,7 @@ import { codeColors } from './code-colors.ts';
 import { comments } from './edits.ts';
 import { matchingParentheses } from './matching.ts';
 import { pairKeys, pairs } from './pairs.ts';
+import { runLinesShown } from './run-lines.ts';
 import { indentation, indentationKeys } from './typing.ts';
 
 /**
@@ -34,8 +35,8 @@ const browserHistory: Extension = Prec.highest(
  * The editor: the rules of typing, the signs that close by themselves, the history, the keys of
  * every text field (the arrows, Home and End, Backspace, select all), the numbers of the lines,
  * the colors of the code, the pair of parentheses at the cursor, the checks as the learner types
- * (whose errors `explain` writes). A key is tried in the order of
- * the list: Backspace takes a pair of signs before it takes an indentation or a character, and
+ * (whose errors `explain` writes), the lines of a run that the screen shows, whose marks stand
+ * in the margin before the numbers. A key is tried in the order of the list: Backspace takes a pair of signs before it takes an indentation or a character, and
  * Enter is ours before it is the one of every text field. The selection and the cursor are
  * drawn by the editor rather than by the browser, so that they take our look. `label` names the
  * code for a screen reader.
@@ -52,6 +53,7 @@ export function editorSetup(label: string, explain: Explain): Extension {
 		history(),
 		comments,
 		keymap.of([...pairKeys, ...indentationKeys, ...standardKeymap]),
+		runLinesShown,
 		lineNumbers(),
 		drawSelection(),
 		dropCursor(),
