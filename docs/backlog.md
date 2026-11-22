@@ -67,6 +67,7 @@ The ideas, polish and edge cases found along the way that the current step doesn
 - A setting for the teacher that takes **Instant** away, or limits the speeds, if learners use it in class to try programs at random without watching the robot: Instant stays as `specs.md` describes it, useful for long programs, the variants of a level and the step counter of an infinite loop (a doubt of the owner, seen at step 14b). With no account, such a setting would live in each browser.
 - The ground of the map (the floors, the walls and their faces, the lines every five cells, the shadows) computed once per map rather than at each new world, if a large map or a slow computer shows it at **Instant**: measured at step 14b in the production build, on the sandbox (12 × 8) in Chromium, a frame at **Instant** costs 0.4 ms of updates besides the 8 ms of steps, and 0.2 ms at 20 steps per second, the page keeping its 60 frames per second (seen in the review of the animations of step 14b).
 - The same level open in two tabs: each saves the code that it shows, and the last change wins, so a change typed in one tab replaces the code of the other at its next save (step 16d). If learners meet it, the tab that doesn't hold the keyboard could follow the code saved by the other (the `storage` event, as the settings do), or say that another tab has changed it.
+- A small library of the learner's own functions, kept from a level to the next (asked by the owner on 2026-11-22, who sees it once there is an account and a database). It needs neither: the browser already saves the code of each level. The open question is the pedagogy: functions carried into a level change what that level asks. To weigh with the levels of the chapter Functions (step 24) and the sandbox (step 25).
 
 ## Content
 
@@ -76,6 +77,7 @@ The ideas, polish and edge cases found along the way that the current step doesn
 - More paints than `red`, `yellow` and `blue`, if a level needs them.
 - The same map solved twice, the second time with a constraint (e.g. first with `forward()` written out, then with a loop and at most a given number of lines), so that the learner feels what a control structure brings; close to the challenges of the shortest code.
 - A sentence in the guide of the codes for the teachers (step 21): a private window keeps nothing once it is closed, and Stepwise can't warn the learner there (see [Error handling](../specs.md#error-handling)); a level code brings a learner back to their level.
+- A level of the chapter Functions (step 24) where the learner writes their own `forward` with a parameter (`function walk(steps):`, then `repeat steps:` and `forward()`), the reward of functions: they make the language richer themselves. It is why `forward()` takes no value: the owner asked for `forward(n)` on 2026-11-22, and agreed to keep it without one, so that `repeat` keeps its first use in the chapter Repeat, one line stays one step and one action, and no built-in function has an optional value.
 
 ## Tooling
 
