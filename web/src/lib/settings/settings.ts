@@ -1,7 +1,8 @@
 // The settings (see Settings in specs.md): what the learner chooses for the whole application,
-// not for a level. A setting arrives with the step that codes it: the speed with the running
-// (step 17), **Sounds** with the sounds (step 18). Nothing here knows how they are saved
-// (saved-settings.ts).
+// not for a level. A setting arrives with the step that codes it: **Sounds** with the sounds
+// (step 18). Nothing here knows how they are saved (saved-settings.ts).
+
+import { NORMAL_SPEED } from '#lib/run/pace.ts';
 
 /** The themes, each by the name the page takes (`data-theme`, see lib/styles/colors.css). */
 export const THEMES = ['day-desk', 'night-desk'] as const;
@@ -22,7 +23,16 @@ export function themeMessage(theme: Theme): string {
 /** The settings of the application. */
 export interface Settings {
 	theme: Theme;
+	/**
+	 * The speed of a program, in steps per second, one of the list (`SPEEDS` in run/pace.ts):
+	 * `Infinity` for **Instant**. The panel of the settings doesn't show it: the menu **Run** and
+	 * the status bar of a level choose it (see Running a program in specs.md).
+	 */
+	speed: number;
 }
 
-/** The settings of a first visit: Day Desk, so that a whole class sees the same screen. */
-export const DEFAULT_SETTINGS: Readonly<Settings> = { theme: 'day-desk' };
+/**
+ * The settings of a first visit: Day Desk, so that a whole class sees the same screen, and the
+ * normal speed.
+ */
+export const DEFAULT_SETTINGS: Readonly<Settings> = { theme: 'day-desk', speed: NORMAL_SPEED };

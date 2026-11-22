@@ -2,4 +2,5 @@
 // the `.ts` files alone, and a type written in a component reaches another file unknown.
 
 /** The name of an icon. */
-export type IconName = 'arrow-down' | 'arrow-up' | 'close' | 'diamond' | 'gear';
+export type IconName =
+	'arrow-down' | 'arrow-up' | 'check' | 'chevron' | 'close' | 'diamond' | 'gear';

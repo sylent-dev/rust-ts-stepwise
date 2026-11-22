@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { paceFrame, runInstant, START_CARRY } from './pace.ts';
+import {
+	isInstant,
+	nearestSpeed,
+	NORMAL_SPEED,
+	paceFrame,
+	runInstant,
+	SPEEDS,
+	START_CARRY
+} from './pace.ts';
 
 /**
  * The steps run at `rate` during `seconds`, by frames `interval` milliseconds apart, each one
@@ -17,6 +25,47 @@ function stepsRun(rate: number, interval: number, seconds = 1, jitter = 0): numb
 	}
 	return steps;
 }
+
+describe('the speeds', () => {
+	it('go from the slowest to Instant, the only one without animation', () => {
+		expect([...SPEEDS]).toEqual([...SPEEDS].sort((a, b) => a - b));
+		expect(SPEEDS.map(isInstant)).toEqual([false, false, false, false, true]);
+	});
+
+	it('hold the normal speed, which isn’t Instant', () => {
+		expect(SPEEDS).toContain(NORMAL_SPEED);
+		expect(isInstant(NORMAL_SPEED)).toBe(false);
+	});
+});
+
+describe('nearestSpeed', () => {
+	it.each(SPEEDS)('keeps the speed %d of the list', (speed) => {
+		expect(nearestSpeed(speed)).toBe(speed);
+	});
+
+	it('gives the speed nearest by its ratio, not by its difference', () => {
+		// 3 is at 1.5 times 2 and 1.67 times under 5; 12 is 8 over 5 and 8 under 20, and nearer to 20.
+		expect(nearestSpeed(3)).toBe(2);
+		expect(nearestSpeed(4)).toBe(5);
+		expect(nearestSpeed(12)).toBe(20);
+		expect(nearestSpeed(1.2)).toBe(1);
+	});
+
+	it('gives the slower of two speeds as near', () => {
+		// 10 is twice 5 and half 20.
+		expect(nearestSpeed(10)).toBe(5);
+	});
+
+	it('gives the ends of the list beyond them, and never Instant for a rate with an end', () => {
+		expect(nearestSpeed(0.1)).toBe(1);
+		expect(nearestSpeed(1000)).toBe(20);
+		expect(nearestSpeed(Number.MAX_VALUE)).toBe(20);
+	});
+
+	it.each([0, -2, -Infinity, NaN])('gives nothing for %d, which is no rate', (rate) => {
+		expect(nearestSpeed(rate)).toBeUndefined();
+	});
+});
 
 describe('paceFrame', () => {
 	it('runs the first step at the first frame', () => {

@@ -5,7 +5,8 @@
      and it wires the rest: the same for a level and for the sandbox. The code of each level is
      saved as the learner changes it, and comes back with the level, until **Restore starting
      code** puts the level back in its first state (see Code editor in specs.md). **Run** plays
-     that code on the map shown (see Running a program in specs.md). -->
+     that code on the map shown, at the speed of the settings, which **Run › Speed** chooses
+     (see Running a program in specs.md). -->
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import { differsFromStart, type LevelCode } from '#lib/code/code.ts';
@@ -17,6 +18,7 @@
 	import { t } from '#lib/i18n.ts';
 	import { loadFailed } from '#lib/page/startup.svelte.ts';
 	import { currentPlatform } from '#lib/platform.ts';
+	import { chooseSpeed, settings } from '#lib/settings/current-settings.svelte.ts';
 	import SettingsButton from '#lib/settings/settings-button.svelte';
 	import Confirmation from '#lib/shell/confirmation.svelte';
 	import { currentScreen } from '#lib/shell/current-screen.svelte.ts';
@@ -29,6 +31,7 @@
 	import MapBlock from './map-block.svelte';
 	import type { Playground } from './playground.ts';
 	import { Program } from './program.ts';
+	import type { SpeedSetting } from './speeds.ts';
 
 	/** A level has a number, the sandbox none. */
 	type Props = {
@@ -56,17 +59,33 @@
 	 * The program of the screen: the code of the editor, played on the map shown. A program of
 	 * its own for each map, made with it, so that the map never draws the program of another
 	 * one, and freed with its run once another one has taken its place or the screen closes; at
-	 * rest until **Run** or **Step**. An error of the bridge while it runs is one that the
-	 * application didn't foresee: the page says it, in place of the screen (see Error handling in
-	 * specs.md).
+	 * rest until **Run** or **Step**. It reads the speed of the settings at each of its frames,
+	 * so a speed chosen while it runs is followed at once. An error of the bridge while it runs
+	 * is one that the application didn't foresee: the page says it, in place of the screen (see
+	 * Error handling in specs.md).
 	 */
 	const program = kept(() => {
 		const ground = playground;
 		// Made out of the reach of the signals: only another map makes another program.
 		return (
-			ground && untrack(() => new Program(ground, () => editing?.text, { onBroken: loadFailed }))
+			ground &&
+			untrack(
+				() =>
+					new Program(ground, () => editing?.text, {
+						rate: () => settings.speed,
+						onBroken: loadFailed
+					})
+			)
 		);
 	});
+
+	/** The speed of the programs: a setting, which the menu **Run** reads and chooses. */
+	const speed: SpeedSetting = {
+		get current() {
+			return settings.speed;
+		},
+		choose: chooseSpeed
+	};
 
 	// A run is paused while a message takes the place of the screen, and stays so once the screen
 	// is back (see Error handling in specs.md).
@@ -139,7 +158,7 @@
 <ScreenShortcuts commands={Object.values(commands)} />
 <div class="level-screen">
 	<Header>
-		<MenuBar menus={levelMenus(screen, commands)} />
+		<MenuBar menus={levelMenus(screen, commands, speed)} />
 		<!-- The diamond is the mark of the sandbox. -->
 		<Place {title} icon={screen === 'sandbox' ? 'diamond' : undefined} />
 		<SettingsButton gear />

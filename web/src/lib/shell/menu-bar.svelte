@@ -6,19 +6,24 @@
      move no focus (a scroll bar). The rows of every menu stay in the page,
      hidden until their menu opens: a menu grows as it opens and goes back as it closes, by its
      styles alone. A row leads to a page, or runs a command of the screen (commands.ts), which
-     gives it its text, its shortcut and its state. -->
+     gives it its text, its shortcut and its state; or it opens beside it the choices of one
+     thing, the one in use marked (**Speed**), which follow the same rule: the choice lit holds
+     the focus, or else their row does. -->
 <script lang="ts">
 	import { flushSync } from 'svelte';
 	import { resolve } from '$app/paths';
 	import { t } from '#lib/i18n.ts';
+	import Icon from '#lib/icon.svelte';
 	import { currentPlatform } from '#lib/platform.ts';
 	import { spokenShortcut, type ScreenCommand } from './commands.ts';
 	import {
 		canChoose,
+		choicesOn,
 		closedOn,
 		openOn,
 		pressKey,
 		type BarState,
+		type Choice,
 		type Menu,
 		type SeparatorRow
 	} from './menus.ts';
@@ -30,6 +35,9 @@
 	const nameId = (menu: number) => `${id}-name-${menu}`;
 	const rowsId = (menu: number) => `${id}-rows-${menu}`;
 	const rowId = (menu: number, row: number) => `${id}-row-${menu}-${row}`;
+	const choicesId = (menu: number, row: number) => `${id}-choices-${menu}-${row}`;
+	const choiceId = (menu: number, row: number, choice: number) =>
+		`${id}-choice-${menu}-${row}-${choice}`;
 
 	const platform = currentPlatform();
 
@@ -77,7 +85,12 @@
 		set(next);
 		// The rows of a menu that opens must show before one of them can take the focus.
 		flushSync();
-		const holder = bar.open && bar.row !== null ? rowId(bar.menu, bar.row) : nameId(bar.menu);
+		const holder =
+			!bar.open || bar.row === null
+				? nameId(bar.menu)
+				: typeof bar.choice === 'number'
+					? choiceId(bar.menu, bar.row, bar.choice)
+					: rowId(bar.menu, bar.row);
 		moving = true;
 		try {
 			document.getElementById(holder)?.focus();
@@ -105,6 +118,17 @@
 		else go(closedOn(menu));
 	}
 
+	/**
+	 * The focus arrives on a choice the same way. The bar follows it while the choices of its row
+	 * show; else the name of the menu takes the focus, and the menu stays closed.
+	 */
+	function arriveAtChoice(menu: number, row: number, choice: number) {
+		if (moving) return;
+		const shown = bar.open && bar.menu === menu && bar.row === row && bar.choice !== undefined;
+		if (shown) set(choicesOn(menu, row, choice));
+		else go(closedOn(menu));
+	}
+
 	/** Moves the bar after the pointer, which a move alone doesn't tell from the keyboard. */
 	function point(next: BarState) {
 		keys = false;
@@ -118,6 +142,29 @@
 	function hover(menu: number, row: number | null) {
 		// The row that the keys lit loses its ring under the pointer.
 		if (keys || bar.row !== row) point({ menu, open: true, row });
+	}
+
+	/**
+	 * The pointer moves over a row that offers choices, or presses it: they show beside it, none
+	 * lit, and stay there until another row is lit.
+	 */
+	function showChoices(menu: number, row: number) {
+		if (keys || bar.row !== row || bar.choice !== null) point(choicesOn(menu, row, null));
+	}
+
+	/** The pointer moves over a choice: it is lit. */
+	function hoverChoice(menu: number, row: number, choice: number) {
+		if (keys || bar.choice !== choice) point(choicesOn(menu, row, choice));
+	}
+
+	/**
+	 * The pointer leaves a menu: no row stays lit, but the one whose choices show, which stay
+	 * open with none of them lit.
+	 */
+	function unlight(menu: number) {
+		if (bar.row === null) return;
+		if (bar.choice === undefined) point(openOn(menu));
+		else if (bar.choice !== null) point(choicesOn(menu, bar.row, null));
 	}
 
 	/**
@@ -158,6 +205,12 @@
 		command.run();
 	}
 
+	/** Takes a choice, as a click on it does: the menu closes first. */
+	function choose(menu: number, choice: Choice) {
+		leave(menu);
+		choice.choose();
+	}
+
 	function onkeydown(event: KeyboardEvent) {
 		if (event.ctrlKey || event.altKey || event.metaKey) return;
 		const outcome = pressKey(bar, event.key, menus, event.repeat);
@@ -165,7 +218,9 @@
 		if ('runs' in outcome) {
 			event.preventDefault();
 			// A row runs by its own click, which also closes its menu, as under the mouse.
-			document.getElementById(rowId(bar.menu, outcome.runs))?.click();
+			const { runs, choice } = outcome;
+			const ran = choice === undefined ? rowId(bar.menu, runs) : choiceId(bar.menu, runs, choice);
+			document.getElementById(ran)?.click();
 		} else {
 			if (!outcome.passes) event.preventDefault();
 			go(outcome.state);
@@ -249,7 +304,7 @@
 				aria-labelledby={nameId(m)}
 				hidden={!open}
 				onpointerleave={() => {
-					if (open && bar.row !== null) point(openOn(m));
+					if (open) unlight(m);
 				}}
 			>
 				{#each menu.rows as row, r (r)}
@@ -290,6 +345,57 @@
 								<ShortcutKeys shortcut={command.shortcut} />
 							{/if}
 						</button>
+					{:else if row.kind === 'choices'}
+						{@const shown = open && bar.row === r && bar.choice !== undefined}
+						<!-- The row and its choices in one box, which places them beside it. -->
+						<div class="beside" role="none">
+							<!-- It stays lit while one of its choices holds the focus. -->
+							<button
+								type="button"
+								class="row"
+								class:shown
+								role="menuitem"
+								id={rowId(m, r)}
+								tabindex="-1"
+								aria-haspopup="menu"
+								aria-expanded={shown}
+								aria-controls={choicesId(m, r)}
+								onclick={() => showChoices(m, r)}
+								onpointermove={() => showChoices(m, r)}
+								onfocus={() => arrive(m, r)}
+								{onkeydown}
+							>
+								{row.label}
+								<span class="mark"><Icon name="chevron" size={12} /></span>
+							</button>
+							<div
+								class="rows choices"
+								role="menu"
+								id={choicesId(m, r)}
+								aria-labelledby={rowId(m, r)}
+								hidden={!shown}
+							>
+								{#each row.choices as choice, c (choice.id)}
+									<button
+										type="button"
+										class="row"
+										role="menuitemradio"
+										id={choiceId(m, r, c)}
+										tabindex="-1"
+										aria-checked={choice.chosen}
+										onclick={() => choose(m, choice)}
+										onpointermove={() => hoverChoice(m, r, c)}
+										onfocus={() => arriveAtChoice(m, r, c)}
+										{onkeydown}
+									>
+										{choice.label}
+										{#if choice.chosen}
+											<span class="mark"><Icon name="check" size={12} /></span>
+										{/if}
+									</button>
+								{/each}
+							</div>
+						</div>
 					{:else if row.kind === 'here'}
 						<span
 							class="row here"
@@ -378,6 +484,22 @@
 		transition: none;
 	}
 
+	/* The choices of a row open beside it, against the right edge of its menu, the first one on
+	   the line of their row: up by the room that a menu keeps above its first row. They grow as a
+	   menu does, and are gone at once, as in the mock-up: their menu may be closing around them. */
+	.beside {
+		position: relative;
+	}
+
+	.choices {
+		top: calc(-1 * var(--space-4));
+		left: 100%;
+	}
+
+	.choices[hidden] {
+		transition: none;
+	}
+
 	@media (prefers-reduced-motion: reduce) {
 		.rows {
 			transition: none;
@@ -404,6 +526,13 @@
 		cursor: default;
 	}
 
+	/* What ends a row in place of a shortcut, in the color of what comes second: the arrow of a
+	   row that opens its choices, the mark of the choice in use. */
+	.mark {
+		display: flex;
+		color: var(--weak);
+	}
+
 	/* A row whose command can't run now is greyed, its shortcut with it: the color of what comes
 	   second, paler still. The 55% is the one of the mock-up, tuned by eye. */
 	.off {
@@ -418,9 +547,11 @@
 	}
 
 	/* One row is lit at a time, the one that holds the focus: under the pointer, or chosen with
-	   the keys. The row of the screen already shown is lit as well, as if already chosen. */
+	   the keys. The row of the screen already shown is lit as well, as if already chosen, and so
+	   is the row whose choices show, while one of them holds the focus. */
 	.row:focus,
-	.here {
+	.here,
+	.shown {
 		background: var(--hover);
 	}
 

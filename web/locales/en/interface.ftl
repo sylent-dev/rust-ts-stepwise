@@ -63,6 +63,20 @@ command-resume = Resume
 command-step = Step
 command-reset = Reset
 
+## The speed of a program, which the menu **Run** chooses, and later the status bar.
+
+# The row of the menu **Run** that opens the speeds.
+speed-name = Speed
+# A speed, named by the steps of the program that it runs each second.
+# $steps (Number): the steps per second.
+speed-steps =
+    { $steps ->
+        [one] { $steps } step per second
+       *[other] { $steps } steps per second
+    }
+# The fastest speed: as many steps as the browser allows, without animation.
+speed-instant = Instant
+
 ## The keys that a shortcut names by a word, written beside its command: `key-<name>`
 ## (`keyMessage`). A letter, a sign, an arrow and a function key (F10) are shown as they are.
 

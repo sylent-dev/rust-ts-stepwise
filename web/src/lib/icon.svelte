@@ -17,6 +17,8 @@
 	const shapes: Record<IconName, Snippet> = {
 		'arrow-down': arrowDown,
 		'arrow-up': arrowUp,
+		check,
+		chevron,
 		close,
 		diamond,
 		gear
@@ -29,6 +31,14 @@
 
 {#snippet arrowUp()}
 	<path d="M8 13.2V2.8M3.8 7 8 2.8 12.2 7" />
+{/snippet}
+
+{#snippet check()}
+	<path d="m3 8.5 3.2 3.2L13 4.8" />
+{/snippet}
+
+{#snippet chevron()}
+	<path d="m6 3.5 4.5 4.5L6 12.5" />
 {/snippet}
 
 {#snippet close()}
