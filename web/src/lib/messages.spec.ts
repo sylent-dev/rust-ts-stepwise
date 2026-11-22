@@ -15,10 +15,9 @@ import {
 	type TermReference
 } from '@fluent/syntax';
 import { describe, expect, it } from 'vitest';
-import { benchPrograms, programMessage } from '#lib/bench/bench-programs.ts';
 import { ERROR_PARTS, ERROR_SUBJECTS, errorMessage } from '#lib/errors/error-text.ts';
-import { commandMessage, LEVEL_COMMANDS } from '#lib/level-screen/level-commands.ts';
-import { LEVEL_PARTS, levelMessage, levels, SANDBOX } from '#lib/levels/levels.ts';
+import { COMMAND_TEXTS, commandMessage } from '#lib/level-screen/level-commands.ts';
+import { LEVEL_PARTS, levelMessage, levels } from '#lib/levels/levels.ts';
 import { themeMessage, THEMES } from '#lib/settings/settings.ts';
 import { KEY_NAMES, keyMessage } from '#lib/shell/commands.ts';
 import { adviceMessage, WINDOW_ADVICES } from '#lib/shell/window-size.ts';
@@ -38,24 +37,13 @@ const FAMILIES: Readonly<Record<string, { prefix: string; names: readonly string
 	},
 	themeMessage: { prefix: 'theme-', names: THEMES.map(themeMessage) },
 	adviceMessage: { prefix: 'window-advice-', names: WINDOW_ADVICES.map(adviceMessage) },
-	commandMessage: { prefix: 'command-', names: LEVEL_COMMANDS.map(commandMessage) },
+	commandMessage: { prefix: 'command-', names: COMMAND_TEXTS.map(commandMessage) },
 	keyMessage: { prefix: 'key-', names: KEY_NAMES.map(keyMessage) },
 	errorMessage: {
 		prefix: 'error-',
 		names: ERROR_SUBJECTS.flatMap((subject) =>
 			ERROR_PARTS.map((part) => errorMessage(subject, part))
 		)
-	},
-	programMessage: {
-		prefix: 'bench-program-',
-		// A program of the bench may play on several maps: its message is counted once.
-		names: [
-			...new Set(
-				[...levels.map(({ name }) => name), SANDBOX]
-					.flatMap(benchPrograms)
-					.map(({ name }) => programMessage(name))
-			)
-		]
 	}
 };
 

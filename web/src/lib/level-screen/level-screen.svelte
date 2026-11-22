@@ -1,23 +1,25 @@
 <!-- The level screen, and the sandbox, the level screen without goal (see Level screen in
      specs.md): under its header, the code on the left on the whole height, the map on top on the
      right, the console and the variables under it. The blocks meet without any line, each zone in
-     its own tone; the panels come with the running (step 17). A route gives it what it plays on,
+     its own tone; the panels come with the console (step 17e). A route gives it what it plays on,
      and it wires the rest: the same for a level and for the sandbox. The code of each level is
      saved as the learner changes it, and comes back with the level, until **Restore starting
-     code** puts the level back in its first state (see Code editor in specs.md). -->
+     code** puts the level back in its first state (see Code editor in specs.md). **Run** plays
+     that code on the map shown (see Running a program in specs.md). -->
 <script lang="ts">
-	import Bench from '#lib/bench/bench.svelte';
+	import { untrack } from 'svelte';
 	import { differsFromStart, type LevelCode } from '#lib/code/code.ts';
 	import { keepCode, openingCode, restoreCode } from '#lib/code/current-code.ts';
+	import { kept } from '#lib/core/core-ready.svelte.ts';
 	import CodeEditor from '#lib/editor/code-editor.svelte';
 	import type { Editing } from '#lib/editor/edits.ts';
 	import { errorText } from '#lib/errors/error-text.ts';
 	import { t } from '#lib/i18n.ts';
-	import type { Scene } from '#lib/map/scene.ts';
+	import { loadFailed } from '#lib/page/startup.svelte.ts';
 	import { currentPlatform } from '#lib/platform.ts';
-	import type { Playback } from '#lib/run/playback.svelte.ts';
 	import SettingsButton from '#lib/settings/settings-button.svelte';
 	import Confirmation from '#lib/shell/confirmation.svelte';
+	import { currentScreen } from '#lib/shell/current-screen.svelte.ts';
 	import Header from '#lib/shell/header.svelte';
 	import MenuBar from '#lib/shell/menu-bar.svelte';
 	import Place from '#lib/shell/place.svelte';
@@ -26,6 +28,7 @@
 	import { levelMenus, type LevelScreenKind } from './level-menus.ts';
 	import MapBlock from './map-block.svelte';
 	import type { Playground } from './playground.ts';
+	import { Program } from './program.ts';
 
 	/** A level has a number, the sandbox none. */
 	type Props = {
@@ -46,14 +49,30 @@
 
 	let { screen, title, playground, number }: Props = $props();
 
-	/** The program played on the map. */
-	let playback = $state.raw<Playback>();
-
-	/** What the map draws: the program played, or the world at rest before any program. */
-	const scene = $derived<Scene | undefined>(playback ?? playground);
-
 	/** The editor shown; nothing until the core is ready. */
 	let editing = $state.raw<Editing>();
+
+	/**
+	 * The program of the screen: the code of the editor, played on the map shown. A program of
+	 * its own for each map, made with it, so that the map never draws the program of another
+	 * one, and freed with its run once another one has taken its place or the screen closes; at
+	 * rest until **Run** or **Step**. An error of the bridge while it runs is one that the
+	 * application didn't foresee: the page says it, in place of the screen (see Error handling in
+	 * specs.md).
+	 */
+	const program = kept(() => {
+		const ground = playground;
+		// Made out of the reach of the signals: only another map makes another program.
+		return (
+			ground && untrack(() => new Program(ground, () => editing?.text, { onBroken: loadFailed }))
+		);
+	});
+
+	// A run is paused while a message takes the place of the screen, and stays so once the screen
+	// is back (see Error handling in specs.md).
+	$effect(() => {
+		if (!currentScreen.shows) program.current?.pause();
+	});
 
 	/** Whether the confirmation of **Restore starting code** shows. */
 	let restoring = $state(false);
@@ -80,7 +99,8 @@
 			},
 			confirmRestore: () => {
 				restoring = true;
-			}
+			},
+			program: () => program.current
 		},
 		currentPlatform()
 	);
@@ -92,11 +112,13 @@
 	}
 
 	/**
-	 * Puts the level shown back in its first state, once the learner has confirmed: its code is
-	 * forgotten, and the editor opens again on its starting code, with nothing to undo.
+	 * Puts the level shown back in its first state, once the learner has confirmed: its program
+	 * ends, as by **Reset**, its code is forgotten, and the editor opens again on its starting
+	 * code, with nothing to undo.
 	 */
 	function restore() {
 		if (!playground) return;
+		program.current?.reset();
 		restoreCode(playground.name);
 		editing?.reopen(playground.startingCode);
 	}
@@ -127,28 +149,23 @@
 			{#if playground}
 				<!-- One editor per level, whichever of its maps is shown: the code belongs to the
 				     level, which its name tells from the others. It opens on the code saved for the
-				     level, read once as the editor is made. -->
+				     level, read once as the editor is made. Its code can't be changed while its
+				     program runs or is paused. -->
 				{#key playground.name}
 					<CodeEditor
 						text={openingCode(playground.name, playground.startingCode).text}
 						explain={errorText}
+						locked={program.current?.locked}
 						bind:editing
 						onchange={keep}
 					/>
 				{/key}
 			{/if}
 		</div>
-		<div class="map"><MapBlock {scene} goals={playground?.goals} /></div>
-		<!-- Until the running (step 17), the zone of the panels holds the bench of the animations:
-		     short programs of its own, not the code of the editor, played by the core on the map
-		     of the screen. A bench of its own for each map, whose runs start on it. -->
-		<div class="panels">
-			{#if playground}
-				{#key playground}
-					<Bench {playground} bind:playback />
-				{/key}
-			{/if}
-		</div>
+		<div class="map"><MapBlock scene={program.current?.played} goals={playground?.goals} /></div>
+		<!-- The zone of the console and of the variables, empty until they come (steps 17e and
+		     19). -->
+		<div class="panels"></div>
 	</main>
 </div>
 <Confirmation

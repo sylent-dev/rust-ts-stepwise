@@ -3,6 +3,7 @@
 
 import { type Edit, type Editing, EDITS } from '#lib/editor/edits.ts';
 import type { CommandTarget } from './level-commands.ts';
+import type { ProgramControls, RunAction } from './program.ts';
 
 /** An editor that can do the given edits, and remembers the ones it was asked. */
 export function editorFor(able: readonly Edit[] = EDITS): Editing & { asked: Edit[] } {
@@ -17,12 +18,32 @@ export function editorFor(able: readonly Edit[] = EDITS): Editing & { asked: Edi
 }
 
 /**
- * What a screen gives its commands: the editor shown, if any, and whether its code has something
- * to restore. It counts the confirmations it was asked to open.
+ * A program that stands where a test puts it (`action`, `canStep`), and remembers what it was
+ * asked.
+ */
+export function programFor(
+	action: RunAction = 'run',
+	canStep = true
+): ProgramControls & { action: RunAction; canStep: boolean; asked: string[] } {
+	const asked: string[] = [];
+	return {
+		asked,
+		action,
+		canStep,
+		runOrPause: () => asked.push('runOrPause'),
+		step: () => asked.push('step'),
+		reset: () => asked.push('reset')
+	};
+}
+
+/**
+ * What a screen gives its commands: the editor shown, if any, whether its code has something
+ * to restore, and its program, if any. It counts the confirmations it was asked to open.
  */
 export function screenWith(
 	editing: () => Editing | undefined = () => undefined,
-	restorable = false
+	restorable = false,
+	program: () => ProgramControls | undefined = () => undefined
 ): CommandTarget & { confirmations: number } {
 	const screen = {
 		confirmations: 0,
@@ -30,7 +51,8 @@ export function screenWith(
 		canRestore: () => restorable,
 		confirmRestore: () => {
 			screen.confirmations += 1;
-		}
+		},
+		program
 	};
 	return screen;
 }

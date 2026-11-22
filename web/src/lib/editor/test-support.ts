@@ -80,6 +80,18 @@ export function press(state: EditorState, key: string, shift = false): EditorSta
 }
 
 /**
+ * Whether the editor takes a key, rather than leaves it to the browser: one of its bindings
+ * says so, whether it changes anything or not.
+ */
+export function takes(state: EditorState, key: string, shift = false): boolean {
+	const { view } = standIn(state);
+	return state
+		.facet(keymap)
+		.flat()
+		.some((binding) => binding.key === key && (shift ? binding.shift : binding.run)?.(view));
+}
+
+/**
  * The state after characters are typed one by one: each is given to the input handlers in the
  * order of the editor, and written as it is when none takes it. `at` places one text elsewhere
  * than at the selection, as a text that isn't typed at the cursor arrives.

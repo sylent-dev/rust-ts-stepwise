@@ -10,7 +10,7 @@ import { t } from '#lib/i18n.ts';
 import type { Platform } from '#lib/platform.ts';
 
 /** A key that writes no character, named as a keyboard event names it (`key`). */
-export type NamedKey = 'ArrowUp' | 'ArrowDown';
+export type NamedKey = 'ArrowUp' | 'ArrowDown' | 'Enter' | 'F10';
 
 /** The keys held with the key of a shortcut. */
 interface Held {
@@ -35,19 +35,28 @@ interface Held {
 export type Shortcut = Held & ({ character: string } | { key: NamedKey });
 
 /**
- * A command of a screen. What changes with the screen (`enabled`, and later a text that follows
- * the run) is a getter, read each time: a command is given as it is, never copied, since a copy
- * (`{ ...command }`) would keep the values of the moment.
+ * A command of a screen. What changes with the screen (`enabled`, and the text of **Run**, which
+ * follows the program) is a getter, read each time: a command is given as it is, never copied,
+ * since a copy (`{ ...command }`) would keep the values of the moment.
  */
 export interface ScreenCommand {
 	/** Its name in the code, the same in every language: `undo`. */
 	id: string;
-	/** Its text, in a menu as on a tip. */
-	label: string;
+	/**
+	 * Its text, in a menu as on a tip. One command may change its text with what it does now
+	 * (**Run**, **Pause**, **Resume**): what shows it reads it again.
+	 */
+	readonly label: string;
 	/** Its shortcut, the one that the interface shows. */
 	shortcut?: Shortcut;
 	/** The shortcuts that run it too, shown nowhere: a habit from another editor. */
 	alsoHeard?: readonly Shortcut[];
+	/**
+	 * Whether its shortcut held down runs it again at each repeat of the keyboard, as a code
+	 * editor repeats **Undo**. Without it, a press runs the command once, however long it lasts:
+	 * **Run** held down would start and pause the program many times a second.
+	 */
+	repeats?: true;
 	/**
 	 * Whether it can run now: a row greyed otherwise, and a shortcut that does nothing. It
 	 * follows the state of the screen: what shows it reads it again.
@@ -63,6 +72,8 @@ export interface KeyPress {
 	shiftKey: boolean;
 	altKey: boolean;
 	metaKey: boolean;
+	/** Whether the keyboard repeats a key held down, rather than tells a new press. */
+	repeat: boolean;
 }
 
 /** Whether a character is the same in lowercase and in capitals: a sign, a digit. */
@@ -104,8 +115,17 @@ export function commandFor(
 	);
 }
 
+/**
+ * Whether a press runs the command that it names: one that can run now, and at the repeat of a
+ * key held down, one made to be repeated. The shortcut stays the one of the screen all the same:
+ * the listener keeps it from the browser whether the command runs or not.
+ */
+export function runsOn(press: KeyPress, command: ScreenCommand): boolean {
+	return command.enabled && (!press.repeat || command.repeats === true);
+}
+
 /** The keys that a shortcut names by a word, which a language may write its own way. */
-export const KEY_NAMES = ['ctrl', 'cmd', 'shift', 'alt'] as const;
+export const KEY_NAMES = ['ctrl', 'cmd', 'shift', 'alt', 'enter'] as const;
 
 /** A key named by a word. */
 export type KeyName = (typeof KEY_NAMES)[number];
@@ -119,17 +139,29 @@ export function keyMessage(key: KeyName): string {
 export type KeyPart = { text: string } | { icon: IconName };
 
 /**
- * How each key without a character is shown. An arrow is drawn, as the one printed on the key:
- * the character `↑` reads as a circumflex accent in a small text.
+ * How a key without a character is shown. An arrow is drawn, as the one printed on the key: the
+ * character `↑` reads as a circumflex accent in a small text. Enter has its name in each
+ * language, and a function key is written as it is printed.
  */
-const NAMED_KEYS = {
-	ArrowUp: { icon: 'arrow-up' },
-	ArrowDown: { icon: 'arrow-down' }
-} satisfies Record<NamedKey, KeyPart>;
+function namedKey(key: NamedKey): KeyPart {
+	switch (key) {
+		case 'ArrowUp':
+			return { icon: 'arrow-up' };
+		case 'ArrowDown':
+			return { icon: 'arrow-down' };
+		case 'Enter':
+			return { text: t(keyMessage('enter')) };
+		case 'F10':
+			return { text: key };
+	}
+}
+
+/** A key held with the key of a shortcut, by its name. */
+type HeldKey = Exclude<KeyName, 'enter'>;
 
 /** The keys held for a shortcut on this computer, in the order they are said: Ctrl, Shift, Alt. */
-function heldKeys(shortcut: Shortcut, platform: Platform): KeyName[] {
-	const held: KeyName[] = [];
+function heldKeys(shortcut: Shortcut, platform: Platform): HeldKey[] {
+	const held: HeldKey[] = [];
 	if (shortcut.ctrl) held.push(platform === 'mac' ? 'cmd' : 'ctrl');
 	if (shortcut.shift) held.push('shift');
 	if (shortcut.alt) held.push('alt');
@@ -143,7 +175,7 @@ function heldKeys(shortcut: Shortcut, platform: Platform): KeyName[] {
 export function keyParts(shortcut: Shortcut, platform: Platform): KeyPart[] {
 	return [
 		...heldKeys(shortcut, platform).map((key) => ({ text: t(keyMessage(key)) })),
-		'key' in shortcut ? NAMED_KEYS[shortcut.key] : { text: shortcut.character.toUpperCase() }
+		'key' in shortcut ? namedKey(shortcut.key) : { text: shortcut.character.toUpperCase() }
 	];
 }
 
@@ -153,7 +185,7 @@ const SPOKEN_KEYS = {
 	cmd: 'Meta',
 	shift: 'Shift',
 	alt: 'Alt'
-} satisfies Record<KeyName, string>;
+} satisfies Record<HeldKey, string>;
 
 /**
  * A shortcut as a screen reader is told it (`aria-keyshortcuts`): the names of the keys as a

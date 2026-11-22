@@ -3,8 +3,7 @@
 ### https://projectfluent.org/fluent/guide/
 ###
 ### One file per domain, all read into one bundle (src/lib/i18n.ts): this one for the interface,
-### `levels.ftl` for what the levels say, `errors.ftl` for the errors of the checks, `bench.ftl`
-### for the bench of the animations.
+### `levels.ftl` for what the levels say, `errors.ftl` for the errors of the checks.
 ###
 ### The names. A test reads the code and these files, and holds what follows
 ### (src/lib/messages.spec.ts).
@@ -43,6 +42,7 @@ screen-manual = Manual
 menus-name = Menus
 menu-level = Level
 menu-edit = Edit
+menu-run = Run
 menu-help = Help
 
 ## The commands of the level screen and of the sandbox, as a row of a menu names them, and later
@@ -56,15 +56,22 @@ command-redo = Redo
 command-comment-lines = Comment lines
 command-move-line-up = Move line up
 command-move-line-down = Move line down
+# The same command while no program runs, while one runs, and while one is paused.
+command-run = Run
+command-pause = Pause
+command-resume = Resume
+command-step = Step
+command-reset = Reset
 
 ## The keys that a shortcut names by a word, written beside its command: `key-<name>`
-## (`keyMessage`). A letter, a sign and an arrow are shown as they are.
+## (`keyMessage`). A letter, a sign, an arrow and a function key (F10) are shown as they are.
 
 key-ctrl = Ctrl
 # The key of the shortcuts on a computer of Apple, in place of Ctrl.
 key-cmd = Cmd
 key-shift = Shift
 key-alt = Alt
+key-enter = Enter
 
 ## The settings: the panel, which a header opens by its name or by a gear.
 

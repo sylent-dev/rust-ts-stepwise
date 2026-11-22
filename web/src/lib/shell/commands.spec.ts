@@ -4,6 +4,7 @@ import {
 	KEY_NAMES,
 	keyMessage,
 	keyParts,
+	runsOn,
 	spokenShortcut,
 	type KeyPress,
 	type ScreenCommand,
@@ -15,14 +16,15 @@ function command(id: string, keys: Partial<ScreenCommand> = {}): ScreenCommand {
 	return { id, label: id, enabled: true, run: () => {}, ...keys };
 }
 
-/** A press of a key, with the keys held written as a keyboard event has them. */
+/** A new press of a key, with the keys held written as a keyboard event has them. */
 function press(key: string, ...held: ('ctrl' | 'shift' | 'alt' | 'meta')[]): KeyPress {
 	return {
 		key,
 		ctrlKey: held.includes('ctrl'),
 		shiftKey: held.includes('shift'),
 		altKey: held.includes('alt'),
-		metaKey: held.includes('meta')
+		metaKey: held.includes('meta'),
+		repeat: false
 	};
 }
 
@@ -36,8 +38,11 @@ const comment = command('comment', {
 	alsoHeard: [{ character: '/', ctrl: true }]
 });
 const lineUp = command('line-up', { shortcut: { key: 'ArrowUp', alt: true } });
+const run = command('run', { shortcut: { key: 'Enter', ctrl: true } });
+const reset = command('reset', { shortcut: { key: 'Enter', ctrl: true, shift: true } });
+const step = command('step', { shortcut: { key: 'F10' } });
 const silent = command('silent');
-const commands = [silent, undo, redo, comment, lineUp];
+const commands = [silent, undo, redo, comment, lineUp, run, reset, step];
 
 /** The name of the command that a press names on a computer that isn't one of Apple. */
 const named = (pressed: KeyPress) => commandFor(pressed, commands, 'other')?.id;
@@ -72,6 +77,15 @@ describe('commandFor', () => {
 
 	it('compares Shift for a key that writes no character', () => {
 		expect(named(press('ArrowUp', 'alt', 'shift'))).toBeUndefined();
+		expect(named(press('Enter', 'ctrl'))).toBe('run');
+		expect(named(press('Enter', 'ctrl', 'shift'))).toBe('reset');
+	});
+
+	it('hears a function key pressed alone, and Enter only with its held keys', () => {
+		expect(named(press('F10'))).toBe('step');
+		expect(named(press('F10', 'ctrl'))).toBeUndefined();
+		expect(named(press('Enter'))).toBeUndefined();
+		expect(named(press('Enter', 'shift'))).toBeUndefined();
 	});
 
 	it('hears nothing in a key pressed alone, nor with another key held than its own', () => {
@@ -113,6 +127,29 @@ describe('commandFor', () => {
 	});
 });
 
+describe('runsOn', () => {
+	const held: KeyPress = { ...press('z', 'ctrl'), repeat: true };
+
+	it('runs a command at a new press of its shortcut', () => {
+		expect(runsOn(press('z', 'ctrl'), undo)).toBe(true);
+	});
+
+	it('runs a command once, however long its shortcut is held down', () => {
+		expect(runsOn(held, undo)).toBe(false);
+	});
+
+	it('runs a command made to be repeated at each repeat of a key held down', () => {
+		expect(runsOn(held, command('undo', { repeats: true }))).toBe(true);
+	});
+
+	it('runs no command that can’t run now, repeated or not', () => {
+		const off = command('undo', { enabled: false, repeats: true });
+
+		expect(runsOn(press('z', 'ctrl'), off)).toBe(false);
+		expect(runsOn(held, off)).toBe(false);
+	});
+});
+
 describe('keyParts', () => {
 	const shown = (shortcut: Shortcut, platform: 'mac' | 'other' = 'other') =>
 		keyParts(shortcut, platform).map((part) => ('icon' in part ? `<${part.icon}>` : part.text));
@@ -126,6 +163,12 @@ describe('keyParts', () => {
 	it('draws an arrow', () => {
 		expect(shown({ key: 'ArrowUp', alt: true })).toEqual(['Alt', '<arrow-up>']);
 		expect(shown({ key: 'ArrowDown', alt: true })).toEqual(['Alt', '<arrow-down>']);
+	});
+
+	it('names Enter, and writes a function key as it is printed', () => {
+		expect(shown({ key: 'Enter', ctrl: true, shift: true })).toEqual(['Ctrl', 'Shift', 'Enter']);
+		expect(shown({ key: 'Enter', ctrl: true }, 'mac')).toEqual(['Cmd', 'Enter']);
+		expect(shown({ key: 'F10' })).toEqual(['F10']);
 	});
 
 	it('names Cmd in place of Ctrl on a computer of Apple', () => {
@@ -144,11 +187,21 @@ describe('spokenShortcut', () => {
 		expect(spokenShortcut({ character: 'z', ctrl: true, shift: true }, 'mac')).toBe('Meta+Shift+Z');
 		expect(spokenShortcut({ character: ':', ctrl: true }, 'other')).toBe('Control+:');
 		expect(spokenShortcut({ key: 'ArrowDown', alt: true }, 'other')).toBe('Alt+ArrowDown');
+		expect(spokenShortcut({ key: 'Enter', ctrl: true, shift: true }, 'other')).toBe(
+			'Control+Shift+Enter'
+		);
+		expect(spokenShortcut({ key: 'F10' }, 'mac')).toBe('F10');
 	});
 });
 
 describe('keyMessage', () => {
 	it('names the message of each key', () => {
-		expect(KEY_NAMES.map(keyMessage)).toEqual(['key-ctrl', 'key-cmd', 'key-shift', 'key-alt']);
+		expect(KEY_NAMES.map(keyMessage)).toEqual([
+			'key-ctrl',
+			'key-cmd',
+			'key-shift',
+			'key-alt',
+			'key-enter'
+		]);
 	});
 });

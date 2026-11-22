@@ -14,16 +14,18 @@ import {
 	type Shortcut
 } from '#lib/shell/commands.ts';
 import { commandMessage, LEVEL_COMMANDS, levelCommands } from './level-commands.ts';
-import { editorFor, screenWith } from './test-support.ts';
+import type { ProgramControls } from './program.ts';
+import { editorFor, programFor, screenWith } from './test-support.ts';
 
-/** A press of a key, with the keys held written as a keyboard event has them. */
+/** A new press of a key, with the keys held written as a keyboard event has them. */
 function press(key: string, ...held: ('ctrl' | 'shift' | 'alt' | 'meta')[]): KeyPress {
 	return {
 		key,
 		ctrlKey: held.includes('ctrl'),
 		shiftKey: held.includes('shift'),
 		altKey: held.includes('alt'),
-		metaKey: held.includes('meta')
+		metaKey: held.includes('meta'),
+		repeat: false
 	};
 }
 
@@ -84,13 +86,90 @@ describe('levelCommands', () => {
 			'Redo',
 			'Comment lines',
 			'Move line up',
-			'Move line down'
+			'Move line down',
+			'Run',
+			'Step',
+			'Reset'
 		]);
 	});
 
 	it('names the message of a command', () => {
 		expect(commandMessage('move-line-up')).toBe('command-move-line-up');
+		expect(commandMessage('pause')).toBe('command-pause');
 	});
+
+	it('names Run by what it does now: Run, Pause while a program runs, Resume once paused', () => {
+		const program = programFor();
+		const { run } = levelCommands(
+			screenWith(undefined, false, () => program),
+			'other'
+		);
+
+		expect(run.label).toBe('Run');
+		program.action = 'pause';
+		expect(run.label).toBe('Pause');
+		program.action = 'resume';
+		expect(run.label).toBe('Resume');
+	});
+
+	it('asks the program of the screen for Run, Step and Reset', () => {
+		const program = programFor();
+		const commands = levelCommands(
+			screenWith(undefined, false, () => program),
+			'other'
+		);
+
+		commands.run.run();
+		commands.step.run();
+		commands.reset.run();
+
+		expect(program.asked).toEqual(['runOrPause', 'step', 'reset']);
+	});
+
+	it('can step unless the program runs, and can always run and reset', () => {
+		const program = programFor('pause', false);
+		const commands = levelCommands(
+			screenWith(undefined, false, () => program),
+			'other'
+		);
+		const able = () => (['run', 'step', 'reset'] as const).filter((name) => commands[name].enabled);
+
+		expect(able()).toEqual(['run', 'reset']);
+		program.canStep = true;
+		expect(able()).toEqual(['run', 'step', 'reset']);
+	});
+
+	it('follows the program of the map shown', () => {
+		let shown: (ProgramControls & { asked: string[] }) | undefined;
+		const commands = levelCommands(
+			screenWith(undefined, false, () => shown),
+			'other'
+		);
+		const first = programFor();
+
+		expect(commands.run.enabled).toBe(false);
+		shown = first;
+		expect(commands.run.enabled).toBe(true);
+		shown = programFor();
+		commands.run.run();
+
+		expect(first.asked).toEqual([]);
+		expect(shown.asked).toEqual(['runOrPause']);
+	});
+
+	it.each(PLATFORMS)(
+		'runs again, at a key held down, what a code editor repeats on %s',
+		(platform) => {
+			const commands = levelCommands(screenWith(), platform);
+
+			expect(LEVEL_COMMANDS.filter((name) => commands[name].repeats)).toEqual([
+				'undo',
+				'redo',
+				'move-line-up',
+				'move-line-down'
+			]);
+		}
+	);
 
 	it.each(EDITS)('asks the editor shown for %s', (name) => {
 		const editor = editorFor();
@@ -104,7 +183,7 @@ describe('levelCommands', () => {
 		expect(editor.asked).toEqual([name]);
 	});
 
-	it('can run what the editor has something to do for, and nothing else', () => {
+	it('can run what the editor has something to do for, and nothing else without a program', () => {
 		const commands = levelCommands(
 			screenWith(() => editorFor(['redo', 'comment-lines'])),
 			'other'
@@ -116,12 +195,12 @@ describe('levelCommands', () => {
 		]);
 	});
 
-	it('can run nothing while the screen has no editor, and asks nothing', () => {
+	it('can run nothing while the screen has neither editor nor program, and asks nothing', () => {
 		const commands = levelCommands(screenWith(), 'other');
 
 		expect(LEVEL_COMMANDS.filter((name) => commands[name].enabled)).toEqual([]);
 		expect(() => {
-			commands.undo.run();
+			for (const name of LEVEL_COMMANDS) commands[name].run();
 		}).not.toThrow();
 	});
 
@@ -178,8 +257,22 @@ describe('levelCommands', () => {
 			'Ctrl+Y',
 			'Ctrl+:',
 			'Alt+arrow-up',
-			'Alt+arrow-down'
+			'Alt+arrow-down',
+			'Ctrl+Enter',
+			'F10',
+			'Ctrl+Shift+Enter'
 		]);
+	});
+
+	it('hears Ctrl+Enter for Run and Ctrl+Shift+Enter for Reset, Cmd on a computer of Apple', () => {
+		const commands = levelCommands(screenWith(), 'other');
+		const all = Object.values(commands);
+
+		expect(commandFor(press('Enter', 'ctrl'), all, 'other')).toBe(commands.run);
+		expect(commandFor(press('Enter', 'ctrl', 'shift'), all, 'other')).toBe(commands.reset);
+		expect(commandFor(press('F10'), all, 'other')).toBe(commands.step);
+		expect(commandFor(press('Enter'), all, 'other')).toBeUndefined();
+		expect(shownKeys(levelCommands(screenWith(), 'mac').run, 'mac')).toBe('Cmd+Enter');
 	});
 
 	it('hears Ctrl+Y and Ctrl+Shift+Z for Redo', () => {

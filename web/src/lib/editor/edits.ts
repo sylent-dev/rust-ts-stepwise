@@ -58,8 +58,13 @@ const COMMANDS = {
 	'move-line-down': moveLineDown
 } satisfies Record<Edit, StateCommand>;
 
-/** Whether an edit has something to do in this state: nothing to undo before the first change. */
+/**
+ * Whether an edit has something to do in this state: nothing to undo before the first change,
+ * and nothing at all in a code that can't be changed, while its program runs or is paused
+ * (lock.ts).
+ */
 export function canEdit(edit: Edit, state: EditorState): boolean {
+	if (state.readOnly) return false;
 	switch (edit) {
 		case 'undo':
 			return undoDepth(state) > 0;

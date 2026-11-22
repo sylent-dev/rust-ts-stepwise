@@ -170,6 +170,8 @@ Settled at step 16d (2026-11-21): the code is saved at each change, in the handl
 
 ### Step 17: the edges of `Playback`
 
+Settled at step 17a (2026-11-22), as sketched below (see Execution in `docs/technical-choices.md`): the run is optional, the `Playback` asks for its own frames, one private function runs a step and tells the line printed (`onPrinted`), the speed is read from outside, and `status` has a name for each case. What the sketch became: the check before running lives in `Program` (`level-screen/program.ts`), the program of a screen, which the commands ask; `status` tells `ended`, a program that ran to its end as the core says it, from `failed`, and `stopped` is either, while `RunEnd` keeps its name, the end that the robot shows of a program that ended; **Step**, from stopped, only starts the program (decided with the owner). Left to their steps: `pausesBefore` and `calls()` (19), the vocabulary of `map/motion.ts` apart from its poses (18).
+
 The engine is right and tested: one clock for the steps and their animations, `timeAt`, `now` and `lessMotion` injected, 38 tests through the public API and `tick(time)`. Five assumptions come from the bench (`web/src/lib/run/playback.svelte.ts`):
 
 1. **A run always exists.** The constructor and `reset()` call `start()` (`:116`, `:170`), which throws for a program with errors; and the map at rest comes from `playback.world` alone. With the editor, the map shows while the code has errors, and **Reset** after a change of the code would throw.

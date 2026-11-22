@@ -5,7 +5,7 @@
      panel, which keeps the keys. -->
 <script lang="ts">
 	import { currentPlatform } from '#lib/platform.ts';
-	import { commandFor, type ScreenCommand } from './commands.ts';
+	import { commandFor, runsOn, type ScreenCommand } from './commands.ts';
 	import { currentScreen } from './current-screen.svelte.ts';
 
 	let { commands }: { commands: readonly ScreenCommand[] } = $props();
@@ -20,10 +20,10 @@
 		// A panel over the screen is the dialog of the browser, shown as a modal. The page is
 		// asked for a shortcut alone, not at each key typed in the code.
 		if (document.querySelector('dialog:modal')) return;
-		// The shortcut of a command that can't run now stays ours: the browser does nothing else
-		// with it.
+		// The shortcut of a command that doesn't run at this press, greyed or held down, stays
+		// ours: the browser does nothing else with it.
 		event.preventDefault();
-		if (command.enabled) command.run();
+		if (runsOn(event, command)) command.run();
 	}
 </script>
 

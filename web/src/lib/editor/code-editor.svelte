@@ -11,6 +11,7 @@
 	import type { Explain } from './checks.ts';
 	import { followEditing } from './editing.svelte.ts';
 	import type { Editing } from './edits.ts';
+	import { lockOf, setLock } from './lock.ts';
 	import { editorSetup } from './setup.ts';
 
 	interface Props {
@@ -21,6 +22,11 @@
 		 * as the editor is made.
 		 */
 		explain: Explain;
+		/**
+		 * Whether the code can't be changed: while its program runs or is paused. The cursor
+		 * still moves in it.
+		 */
+		locked?: boolean;
 		/** The editor shown, for the commands of the screen; nothing once it has gone. */
 		editing?: Editing;
 		/**
@@ -31,7 +37,7 @@
 		onchange?: () => void;
 	}
 
-	let { text, explain, editing = $bindable(), onchange }: Props = $props();
+	let { text, explain, locked = false, editing = $bindable(), onchange }: Props = $props();
 
 	/** Makes the editor in its block, and takes it away with it. */
 	function mount(block: HTMLElement): () => void {
@@ -49,18 +55,28 @@
 				if (update.docChanged) onchange?.();
 			})
 		];
-		const view = new EditorView({
-			parent: block,
-			state: EditorState.create({ doc: untrack(() => text), extensions })
-		});
+		/** A state of the editor on a text, its code locked or not as the screen says now. */
+		const stateOn = (doc: string) =>
+			EditorState.create({ doc, extensions: [extensions, lockOf(untrack(() => locked))] });
+		const view = new EditorView({ parent: block, state: stateOn(untrack(() => text)) });
 		// A new state, rather than a change of the text: the history starts again with it. The
 		// editor keeps its page, so the keyboard stays in the code if it was there.
 		const { editing: own, follow } = followEditing(view, (reopened) => {
-			view.setState(EditorState.create({ doc: reopened, extensions }));
+			view.setState(stateOn(reopened));
 		});
 		editing = own;
+		// The lock follows the screen, in an effect of its own: read here, it would make the
+		// editor again at each change.
+		$effect(() => {
+			if (view.state.readOnly !== locked) view.dispatch(setLock(locked));
+		});
 		return () => {
-			// The editor of the next level may have taken its place already.
+			// The editor of the next level may have taken its place already. Read in a cleanup,
+			// `editing` is as it was before the changes of the batch (see `kept` in
+			// core/core-ready.svelte.ts): this sees an editor that took the place in an earlier
+			// batch, never one of this batch. It holds as the screen makes its editors: Svelte
+			// takes away the editor of a level before it makes the one of the next, which writes
+			// `editing` after this.
 			if (editing === own) editing = undefined;
 			view.destroy();
 		};
