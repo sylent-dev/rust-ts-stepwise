@@ -71,7 +71,12 @@
 			if (view.state.readOnly !== locked) view.dispatch(setLock(locked));
 		});
 		return () => {
-			// The editor of the next level may have taken its place already.
+			// The editor of the next level may have taken its place already. Read in a cleanup,
+			// `editing` is as it was before the changes of the batch (see `kept` in
+			// core/core-ready.svelte.ts): this sees an editor that took the place in an earlier
+			// batch, never one of this batch. It holds as the screen makes its editors: Svelte
+			// takes away the editor of a level before it makes the one of the next, which writes
+			// `editing` after this.
 			if (editing === own) editing = undefined;
 			view.destroy();
 		};

@@ -64,8 +64,10 @@ export interface PlaybackOptions {
 	/**
 	 * Told that a step threw, at a frame or at a **Step**, with what it threw. A step never
 	 * throws: the errors of a program are its outcome, so this is an error of the bridge, or of
-	 * what reads a step here, which the screen can only say. The program has stopped by then, and
-	 * the error goes on to who asked for the step, or to the browser, which writes it.
+	 * what reads a step here, which the screen can only say. The program no longer runs by then,
+	 * and the error goes on to who asked for the step, or to the browser, which writes it. What
+	 * it shows may be a step behind its run, whose step ran before it threw, and nothing reads the
+	 * run again, which may throw once more: the program is to leave, not to resume.
 	 */
 	onBroken?: (error: unknown) => void;
 	/**

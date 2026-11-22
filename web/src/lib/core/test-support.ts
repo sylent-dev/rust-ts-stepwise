@@ -7,22 +7,26 @@ import { fileURLToPath } from 'node:url';
 import { initSync } from '#lib/wasm/stepwise.js';
 
 /**
+ * The path of a file, from the folder of this module. Joined by hand: in a test compiled as for
+ * a browser (`*.svelte.spec.ts`), Vite turns `new URL('…', import.meta.url)` into the address of
+ * a file of the website, which Node can't read.
+ */
+function fileFromHere(...parts: string[]): string {
+	return join(dirname(fileURLToPath(import.meta.url)), ...parts);
+}
+
+/**
  * Loads the WebAssembly module, before the tests of a file call anything of the core. A browser
  * fetches the module (`loadCore`); a test reads its file, built by `npm run wasm`, which
  * `npm test` runs first.
- *
- * Its path is joined by hand: in a test compiled as for a browser (`*.svelte.spec.ts`), Vite
- * turns `new URL('…', import.meta.url)` into the address of a file of the website, which Node
- * can't read.
  */
 export function loadTestCore(): void {
-	const folder = dirname(fileURLToPath(import.meta.url));
-	initSync({ module: readFileSync(join(folder, '..', 'wasm', 'stepwise_bg.wasm')) });
+	initSync({ module: readFileSync(fileFromHere('..', 'wasm', 'stepwise_bg.wasm')) });
 }
 
 /** The text of a file of `web/levels/`, by its stable name: a level, or `sandbox`. */
 export function levelFile(name: string): string {
-	return readFileSync(new URL(`../../../levels/${name}.toml`, import.meta.url), 'utf8');
+	return readFileSync(fileFromHere('..', '..', '..', 'levels', `${name}.toml`), 'utf8');
 }
 
 /** The file of a level without starting code, from the body of each of its `[[maps]]` tables. */

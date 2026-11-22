@@ -60,6 +60,43 @@ describe('kept', () => {
 		expect([first?.freed, second?.freed]).toEqual([1, 1]);
 	});
 
+	it('frees an object read, then replaced, before the effects ran', () => {
+		let text = $state('one');
+		let kept: { readonly current: Kept | undefined } | undefined;
+		const leave = $effect.root(() => {
+			kept = keep(() => new Kept(text));
+		});
+		flushSync();
+		const first = kept?.current;
+
+		// No effect ever sees the second one: it is made by this reading, then replaced.
+		text = 'two';
+		const second = kept?.current;
+		text = 'three';
+		flushSync();
+		const third = kept?.current;
+		expect([second?.text, third?.text]).toEqual(['two', 'three']);
+		expect([first?.freed, second?.freed, third?.freed]).toEqual([1, 1, 0]);
+
+		leave();
+		expect([first?.freed, second?.freed, third?.freed]).toEqual([1, 1, 1]);
+	});
+
+	it('frees an object made after the last time the effects ran, once the component leaves', () => {
+		let text = $state('one');
+		let kept: { readonly current: Kept | undefined } | undefined;
+		const leave = $effect.root(() => {
+			kept = keep(() => new Kept(text));
+		});
+		flushSync();
+		const first = kept?.current;
+
+		text = 'two';
+		const second = kept?.current;
+		leave();
+		expect([first?.freed, second?.freed]).toEqual([1, 1]);
+	});
+
 	it('gives nothing while `make` gives nothing, and frees what it gave before', () => {
 		let shown = $state(true);
 		let kept: { readonly current: Kept | undefined } | undefined;
