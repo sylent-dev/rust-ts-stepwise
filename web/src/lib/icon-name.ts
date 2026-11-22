@@ -3,4 +3,15 @@
 
 /** The name of an icon. */
 export type IconName =
-	'arrow-down' | 'arrow-up' | 'check' | 'chevron' | 'close' | 'diamond' | 'gear';
+	| 'arrow-down'
+	| 'arrow-up'
+	| 'check'
+	| 'chevron'
+	| 'close'
+	| 'diamond'
+	| 'gear'
+	| 'next'
+	| 'pause'
+	| 'play'
+	| 'reset'
+	| 'step';

@@ -2,7 +2,11 @@
      setup.ts, with our look. It opens on a text and keeps its own document from then on, until
      the screen opens it again on another (`reopen` of `Editing`): the screen shows one editor
      per level, made again when the level changes. Made once the core has loaded, which gives the
-     code its colors. -->
+     code its colors. It shows the lines of a run that the screen gives it (run-lines.ts).
+
+     `--below`, the room under the last line of the code, so that what floats in the corner of
+     the editor hides no line once the code has scrolled to its end: the padding of the code by
+     default. -->
 <script lang="ts">
 	import { EditorState } from '@codemirror/state';
 	import { EditorView } from '@codemirror/view';
@@ -12,7 +16,9 @@
 	import { followEditing } from './editing.svelte.ts';
 	import type { Editing } from './edits.ts';
 	import { lockOf, setLock } from './lock.ts';
+	import { type RunLine, showLine } from './run-lines.ts';
 	import { editorSetup } from './setup.ts';
+	import { isTyped } from './typing.ts';
 
 	interface Props {
 		/** The code that the editor opens on; a change of it later is not followed. */
@@ -27,6 +33,16 @@
 		 * still moves in it.
 		 */
 		locked?: boolean;
+		/**
+		 * The line of the next step of the program, lit; nothing while no program waits on a
+		 * step. The code scrolls just enough for it to be seen as it changes.
+		 */
+		next?: number | undefined;
+		/**
+		 * The line where an error stopped the program, marked; nothing once the screen takes it
+		 * away. It stays on its line while the code changes around it, and goes with its line.
+		 */
+		failed?: number | undefined;
 		/** The editor shown, for the commands of the screen; nothing once it has gone. */
 		editing?: Editing;
 		/**
@@ -35,9 +51,23 @@
 		 * it again.
 		 */
 		onchange?: () => void;
+		/**
+		 * Says that the learner typed in the code: a character written or erased, a line
+		 * broken, an indentation (`isTyped`). Not a line moved nor a change undone.
+		 */
+		ontype?: () => void;
 	}
 
-	let { text, explain, locked = false, editing = $bindable(), onchange }: Props = $props();
+	let {
+		text,
+		explain,
+		locked = false,
+		next,
+		failed,
+		editing = $bindable(),
+		onchange,
+		ontype
+	}: Props = $props();
 
 	/** Makes the editor in its block, and takes it away with it. */
 	function mount(block: HTMLElement): () => void {
@@ -53,22 +83,42 @@
 			EditorView.updateListener.of((update) => {
 				follow(update.state);
 				if (update.docChanged) onchange?.();
+				if (update.transactions.some(isTyped)) ontype?.();
 			})
 		];
 		/** A state of the editor on a text, its code locked or not as the screen says now. */
 		const stateOn = (doc: string) =>
 			EditorState.create({ doc, extensions: [extensions, lockOf(untrack(() => locked))] });
 		const view = new EditorView({ parent: block, state: stateOn(untrack(() => text)) });
+		/** Shows a line of the run as the screen gives it now, unless it stands there already. */
+		const showNow = (line: RunLine, at: number | undefined) => {
+			const shown = showLine(view.state, line, at);
+			if (shown) view.dispatch(shown);
+		};
 		// A new state, rather than a change of the text: the history starts again with it. The
-		// editor keeps its page, so the keyboard stays in the code if it was there.
+		// editor keeps its page, so the keyboard stays in the code if it was there. A new state
+		// has no line of a run: they come back as the screen gives them, whatever it did before.
 		const { editing: own, follow } = followEditing(view, (reopened) => {
 			view.setState(stateOn(reopened));
+			untrack(() => {
+				showNow('next', next);
+				showNow('failed', failed);
+			});
 		});
 		editing = own;
 		// The lock follows the screen, in an effect of its own: read here, it would make the
 		// editor again at each change.
 		$effect(() => {
 			if (view.state.readOnly !== locked) view.dispatch(setLock(locked));
+		});
+		// The lines of the run too, each as the screen changes it. A line that the code carried
+		// elsewhere, or took away, stays so until the screen gives another one: the next **Run**
+		// or **Reset**, which always takes the line away before an error gives it again.
+		$effect(() => {
+			showNow('next', next);
+		});
+		$effect(() => {
+			showNow('failed', failed);
 		});
 		return () => {
 			// The editor of the next level may have taken its place already. Read in a cleanup,
@@ -91,10 +141,11 @@
 	   block of the editor and under `.cm-editor`, so that each rule wins over the one it
 	   replaces, wherever CodeMirror puts its style sheet. */
 	.editor {
-		/* The margin of the numbers of the lines, as wide as in the mock-up: room for a
-		   breakpoint and the arrow of the next step (steps 17 and 19) left of a number of three
-		   figures. */
+		/* The margin of the numbers of the lines, as wide as in the mock-up, of which the marks
+		   of a run take the first 21 pixels: room for the arrow of the next step, 6 pixels from
+		   the edge as in the mock-up, left of a number of three figures. */
 		--margin: 52px;
+		--marks: 21px;
 		height: 100%;
 		/* CodeMirror stacks what it draws with figures of its own (200 for its margin): an order
 		   inside the block, which is never compared with the layers of the page. */
@@ -122,7 +173,7 @@
 		/* The thin line at the 80th column, drawn behind the code: it scrolls with it, and
 		   stands past the width of the editor on a small window. */
 		.cm-editor .cm-content {
-			padding: var(--space-12) 0;
+			padding: var(--space-12) 0 var(--below, var(--space-12));
 			background-image: linear-gradient(var(--hover), var(--hover));
 			background-repeat: no-repeat;
 			background-position: calc(var(--space-12) + 80ch) 0;
@@ -142,9 +193,52 @@
 		/* A number sits 9 pixels from the code side of the margin and is a little smaller than
 		   the code, both tuned by eye on the mock-up. */
 		.cm-editor .cm-lineNumbers .cm-gutterElement {
-			min-width: var(--margin);
+			min-width: calc(var(--margin) - var(--marks));
 			padding: 0 9px 0 0;
 			font-size: 0.88em;
+		}
+
+		/* The marks of a run, before the numbers: an icon of 13 pixels in the middle of its
+		   line. */
+		.cm-editor .run-marks {
+			width: var(--marks);
+		}
+
+		.cm-editor .run-marks .cm-gutterElement {
+			display: flex;
+			align-items: center;
+			padding-left: var(--space-6);
+		}
+
+		/* The line of the next step, and the one where an error stopped the program: lit on the
+		   whole width of the code and of its margin, its number in the strong weight. The arrow
+		   of the next step in amber, the cross of an error in red, as its number. */
+		.cm-editor .cm-line.run-next,
+		.cm-editor .cm-gutterElement.run-next {
+			background: var(--current);
+		}
+
+		.cm-editor .cm-line.run-failed,
+		.cm-editor .cm-gutterElement.run-failed {
+			background: var(--error-soft);
+		}
+
+		.cm-editor .cm-lineNumbers .cm-gutterElement.run-next {
+			color: var(--text);
+			font-weight: var(--weight-code-strong);
+		}
+
+		.cm-editor .cm-lineNumbers .cm-gutterElement.run-failed {
+			color: var(--error);
+			font-weight: var(--weight-code-strong);
+		}
+
+		.cm-editor .run-mark.run-next {
+			color: var(--accent-text);
+		}
+
+		.cm-editor .run-mark.run-failed {
+			color: var(--error);
 		}
 
 		/* The cursor: 2 pixels wide, on the place between two characters. */

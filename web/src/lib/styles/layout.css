@@ -7,6 +7,9 @@
 	/* What is clicked in a band, a text or an icon in its square: the fill under the pointer
 	   leaves 8 pixels of the header above it and under it. */
 	--band-item-height: 30px;
+	/* The side of a control that floats over the code, as in the mock-up: the three of a
+	   program. The code gives them room past its last line. */
+	--control-side: 44px;
 
 	/* The layers, from the lowest to the highest: where a block stands over the screen, as a
 	   `z-index`. They are only compared with each other; a new one takes its place in this
