@@ -4,7 +4,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { loadSettings, saveSettings, SETTINGS_KEY } from '#lib/settings/saved-settings.ts';
-import { THEMES } from '#lib/settings/settings.ts';
+import { DEFAULT_SETTINGS, THEMES } from '#lib/settings/settings.ts';
 import { openStore, type Backend } from '#lib/storage/store.ts';
 import { memoryBackend } from '#lib/storage/test-support.ts';
 import page from '../../app.html?raw';
@@ -72,7 +72,7 @@ describe('the script of the page', () => {
 				() => storage,
 				() => {}
 			),
-			{ theme }
+			{ ...DEFAULT_SETTINGS, theme }
 		);
 		expect(themeAfter(storage)).toBe(theme);
 	});

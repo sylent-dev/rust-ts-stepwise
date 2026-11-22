@@ -16,6 +16,15 @@ export function chooseTheme(theme: Theme): void {
 	saveSettings(store, current);
 }
 
+/**
+ * Chooses a speed, in steps per second, one of the list (`SPEEDS` in run/pace.ts): a program
+ * that runs follows it at its next frame, and it is saved.
+ */
+export function chooseSpeed(speed: number): void {
+	current.speed = speed;
+	saveSettings(store, current);
+}
+
 /** Takes the settings as the browser holds them now: another tab has just saved them. */
 export function followSavedSettings(): void {
 	Object.assign(current, loadSettings(store));

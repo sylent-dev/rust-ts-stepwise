@@ -8,6 +8,29 @@ export const SPEEDS = [1, 2, 5, 20, Infinity] as const;
 /** The speed of a first visit, the normal speed, in steps per second. */
 export const NORMAL_SPEED = 2;
 
+/** Whether a speed is **Instant**: as many steps as the browser allows, without animation. */
+export function isInstant(speed: number): boolean {
+	return !Number.isFinite(speed);
+}
+
+/**
+ * The speed of the list nearest to a rate, in steps per second: what a speed chosen under
+ * another list becomes, so that a change of the list keeps the choice of the learner as closely
+ * as it can. Nearest by the ratio of the two, as a speed is felt: 3 is nearer to 2 than to 5,
+ * and half-way the slower one is taken. A rate that isn't **Instant** never becomes it, however
+ * fast: only **Instant** runs without animation. Nothing for what is no rate at all (zero,
+ * less, not a number).
+ */
+export function nearestSpeed(rate: number): number | undefined {
+	if (!(rate > 0)) return undefined;
+	if (isInstant(rate)) return Infinity;
+	const apart = (speed: number) => Math.abs(Math.log(speed / rate));
+	return SPEEDS.filter((speed) => !isInstant(speed)).reduce<number | undefined>(
+		(nearest, speed) => (nearest === undefined || apart(speed) < apart(nearest) ? speed : nearest),
+		undefined
+	);
+}
+
 /**
  * The share of a step owed at an animated speed, carried from a frame to the next. A run starts
  * with a whole step owed, so that its first step runs at its first frame.
@@ -38,8 +61,15 @@ export function paceFrame(
  * usual program, 0.6 ms when each line prints twenty values, and up to 9 ms for lines nobody
  * writes by hand (190 values printed, a hundred texts joined on one line). The page then draws
  * one frame in two at worst and still answers: the batch stays as it is.
+ *
+ * A prime number, so that a loop without end is seen running: a frame stops on a whole number
+ * of batches, and with a round one (1,000 until step 17b) every frame stopped on the same step
+ * of any loop whose turn takes 2, 4, 5, 8 or 10 steps, the robot never seen moving while it
+ * turned thousands of times (measured by the review of the animations of step 17b). With a
+ * prime, where a frame stops in the loop follows the number of its batches, which the clock
+ * makes different from a frame to the next.
  */
-const BATCH = 1000;
+export const BATCH = 997;
 
 /**
  * At **Instant**, runs steps until `budget` milliseconds have passed since `start`, so that the

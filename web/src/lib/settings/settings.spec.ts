@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { NORMAL_SPEED, SPEEDS } from '#lib/run/pace.ts';
 import { DEFAULT_SETTINGS, isTheme, THEMES } from './settings.ts';
 
 describe('the themes', () => {
@@ -9,5 +10,12 @@ describe('the themes', () => {
 
 	it('have Day Desk as the one of a first visit', () => {
 		expect(DEFAULT_SETTINGS.theme).toBe('day-desk');
+	});
+});
+
+describe('the speed', () => {
+	it('is the normal one at a first visit, a speed of the list', () => {
+		expect(DEFAULT_SETTINGS.speed).toBe(NORMAL_SPEED);
+		expect(SPEEDS).toContain(DEFAULT_SETTINGS.speed);
 	});
 });

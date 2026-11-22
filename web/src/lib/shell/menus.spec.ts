@@ -2,10 +2,15 @@ import { describe, expect, it } from 'vitest';
 import type { ScreenCommand } from './commands.ts';
 import {
 	canChoose,
+	choicesOn,
 	closedOn,
+	litChoice,
 	openOn,
+	pointerLeft,
 	pressKey,
+	showsChoices,
 	type BarState,
+	type Choice,
 	type Menu,
 	type MenuRow
 } from './menus.ts';
@@ -77,6 +82,10 @@ describe('canChoose', () => {
 
 	it('never chooses the line between two groups of rows', () => {
 		expect(canChoose({ kind: 'separator' })).toBe(false);
+	});
+
+	it('always chooses a row that offers choices', () => {
+		expect(canChoose({ kind: 'choices', id: 'speed', label: 'Speed', choices: [] })).toBe(true);
 	});
 });
 
@@ -238,5 +247,195 @@ describe('pressKey, a menu of commands', () => {
 
 		expect(pressKey(on(0, 1), 'ArrowDown', between)).toEqual({ state: on(0, 2) });
 		expect(pressKey(on(0, 1), 'ArrowUp', between)).toEqual({ state: on(0, 0) });
+	});
+});
+
+describe('pressKey, a row of choices', () => {
+	/** Choices named by their letters, the one at `inUse` marked, if any. */
+	function choices(letters: string, inUse?: number): Choice[] {
+		// eslint-disable-next-line @typescript-eslint/no-misused-spread -- the choices are written in ASCII: one letter, one choice
+		return [...letters].map((label, index) => ({
+			id: label,
+			label,
+			chosen: index === inUse,
+			choose: () => {}
+		}));
+	}
+
+	/** Run, a line, then Speed with five speeds, the second one in use; and Help beside. */
+	const speeds = (inUse?: number): Menu[] => [
+		{
+			id: 'run',
+			name: 'Run',
+			rows: [
+				commandRow('run'),
+				{ kind: 'separator' },
+				{ kind: 'choices', id: 'speed', label: 'Speed', choices: choices('abcde', inUse) }
+			]
+		},
+		menu('Help', 'g')
+	];
+	const bar = speeds(1);
+	const SPEED = 2;
+
+	it('reaches the row with the arrows, as any row to choose, its choices closed', () => {
+		expect(pressKey(on(0, 0), 'ArrowDown', bar)).toEqual({ state: on(0, SPEED) });
+		expect(pressKey(closedOn(0), 'ArrowUp', bar)).toEqual({ state: on(0, SPEED) });
+		expect(on(0, SPEED).choice).toBeUndefined();
+	});
+
+	it.each(['ArrowRight', 'Enter', ' '])('opens its choices on the one in use with %j', (key) => {
+		expect(pressKey(on(0, SPEED), key, bar)).toEqual({ state: choicesOn(0, SPEED, 1) });
+	});
+
+	it('opens its choices on the first one when none is in use', () => {
+		expect(pressKey(on(0, SPEED), 'ArrowRight', speeds())).toEqual({
+			state: choicesOn(0, SPEED, 0)
+		});
+	});
+
+	it.each(['ArrowRight', 'Enter', ' '])(
+		'enters with %j the choices that the pointer opened, none lit yet',
+		(key) => {
+			expect(pressKey(choicesOn(0, SPEED, null), key, bar)).toEqual({
+				state: choicesOn(0, SPEED, 1)
+			});
+		}
+	);
+
+	it.each(['Enter', ' '])('opens nothing while %j is held down and repeats', (key) => {
+		// The press opened the menu on this row: its repeats must not open the choices, then take one.
+		expect(pressKey(on(0, SPEED), key, bar, true)).toEqual({ state: on(0, SPEED) });
+		expect(pressKey(choicesOn(0, SPEED, 1), key, bar, true)).toEqual({
+			state: choicesOn(0, SPEED, 1)
+		});
+	});
+
+	it('goes down and up the choices, the last one before the first', () => {
+		expect(pressKey(choicesOn(0, SPEED, 1), 'ArrowDown', bar)).toEqual({
+			state: choicesOn(0, SPEED, 2)
+		});
+		expect(pressKey(choicesOn(0, SPEED, 4), 'ArrowDown', bar)).toEqual({
+			state: choicesOn(0, SPEED, 0)
+		});
+		expect(pressKey(choicesOn(0, SPEED, 0), 'ArrowUp', bar)).toEqual({
+			state: choicesOn(0, SPEED, 4)
+		});
+	});
+
+	it('goes to the first and the last choice with Home and End', () => {
+		expect(pressKey(choicesOn(0, SPEED, 2), 'Home', bar)).toEqual({
+			state: choicesOn(0, SPEED, 0)
+		});
+		expect(pressKey(choicesOn(0, SPEED, 2), 'End', bar)).toEqual({
+			state: choicesOn(0, SPEED, 4)
+		});
+	});
+
+	it.each(['Enter', ' '])('takes the lit choice with %j', (key) => {
+		expect(pressKey(choicesOn(0, SPEED, 3), key, bar)).toEqual({ runs: SPEED, choice: 3 });
+	});
+
+	it.each(['ArrowLeft', 'Escape'])(
+		'leaves the choices for their row with %j, the menu staying open',
+		(key) => {
+			expect(pressKey(choicesOn(0, SPEED, 3), key, bar)).toEqual({ state: on(0, SPEED) });
+		}
+	);
+
+	it('opens the menu beside with the arrow right, from a choice', () => {
+		expect(pressKey(choicesOn(0, SPEED, 3), 'ArrowRight', bar)).toEqual({ state: on(1, 0) });
+	});
+
+	it('closes everything with Tab, which the browser still handles', () => {
+		expect(pressKey(choicesOn(0, SPEED, 3), 'Tab', bar)).toEqual({
+			state: closedOn(0),
+			passes: true
+		});
+	});
+
+	it('acts on the row while no choice is lit: the pointer only opened them', () => {
+		const shown = choicesOn(0, SPEED, null);
+
+		expect(pressKey(shown, 'ArrowUp', bar)).toEqual({ state: on(0, 0) });
+		expect(pressKey(shown, 'ArrowDown', bar)).toEqual({ state: on(0, 0) });
+		expect(pressKey(shown, 'Home', bar)).toEqual({ state: on(0, 0) });
+		expect(pressKey(shown, 'ArrowLeft', bar)).toEqual({ state: on(1, 0) });
+		expect(pressKey(shown, 'Escape', bar)).toEqual({ state: closedOn(0) });
+	});
+
+	it('closes the choices when the keys leave their row', () => {
+		const left = pressKey(choicesOn(0, SPEED, null), 'ArrowUp', bar);
+		expect(left && 'state' in left ? left.state.choice : null).toBeUndefined();
+	});
+
+	it('leaves the other keys to the browser, among the choices too', () => {
+		expect(pressKey(choicesOn(0, SPEED, 3), 'a', bar)).toBeUndefined();
+	});
+
+	it('opens a row without a choice on none, and takes none', () => {
+		const empty: Menu[] = [
+			{
+				id: 'run',
+				name: 'Run',
+				rows: [{ kind: 'choices', id: 'speed', label: 'Speed', choices: [] }]
+			}
+		];
+
+		expect(pressKey(on(0, 0), 'ArrowRight', empty)).toEqual({ state: choicesOn(0, 0, null) });
+		expect(pressKey(choicesOn(0, 0, null), 'Enter', empty)).toEqual({
+			state: choicesOn(0, 0, null)
+		});
+	});
+
+	it('walks the speeds: open the menu, reach the row, enter, choose, take', () => {
+		const states = ['ArrowUp', 'ArrowRight', 'ArrowDown', 'ArrowDown'].reduce((from, key) => {
+			const outcome = pressKey(from, key, bar);
+			if (!outcome || 'runs' in outcome) throw new Error(`${key} moves nothing`);
+			return outcome.state;
+		}, closedOn(0));
+
+		expect(states).toEqual(choicesOn(0, SPEED, 3));
+		expect(pressKey(states, 'Enter', bar)).toEqual({ runs: SPEED, choice: 3 });
+	});
+});
+
+describe('the choices of a row, as the bar holds them', () => {
+	it('show once their row is lit with them, one of them lit or none', () => {
+		expect(showsChoices(choicesOn(0, 2, null))).toBe(true);
+		expect(showsChoices(choicesOn(0, 2, 0))).toBe(true);
+		expect(showsChoices(on(0, 2))).toBe(false);
+		expect(showsChoices(openOn(0))).toBe(false);
+		expect(showsChoices(closedOn(0))).toBe(false);
+	});
+
+	it('never show on a bar that is closed, or without a lit row', () => {
+		expect(showsChoices({ menu: 0, open: false, row: null, choice: 1 })).toBe(false);
+		expect(showsChoices({ menu: 0, open: true, row: null, choice: 1 })).toBe(false);
+	});
+
+	it('have one lit, the first one too, or none', () => {
+		expect(litChoice(choicesOn(0, 2, 0))).toBe(0);
+		expect(litChoice(choicesOn(0, 2, 3))).toBe(3);
+		expect(litChoice(choicesOn(0, 2, null))).toBeUndefined();
+		expect(litChoice(on(0, 2))).toBeUndefined();
+		expect(litChoice({ menu: 0, open: false, row: null, choice: 1 })).toBeUndefined();
+	});
+});
+
+describe('pointerLeft', () => {
+	it('leaves no row lit in a menu', () => {
+		expect(pointerLeft(on(1, 2))).toEqual(openOn(1));
+	});
+
+	it('keeps the choices open, their row lit and none of them lit', () => {
+		expect(pointerLeft(choicesOn(0, 2, 3))).toEqual(choicesOn(0, 2, null));
+		expect(pointerLeft(choicesOn(0, 2, 0))).toEqual(choicesOn(0, 2, null));
+	});
+
+	it('changes nothing where nothing is lit to put out: the same state', () => {
+		for (const state of [closedOn(1), openOn(1), choicesOn(0, 2, null)]) {
+			expect(pointerLeft(state)).toBe(state);
+		}
 	});
 });

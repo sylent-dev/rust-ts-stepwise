@@ -1,17 +1,22 @@
 import { describe, expect, it } from 'vitest';
+import { NORMAL_SPEED, SPEEDS } from '#lib/run/pace.ts';
 import { canChoose, type MenuRow } from '#lib/shell/menus.ts';
 import { LEVEL_COMMANDS, levelCommands } from './level-commands.ts';
 import { levelMenus, type LevelScreenKind } from './level-menus.ts';
-import { screenWith } from './test-support.ts';
+import { screenWith, speedAt } from './test-support.ts';
 
 /** The commands of a screen without an editor: none can run. */
 const commands = levelCommands(screenWith(), 'other');
+
+/** The speed of a first visit. */
+const speed = speedAt(NORMAL_SPEED);
 
 /** The name of a row in the code; `-` for the line between two groups. */
 function nameOf(row: MenuRow): string {
 	switch (row.kind) {
 		case 'link':
 		case 'here':
+		case 'choices':
 			return row.id;
 		case 'command':
 			return row.command.id;
@@ -22,7 +27,7 @@ function nameOf(row: MenuRow): string {
 
 /** The row of a screen, by the name of its menu and its own in the code. */
 function row(screen: LevelScreenKind, menu: string, name: string): MenuRow | undefined {
-	return levelMenus(screen, commands)
+	return levelMenus(screen, commands, speed)
 		.find((candidate) => candidate.id === menu)
 		?.rows.find((candidate) => nameOf(candidate) === name);
 }
@@ -30,11 +35,11 @@ function row(screen: LevelScreenKind, menu: string, name: string): MenuRow | und
 describe('levelMenus', () => {
 	it('gives a level and the sandbox the same menus and the same rows, in the same order', () => {
 		const names = (screen: LevelScreenKind) =>
-			levelMenus(screen, commands).map((menu) => [menu.id, ...menu.rows.map(nameOf)]);
+			levelMenus(screen, commands, speed).map((menu) => [menu.id, ...menu.rows.map(nameOf)]);
 		expect(names('level')).toEqual([
 			['level', 'all-levels', 'sandbox', '-', 'restore-starting-code'],
 			['edit', 'undo', 'redo', '-', 'comment-lines', 'move-line-up', 'move-line-down'],
-			['run', 'run', 'step', 'reset'],
+			['run', 'run', 'step', 'reset', '-', 'speed'],
 			['help', 'manual']
 		]);
 		expect(names('sandbox')).toEqual(names('level'));
@@ -60,7 +65,7 @@ describe('levelMenus', () => {
 	});
 
 	it('gives every command of the screen one row, which runs the command that the shortcuts hear', () => {
-		const rows = levelMenus('level', commands).flatMap((menu) =>
+		const rows = levelMenus('level', commands, speed).flatMap((menu) =>
 			menu.rows.flatMap((candidate) => (candidate.kind === 'command' ? [candidate.command] : []))
 		);
 
@@ -70,5 +75,24 @@ describe('levelMenus', () => {
 		for (const command of rows) {
 			expect(Object.values(commands)).toContain(command);
 		}
+	});
+
+	it('offers every speed beside the row Speed, which no state of the program greys', () => {
+		const offered = row('level', 'run', 'speed');
+		expect(offered && canChoose(offered)).toBe(true);
+		expect(offered?.kind === 'choices' ? offered.choices : []).toHaveLength(SPEEDS.length);
+	});
+
+	it('chooses the speed of the screen, and marks the one in use', () => {
+		const setting = speedAt(NORMAL_SPEED);
+		const offered = levelMenus('sandbox', commands, setting)
+			.find((menu) => menu.id === 'run')
+			?.rows.find((candidate) => candidate.kind === 'choices');
+		const choices = offered?.choices ?? [];
+
+		expect(choices.filter(({ chosen }) => chosen).map(({ id }) => id)).toEqual(['speed-2']);
+		choices.at(-1)?.choose();
+		expect(setting.current).toBe(Infinity);
+		expect(choices.filter(({ chosen }) => chosen).map(({ id }) => id)).toEqual(['speed-instant']);
 	});
 });

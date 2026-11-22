@@ -1,9 +1,10 @@
-// What the tests of the level screen share: what the screen gives its commands, and an editor
-// that stands for the one on its page. Used by the tests alone.
+// What the tests of the level screen share: what the screen gives its commands and its menus, and
+// an editor that stands for the one on its page. Used by the tests alone.
 
 import { type Edit, type Editing, EDITS } from '#lib/editor/edits.ts';
 import type { CommandTarget } from './level-commands.ts';
 import type { ProgramControls, RunAction } from './program.ts';
+import type { SpeedSetting } from './speeds.ts';
 
 /** An editor that can do the given edits, and remembers the ones it was asked. */
 export function editorFor(able: readonly Edit[] = EDITS): Editing & { asked: Edit[] } {
@@ -55,4 +56,15 @@ export function screenWith(
 		program
 	};
 	return screen;
+}
+
+/** A speed that stands for the setting: it starts at `speed`, and keeps the one chosen. */
+export function speedAt(speed: number): SpeedSetting & { current: number } {
+	const setting = {
+		current: speed,
+		choose: (chosen: number) => {
+			setting.current = chosen;
+		}
+	};
+	return setting;
 }

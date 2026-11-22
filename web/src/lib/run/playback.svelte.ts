@@ -15,7 +15,7 @@ import {
 	type Motion
 } from '#lib/map/motion.ts';
 import type { Scene } from '#lib/map/scene.ts';
-import { NORMAL_SPEED, paceFrame, runInstant, SPEEDS, START_CARRY } from './pace.ts';
+import { isInstant, NORMAL_SPEED, paceFrame, runInstant, SPEEDS, START_CARRY } from './pace.ts';
 
 /** The time an **Instant** frame spends running steps, so that the page still draws. */
 const INSTANT_BUDGET = 8;
@@ -297,7 +297,7 @@ export class Playback implements Scene {
 	 */
 	tick(time: number): boolean {
 		const rate = this.#rate();
-		const instant = !Number.isFinite(rate);
+		const instant = isInstant(rate);
 		// **Instant** draws no animation: while the program runs, the action under way ends at once,
 		// the last one too.
 		if (this.running && instant) this.#endMotion();

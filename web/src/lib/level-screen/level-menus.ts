@@ -4,6 +4,7 @@
 import { t } from '#lib/i18n.ts';
 import type { Menu, MenuRow } from '#lib/shell/menus.ts';
 import type { LevelCommand, LevelCommands } from './level-commands.ts';
+import { speedChoices, type SpeedSetting } from './speeds.ts';
 
 /**
  * The tab of the browser that shows the manual when a level opens it: always the same one, so
@@ -22,9 +23,14 @@ const SEPARATOR: MenuRow = { kind: 'separator' };
 
 /**
  * The menus of the header of a level, or of the sandbox. A row that runs a command takes it
- * from the commands of the screen, which the shortcuts read too.
+ * from the commands of the screen, which the shortcuts read too; **Speed** offers the speeds of
+ * `speed`, the setting as the screen reads it and chooses it.
  */
-export function levelMenus(screen: LevelScreenKind, commands: LevelCommands): Menu[] {
+export function levelMenus(
+	screen: LevelScreenKind,
+	commands: LevelCommands,
+	speed: SpeedSetting
+): Menu[] {
 	const command = (name: LevelCommand): MenuRow => ({ kind: 'command', command: commands[name] });
 	const sandbox: MenuRow =
 		screen === 'sandbox'
@@ -56,7 +62,13 @@ export function levelMenus(screen: LevelScreenKind, commands: LevelCommands): Me
 		{
 			id: 'run',
 			name: t('menu-run'),
-			rows: [command('run'), command('step'), command('reset')]
+			rows: [
+				command('run'),
+				command('step'),
+				command('reset'),
+				SEPARATOR,
+				{ kind: 'choices', id: 'speed', label: t('speed-name'), choices: speedChoices(speed) }
+			]
 		},
 		{
 			id: 'help',
