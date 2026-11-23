@@ -1,14 +1,16 @@
 // The code saved in the browser and the starting code given back (see Code editor in specs.md):
 // what the tests of Vitest hold of the storage, here with a page that reloads and a key that the
 // learner holds down.
-import { expect, test } from '@playwright/test';
 import {
 	codeOf,
 	codeText,
+	expect,
 	expectCode,
 	holdKey,
+	leanOn,
 	menuName,
 	openSandbox,
+	test,
 	writeCode
 } from './test-support.ts';
 
@@ -46,7 +48,7 @@ test('Restore starting code restores on a new press of Enter, and leaves nothing
 	expect(await codeText(page)).toBe(typed);
 
 	// A new press restores once let go: while it stays down, nothing happens.
-	for (let press = 0; press < 4; press += 1) await page.keyboard.down('Enter');
+	await leanOn(page, 'Enter');
 	await expect(confirmation).toBeVisible();
 	expect(await codeText(page)).toBe(typed);
 	await page.keyboard.up('Enter');
@@ -55,7 +57,7 @@ test('Restore starting code restores on a new press of Enter, and leaves nothing
 	await expect(codeOf(page)).toBeFocused();
 
 	// The code that was replaced can't come back.
-	await page.keyboard.press('Control+Z');
+	await page.keyboard.press('ControlOrMeta+Z');
 	expect(await codeText(page)).toBe(starting);
 	await menuName(page, 'Edit').click();
 	await expect(page.getByRole('menuitem', { name: /^Undo/ })).toHaveAttribute(

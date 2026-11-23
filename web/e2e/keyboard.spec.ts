@@ -1,13 +1,16 @@
 // The keyboard on the level screen (see Code editor and Level screen in specs.md): the way out of
 // the code that the panel of the shortcuts gives, and a key held down on a row of a menu.
-import { expect, test } from '@playwright/test';
 import {
 	codeOf,
 	codeText,
 	control,
+	expect,
 	holdKey,
+	lineOf,
 	menuName,
 	openSandbox,
+	shortcutKeys,
+	test,
 	writeCode
 } from './test-support.ts';
 
@@ -20,10 +23,7 @@ test('Escape, then Tab, leaves the code, as the panel of the shortcuts says', as
 	await menuName(page, 'Help').click();
 	await page.getByRole('menuitem', { name: 'Keyboard shortcuts' }).click();
 	const panel = page.getByRole('dialog', { name: 'Keyboard shortcuts' });
-	const way = panel.locator('dl > div').filter({
-		has: page.getByRole('term').filter({ hasText: 'Leave the editor' })
-	});
-	await expect(way.getByRole('definition')).toHaveText('Esc, then Tab');
+	await expect(shortcutKeys(panel, 'Leave the editor')).toHaveText('Esc, then Tab');
 	await page.keyboard.press('Escape');
 	await expect(panel).toBeHidden();
 	await expect(codeOf(page)).toBeFocused();
@@ -42,7 +42,7 @@ test('Escape, then Tab, leaves the code, as the panel of the shortcuts says', as
 
 test('A speed taken with Enter held down types nothing in the code', async ({ page }) => {
 	await writeCode(page, 'forward()\nforward()\n');
-	await page.locator('.cm-line').first().click();
+	await lineOf(page, 1).click();
 	const before = await codeText(page);
 
 	await menuName(page, 'Run').click();
