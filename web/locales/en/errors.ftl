@@ -10,7 +10,8 @@
 ### or `foreign-word-<word>` for a word of another language (src/lib/errors/error-text.ts and
 ### runtime-error-text.ts); no code is both an error of the checks and one while running. No
 ### other message starts with `error-`. Every message may write `$line`, the line of the error;
-### the other values are those of its code.
+### the other values are those of its code. A line is written without the commas of the
+### thousands, as in interface.ftl.
 ###
 ### A type of value is given by its name (`number`, `text`, `boolean`, `color`), which each
 ### message writes in its words: the variants list the types that the error can find.
@@ -186,11 +187,11 @@ error-undeclared-variable-changed-title = { $name } is changed, but no variable 
 error-undeclared-variable-changed-rule = A variable is declared with let, then '=' alone changes its value.
 
 # $name (String): the variable. $declared (Number): the line of its `let`.
-error-variable-before-let-title = { $name } is used before its let, on line { $declared }.
+error-variable-before-let-title = { $name } is used before its let, on line { NUMBER($declared, useGrouping: 0) }.
 error-variable-before-let-rule = A variable exists from its let to the end of its block.
 
 # $name (String): the variable. $declared (Number): the line of its `let`.
-error-variable-after-block-title = { $name } is used after the end of its block, which declares it on line { $declared }.
+error-variable-after-block-title = { $name } is used after the end of its block, which declares it on line { NUMBER($declared, useGrouping: 0) }.
 error-variable-after-block-rule = A variable exists from its let to the end of its block.
 
 # $name (String): the variable.
@@ -198,20 +199,20 @@ error-main-variable-in-function-title = { $name } is a variable of the main prog
 error-main-variable-in-function-rule = A function sees only its parameters and its own variables.
 
 # $name (String): the variable. $first (Number): the line where it was declared first.
-error-already-declared-title = { $name } is already declared, on line { $first }.
+error-already-declared-title = { $name } is already declared, on line { NUMBER($first, useGrouping: 0) }.
 error-already-declared-rule = let declares a variable once, then '=' alone changes its value.
 
 # $name (String): the function. $first (Number): the line of the first definition.
-error-duplicate-function-title = A function named { $name } is already defined, on line { $first }.
+error-duplicate-function-title = A function named { $name } is already defined, on line { NUMBER($first, useGrouping: 0) }.
 error-duplicate-function-rule = A name is one thing in the whole program: two functions can’t share it.
 
 # $name (String): the function. $defined (Number): the line of its definition.
-error-name-of-function-title = { $name } is the name of a function, defined on line { $defined }.
+error-name-of-function-title = { $name } is the name of a function, defined on line { NUMBER($defined, useGrouping: 0) }.
 error-name-of-function-rule = A variable or a parameter can’t take the name of a function of the program.
 
 # $name (String): the function. $line (Number): the line of the call. $defined (Number): the line
 # of its definition.
-error-called-before-definition-title = { $name } is called on line { $line } but defined on line { $defined }.
+error-called-before-definition-title = { $name } is called on line { NUMBER($line, useGrouping: 0) } but defined on line { NUMBER($defined, useGrouping: 0) }.
 error-called-before-definition-rule = A function is defined above the lines that call it.
 
 # $name (String): the function. $expected (Number): its parameters. $given (Number): the values
@@ -323,8 +324,8 @@ error-text-too-long-title = This text would be longer than { $limit } characters
 error-text-too-long-rule = Two texts joined with '+' make { $limit } characters at most.
 
 # $function (String): the function, as it is written: built in or of the program.
-error-no-value-title = { $function } gives no value back.
-error-no-value-rule = A call is used as a value only when its function gives one back.
+error-no-value-title = { $function } doesn’t return a value.
+error-no-value-rule = A call is used as a value only when its function returns one.
 
 # $limit (Number): the most calls in progress, one inside the other. The function called isn't
 # named: it may not be the one that calls itself (`count` calls `show`, then itself).
@@ -337,13 +338,13 @@ error-bump-rule = forward() needs a free cell in front of the robot.
 error-already-carrying-title = The robot already carries an item.
 error-already-carrying-rule = The robot carries one item at a time.
 
-error-no-item-here-title = No item lies on the cell of the robot.
+error-no-item-here-title = There is nothing to pick up here.
 error-no-item-here-rule = pick_up() needs an item on the cell of the robot.
 
-error-not-carrying-title = The robot carries no item.
+error-not-carrying-title = The robot has nothing to drop.
 error-not-carrying-rule = drop() needs an item carried by the robot.
 
-error-item-already-here-title = An item already lies on the cell of the robot.
+error-item-already-here-title = There is already an item here.
 error-item-already-here-rule = A cell holds one item at a time.
 
 # $function (String): the built-in function. $found (String): the type of the value it was given.

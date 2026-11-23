@@ -133,6 +133,22 @@ describe('runtimeErrorText', () => {
 		);
 	});
 
+	it('says what the robot can’t do in familiar words, and the rule in exact ones', () => {
+		expect(textOf('forward()\nforward()\npick_up()\n')).toEqual([
+			'There is nothing to pick up here.',
+			'pick_up() needs an item on the cell of the robot.'
+		]);
+		expect(textOf('drop()\n')[0]).toBe('The robot has nothing to drop.');
+		expect(textOf('pick_up()\nforward()\ndrop()\n')[0]).toBe('There is already an item here.');
+	});
+
+	it('says that a function returns no value with the word of the language', () => {
+		expect(textOf('let line = print("a")\n')).toEqual([
+			'print doesn’t return a value.',
+			'A call is used as a value only when its function returns one.'
+		]);
+	});
+
 	it('says the fact of too many calls, without naming a function that may not be the one', () => {
 		const source =
 			'function show():\n    print(1)\nfunction count(n):\n    show()\n    count(n + 1)\n\ncount(1)\n';
