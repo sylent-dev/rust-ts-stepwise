@@ -11,7 +11,7 @@
      The status bar, under the code, says where the program stands, in the color of its state.
      The console shows the log of the last **Run**: what the program printed and the error that
      stopped it, or the errors that kept it from starting, a click on one putting the cursor at
-     its place. -->
+     its place. **Help › Keyboard shortcuts** lists the shortcuts of the screen in a panel. -->
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import { differsFromStart, type LevelCode } from '#lib/code/code.ts';
@@ -32,8 +32,10 @@
 	import MenuBar from '#lib/shell/menu-bar.svelte';
 	import Place from '#lib/shell/place.svelte';
 	import ScreenShortcuts from '#lib/shell/screen-shortcuts.svelte';
+	import ShortcutsPanel from '#lib/shell/shortcuts-panel.svelte';
 	import { levelCommands } from './level-commands.ts';
 	import { levelMenus, type LevelScreenKind } from './level-menus.ts';
+	import { levelShortcuts } from './level-shortcuts.ts';
 	import { LockFlash } from './lock-flash.svelte.ts';
 	import MapBlock from './map-block.svelte';
 	import type { Playground } from './playground.ts';
@@ -153,6 +155,12 @@
 	let restoring = $state(false);
 
 	/**
+	 * Whether the panel of the keyboard shortcuts shows. A program keeps running under it, as
+	 * under the settings: only the shortcuts of the screen go silent.
+	 */
+	let showingShortcuts = $state(false);
+
+	/**
 	 * The code of the level shown, as the editor holds it: what is saved, and what is compared
 	 * with the starting code. Nothing while the screen has no editor.
 	 */
@@ -175,7 +183,10 @@
 			confirmRestore: () => {
 				restoring = true;
 			},
-			program: () => program.current
+			program: () => program.current,
+			showShortcuts: () => {
+				showingShortcuts = true;
+			}
 		},
 		currentPlatform()
 	);
@@ -279,6 +290,11 @@
 	lost={restoreLost}
 	action={t('restore-action')}
 	onconfirm={restore}
+/>
+<ShortcutsPanel
+	bind:open={showingShortcuts}
+	title={commands['keyboard-shortcuts'].label}
+	columns={levelShortcuts(commands)}
 />
 
 <style>

@@ -42,21 +42,26 @@ export function programFor(
 
 /**
  * What a screen gives its commands: the editor shown, if any, whether its code has something
- * to restore, and its program, if any. It counts the confirmations it was asked to open.
+ * to restore, and its program, if any. It counts the confirmations and the panels of the
+ * shortcuts it was asked to open.
  */
 export function screenWith(
 	editing: () => Editing | undefined = () => undefined,
 	restorable = false,
 	program: () => ProgramControls | undefined = () => undefined
-): CommandTarget & { confirmations: number } {
+): CommandTarget & { confirmations: number; shortcutPanels: number } {
 	const screen = {
 		confirmations: 0,
+		shortcutPanels: 0,
 		editing,
 		canRestore: () => restorable,
 		confirmRestore: () => {
 			screen.confirmations += 1;
 		},
-		program
+		program,
+		showShortcuts: () => {
+			screen.shortcutPanels += 1;
+		}
 	};
 	return screen;
 }

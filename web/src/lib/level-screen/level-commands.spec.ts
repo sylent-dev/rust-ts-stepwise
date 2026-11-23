@@ -89,7 +89,8 @@ describe('levelCommands', () => {
 			'Move line down',
 			'Run',
 			'Step',
-			'Reset'
+			'Reset',
+			'Keyboard shortcuts'
 		]);
 	});
 
@@ -191,14 +192,15 @@ describe('levelCommands', () => {
 
 		expect(LEVEL_COMMANDS.filter((name) => commands[name].enabled)).toEqual([
 			'redo',
-			'comment-lines'
+			'comment-lines',
+			'keyboard-shortcuts'
 		]);
 	});
 
-	it('can run nothing while the screen has neither editor nor program, and asks nothing', () => {
+	it('can only show the shortcuts while the screen has neither editor nor program', () => {
 		const commands = levelCommands(screenWith(), 'other');
 
-		expect(LEVEL_COMMANDS.filter((name) => commands[name].enabled)).toEqual([]);
+		expect(LEVEL_COMMANDS.filter((name) => commands[name].enabled)).toEqual(['keyboard-shortcuts']);
 		expect(() => {
 			for (const name of LEVEL_COMMANDS) commands[name].run();
 		}).not.toThrow();
@@ -242,6 +244,21 @@ describe('levelCommands', () => {
 		expect(screen.confirmations).toBe(1);
 	});
 
+	it('opens the panel of the shortcuts, at any moment, without a shortcut of its own', () => {
+		const screen = screenWith(
+			() => editorFor(),
+			false,
+			() => programFor('pause')
+		);
+		const shortcuts = levelCommands(screen, 'other')['keyboard-shortcuts'];
+
+		expect(shortcuts.enabled).toBe(true);
+		shortcuts.run();
+
+		expect(screen.shortcutPanels).toBe(1);
+		expect([shortcuts.shortcut, shortcuts.alsoHeard]).toEqual([undefined, undefined]);
+	});
+
 	it('gives Restore starting code no shortcut, since it asks before it acts', () => {
 		const restore = levelCommands(screenWith(), 'other')['restore-starting-code'];
 
@@ -260,7 +277,8 @@ describe('levelCommands', () => {
 			'Alt+arrow-down',
 			'Ctrl+Enter',
 			'F10',
-			'Ctrl+Shift+Enter'
+			'Ctrl+Shift+Enter',
+			undefined
 		]);
 	});
 

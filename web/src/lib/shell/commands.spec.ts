@@ -160,13 +160,22 @@ describe('keyParts', () => {
 		expect(shown({ character: 'z', ctrl: true, shift: true })).toEqual(['Ctrl', 'Shift', 'Z']);
 	});
 
-	it('draws an arrow', () => {
+	it('draws an arrow, which a screen reader reads as the character of the arrow', () => {
 		expect(shown({ key: 'ArrowUp', alt: true })).toEqual(['Alt', '<arrow-up>']);
 		expect(shown({ key: 'ArrowDown', alt: true })).toEqual(['Alt', '<arrow-down>']);
+		expect(keyParts({ key: 'ArrowUp', alt: true }, 'other')[1]).toEqual({
+			icon: 'arrow-up',
+			spoken: '↑'
+		});
+		expect(keyParts({ key: 'ArrowDown', alt: true }, 'other')[1]).toEqual({
+			icon: 'arrow-down',
+			spoken: '↓'
+		});
 	});
 
-	it('names Enter, and writes a function key as it is printed', () => {
+	it('names Enter and Tab, and writes a function key as it is printed', () => {
 		expect(shown({ key: 'Enter', ctrl: true, shift: true })).toEqual(['Ctrl', 'Shift', 'Enter']);
+		expect(shown({ key: 'Tab', shift: true })).toEqual(['Shift', 'Tab']);
 		expect(shown({ key: 'Enter', ctrl: true }, 'mac')).toEqual(['Cmd', 'Enter']);
 		expect(shown({ key: 'F10' })).toEqual(['F10']);
 	});
@@ -201,7 +210,8 @@ describe('keyMessage', () => {
 			'key-cmd',
 			'key-shift',
 			'key-alt',
-			'key-enter'
+			'key-enter',
+			'key-tab'
 		]);
 	});
 });

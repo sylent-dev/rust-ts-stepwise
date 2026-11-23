@@ -80,7 +80,9 @@ export function levelMenus(
 					label: t('screen-manual'),
 					to: 'manual',
 					tab: MANUAL_TAB
-				}
+				},
+				SEPARATOR,
+				command('keyboard-shortcuts')
 			]
 		}
 	];
