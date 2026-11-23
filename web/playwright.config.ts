@@ -1,9 +1,10 @@
 import { defineConfig, devices } from '@playwright/test';
+import { SMALLEST_WINDOW } from '#lib/shell/window-size.ts';
 
 // The tests in a real browser (see Tests in a real browser in docs/technical-choices.md): the
 // website as it is built, served by `vite preview` on a port of its own, in Chromium alone until
-// the pass on every browser of the first release. They check the wiring of the screens, which the tests of
-// Vitest can't reach without a page; the logic stays with those.
+// the pass on every browser of the first release. They check the wiring of the screens, which
+// the tests of Vitest can't reach without a page; the logic stays with those.
 const PORT = 4180;
 const ADDRESS = `http://127.0.0.1:${PORT}`;
 
@@ -18,9 +19,9 @@ export default defineConfig({
 	projects: [
 		{
 			name: 'chromium',
-			// The smallest window the screens are drawn for (`SMALLEST_WINDOW` in
-			// src/lib/shell/window-size.ts): what doesn't fit there would show in no test larger.
-			use: { ...devices['Desktop Chrome'], viewport: { width: 1280, height: 720 } }
+			// The smallest window the screens are drawn for: a larger one would hide what doesn't
+			// fit there.
+			use: { ...devices['Desktop Chrome'], viewport: SMALLEST_WINDOW }
 		}
 	],
 	webServer: {

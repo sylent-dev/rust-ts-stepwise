@@ -15,10 +15,13 @@ export const test = base.extend<{ quietPage: undefined }>({
 			const heard: string[] = [];
 			page.on('pageerror', (error) => heard.push(error.message));
 			page.on('console', (message) => {
-				if (message.type() === 'error' || message.type() === 'warning') heard.push(message.text());
+				if (message.type() !== 'error' && message.type() !== 'warning') return;
+				// A file that doesn't come is named apart from its message.
+				const { url } = message.location();
+				heard.push(url ? `${message.text()} (${url})` : message.text());
 			});
 			await use(undefined);
-			expect(heard).toEqual([]);
+			expect(heard, 'What the page threw, or wrote as an error or a warning').toEqual([]);
 		},
 		{ auto: true }
 	]
@@ -46,7 +49,7 @@ export async function writeCode(page: Page, text: string): Promise<void> {
 	await codeOf(page).fill(text);
 }
 
-/** A line of the code, from 1, as the editor draws it. */
+/** A line of the code, from 1, among the lines that the editor draws, as `codeText` reads them. */
 export function lineOf(page: Page, number: number): Locator {
 	return page.locator('.cm-line').nth(number - 1);
 }
