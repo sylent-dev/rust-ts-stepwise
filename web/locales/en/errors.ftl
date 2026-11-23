@@ -1,14 +1,20 @@
-### The errors of the checks before running, in English (see interface.ftl for the rule of the
-### names, and Checks before running in specs.md). Each has two sentences: `-title`, what
+### The errors of the programs, in English (see interface.ftl for the rule of the names): those
+### of the checks before running (see Checks before running in specs.md), then those that stop
+### a program while it runs (see Error handling). Each has two sentences: `-title`, what
 ### happened in this program, written in extra-bold, then `-rule`, the rule, true of every
 ### program (see An error in docs/design-system.md). The rule never becomes an order nor a
 ### guess: no fix, no "Did you mean". The words and the signs of other languages are the one
 ### exception: their rule shows the way of Stepwise.
 ###
 ### The family `error-<subject>-<part>` (`errorMessage`): the subject is the code of the error,
-### or `foreign-word-<word>` for a word of another language (src/lib/errors/error-text.ts). No
+### or `foreign-word-<word>` for a word of another language (src/lib/errors/error-text.ts and
+### runtime-error-text.ts); no code is both an error of the checks and one while running. No
 ### other message starts with `error-`. Every message may write `$line`, the line of the error;
-### the other values are those of its code.
+### the other values are those of its code. A line is written without the commas of the
+### thousands, as in interface.ftl.
+###
+### A type of value is given by its name (`number`, `text`, `boolean`, `color`), which each
+### message writes in its words: the variants list the types that the error can find.
 ###
 ### Shown in the font of the code, under the pointer in the editor and in the console: code is
 ### written as it is typed, without quotes, and a sign alone between straight quotes (':').
@@ -181,11 +187,11 @@ error-undeclared-variable-changed-title = { $name } is changed, but no variable 
 error-undeclared-variable-changed-rule = A variable is declared with let, then '=' alone changes its value.
 
 # $name (String): the variable. $declared (Number): the line of its `let`.
-error-variable-before-let-title = { $name } is used before its let, on line { $declared }.
+error-variable-before-let-title = { $name } is used before its let, on line { NUMBER($declared, useGrouping: 0) }.
 error-variable-before-let-rule = A variable exists from its let to the end of its block.
 
 # $name (String): the variable. $declared (Number): the line of its `let`.
-error-variable-after-block-title = { $name } is used after the end of its block, which declares it on line { $declared }.
+error-variable-after-block-title = { $name } is used after the end of its block, which declares it on line { NUMBER($declared, useGrouping: 0) }.
 error-variable-after-block-rule = A variable exists from its let to the end of its block.
 
 # $name (String): the variable.
@@ -193,20 +199,20 @@ error-main-variable-in-function-title = { $name } is a variable of the main prog
 error-main-variable-in-function-rule = A function sees only its parameters and its own variables.
 
 # $name (String): the variable. $first (Number): the line where it was declared first.
-error-already-declared-title = { $name } is already declared, on line { $first }.
+error-already-declared-title = { $name } is already declared, on line { NUMBER($first, useGrouping: 0) }.
 error-already-declared-rule = let declares a variable once, then '=' alone changes its value.
 
 # $name (String): the function. $first (Number): the line of the first definition.
-error-duplicate-function-title = A function named { $name } is already defined, on line { $first }.
+error-duplicate-function-title = A function named { $name } is already defined, on line { NUMBER($first, useGrouping: 0) }.
 error-duplicate-function-rule = A name is one thing in the whole program: two functions can’t share it.
 
 # $name (String): the function. $defined (Number): the line of its definition.
-error-name-of-function-title = { $name } is the name of a function, defined on line { $defined }.
+error-name-of-function-title = { $name } is the name of a function, defined on line { NUMBER($defined, useGrouping: 0) }.
 error-name-of-function-rule = A variable or a parameter can’t take the name of a function of the program.
 
 # $name (String): the function. $line (Number): the line of the call. $defined (Number): the line
 # of its definition.
-error-called-before-definition-title = { $name } is called on line { $line } but defined on line { $defined }.
+error-called-before-definition-title = { $name } is called on line { NUMBER($line, useGrouping: 0) } but defined on line { NUMBER($defined, useGrouping: 0) }.
 error-called-before-definition-rule = A function is defined above the lines that call it.
 
 # $name (String): the function. $expected (Number): its parameters. $given (Number): the values
@@ -232,3 +238,128 @@ error-unknown-function-rule = A call needs a function, built in or defined above
 
 error-expression-alone-title = This line holds a value alone, which does nothing.
 error-expression-alone-rule = Of the values, only a call can stand alone on its line.
+
+## The errors while the program runs: only the values decide them, so the checks before running
+## can't find them.
+
+# $found (String): the type of the condition.
+error-condition-not-boolean-title = This condition is { $found ->
+        [number] a number
+        [text] a text
+       *[color] a color
+    }, not a boolean.
+error-condition-not-boolean-rule = The condition of an if, an else if or a while is a boolean: true or false.
+
+# $found (String): the type of the count.
+error-repeat-count-not-number-title = The count of this repeat is { $found ->
+        [text] a text
+        [boolean] a boolean
+       *[color] a color
+    }, not a number.
+error-repeat-count-not-number-rule = The count of a repeat is a whole number, 0 or more.
+
+# $count (String): the count, as its digits.
+error-negative-repeat-count-title = The count of this repeat is { $count }, below 0.
+error-negative-repeat-count-rule = The count of a repeat is a whole number, 0 or more.
+
+# $operator (String): the operator, `-` or `not`. $group (String): `negate` for `-`, `not` for
+# `not`. $found (String): the type of the value after it.
+error-unary-operand-title = { $group ->
+        [not] not stands in front of { $found ->
+            [number] a number
+            [text] a text
+           *[color] a color
+        }.
+       *[negate] '-' stands in front of { $found ->
+            [text] a text
+            [boolean] a boolean
+           *[color] a color
+        }.
+    }
+error-unary-operand-rule = { $group ->
+        [not] not takes a boolean: true or false.
+       *[negate] '-' in front of a value takes a number.
+    }
+
+# $operator (String): the sign between the two values. $group (String): what the operator does,
+# `plus` for '+', `arithmetic` for '-', '*', '/' and '%', `order` for '<', '<=', '>' and '>=',
+# `equality` for '==' and '!=', `logic` for and and or, which a side that isn't a boolean stops
+# with an error of its own. $left, $right (String): the types of the two values.
+error-binary-operands-title = '{ $operator }' has { $left ->
+        [number] a number
+        [text] a text
+        [boolean] a boolean
+       *[color] a color
+    } on its left and { $right ->
+        [number] a number
+        [text] a text
+        [boolean] a boolean
+       *[color] a color
+    } on its right.
+error-binary-operands-rule = { $group ->
+        [plus] '+' adds two numbers or joins two texts.
+        [order] '{ $operator }' compares two numbers.
+        [equality] '{ $operator }' compares two values of the same type.
+        [logic] { $operator } joins two booleans: true or false.
+       *[arithmetic] '{ $operator }' takes a number on each side.
+    }
+
+# $operator (String): `and` or `or`. $found (String): the type of the side that stopped it.
+error-logic-operand-title = This side of { $operator } is { $found ->
+        [number] a number
+        [text] a text
+       *[color] a color
+    }, not a boolean.
+error-logic-operand-rule = { $operator } joins two booleans: true or false.
+
+error-division-by-zero-title = The program divided by zero.
+error-division-by-zero-rule = '/' and '%' need a number other than 0 on their right.
+
+# $smallest, $largest (String): the smallest and the largest whole numbers, as their digits.
+error-overflow-title = This result is beyond what a number holds.
+error-overflow-rule = A number stays between { $smallest } and { $largest }.
+
+# $limit (Number): the most characters of a text.
+error-text-too-long-title = This text would be longer than { $limit } characters.
+error-text-too-long-rule = Two texts joined with '+' make { $limit } characters at most.
+
+# $function (String): the function, as it is written: built in or of the program.
+error-no-value-title = { $function } doesn’t return a value.
+error-no-value-rule = A call is used as a value only when its function returns one.
+
+# $limit (Number): the most calls in progress, one inside the other. The function called isn't
+# named: it may not be the one that calls itself (`count` calls `show`, then itself).
+error-too-many-calls-title = { $limit } calls in progress: the limit is reached.
+error-too-many-calls-rule = A function that calls itself needs a case where it doesn’t.
+
+error-bump-title = The robot bumped into a wall.
+error-bump-rule = forward() needs a free cell in front of the robot.
+
+error-already-carrying-title = The robot already carries an item.
+error-already-carrying-rule = The robot carries one item at a time.
+
+error-no-item-here-title = There is nothing to pick up here.
+error-no-item-here-rule = pick_up() needs an item on the cell of the robot.
+
+error-not-carrying-title = The robot has nothing to drop.
+error-not-carrying-rule = drop() needs an item carried by the robot.
+
+error-item-already-here-title = There is already an item here.
+error-item-already-here-rule = A cell holds one item at a time.
+
+# $function (String): the built-in function. $found (String): the type of the value it was given.
+error-value-not-color-title = { $function } is given { $found ->
+        [number] a number
+        [text] a text
+       *[boolean] a boolean
+    }, not a color.
+error-value-not-color-rule = { $function } takes a color: red, yellow or blue.
+
+# $limit (Number): the most characters of a line.
+error-line-too-long-title = This line of print would be longer than { $limit } characters.
+error-line-too-long-rule = print writes { $limit } characters on a line at most, the spaces between its values counted.
+
+# What the checks rule out, or a mistake of Stepwise: never for a program that the checks let
+# run.
+error-internal-title = Stepwise stopped the program by mistake.
+error-internal-rule = This isn’t an error of the program, but one of Stepwise.

@@ -24,11 +24,12 @@ export interface FollowedEditing {
  * never the editor itself: a row of a menu or the status bar that read it is then drawn again
  * once the code or the cursor has changed. `restart` gives the editor a new state, made from a
  * text with the parts of the editor; the editor says no change then, so `reopen` follows its
- * state itself.
+ * state itself. `focus` gives the code the keyboard.
  */
 export function followEditing(
 	editor: Parameters<StateCommand>[0],
-	restart: (text: string) => void
+	restart: (text: string) => void,
+	focus: () => void
 ): FollowedEditing {
 	let latest = $state.raw(editor.state);
 	return {
@@ -49,6 +50,12 @@ export function followEditing(
 			reopen: (text) => {
 				restart(text);
 				latest = editor.state;
+			},
+			showPlace: (at) => {
+				const { state } = editor;
+				const place = Math.min(Math.max(at, 0), state.doc.length);
+				editor.dispatch(state.update({ selection: { anchor: place }, scrollIntoView: true }));
+				focus();
 			}
 		},
 		follow: (state) => {

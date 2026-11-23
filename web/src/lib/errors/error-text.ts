@@ -1,9 +1,16 @@
 // What an error of the checks says (see An error in docs/design-system.md): two sentences, what
 // happened in this program, then the rule, true of every program. The core gives an error as a
 // code with its values (crates/wasm/src/check.rs), never as a sentence; its sentences are the
-// messages of locales/en/errors.ftl, which this module names and gives their values.
+// messages of locales/en/errors.ftl, which this module names and gives their values. The errors
+// while running have theirs too (runtime-error-text.ts), in the same family of messages.
 
-import type { ForeignWord, ProgramError, ProgramErrorKind, Span } from '#lib/core/core.ts';
+import type {
+	ForeignWord,
+	ProgramError,
+	ProgramErrorKind,
+	RuntimeErrorKind,
+	Span
+} from '#lib/core/core.ts';
 import { type MessageArguments, t } from '#lib/i18n.ts';
 
 /** The two sentences of an error. */
@@ -20,8 +27,13 @@ type ErrorCode = ProgramErrorKind['code'];
 /** The error of each code, with the values it carries. */
 type KindOf = { [C in ErrorCode]: Extract<ProgramErrorKind, { code: C }> };
 
-/** What the messages of an error are about: its code, or for a word of another language, the word. */
-export type ErrorSubject = Exclude<ErrorCode, 'foreign-word'> | `foreign-word-${ForeignWord}`;
+/**
+ * What the messages of an error are about: its code, or for a word of another language, the
+ * word. The codes of the errors while running are subjects too: no code is one of both kinds
+ * (tested with the bridge, core/run.spec.ts).
+ */
+export type ErrorSubject =
+	Exclude<ErrorCode, 'foreign-word'> | `foreign-word-${ForeignWord}` | RuntimeErrorKind['code'];
 
 /** The two parts of what an error says, each a message. */
 export const ERROR_PARTS = ['title', 'rule'] as const;
@@ -143,7 +155,10 @@ function isErrorCode(code: string): code is ErrorCode {
 	return Object.hasOwn(VALUES, code);
 }
 
-/** Every subject that an error may have, each with its two messages. */
+/**
+ * Every subject that an error of the checks may have, each with its two messages; those of the
+ * errors while running are `RUNTIME_ERROR_SUBJECTS`.
+ */
 export const ERROR_SUBJECTS: readonly ErrorSubject[] = [
 	...Object.keys(VALUES)
 		.filter(isErrorCode)

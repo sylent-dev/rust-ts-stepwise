@@ -1,7 +1,8 @@
-//! The words of the language, for the interface: the keywords, the words of other languages
-//! and the built-in functions, each list a TypeScript union of the words as they are written
-//! (`'let' | 'if' | …`), so that a table of the interface keyed by one of them names every
-//! word, and a word added to the core is refused there until it is placed.
+//! The words of the language, for the interface: the keywords, the words of other languages,
+//! the built-in functions and the operators, each list a TypeScript union of the words as they
+//! are written (`'let' | 'if' | …`, `'+' | '-' | …`), so that a table of the interface keyed by
+//! one of them names every word, and a word added to the core is refused there until it is
+//! placed.
 //!
 //! Each enum is the one of the same name in the core, and each variant the word of the same
 //! name: the conversion names them all, and two tests compare what the interface reads with
@@ -9,7 +10,7 @@
 //! world (`world.rs`), and are held by the same tests.
 
 use serde::Serialize;
-use stepwise_core::{builtin, foreign_word, lexer};
+use stepwise_core::{builtin, foreign_word, interpreter, lexer};
 use tsify::Tsify;
 
 /// A keyword of the language.
@@ -144,12 +145,83 @@ impl From<builtin::Builtin> for Builtin {
     }
 }
 
+/// An operator written in front of a value, as it is written.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Tsify)]
+pub enum UnaryOperator {
+    #[serde(rename = "-")]
+    Negate,
+    #[serde(rename = "not")]
+    Not,
+}
+
+impl From<interpreter::UnaryOperator> for UnaryOperator {
+    fn from(operator: interpreter::UnaryOperator) -> Self {
+        use interpreter::UnaryOperator as U;
+        match operator {
+            U::Negate => Self::Negate,
+            U::Not => Self::Not,
+        }
+    }
+}
+
+/// An operator written between two values, as it is written.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Tsify)]
+pub enum BinaryOperator {
+    #[serde(rename = "+")]
+    Add,
+    #[serde(rename = "-")]
+    Subtract,
+    #[serde(rename = "*")]
+    Multiply,
+    #[serde(rename = "/")]
+    Divide,
+    #[serde(rename = "%")]
+    Remainder,
+    #[serde(rename = "==")]
+    Equal,
+    #[serde(rename = "!=")]
+    NotEqual,
+    #[serde(rename = "<")]
+    Less,
+    #[serde(rename = "<=")]
+    LessEqual,
+    #[serde(rename = ">")]
+    Greater,
+    #[serde(rename = ">=")]
+    GreaterEqual,
+    #[serde(rename = "and")]
+    And,
+    #[serde(rename = "or")]
+    Or,
+}
+
+impl From<interpreter::BinaryOperator> for BinaryOperator {
+    fn from(operator: interpreter::BinaryOperator) -> Self {
+        use interpreter::BinaryOperator as B;
+        match operator {
+            B::Add => Self::Add,
+            B::Subtract => Self::Subtract,
+            B::Multiply => Self::Multiply,
+            B::Divide => Self::Divide,
+            B::Remainder => Self::Remainder,
+            B::Equal => Self::Equal,
+            B::NotEqual => Self::NotEqual,
+            B::Less => Self::Less,
+            B::LessEqual => Self::LessEqual,
+            B::Greater => Self::Greater,
+            B::GreaterEqual => Self::GreaterEqual,
+            B::And => Self::And,
+            B::Or => Self::Or,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use stepwise_core::{builtin, color, foreign_word, lexer};
+    use stepwise_core::{builtin, color, foreign_word, interpreter, lexer};
     use tsify::Tsify;
 
-    use super::{Builtin, ForeignWord, Keyword};
+    use super::{BinaryOperator, Builtin, ForeignWord, Keyword, UnaryOperator};
     use crate::world::Color;
 
     /// The words of a TypeScript union of texts, in its order: what its declaration holds
@@ -179,6 +251,14 @@ mod tests {
             union(Color::DECL),
             color::Color::ALL.map(color::Color::as_str)
         );
+        assert_eq!(
+            union(UnaryOperator::DECL),
+            interpreter::UnaryOperator::ALL.map(interpreter::UnaryOperator::as_str)
+        );
+        assert_eq!(
+            union(BinaryOperator::DECL),
+            interpreter::BinaryOperator::ALL.map(interpreter::BinaryOperator::as_str)
+        );
     }
 
     /// A conversion that names every word may still cross two of them. The unions are in the
@@ -197,6 +277,16 @@ mod tests {
         }
         for (rank, word) in color::Color::ALL.into_iter().enumerate() {
             assert_eq!(Color::from(word) as usize, rank, "{word:?}");
+        }
+        for (rank, operator) in interpreter::UnaryOperator::ALL.into_iter().enumerate() {
+            assert_eq!(UnaryOperator::from(operator) as usize, rank, "{operator:?}");
+        }
+        for (rank, operator) in interpreter::BinaryOperator::ALL.into_iter().enumerate() {
+            assert_eq!(
+                BinaryOperator::from(operator) as usize,
+                rank,
+                "{operator:?}"
+            );
         }
     }
 

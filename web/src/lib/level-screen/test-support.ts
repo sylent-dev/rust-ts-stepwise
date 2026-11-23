@@ -16,7 +16,8 @@ export function editorFor(able: readonly Edit[] = EDITS): Editing & { asked: Edi
 		text: '',
 		cursor: { line: 1, column: 1 },
 		errors: 0,
-		reopen: () => {}
+		reopen: () => {},
+		showPlace: () => {}
 	};
 }
 

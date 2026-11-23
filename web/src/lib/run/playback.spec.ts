@@ -193,6 +193,29 @@ describe('a program played on the map', () => {
 		expect(printed).toEqual(['1', '', 'again', 'again', 'again']);
 	});
 
+	it('tells once per run how the program stopped, once its last action has ended', () => {
+		const stopped: string[] = [];
+		const onStopped = (outcome: { type: string }) => stopped.push(outcome.type);
+		using playback = play('forward()\nforward()\nforward()\nforward()\n', { onStopped });
+		playback.play();
+		for (let time = 0; time <= 1500; time += 500) playback.tick(time);
+		// The fourth move bumps: the bump plays first, and the program has stopped once it ends.
+		expect({ status: playback.status, stopped }).toEqual({ status: 'running', stopped: [] });
+		for (let time = 2500; playback.tick(time); time += 500);
+		expect(stopped).toEqual(['failed']);
+		// A new run tells its own end, a program without a step at once.
+		playback.play();
+		for (let time = 10_000; playback.tick(time); time += 500);
+		expect(stopped).toEqual(['failed', 'failed']);
+		playback.reset();
+		using empty = play('# nothing yet\n', { onStopped });
+		empty.play();
+		empty.play();
+		expect(stopped).toEqual(['failed', 'failed', 'ended', 'ended']);
+		empty.step();
+		expect(stopped).toEqual(['failed', 'failed', 'ended', 'ended', 'ended']);
+	});
+
 	it('moves the line on at once after a step without action', () => {
 		using playback = play('let steps = 1\nstop_painting()\nforward()\n');
 		playback.play();

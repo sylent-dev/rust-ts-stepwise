@@ -184,3 +184,130 @@ describe('the program of a screen', () => {
 		program.free();
 	});
 });
+
+describe('the console of the program of a screen', () => {
+	/** What the console holds, its errors by their code and their line. */
+	function shown(program: Program) {
+		const { kind, lines, errors } = program.log;
+		return {
+			kind,
+			lines,
+			errors: errors.map(({ error, line }) => `${error.kind.code} · ${String(line)}`)
+		};
+	}
+
+	it('holds nothing before any Run', () => {
+		const program = programOf({ text: 'print(1)\n' });
+		expect(shown(program)).toEqual({ kind: 'empty', lines: [], errors: [] });
+		program.free();
+	});
+
+	it('writes the lines that the program prints, then the error that stops it', () => {
+		const program = programOf({ text: 'print("Sides:", 1)\nprint()\npick_up()\n' });
+		program.runOrPause();
+		finish();
+		expect(shown(program)).toEqual({
+			kind: 'ran',
+			lines: ['Sides: 1', ''],
+			errors: ['no-item-here · 3']
+		});
+		program.free();
+	});
+
+	it('lists the errors that kept the program from starting, in place of the last run', () => {
+		const code = { text: 'print(1)\n' };
+		const program = programOf(code);
+		program.runOrPause();
+		finish();
+		code.text = 'print(sidse)\nfoward()\n';
+		program.runOrPause();
+		expect(shown(program)).toEqual({
+			kind: 'checked',
+			lines: [],
+			errors: ['unknown-name · 1', 'unknown-function · 2']
+		});
+		program.free();
+	});
+
+	it('is cleared by Run, and by Step from stopped, which start the program', () => {
+		const code = { text: 'foward()\n' };
+		const program = programOf(code);
+		program.runOrPause();
+		code.text = 'print(1)\nprint(2)\n';
+		program.step();
+		expect(shown(program)).toEqual({ kind: 'ran', lines: [], errors: [] });
+		program.step();
+		finish();
+		expect(shown(program).lines).toEqual(['1']);
+		program.free();
+	});
+
+	it('keeps the log of the last run on Reset, and on Resume', () => {
+		const program = programOf({ text: 'print(1)\nprint(2)\nprint(3)\n' });
+		program.step();
+		program.step();
+		finish();
+		program.runOrPause();
+		finish();
+		expect(shown(program).lines).toEqual(['1', '2', '3']);
+		program.reset();
+		expect(shown(program)).toEqual({ kind: 'ran', lines: ['1', '2', '3'], errors: [] });
+		program.free();
+	});
+
+	it('lists the errors of the code as it is now when asked, without running', () => {
+		const code = { text: 'print(1)\n' };
+		const program = programOf(code);
+		program.runOrPause();
+		finish();
+		code.text = 'print(1)\nfoward()\n';
+		program.listErrors();
+		expect(shown(program)).toEqual({
+			kind: 'checked',
+			lines: [],
+			errors: ['unknown-function · 2']
+		});
+		expect(program.status).toBe('ended');
+		program.free();
+	});
+
+	it('lists nothing when asked for a code without error, nor while the program runs', () => {
+		const code = { text: 'print(1)\nforward()\n' };
+		const program = programOf(code);
+		program.listErrors();
+		expect(shown(program).kind).toBe('empty');
+		program.runOrPause();
+		code.text = 'foward()\n';
+		program.listErrors();
+		expect(shown(program).kind).toBe('ran');
+		program.free();
+	});
+
+	it('keeps its errors at their places as the code changes', () => {
+		const code = { text: 'print(1)\nfoward()\n' };
+		const program = programOf(code);
+		program.runOrPause();
+		program.follow({ map: (at) => at + 12, lineAt: () => 3 });
+		expect(program.log.errors.map(({ at, line }) => ({ at, line }))).toEqual([{ at: 21, line: 3 }]);
+		program.free();
+	});
+
+	it('forgets everything once the starting code is restored, and puts the map back', () => {
+		const program = programOf({ text: 'print(1)\nforward()\npick_up()\n' });
+		program.runOrPause();
+		finish();
+		program.restore();
+		expect({
+			...shown(program),
+			status: program.status,
+			position: program.played.world.robot.position
+		}).toEqual({
+			kind: 'empty',
+			lines: [],
+			errors: [],
+			status: 'ready',
+			position: { x: 0, y: 0 }
+		});
+		program.free();
+	});
+});
