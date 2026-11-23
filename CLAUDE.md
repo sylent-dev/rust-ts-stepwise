@@ -42,6 +42,7 @@ Two folders are the exchange area between the owner and Claude Code. They are ig
 
 - `inputs/`: what the owner gives for context: screenshots, examples, references, copied texts. Read them when the owner points to them; never commit, move or delete them unless asked.
 - `outputs/`: what Claude Code produces for the owner: reports, code review notes, previews, screenshots. Name them `<YYYY-MM-DD>-<subject>.<ext>` when they are meant to be kept for a while.
+- At the end of a numbered step (not of a sub-step), propose to tidy both folders (`tidy-io-folders` skill), and run it on the owner's word.
 - Anything meant to last goes elsewhere and is committed: documentation in `docs/`, the files that the website serves as they are in `web/static/` (the icon of the tab, the fonts), test data next to the tests. The drawings of the world elements stay with their sheet in `docs/mockups/world-elements/daylight/`, where the application reads them through `web/src/lib/elements.ts` alone (see World elements in `docs/technical-choices.md`).
 
 ## Process
