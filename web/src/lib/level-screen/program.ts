@@ -1,8 +1,9 @@
 // The program of a level screen (see Running a program in specs.md): the code of the editor,
 // checked, then played on the map shown. The commands **Run**, **Step** and **Reset** ask it
-// (level-commands.ts), and the screen reads on it what its map draws and whether its code can be
-// changed.
+// (level-commands.ts), and the screen reads on it what its map draws, whether its code can be
+// changed, and what its console shows.
 
+import { ConsoleLog } from '#lib/console/console-log.svelte.ts';
 import { check } from '#lib/core/core.ts';
 import type { Scene } from '#lib/map/scene.ts';
 import { Playback, type PlaybackOptions, type PlaybackStatus } from '#lib/run/playback.svelte.ts';
@@ -38,6 +39,11 @@ export interface ProgramControls {
 export class Program implements ProgramControls {
 	/** The program as it is played, for the screen to read. It follows the program. */
 	readonly played: PlayedProgram;
+	/**
+	 * What its console shows: the log of its last **Run**, which the program writes as it runs,
+	 * and the errors that kept it from starting. It follows the program.
+	 */
+	readonly log = new ConsoleLog();
 	readonly #playback: Playback;
 	readonly #text: () => string | undefined;
 	/** The code as it was last checked, which a run starts on. */
@@ -45,13 +51,22 @@ export class Program implements ProgramControls {
 
 	/**
 	 * The program of the map of `playground`, at rest. `text` gives the code of the editor as it
-	 * is now, read when the program starts; nothing while the screen has no editor.
+	 * is now, read when the program starts; nothing while the screen has no editor. What it
+	 * prints and the error that stops it go to its log, rather than to `options`.
 	 */
 	constructor(playground: Playground, text: () => string | undefined, options?: PlaybackOptions) {
 		this.#text = text;
 		this.#playback = new Playback(
 			{ world: playground.world, start: () => playground.start(this.#checked) },
-			options
+			{
+				...options,
+				onPrinted: (line) => {
+					this.log.print(line);
+				},
+				onStopped: (outcome) => {
+					if (outcome.type === 'failed') this.log.fail(outcome.error);
+				}
+			}
 		);
 		this.played = this.#playback;
 	}
@@ -95,7 +110,10 @@ export class Program implements ProgramControls {
 				this.#playback.play();
 				break;
 			case 'run':
-				if (this.#check()) this.#playback.play();
+				if (this.#check()) {
+					this.log.start();
+					this.#playback.play();
+				}
 				break;
 		}
 	}
@@ -103,11 +121,29 @@ export class Program implements ProgramControls {
 	step(): void {
 		// A program that waits runs its next step; one that hasn't started, or has stopped, is
 		// checked as for **Run**, then only starts.
-		if (this.status === 'paused' || (this.canStep && this.#check())) this.#playback.step();
+		if (this.status === 'paused') {
+			this.#playback.step();
+		} else if (this.canStep && this.#check()) {
+			this.log.start();
+			this.#playback.step();
+		}
 	}
 
+	/** **Reset**: the map goes back to its start, and the console keeps the log of the last run. */
 	reset(): void {
 		this.#playback.reset();
+	}
+
+	/**
+	 * Lists in the console the errors of the code as it is now, as **Run** would, without running:
+	 * the number of errors of the status bar asks it. Nothing changes when the code has none, nor
+	 * while the program runs or is paused, on a code that had none.
+	 */
+	listErrors(): void {
+		const text = this.#text();
+		if (text === undefined || this.locked) return;
+		const errors = check(text);
+		if (errors.length > 0) this.log.list(errors);
 	}
 
 	/** Pauses the program, if it runs, as **Pause** does. */
@@ -127,13 +163,15 @@ export class Program implements ProgramControls {
 	/**
 	 * Checks the code as it is now, before the program starts on it. With an error nothing
 	 * starts, and the map goes back to its start all the same: what it showed was the end of
-	 * another program. The editor underlines the errors; the console lists them at step 17e.
+	 * another program. The editor underlines the errors, and the console lists them.
 	 */
 	#check(): boolean {
 		const text = this.#text();
 		if (text === undefined) return false;
-		if (check(text).length > 0) {
+		const errors = check(text);
+		if (errors.length > 0) {
 			this.#playback.reset();
+			this.log.list(errors);
 			return false;
 		}
 		this.#checked = text;

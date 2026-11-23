@@ -62,6 +62,11 @@ export interface PlaybackOptions {
 	 */
 	onPrinted?: (line: string) => void;
 	/**
+	 * Told once per run how the program stopped, at its end or on an error, as `outcome` takes it:
+	 * once its last action has ended, the end of the run playing afterwards.
+	 */
+	onStopped?: (outcome: Outcome) => void;
+	/**
 	 * Told that a step threw, at a frame or at a **Step**, with what it threw. A step never
 	 * throws: the errors of a program are its outcome, so this is an error of the bridge, or of
 	 * what reads a step here, which the screen can only say. The program no longer runs by then,
@@ -156,6 +161,7 @@ export class Playback implements Scene {
 	readonly #rate: () => number;
 	readonly #frames: Frames;
 	readonly #onPrinted: ((line: string) => void) | undefined;
+	readonly #onStopped: ((outcome: Outcome) => void) | undefined;
 	readonly #onBroken: ((error: unknown) => void) | undefined;
 	readonly #timeAt: (action: Action, rate: number, lessMotion: boolean) => number;
 	readonly #now: () => number;
@@ -173,6 +179,8 @@ export class Playback implements Scene {
 	 * from one that hasn't started. Written wherever `#run` is.
 	 */
 	#started = $state(false);
+	/** Whether `onStopped` was told how the run stopped. Written wherever `#run` is. */
+	#stopTold = false;
 	/** Takes back the frame asked to the page; nothing while none is asked. */
 	#unasked: (() => void) | undefined;
 	/** The time of the frame before, for the pace; nothing before the first frame of a run. */
@@ -192,6 +200,7 @@ export class Playback implements Scene {
 			rate = () => NORMAL_SPEED,
 			frames = pageFrames,
 			onPrinted,
+			onStopped,
 			onBroken,
 			timeAt = actionTime,
 			now = () => performance.now(),
@@ -202,6 +211,7 @@ export class Playback implements Scene {
 		this.#rate = rate;
 		this.#frames = frames;
 		this.#onPrinted = onPrinted;
+		this.#onStopped = onStopped;
 		this.#onBroken = onBroken;
 		this.#timeAt = timeAt;
 		this.#now = now;
@@ -271,6 +281,7 @@ export class Playback implements Scene {
 		this.#run?.free();
 		this.#run = undefined;
 		this.#started = false;
+		this.#stopTold = false;
 		this.running = false;
 		this.#rewind();
 	}
@@ -284,6 +295,7 @@ export class Playback implements Scene {
 		this.#run?.free();
 		this.#run = undefined;
 		this.#started = false;
+		this.#stopTold = false;
 	}
 
 	[Symbol.dispose](): void {
@@ -392,6 +404,7 @@ export class Playback implements Scene {
 		this.#run?.free();
 		this.#run = run;
 		this.#started = true;
+		this.#stopTold = false;
 		this.#rewind();
 	}
 
@@ -517,12 +530,17 @@ export class Playback implements Scene {
 	}
 
 	/**
-	 * Highlights the line of the next step, or tells how the program stopped; neither before it
-	 * starts.
+	 * Highlights the line of the next step, or tells how the program stopped, once per run to
+	 * `onStopped`; neither before it starts.
 	 */
 	#showLine(): void {
 		const run = this.#run;
 		this.line = run?.line;
-		this.outcome = run && run.line === undefined ? run.outcome() : undefined;
+		const outcome = run && run.line === undefined ? run.outcome() : undefined;
+		this.outcome = outcome;
+		if (outcome && !this.#stopTold) {
+			this.#stopTold = true;
+			this.#onStopped?.(outcome);
+		}
 	}
 }

@@ -3,7 +3,7 @@
 ### https://projectfluent.org/fluent/guide/
 ###
 ### One file per domain, all read into one bundle (src/lib/i18n.ts): this one for the interface,
-### `levels.ftl` for what the levels say, `errors.ftl` for the errors of the checks.
+### `levels.ftl` for what the levels say, `errors.ftl` for the errors of the programs.
 ###
 ### The names. A test reads the code and these files, and holds what follows
 ### (src/lib/messages.spec.ts).
@@ -123,6 +123,28 @@ status-steps =
 # $line (Number): its line, from 1.
 # $column (Number): its column, in characters from the start of the line, from 1.
 status-cursor = Ln { $line }, Col { $column }
+# The tip of the number of errors, which lists them in the console.
+status-errors-show = Show in the console
+
+## The console, under the map: the log of the last Run, what the program printed and the error
+## that stopped it, or the errors that kept it from starting.
+
+# Its name, on its tab.
+console-name = Console
+# Before any Run.
+console-empty = Run your program to see what it prints.
+# Above the lines kept, once earlier lines are gone.
+# $kept (Number): the most lines that the console keeps.
+console-cut = Earlier lines aren’t shown: the console keeps the last { $kept }.
+# The line of an error, before its two sentences: the editor shows its place.
+# $line (Number): the line, from 1.
+console-line = Ln { $line }
+# Under the errors that kept the program from starting: why nothing moved on the map.
+# $errors (Number): how many there are, never 0.
+console-fix = Fix { $errors ->
+        [one] this error
+       *[other] these { $errors } errors
+    } to run the program.
 
 ## The keys that a shortcut names by a word, written beside its command: `key-<name>`
 ## (`keyMessage`). A letter, a sign, an arrow and a function key (F10) are shown as they are.

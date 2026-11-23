@@ -8,7 +8,8 @@
      The squares are for the pointer: the keyboard chooses a speed in **Run › Speed**, as the
      status bar of a code editor takes no stop of Tab. Each names its speed in the tip of the
      browser, as the buttons of a band do, and a press on one leaves the keyboard where it was,
-     the code most often. -->
+     the code most often. The number of errors is for the pointer too, which lists them in the
+     console: the keyboard has **Run**, which lists them as well. -->
 <script lang="ts">
 	import type { Cursor } from '#lib/editor/cursor.ts';
 	import { t } from '#lib/i18n.ts';
@@ -30,9 +31,11 @@
 		cursor: Cursor | undefined;
 		/** The flash of a locked code, which the bar plays and tells where it stands. */
 		flash: LockFlash;
+		/** Lists the errors in the console, as **Run** would, without running. */
+		onerrors: () => void;
 	}
 
-	let { status, errors, steps, speed, cursor, flash }: Props = $props();
+	let { status, errors, steps, speed, cursor, flash, onerrors }: Props = $props();
 
 	/** The bar, whose animations a new try starts again. */
 	let bar = $state<HTMLElement>();
@@ -74,7 +77,16 @@
 	     often. -->
 	<span class="state" role="status">{holding ? t('status-locked') : status.text}</span>
 	{#if errors > 0}
-		<span class="errors">{t('status-errors', { errors })}</span>
+		<button
+			type="button"
+			class="errors"
+			tabindex="-1"
+			title={t('status-errors-show')}
+			onmousedown={keepFocus}
+			onclick={onerrors}
+		>
+			{t('status-errors', { errors })}
+		</button>
 	{/if}
 	<span class="steps">{t('status-steps', { steps })}</span>
 	<span class="speed">
@@ -131,9 +143,18 @@
 		font-weight: var(--weight-strong);
 	}
 
+	/* The number of errors lists them in the console: a button that keeps the look of the text
+	   of the bar, its line under the pointer. */
 	.errors {
+		padding: 0;
+		border: 0;
+		background: none;
 		color: var(--error);
 		font-weight: var(--weight-strong);
+	}
+
+	.errors:hover {
+		text-decoration: underline;
 	}
 
 	/* The bar takes the color of the state of the program, as in a code editor; its texts take

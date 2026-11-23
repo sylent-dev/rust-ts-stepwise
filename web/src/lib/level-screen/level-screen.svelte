@@ -1,22 +1,25 @@
 <!-- The level screen, and the sandbox, the level screen without goal (see Level screen in
      specs.md): under its header, the code on the left on the whole height, the map on top on the
-     right, the console and the variables under it. The blocks meet without any line, each zone in
-     its own tone; the panels come with the console (step 17e). A route gives it what it plays on,
-     and it wires the rest: the same for a level and for the sandbox. The code of each level is
+     right, the console under it, the variables coming beside it at step 19. The blocks meet
+     without any line, each zone in its own tone. A route gives it what it plays on, and it wires
+     the rest: the same for a level and for the sandbox. The code of each level is
      saved as the learner changes it, and comes back with the level, until **Restore starting
      code** puts the level back in its first state (see Code editor in specs.md). **Run** plays
      that code on the map shown, at the speed of the settings, which **Run › Speed** chooses
      (see Running a program in specs.md); the editor lights the line of its next step, and marks
      the line where an error stopped it, and its three controls stand in the corner of the code.
      The status bar, under the code, says where the program stands, in the color of its state.
-     -->
+     The console shows the log of the last **Run**: what the program printed and the error that
+     stopped it, or the errors that kept it from starting, a click on one putting the cursor at
+     its place. -->
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import { differsFromStart, type LevelCode } from '#lib/code/code.ts';
 	import { keepCode, openingCode, restoreCode } from '#lib/code/current-code.ts';
+	import ConsolePanel from '#lib/console/console-panel.svelte';
 	import { kept } from '#lib/core/core-ready.svelte.ts';
 	import CodeEditor from '#lib/editor/code-editor.svelte';
-	import type { Editing } from '#lib/editor/edits.ts';
+	import type { CodeChange, Editing } from '#lib/editor/edits.ts';
 	import { errorText } from '#lib/errors/error-text.ts';
 	import { t } from '#lib/i18n.ts';
 	import { loadFailed } from '#lib/page/startup.svelte.ts';
@@ -177,20 +180,25 @@
 		currentPlatform()
 	);
 
-	/** Keeps the code of the level shown, at each change that the learner makes to it. */
-	function keep() {
+	/**
+	 * Keeps the code of the level shown, at each change that the learner makes to it, and the
+	 * errors that the console lists at their places in it.
+	 */
+	function onchange(change: CodeChange) {
 		const code = shownCode();
 		if (playground && code) keepCode(playground.name, code);
+		program.current?.log.follow(change);
 	}
 
 	/**
 	 * Puts the level shown back in its first state, once the learner has confirmed: its program
 	 * ends, as by **Reset**, its code is forgotten, and the editor opens again on its starting
-	 * code, with nothing to undo.
+	 * code, with nothing to undo. The console forgets what it said of the code that is gone.
 	 */
 	function restore() {
 		if (!playground) return;
 		program.current?.reset();
+		program.current?.log.clear();
 		restoreCode(playground.name);
 		editing?.reopen(playground.startingCode);
 	}
@@ -235,7 +243,7 @@
 							next={program.current?.played.line}
 							failed={failedLine}
 							bind:editing
-							onchange={keep}
+							{onchange}
 							ontype={() => (typing = true)}
 							onrefuse={() => {
 								lockFlash.refuse();
@@ -256,12 +264,14 @@
 				{speed}
 				cursor={editing?.cursor}
 				flash={lockFlash}
+				onerrors={() => program.current?.listErrors()}
 			/>
 		</div>
 		<div class="map"><MapBlock scene={program.current?.played} goals={playground?.goals} /></div>
-		<!-- The zone of the console and of the variables, empty until they come (steps 17e and
-		     19). -->
-		<div class="panels"></div>
+		<!-- The zone of the console, and of the variables at step 19. -->
+		<div class="panels">
+			<ConsolePanel log={program.current?.log} onshow={(at: number) => editing?.showPlace(at)} />
+		</div>
 	</main>
 </div>
 <Confirmation
@@ -333,7 +343,6 @@
 
 	.panels {
 		min-height: 0;
-		overflow: auto;
 		background: var(--band);
 	}
 </style>

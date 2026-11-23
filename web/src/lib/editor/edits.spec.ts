@@ -1,11 +1,12 @@
 // The edits that the screen asks of the editor, on the whole editor: the history and the sign
-// of a comment are parts of it (setup.ts).
+// of a comment are parts of it (setup.ts); then a change of the code as the editor says it to
+// the screen, which follows its places with it.
 
-import type { EditorState } from '@codemirror/state';
+import { EditorState } from '@codemirror/state';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { check, classifyLine } from '#lib/core/core.ts';
 import { loadTestCore } from '#lib/core/test-support.ts';
-import { applyEdit, canEdit, type Edit, EDITS } from './edits.ts';
+import { applyEdit, canEdit, codeChange, type Edit, EDITS } from './edits.ts';
 import { editorSetup } from './setup.ts';
 import { explainByCode, shown, stateOf as markedState, type } from './test-support.ts';
 
@@ -197,5 +198,41 @@ describe('move-line-up and move-line-down', () => {
 	it('leave the first line where it is going up, and the last one going down', () => {
 		expect(edited('for|ward()\nback()', 'move-line-up')).toBe('for|ward()\nback()');
 		expect(edited('forward()\nba|ck()', 'move-line-down')).toBe('forward()\nba|ck()');
+	});
+});
+
+/** The change made by `changes` in a code, as the editor says it. */
+function changed(
+	code: string,
+	changes: { from: number; to?: number; insert?: string }
+): ReturnType<typeof codeChange> {
+	const transaction = EditorState.create({ doc: code }).update({ changes });
+	return codeChange(transaction.changes, transaction.state.doc);
+}
+
+describe('codeChange', () => {
+	const code = 'forward()\nfoward()\n';
+
+	it('carries a place down with the lines written above it', () => {
+		const change = changed(code, { from: 0, insert: 'turn_left()\n' });
+		expect(change.map(10)).toBe(22);
+		expect(change.lineAt(change.map(10))).toBe(3);
+	});
+
+	it('keeps a place on its character when text is written just before it', () => {
+		const change = changed(code, { from: 10, insert: '    ' });
+		expect(change.map(10)).toBe(14);
+	});
+
+	it('leaves a place where its text was, once that text is gone', () => {
+		const change = changed(code, { from: 10, to: 19 });
+		expect(change.map(12)).toBe(10);
+		expect(change.lineAt(change.map(12))).toBe(2);
+	});
+
+	it('takes a place past the end of the code as its end', () => {
+		const change = changed(code, { from: 0, to: 10 });
+		expect(change.map(100)).toBe(9);
+		expect(change.lineAt(100)).toBe(2);
 	});
 });

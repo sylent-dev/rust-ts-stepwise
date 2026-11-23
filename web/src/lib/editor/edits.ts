@@ -13,7 +13,13 @@ import {
 	undo,
 	undoDepth
 } from '@codemirror/commands';
-import { EditorState, type Extension, type StateCommand } from '@codemirror/state';
+import {
+	type ChangeDesc,
+	EditorState,
+	type Extension,
+	type StateCommand,
+	type Text
+} from '@codemirror/state';
 import type { Cursor } from './cursor.ts';
 
 /** The edits, in the order of their menu. */
@@ -103,4 +109,32 @@ export interface Editing {
 	 * editor doesn't say it as one (`onchange` of code-editor.svelte).
 	 */
 	reopen(text: string): void;
+	/**
+	 * Puts the cursor at a place of the code, which the code scrolls to show, and gives the code
+	 * the keyboard, so that the learner types there: the place of an error that the console
+	 * lists. A place past the end of the code is its end.
+	 */
+	showPlace(at: number): void;
+}
+
+/**
+ * A change of the code, as the editor says it to the screen, which follows with it the places
+ * that it keeps in the code (the errors that the console lists).
+ */
+export interface CodeChange {
+	/**
+	 * Where a place of the code before the change stands after it: on the same character, text
+	 * written just before it carrying it along, and where its text was once that text is gone.
+	 */
+	map(at: number): number;
+	/** The line of a place of the code after the change, from 1. */
+	lineAt(at: number): number;
+}
+
+/** A change of the code, made of what changed and of the code after it. */
+export function codeChange(changes: ChangeDesc, after: Text): CodeChange {
+	return {
+		map: (at) => changes.mapPos(Math.min(Math.max(at, 0), changes.length), 1),
+		lineAt: (at) => after.lineAt(Math.min(Math.max(at, 0), after.length)).number
+	};
 }

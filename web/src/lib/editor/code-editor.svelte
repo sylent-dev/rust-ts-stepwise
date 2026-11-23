@@ -14,7 +14,7 @@
 	import { t } from '#lib/i18n.ts';
 	import type { Explain } from './checks.ts';
 	import { followEditing } from './editing.svelte.ts';
-	import type { Editing } from './edits.ts';
+	import { type CodeChange, codeChange, type Editing } from './edits.ts';
 	import { lockOf, setLock } from './lock.ts';
 	import { type RunLine, showLine } from './run-lines.ts';
 	import { editorSetup } from './setup.ts';
@@ -47,10 +47,10 @@
 		editing?: Editing;
 		/**
 		 * Says that the code has changed in the editor, typed or by a command of the screen, once
-		 * `editing` holds the code changed. Never when the editor opens, nor when the screen opens
-		 * it again.
+		 * `editing` holds the code changed, with what changed. Never when the editor opens, nor
+		 * when the screen opens it again.
 		 */
-		onchange?: () => void;
+		onchange?: (change: CodeChange) => void;
 		/**
 		 * Says that the learner typed in the code: a character written or erased, a line
 		 * broken, an indentation (`isTyped`). Not a line moved nor a change undone.
@@ -89,7 +89,7 @@
 			// when it is given a new state (`setState`).
 			EditorView.updateListener.of((update) => {
 				follow(update.state);
-				if (update.docChanged) onchange?.();
+				if (update.docChanged) onchange?.(codeChange(update.changes, update.state.doc));
 				if (update.transactions.some(isTyped)) ontype?.();
 			})
 		];
@@ -114,13 +114,19 @@
 		// A new state, rather than a change of the text: the history starts again with it. The
 		// editor keeps its page, so the keyboard stays in the code if it was there. A new state
 		// has no line of a run: they come back as the screen gives them, whatever it did before.
-		const { editing: own, follow } = followEditing(view, (reopened) => {
-			view.setState(stateOn(reopened));
-			untrack(() => {
-				showNow('next', next);
-				showNow('failed', failed);
-			});
-		});
+		const { editing: own, follow } = followEditing(
+			view,
+			(reopened) => {
+				view.setState(stateOn(reopened));
+				untrack(() => {
+					showNow('next', next);
+					showNow('failed', failed);
+				});
+			},
+			() => {
+				view.focus();
+			}
+		);
 		editing = own;
 		// The lock follows the screen, in an effect of its own: read here, it would make the
 		// editor again at each change.

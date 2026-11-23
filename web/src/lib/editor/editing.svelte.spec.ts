@@ -11,8 +11,10 @@ import { followEditing } from './editing.svelte.ts';
 /**
  * What stands for the editor on its page: it keeps its state, and says each change to what
  * follows it, as the editor does. Opened again, it takes a new state, which it says to nothing.
+ * It counts the times it was given the keyboard.
  */
 function editorOf(text: string) {
+	let focused = 0;
 	let state = EditorState.create({ doc: text, extensions: history() });
 	const editor = {
 		get state() {
@@ -23,12 +25,20 @@ function editorOf(text: string) {
 			follow(state);
 		}
 	};
-	const { editing, follow } = followEditing(editor, (reopened) => {
-		state = EditorState.create({ doc: reopened, extensions: history() });
-	});
+	const { editing, follow } = followEditing(
+		editor,
+		(reopened) => {
+			state = EditorState.create({ doc: reopened, extensions: history() });
+		},
+		() => {
+			focused += 1;
+		}
+	);
 	return {
 		editing,
 		text: () => state.doc.toString(),
+		selection: () => state.selection.main,
+		focused: () => focused,
 		/** Puts the cursor at a place of the code. */
 		moveTo(place: number) {
 			editor.dispatch(state.update({ selection: { anchor: place } }));
@@ -142,5 +152,23 @@ describe('followEditing', () => {
 
 	it('counts no error in an editor without the checks', () => {
 		expect(editorOf('print(sidse)').editing.errors).toBe(0);
+	});
+
+	it('puts the cursor at a place, and gives the code the keyboard', () => {
+		const editor = editorOf('forward()\nfoward()\n');
+
+		editor.editing.showPlace(10);
+
+		expect(editor.selection()).toMatchObject({ anchor: 10, head: 10 });
+		expect(editor.editing.cursor).toEqual({ line: 2, column: 1 });
+		expect(editor.focused()).toBe(1);
+	});
+
+	it('puts the cursor at the end of the code for a place past it', () => {
+		const editor = editorOf('forward()');
+
+		editor.editing.showPlace(50);
+
+		expect(editor.selection().anchor).toBe(9);
 	});
 });
