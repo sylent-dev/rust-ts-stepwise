@@ -34,6 +34,9 @@ export type ListedError = Readonly<
 	}
 >;
 
+/** What the console reads of a log, which only the program writes. */
+export type LogView = Pick<ConsoleLog, 'kind' | 'report' | 'lines' | 'cut' | 'errors'>;
+
 export class ConsoleLog {
 	#kind = $state<LogKind>('empty');
 	#errors = $state.raw<readonly ListedError[]>([]);

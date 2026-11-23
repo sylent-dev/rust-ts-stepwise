@@ -6,16 +6,19 @@
      19), as a title from 1,600 pixels wide, where the two stand side by side without tabs.
 
      It isn't read to a screen reader as it changes: a program may print thousands of lines in a
-     second, and the status bar says already where the program stands. -->
+     second, and the status bar says already where the program stands. Only why a **Run** started
+     nothing is read as it comes, since the bar stays `Ready` then. The block that scrolls takes a
+     stop of Tab, so that the keyboard scrolls it in every browser, as Chrome and Firefox allow by
+     themselves when it holds no button. -->
 <script lang="ts">
 	import { errorText, type ErrorText } from '#lib/errors/error-text.ts';
 	import { runtimeErrorText } from '#lib/errors/runtime-error-text.ts';
 	import { t } from '#lib/i18n.ts';
-	import { type ConsoleLog, KEPT_LINES, type ListedError } from './console-log.svelte.ts';
+	import { KEPT_LINES, type ListedError, type LogView } from './console-log.svelte.ts';
 
 	interface Props {
 		/** The log of the program shown; nothing while the screen has no program. */
-		log: ConsoleLog | undefined;
+		log: LogView | undefined;
 		/** Puts the cursor at a place of the code, that of an error clicked. */
 		onshow: (at: number) => void;
 	}
@@ -62,9 +65,17 @@
 	}
 </script>
 
-<section class="console" aria-labelledby={nameId}>
+<section class="console">
 	<div class="tabs"><h2 class="tab" id={nameId}>{t('console-name')}</h2></div>
-	<div class="panel" bind:this={panel} {onscroll}>
+	<!-- svelte-ignore a11y_no_noninteractive_tabindex (a block that scrolls is reached by Tab, so that the keyboard scrolls it) -->
+	<div
+		class="panel"
+		role="region"
+		aria-labelledby={nameId}
+		tabindex="0"
+		bind:this={panel}
+		{onscroll}
+	>
 		{#if !log || log.kind === 'empty'}
 			<p class="weak">{t('console-empty')}</p>
 		{:else}
@@ -91,10 +102,13 @@
 					<span><strong>{title}</strong><br />{rule}</span>
 				</button>
 			{/each}
-			{#if log.kind === 'checked'}
+		{/if}
+		<!-- Read as it comes: the region is on the page before its sentence. -->
+		<div role="status">
+			{#if log?.kind === 'checked'}
 				<p class="weak fix">{t('console-fix', { errors: log.errors.length })}</p>
 			{/if}
-		{/if}
+		</div>
 	</div>
 </section>
 
@@ -168,7 +182,7 @@
 	/* Each kind of message leaves a little room around it. */
 	.prints + .error,
 	.error + .error,
-	.error + .fix {
+	.fix {
 		margin-top: var(--space-8);
 	}
 

@@ -10,13 +10,13 @@ import {
 	RangeSet,
 	StateEffect,
 	StateField,
-	type Transaction,
 	type TransactionSpec
 } from '@codemirror/state';
 import { Decoration, EditorView, GutterMarker, gutter, gutterLineClass } from '@codemirror/view';
 import { mount, unmount } from 'svelte';
 import type { IconName } from '#lib/icon-name.ts';
 import Icon from '#lib/icon.svelte';
+import { changedBy, followLine } from './follow.ts';
 
 /** A line of a run: the one of the next step, or the one of the error that stopped it. */
 export type RunLine = 'next' | 'failed';
@@ -29,53 +29,6 @@ const NO_LINES: RunLines = { next: undefined, failed: undefined };
 /** Shows a line of a run on another line, or takes it away. */
 const show = StateEffect.define<{ line: RunLine; at: number | undefined }>();
 
-/**
- * Where a line stands once the code has changed: on the line that holds its text now, lines
- * added or taken away above it, and a line break typed before its text, which carries its text
- * down. Nothing once the line itself is gone: its text and one of its breaks deleted, which
- * Backspace at its start does to an empty line, unless the same change writes it again
- * elsewhere, as a line moved over it does. A line joined to the one above it keeps its text
- * there, and the mark follows it.
- */
-export function followLine(transaction: Transaction, number: number): number | undefined {
-	const before = transaction.startState.doc;
-	if (number < 1 || number > before.lines) return undefined;
-	const line = before.line(number);
-	const replaced: { from: number; to: number }[] = [];
-	transaction.changes.iterChangedRanges((from, to) => {
-		replaced.push({ from, to });
-	});
-	const gone = replaced.some(
-		({ from, to }) =>
-			(number > 1 && from <= line.from - 1 && to >= line.to) ||
-			(number < before.lines && from <= line.from && to >= line.to + 1)
-	);
-	if (gone) return writtenAgain(transaction, line.text);
-	// The first character of its text, and after what is written there: Enter in the spaces that
-	// start a line replaces them with a break and the same spaces (`insertNewLine`), a change
-	// that starts at the start of the line, where a place stays whatever its side.
-	const text = line.to - line.text.trimStart().length;
-	return transaction.newDoc.lineAt(transaction.changes.mapPos(text, 1)).number;
-}
-
-/**
- * The line where a change writes the text of a line again, with its break: **Move line up**
- * and **Move line down** delete the line that the lines moved pass over, and write it on their
- * other side (`moveLineUp`, `moveLineDown` of CodeMirror), as their undo does. Nothing when the
- * change doesn't write it again, nor for a line without text: any line break written by the
- * change would pass for it, and a mark on another line would be worse than none.
- */
-function writtenAgain(transaction: Transaction, text: string): number | undefined {
-	if (text.trim() === '') return undefined;
-	const written: number[] = [];
-	transaction.changes.iterChanges((_fromA, _toA, fromB, toB, inserted) => {
-		const insert = inserted.toString();
-		if (insert === `${text}\n`) written.push(transaction.newDoc.lineAt(fromB).number);
-		else if (insert === `\n${text}`) written.push(transaction.newDoc.lineAt(toB).number);
-	});
-	return written[0];
-}
-
 /** The lines of the run, as the screen showed them and the changes of the code carried them. */
 const runLines = StateField.define<RunLines>({
 	create: () => NO_LINES,
@@ -83,7 +36,7 @@ const runLines = StateField.define<RunLines>({
 		let moved = lines;
 		if (transaction.docChanged) {
 			const follow = (at: number | undefined) =>
-				at === undefined ? undefined : followLine(transaction, at);
+				at === undefined ? undefined : followLine(changedBy(transaction), at);
 			moved = { next: follow(lines.next), failed: follow(lines.failed) };
 		}
 		for (const effect of transaction.effects) {

@@ -187,7 +187,7 @@
 	function onchange(change: CodeChange) {
 		const code = shownCode();
 		if (playground && code) keepCode(playground.name, code);
-		program.current?.log.follow(change);
+		program.current?.follow(change);
 	}
 
 	/**
@@ -197,8 +197,7 @@
 	 */
 	function restore() {
 		if (!playground) return;
-		program.current?.reset();
-		program.current?.log.clear();
+		program.current?.restore();
 		restoreCode(playground.name);
 		editing?.reopen(playground.startingCode);
 	}

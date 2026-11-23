@@ -89,7 +89,10 @@
 			// when it is given a new state (`setState`).
 			EditorView.updateListener.of((update) => {
 				follow(update.state);
-				if (update.docChanged) onchange?.(codeChange(update.changes, update.state.doc));
+				if (update.docChanged) {
+					const { changes, startState, state } = update;
+					onchange?.(codeChange({ changes, before: startState.doc, after: state.doc }));
+				}
 				if (update.transactions.some(isTyped)) ontype?.();
 			})
 		];

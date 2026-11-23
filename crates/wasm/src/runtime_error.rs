@@ -4,7 +4,6 @@
 
 use serde::Serialize;
 use stepwise_core::interpreter::{self, MAX_CALL_DEPTH, MAX_TEXT_LENGTH};
-use stepwise_core::lexer::MAX_NUMBER;
 use stepwise_core::world::RobotError;
 use tsify::Tsify;
 
@@ -146,7 +145,7 @@ impl RuntimeErrorKind {
             K::DivisionByZero => Self::DivisionByZero,
             K::Overflow => Self::Overflow {
                 smallest: i64::MIN.to_string(),
-                largest: MAX_NUMBER.to_string(),
+                largest: i64::MAX.to_string(),
             },
             K::TextTooLong => Self::TextTooLong {
                 limit: count(MAX_TEXT_LENGTH),

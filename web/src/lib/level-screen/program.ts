@@ -3,8 +3,9 @@
 // (level-commands.ts), and the screen reads on it what its map draws, whether its code can be
 // changed, and what its console shows.
 
-import { ConsoleLog } from '#lib/console/console-log.svelte.ts';
+import { ConsoleLog, type LogView } from '#lib/console/console-log.svelte.ts';
 import { check } from '#lib/core/core.ts';
+import type { CodeChange } from '#lib/editor/edits.ts';
 import type { Scene } from '#lib/map/scene.ts';
 import { Playback, type PlaybackOptions, type PlaybackStatus } from '#lib/run/playback.svelte.ts';
 import type { Playground } from './playground.ts';
@@ -43,7 +44,8 @@ export class Program implements ProgramControls {
 	 * What its console shows: the log of its last **Run**, which the program writes as it runs,
 	 * and the errors that kept it from starting. It follows the program.
 	 */
-	readonly log = new ConsoleLog();
+	readonly log: LogView;
+	readonly #log = new ConsoleLog();
 	readonly #playback: Playback;
 	readonly #text: () => string | undefined;
 	/** The code as it was last checked, which a run starts on. */
@@ -52,19 +54,24 @@ export class Program implements ProgramControls {
 	/**
 	 * The program of the map of `playground`, at rest. `text` gives the code of the editor as it
 	 * is now, read when the program starts; nothing while the screen has no editor. What it
-	 * prints and the error that stops it go to its log, rather than to `options`.
+	 * prints and the error that stops it go to its log.
 	 */
-	constructor(playground: Playground, text: () => string | undefined, options?: PlaybackOptions) {
+	constructor(
+		playground: Playground,
+		text: () => string | undefined,
+		options?: Omit<PlaybackOptions, 'onPrinted' | 'onStopped'>
+	) {
 		this.#text = text;
+		this.log = this.#log;
 		this.#playback = new Playback(
 			{ world: playground.world, start: () => playground.start(this.#checked) },
 			{
 				...options,
 				onPrinted: (line) => {
-					this.log.print(line);
+					this.#log.print(line);
 				},
 				onStopped: (outcome) => {
-					if (outcome.type === 'failed') this.log.fail(outcome.error);
+					if (outcome.type === 'failed') this.#log.fail(outcome.error);
 				}
 			}
 		);
@@ -111,7 +118,7 @@ export class Program implements ProgramControls {
 				break;
 			case 'run':
 				if (this.#check()) {
-					this.log.start();
+					this.#log.start();
 					this.#playback.play();
 				}
 				break;
@@ -124,7 +131,7 @@ export class Program implements ProgramControls {
 		if (this.status === 'paused') {
 			this.#playback.step();
 		} else if (this.canStep && this.#check()) {
-			this.log.start();
+			this.#log.start();
 			this.#playback.step();
 		}
 	}
@@ -143,7 +150,21 @@ export class Program implements ProgramControls {
 		const text = this.#text();
 		if (text === undefined || this.locked) return;
 		const errors = check(text);
-		if (errors.length > 0) this.log.list(errors);
+		if (errors.length > 0) this.#log.list(errors);
+	}
+
+	/** Follows a change of the code: the errors that the console lists stay at their places. */
+	follow(change: CodeChange): void {
+		this.#log.follow(change);
+	}
+
+	/**
+	 * Puts the program back as its level starts, once **Restore starting code…** has replaced the
+	 * code: it ends as by **Reset**, and the console forgets what it said of the code that is gone.
+	 */
+	restore(): void {
+		this.reset();
+		this.#log.clear();
 	}
 
 	/** Pauses the program, if it runs, as **Pause** does. */
@@ -171,7 +192,7 @@ export class Program implements ProgramControls {
 		const errors = check(text);
 		if (errors.length > 0) {
 			this.#playback.reset();
-			this.log.list(errors);
+			this.#log.list(errors);
 			return false;
 		}
 		this.#checked = text;

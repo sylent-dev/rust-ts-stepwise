@@ -18,6 +18,9 @@
 ###   writing a name: the test knows each family by its function.
 ### - A message that the code doesn't read is removed. One that only other messages would read
 ###   is a term of Fluent (`-name`).
+###
+### A line or a column of the code is written without the commas of the thousands, as a code
+### editor writes it (`Ln 1234`): `NUMBER($line, useGrouping: 0)`.
 
 app-name = Stepwise
 # The title of a page, in the tab of the browser.
@@ -93,10 +96,10 @@ status-ready = Ready
 # While the program runs, the code can't be changed.
 status-running = Running · Reset to edit
 # $line (Number): the line of the next step, highlighted in the editor.
-status-paused = Paused at line { $line } · Reset to edit
+status-paused = Paused at line { NUMBER($line, useGrouping: 0) } · Reset to edit
 # An error stopped the program; the code can be changed again.
 # $line (Number): the line of the error, marked in the editor.
-status-failed = Error at line { $line }
+status-failed = Error at line { NUMBER($line, useGrouping: 0) }
 # The program ended without error, and a goal of the map isn't met.
 status-goal-not-met = Ended · goal not met
 # The program ended with every goal of the map met.
@@ -122,7 +125,7 @@ status-steps =
 # The place of the cursor in the code.
 # $line (Number): its line, from 1.
 # $column (Number): its column, in characters from the start of the line, from 1.
-status-cursor = Ln { $line }, Col { $column }
+status-cursor = Ln { NUMBER($line, useGrouping: 0) }, Col { NUMBER($column, useGrouping: 0) }
 # The tip of the number of errors, which lists them in the console.
 status-errors-show = Show in the console
 
@@ -138,7 +141,7 @@ console-empty = Run your program to see what it prints.
 console-cut = Earlier lines aren’t shown: the console keeps the last { $kept }.
 # The line of an error, before its two sentences: the editor shows its place.
 # $line (Number): the line, from 1.
-console-line = Ln { $line }
+console-line = Ln { NUMBER($line, useGrouping: 0) }
 # Under the errors that kept the program from starting: why nothing moved on the map.
 # $errors (Number): how many there are, never 0.
 console-fix = Fix { $errors ->

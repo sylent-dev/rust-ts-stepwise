@@ -2,11 +2,12 @@
 // of a comment are parts of it (setup.ts); then a change of the code as the editor says it to
 // the screen, which follows its places with it.
 
-import { EditorState } from '@codemirror/state';
+import { EditorState, type Transaction } from '@codemirror/state';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { check, classifyLine } from '#lib/core/core.ts';
 import { loadTestCore } from '#lib/core/test-support.ts';
 import { applyEdit, canEdit, codeChange, type Edit, EDITS } from './edits.ts';
+import { changedBy } from './follow.ts';
 import { editorSetup } from './setup.ts';
 import { explainByCode, shown, stateOf as markedState, type } from './test-support.ts';
 
@@ -206,8 +207,7 @@ function changed(
 	code: string,
 	changes: { from: number; to?: number; insert?: string }
 ): ReturnType<typeof codeChange> {
-	const transaction = EditorState.create({ doc: code }).update({ changes });
-	return codeChange(transaction.changes, transaction.state.doc);
+	return codeChange(changedBy(EditorState.create({ doc: code }).update({ changes })));
 }
 
 describe('codeChange', () => {
@@ -228,6 +228,28 @@ describe('codeChange', () => {
 		const change = changed(code, { from: 10, to: 19 });
 		expect(change.map(12)).toBe(10);
 		expect(change.lineAt(change.map(12))).toBe(2);
+	});
+
+	it('follows its line moved by Move line up, as the mark of the margin does', () => {
+		const state = EditorState.create({
+			doc: 'forward()\nfoward()\nturn_left()\n',
+			selection: { anchor: 22 }
+		});
+		const moves: Transaction[] = [];
+		applyEdit('move-line-up', {
+			state,
+			dispatch: (transaction) => {
+				moves.push(transaction);
+			}
+		});
+		const [move] = moves;
+		if (!move) throw new Error('Move line up changed nothing');
+		const change = codeChange(changedBy(move));
+		expect(move.newDoc.toString()).toBe('forward()\nturn_left()\nfoward()\n');
+		expect({ at: change.map(12), line: change.lineAt(change.map(12)) }).toEqual({
+			at: 24,
+			line: 3
+		});
 	});
 
 	it('takes a place past the end of the code as its end', () => {

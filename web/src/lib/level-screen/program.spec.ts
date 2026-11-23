@@ -282,4 +282,32 @@ describe('the console of the program of a screen', () => {
 		expect(shown(program).kind).toBe('ran');
 		program.free();
 	});
+
+	it('keeps its errors at their places as the code changes', () => {
+		const code = { text: 'print(1)\nfoward()\n' };
+		const program = programOf(code);
+		program.runOrPause();
+		program.follow({ map: (at) => at + 12, lineAt: () => 3 });
+		expect(program.log.errors.map(({ at, line }) => ({ at, line }))).toEqual([{ at: 21, line: 3 }]);
+		program.free();
+	});
+
+	it('forgets everything once the starting code is restored, and puts the map back', () => {
+		const program = programOf({ text: 'print(1)\nforward()\npick_up()\n' });
+		program.runOrPause();
+		finish();
+		program.restore();
+		expect({
+			...shown(program),
+			status: program.status,
+			position: program.played.world.robot.position
+		}).toEqual({
+			kind: 'empty',
+			lines: [],
+			errors: [],
+			status: 'ready',
+			position: { x: 0, y: 0 }
+		});
+		program.free();
+	});
 });
