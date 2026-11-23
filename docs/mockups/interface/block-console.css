@@ -1,6 +1,8 @@
 /* The elements of the console. Each kind of message leaves a little room around it. */
 .app-message + .console-fix, .console-prints + .app-message, .console-prints + .console-note, .app-message + .app-message, .console-note + .console-note { margin-top: var(--space-8); }
 .console-prints div { white-space: pre-wrap; overflow-wrap: anywhere; }
+/* Above the lines kept, once the earliest ones have gone. */
+.console-cut { margin-bottom: var(--space-8); }
 
 /* An error is one big link to its place in the code. */
 .app-message { margin: 0 calc(-1 * var(--space-6)); padding: var(--space-2) var(--space-6); border-radius: var(--radius); cursor: pointer; }
