@@ -14,6 +14,8 @@ export function editorFor(able: readonly Edit[] = EDITS): Editing & { asked: Edi
 		can: (edit) => able.includes(edit),
 		apply: (edit) => asked.push(edit),
 		text: '',
+		cursor: { line: 1, column: 1 },
+		errors: 0,
 		reopen: () => {}
 	};
 }

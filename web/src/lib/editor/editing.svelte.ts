@@ -3,6 +3,8 @@
 // Without a page, so that this link is tested (editing.svelte.spec.ts).
 
 import type { EditorState, StateCommand } from '@codemirror/state';
+import { errorCount } from './checks.ts';
+import { cursorOf } from './cursor.ts';
 import { applyEdit, canEdit, type Editing } from './edits.ts';
 
 /** An editor followed for the screen. */
@@ -18,7 +20,7 @@ export interface FollowedEditing {
 
 /**
  * Follows an editor for the screen: the editor on its page, or what stands for it in a test.
- * `can` and `text` read the state last said to `follow`, kept as a signal, never the editor
+ * `can`, `text`, `cursor` and `errors` read the state last said to `follow`, kept as a signal, never the editor
  * itself: a row of a menu that read it is then drawn again once the code has changed, greyed or
  * not. `restart` gives the editor a new state, made from a text with the parts of the editor;
  * the editor says no change then, so `reopen` follows its state itself.
@@ -36,6 +38,12 @@ export function followEditing(
 			},
 			get text() {
 				return latest.doc.toString();
+			},
+			get cursor() {
+				return cursorOf(latest);
+			},
+			get errors() {
+				return errorCount(latest);
 			},
 			reopen: (text) => {
 				restart(text);

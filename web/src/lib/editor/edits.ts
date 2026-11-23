@@ -14,6 +14,7 @@ import {
 	undoDepth
 } from '@codemirror/commands';
 import { EditorState, type Extension, type StateCommand } from '@codemirror/state';
+import type { Cursor } from './cursor.ts';
 
 /** The edits, in the order of their menu. */
 export const EDITS = ['undo', 'redo', 'comment-lines', 'move-line-up', 'move-line-down'] as const;
@@ -89,6 +90,13 @@ export interface Editing {
 	apply(edit: Edit): void;
 	/** The code as it is now. It follows the code as it changes. */
 	readonly text: string;
+	/** The place of the cursor. It follows the cursor as it moves. */
+	readonly cursor: Cursor;
+	/**
+	 * The number of errors that the checks underline: it follows them, a moment after the last
+	 * change (checks.ts).
+	 */
+	readonly errors: number;
 	/**
 	 * Opens the editor again on a text, as the first time: the code is replaced for good, and its
 	 * history starts again, with nothing to undo. It isn't a change that the learner made: the

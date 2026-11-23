@@ -29,6 +29,10 @@ function editorOf(text: string) {
 	return {
 		editing,
 		text: () => state.doc.toString(),
+		/** Puts the cursor at a place of the code. */
+		moveTo(place: number) {
+			editor.dispatch(state.update({ selection: { anchor: place } }));
+		},
 		/** Types a text at the end of the code. */
 		type(typed: string) {
 			editor.dispatch(
@@ -116,5 +120,27 @@ describe('followEditing', () => {
 
 		expect(seen).toEqual(['forward()', 'forward()\nback()', 'forward()']);
 		leave();
+	});
+
+	it('has what read the cursor read it again once the cursor has moved', () => {
+		const editor = editorOf('forward()\nback()');
+		const seen: string[] = [];
+		const leave = $effect.root(() => {
+			$effect(() => {
+				const { line, column } = editor.editing.cursor;
+				seen.push(`${String(line)}:${String(column)}`);
+			});
+		});
+		flushSync();
+
+		editor.moveTo(12);
+		flushSync();
+
+		expect(seen).toEqual(['1:1', '2:3']);
+		leave();
+	});
+
+	it('counts no error in an editor without the checks', () => {
+		expect(editorOf('print(sidse)').editing.errors).toBe(0);
 	});
 });

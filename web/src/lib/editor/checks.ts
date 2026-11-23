@@ -139,29 +139,53 @@ const explainer = Facet.define<Explain, Explain | undefined>({
  */
 export const checkAgain = StateEffect.define();
 
-function underlinesIn(state: EditorState): DecorationSet {
+/**
+ * The underlines drawn, and the number of errors among them, which the status bar of the screen
+ * writes: both from the same check, so that the number follows the waves.
+ */
+interface Checked {
+	readonly marks: DecorationSet;
+	readonly errors: number;
+}
+
+function underlinesIn(state: EditorState): Checked {
 	const explain = state.facet(explainer);
-	if (!explain) return Decoration.none;
-	return Decoration.set(underlinesOf(state.doc, explain).map(markOf), true);
+	if (!explain) return { marks: Decoration.none, errors: 0 };
+	const found = underlinesOf(state.doc, explain);
+	return {
+		marks: Decoration.set(found.map(markOf), true),
+		errors: found.filter((underline) => underline.kind === 'error').length
+	};
 }
 
 /**
  * The underlines of the code: checked as soon as the editor opens, then moved with the text at
  * each change, and checked again when asked.
  */
-const underlines = StateField.define<DecorationSet>({
+const underlines = StateField.define<Checked>({
 	create: underlinesIn,
-	update(drawn, transaction) {
+	update(checked, transaction) {
 		if (transaction.effects.some((effect) => effect.is(checkAgain))) {
 			return underlinesIn(transaction.state);
 		}
-		return transaction.docChanged ? drawn.map(transaction.changes) : drawn;
+		return transaction.docChanged
+			? { ...checked, marks: checked.marks.map(transaction.changes) }
+			: checked;
 	},
 	// At the bottom of the order of the marks, so that another mark over the same letters (a color
 	// of the code, the pair of parentheses) is drawn inside it, and the stretch of an underline stays
 	// one piece: each piece would start its wave again.
-	provide: (field) => EditorView.outerDecorations.from(field)
+	provide: (field) => EditorView.outerDecorations.from(field, (checked) => checked.marks)
 });
+
+/**
+ * The number of errors that the last check found, as the waves show them: it changes with them,
+ * a moment after the last change, and not at each key. Nothing found in an editor without the
+ * checks.
+ */
+export function errorCount(state: EditorState): number {
+	return state.field(underlines, false)?.errors ?? 0;
+}
 
 /** Checks the code again once it hasn't changed for `CHECK_DELAY`. */
 const scheduler = ViewPlugin.fromClass(
@@ -203,7 +227,7 @@ export function notesAt(state: EditorState, place: number, side: -1 | 1): NotesA
 	const notes: Note[] = [];
 	let from = place;
 	let to = place;
-	state.field(underlines).between(place, place, (start, end, mark) => {
+	state.field(underlines).marks.between(place, place, (start, end, mark) => {
 		const holds =
 			start === end
 				? start === place

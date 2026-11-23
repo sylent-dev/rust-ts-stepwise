@@ -5,7 +5,7 @@
 import { EditorState, Text } from '@codemirror/state';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { loadTestCore } from '#lib/core/test-support.ts';
-import { checkAgain, checks, LINE_LENGTH, notesAt, underlinesOf } from './checks.ts';
+import { checkAgain, checks, errorCount, LINE_LENGTH, notesAt, underlinesOf } from './checks.ts';
 import { explainByCode } from './test-support.ts';
 
 beforeAll(loadTestCore);
@@ -85,6 +85,30 @@ describe('the underlines of the editor', () => {
 		const declared = typed.update({ changes: { from: 0, insert: 'let sidse = 4' } }).state;
 		expect(saidAt(declared, 21)).toEqual(['unknown-name']);
 		expect(saidAt(declared.update({ effects: checkAgain.of(null) }).state, 21)).toEqual([]);
+	});
+});
+
+describe('errorCount', () => {
+	it('counts the errors underlined, not the lines too long, which are advice', () => {
+		const long = `print("${'a'.repeat(LINE_LENGTH)}")`;
+		expect(errorCount(stateOf(`print(sidse)\nturn()\n${long}`))).toBe(2);
+		expect(errorCount(stateOf(long))).toBe(0);
+	});
+
+	it('follows the underlines: the same number until the next check, as the waves stay', () => {
+		const typed = stateOf('print(sidse)').update({
+			changes: { from: 0, insert: 'let sidse = 4\n' }
+		}).state;
+		expect(errorCount(typed)).toBe(1);
+		const checked = typed.update({ effects: checkAgain.of(null) }).state;
+		expect(errorCount(checked)).toBe(0);
+		const broken = checked.update({ changes: { from: 0, insert: 'turn()\n' } }).state;
+		expect(errorCount(broken)).toBe(0);
+		expect(errorCount(broken.update({ effects: checkAgain.of(null) }).state)).toBe(1);
+	});
+
+	it('finds nothing in an editor without the checks', () => {
+		expect(errorCount(EditorState.create({ doc: 'print(sidse)' }))).toBe(0);
 	});
 });
 

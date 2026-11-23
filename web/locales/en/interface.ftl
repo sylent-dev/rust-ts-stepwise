@@ -70,9 +70,10 @@ command-reset = Reset
 # starting code, which replaces the code.
 control-reset-help = Puts the map back. Your code stays.
 
-## The speed of a program, which the menu **Run** chooses, and later the status bar.
+## The speed of a program, which the menu **Run** chooses, and the status bar.
 
-# The row of the menu **Run** that opens the speeds.
+# The row of the menu **Run** that opens the speeds, and the name before the squares of the
+# status bar that choose them.
 speed-name = Speed
 # A speed, named by the steps of the program that it runs each second.
 # $steps (Number): the steps per second.
@@ -83,6 +84,45 @@ speed-steps =
     }
 # The fastest speed: as many steps as the browser allows, without animation.
 speed-instant = Instant
+
+## The status bar, under the code, as in a code editor: the state of the program, the errors,
+## the steps, the speed and the place of the cursor.
+
+# Before Run or Step, and once Reset has put the map back.
+status-ready = Ready
+# While the program runs, the code can't be changed.
+status-running = Running · Reset to edit
+# $line (Number): the line of the next step, highlighted in the editor.
+status-paused = Paused at line { $line } · Reset to edit
+# An error stopped the program; the code can be changed again.
+# $line (Number): the line of the error, marked in the editor.
+status-failed = Error at line { $line }
+# The program ended without error, and a goal of the map isn't met.
+status-goal-not-met = Ended · goal not met
+# The program ended with every goal of the map met.
+# $map (Number): the number of the map among those of the level, as its tab names it.
+status-map-passed = Ended · map { $map } passed
+# The program ended, in the sandbox, which has no goal.
+status-ended = Ended
+# For a moment, in place of the state, when the learner types in the code while it is locked.
+status-locked = Reset the program to edit your code.
+# The errors that the checks underline in the code.
+# $errors (Number): how many there are, never 0.
+status-errors =
+    { $errors ->
+        [one] { $errors } error
+       *[other] { $errors } errors
+    }
+# $steps (Number): the steps run so far.
+status-steps =
+    { $steps ->
+        [one] { $steps } step
+       *[other] { $steps } steps
+    }
+# The place of the cursor in the code.
+# $line (Number): its line, from 1.
+# $column (Number): its column, in characters from the start of the line, from 1.
+status-cursor = Ln { $line }, Col { $column }
 
 ## The keys that a shortcut names by a word, written beside its command: `key-<name>`
 ## (`keyMessage`). A letter, a sign, an arrow and a function key (F10) are shown as they are.

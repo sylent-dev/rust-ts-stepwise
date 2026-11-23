@@ -8,6 +8,7 @@
      that code on the map shown, at the speed of the settings, which **Run › Speed** chooses
      (see Running a program in specs.md); the editor lights the line of its next step, and marks
      the line where an error stopped it, and its three controls stand in the corner of the code.
+     The status bar, under the code, says where the program stands, in the color of its state.
      -->
 <script lang="ts">
 	import { untrack } from 'svelte';
@@ -35,6 +36,8 @@
 	import { Program } from './program.ts';
 	import RunControls from './run-controls.svelte';
 	import type { SpeedSetting } from './speeds.ts';
+	import { statusState } from './status.ts';
+	import StatusBar from './status-bar.svelte';
 
 	/** A level has a number, the sandbox none. */
 	type Props = {
@@ -121,6 +124,25 @@
 		if (program.current?.locked) typing = false;
 	});
 
+	/**
+	 * How many times the learner has tried to change the code while it was locked: the status bar
+	 * lights up at each one.
+	 */
+	let refusals = $state(0);
+
+	/** What the status bar says of the program of the map shown. */
+	const status = $derived.by(() => {
+		const current = program.current;
+		return statusState(
+			current && {
+				status: current.status,
+				line: current.played.line,
+				outcome: current.played.outcome
+			},
+			playground?.map
+		);
+	});
+
 	/** Whether the confirmation of **Restore starting code** shows. */
 	let restoring = $state(false);
 
@@ -194,31 +216,42 @@
 	</Header>
 	<main>
 		<div class="code">
-			{#if playground}
-				<!-- One editor per level, whichever of its maps is shown: the code belongs to the
-				     level, which its name tells from the others. It opens on the code saved for the
-				     level, read once as the editor is made. Its code can't be changed while its
-				     program runs or is paused. -->
-				{#key playground.name}
-					<!-- Room under the last line for the controls, and as much again above them. -->
-					<CodeEditor
-						--below="calc(var(--control-side) + 2 * var(--space-12))"
-						text={openingCode(playground.name, playground.startingCode).text}
-						explain={errorText}
-						locked={program.current?.locked}
-						next={program.current?.played.line}
-						failed={failedLine}
-						bind:editing
-						onchange={keep}
-						ontype={() => (typing = true)}
-					/>
-				{/key}
-				<!-- A click on a control keeps the focus where it was: only the keyboard brings it
-				     there. -->
-				<div class="corner" onfocusin={() => (typing = false)}>
-					<RunControls {commands} action={program.current?.action ?? 'run'} pale={typing} />
-				</div>
-			{/if}
+			<div class="editor-zone">
+				{#if playground}
+					<!-- One editor per level, whichever of its maps is shown: the code belongs to the
+					     level, which its name tells from the others. It opens on the code saved for
+					     the level, read once as the editor is made. Its code can't be changed while
+					     its program runs or is paused. -->
+					{#key playground.name}
+						<!-- Room under the last line for the controls, and as much again above them. -->
+						<CodeEditor
+							--below="calc(var(--control-side) + 2 * var(--space-12))"
+							text={openingCode(playground.name, playground.startingCode).text}
+							explain={errorText}
+							locked={program.current?.locked}
+							next={program.current?.played.line}
+							failed={failedLine}
+							bind:editing
+							onchange={keep}
+							ontype={() => (typing = true)}
+							onrefuse={() => (refusals += 1)}
+						/>
+					{/key}
+					<!-- A click on a control keeps the focus where it was: only the keyboard brings
+					     it there. -->
+					<div class="corner" onfocusin={() => (typing = false)}>
+						<RunControls {commands} action={program.current?.action ?? 'run'} pale={typing} />
+					</div>
+				{/if}
+			</div>
+			<StatusBar
+				{status}
+				errors={editing?.errors ?? 0}
+				steps={program.current?.played.steps ?? 0}
+				{speed}
+				cursor={editing?.cursor}
+				{refusals}
+			/>
 		</div>
 		<div class="map"><MapBlock scene={program.current?.played} goals={playground?.goals} /></div>
 		<!-- The zone of the console and of the variables, empty until they come (steps 17e and
@@ -262,14 +295,22 @@
 		}
 	}
 
-	/* The editor scrolls its code by itself; the controls float in its corner, and don't scroll
-	   with it. */
+	/* The code on the whole height, its status bar under it. */
 	.code {
-		position: relative;
+		display: flex;
+		flex-direction: column;
 		grid-row: 1 / 3;
 		min-width: 0;
 		min-height: 0;
 		background: var(--surface);
+	}
+
+	/* The editor scrolls its code by itself; the controls float in its corner, and don't scroll
+	   with it. */
+	.editor-zone {
+		position: relative;
+		flex: 1;
+		min-height: 0;
 	}
 
 	.corner {

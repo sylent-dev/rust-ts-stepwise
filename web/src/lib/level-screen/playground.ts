@@ -17,6 +17,11 @@ export interface Playground {
 	readonly world: World;
 	/** The goals of the map of a level; the sandbox has none. */
 	readonly goals?: Goals;
+	/**
+	 * The number of the map of a level among its maps, from 1, as its tab names it (`Map 1`);
+	 * the sandbox has one map, which has no number.
+	 */
+	readonly map?: number;
 	/** The code of a first visit. */
 	readonly startingCode: string;
 	/**
@@ -37,6 +42,7 @@ export function levelPlayground(name: string, level: Level, map: number): Playgr
 		name,
 		world: found.world,
 		goals: found.goals,
+		map: map + 1,
 		startingCode: level.startingCode(),
 		start: (text) => level.start(map, text)
 	};

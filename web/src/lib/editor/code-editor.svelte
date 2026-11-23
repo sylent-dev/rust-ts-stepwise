@@ -56,6 +56,12 @@
 		 * broken, an indentation (`isTyped`). Not a line moved nor a change undone.
 		 */
 		ontype?: () => void;
+		/**
+		 * Says that the learner tried to change the code while it is locked: a key of typing,
+		 * Tab and Shift+Tab included, a text pasted, cut or dropped (lock.ts). The code doesn't
+		 * change.
+		 */
+		onrefuse?: () => void;
 	}
 
 	let {
@@ -66,7 +72,8 @@
 		failed,
 		editing = $bindable(),
 		onchange,
-		ontype
+		ontype,
+		onrefuse
 	}: Props = $props();
 
 	/** Makes the editor in its block, and takes it away with it. */
@@ -88,7 +95,16 @@
 		];
 		/** A state of the editor on a text, its code locked or not as the screen says now. */
 		const stateOn = (doc: string) =>
-			EditorState.create({ doc, extensions: [extensions, lockOf(untrack(() => locked))] });
+			EditorState.create({
+				doc,
+				extensions: [
+					extensions,
+					lockOf(
+						untrack(() => locked),
+						() => onrefuse?.()
+					)
+				]
+			});
 		const view = new EditorView({ parent: block, state: stateOn(untrack(() => text)) });
 		/** Shows a line of the run as the screen gives it now, unless it stands there already. */
 		const showNow = (line: RunLine, at: number | undefined) => {
