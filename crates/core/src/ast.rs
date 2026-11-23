@@ -225,6 +225,9 @@ pub enum BinaryOperator {
 }
 
 impl UnaryOperator {
+    /// Every operator, in the order of the specifications.
+    pub const ALL: [Self; 2] = [Self::Negate, Self::Not];
+
     /// The operator as a program writes it.
     #[must_use]
     pub const fn as_str(self) -> &'static str {
@@ -236,6 +239,23 @@ impl UnaryOperator {
 }
 
 impl BinaryOperator {
+    /// Every operator, in the order of the specifications.
+    pub const ALL: [Self; 13] = [
+        Self::Add,
+        Self::Subtract,
+        Self::Multiply,
+        Self::Divide,
+        Self::Remainder,
+        Self::Equal,
+        Self::NotEqual,
+        Self::Less,
+        Self::LessEqual,
+        Self::Greater,
+        Self::GreaterEqual,
+        Self::And,
+        Self::Or,
+    ];
+
     /// The operator as a program writes it.
     #[must_use]
     pub const fn as_str(self) -> &'static str {
@@ -288,7 +308,7 @@ mod tests {
     #[test]
     fn each_operator_is_written_as_the_parser_reads_it() {
         use BinaryOperator as B;
-        for expected in [UnaryOperator::Negate, UnaryOperator::Not] {
+        for expected in UnaryOperator::ALL {
             let source = format!("let result = {} value", expected.as_str());
             let ExpressionKind::Unary { operator, .. } = value_of(&source) else {
                 panic!("{source:?} has no operator in front of its value");
@@ -310,6 +330,7 @@ mod tests {
             (B::And, "and"),
             (B::Or, "or"),
         ];
+        assert_eq!(B::ALL, between.map(|(operator, _)| operator));
         for (expected, written) in between {
             assert_eq!(expected.as_str(), written);
             let source = format!("let result = left {written} right");

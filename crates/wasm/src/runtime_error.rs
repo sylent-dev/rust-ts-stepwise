@@ -4,6 +4,7 @@
 
 use serde::Serialize;
 use stepwise_core::interpreter::{self, MAX_CALL_DEPTH, MAX_TEXT_LENGTH};
+use stepwise_core::lexer::MAX_NUMBER;
 use stepwise_core::world::RobotError;
 use tsify::Tsify;
 
@@ -27,10 +28,11 @@ pub struct RuntimeError {
 ///
 /// Each variant is the error of the same name in the core, where it is described: those of
 /// `RuntimeErrorKind`, the ones of the robot (`RobotError`) among them, each with its own
-/// code. No code is one of the checks before running (`ProgramErrorKind`). An operator and a
-/// function are given as they are written, a built-in function that the error can only come
-/// from by its type (`word.rs`), a whole number of the program as its digits (see `Value`),
-/// and a limit of the language with the error that it stops.
+/// code. No code is one of the checks before running (`ProgramErrorKind`). An operator is given
+/// by its type, as it is written (`word.rs`), so that the interface places each one; a function
+/// as it is written, a built-in function that the error can only come from by its type; a whole
+/// number of the program as its digits (see `Value`), and a limit of the language with the
+/// error that it stops.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Tsify)]
 #[serde(
     tag = "code",
@@ -49,20 +51,24 @@ pub enum RuntimeErrorKind {
         count: String,
     },
     UnaryOperand {
-        operator: String,
+        operator: word::UnaryOperator,
         found: ValueType,
     },
     BinaryOperands {
-        operator: String,
+        operator: word::BinaryOperator,
         left: ValueType,
         right: ValueType,
     },
     LogicOperand {
-        operator: String,
+        operator: word::BinaryOperator,
         found: ValueType,
     },
     DivisionByZero,
-    Overflow,
+    /// With the smallest and the largest whole numbers, as their digits.
+    Overflow {
+        smallest: String,
+        largest: String,
+    },
     TextTooLong {
         limit: u32,
     },
@@ -121,7 +127,7 @@ impl RuntimeErrorKind {
                 count: count.to_string(),
             },
             K::UnaryOperand { operator, found } => Self::UnaryOperand {
-                operator: operator.as_str().to_owned(),
+                operator: operator.into(),
                 found: found.into(),
             },
             K::BinaryOperands {
@@ -129,16 +135,19 @@ impl RuntimeErrorKind {
                 left,
                 right,
             } => Self::BinaryOperands {
-                operator: operator.as_str().to_owned(),
+                operator: operator.into(),
                 left: left.into(),
                 right: right.into(),
             },
             K::LogicOperand { operator, found } => Self::LogicOperand {
-                operator: operator.as_str().to_owned(),
+                operator: operator.into(),
                 found: found.into(),
             },
             K::DivisionByZero => Self::DivisionByZero,
-            K::Overflow => Self::Overflow,
+            K::Overflow => Self::Overflow {
+                smallest: i64::MIN.to_string(),
+                largest: MAX_NUMBER.to_string(),
+            },
             K::TextTooLong => Self::TextTooLong {
                 limit: count(MAX_TEXT_LENGTH),
             },
@@ -213,7 +222,7 @@ mod tests {
                     found: T::Text,
                 },
                 B::UnaryOperand {
-                    operator: written("-"),
+                    operator: word::UnaryOperator::Negate,
                     found: ValueType::Text,
                 },
             ),
@@ -223,7 +232,7 @@ mod tests {
                     found: T::Number,
                 },
                 B::UnaryOperand {
-                    operator: written("not"),
+                    operator: word::UnaryOperator::Not,
                     found: ValueType::Number,
                 },
             ),
@@ -234,7 +243,7 @@ mod tests {
                     right: T::Color,
                 },
                 B::BinaryOperands {
-                    operator: written("<="),
+                    operator: word::BinaryOperator::LessEqual,
                     left: ValueType::Boolean,
                     right: ValueType::Color,
                 },
@@ -245,12 +254,18 @@ mod tests {
                     found: T::Color,
                 },
                 B::LogicOperand {
-                    operator: written("or"),
+                    operator: word::BinaryOperator::Or,
                     found: ValueType::Color,
                 },
             ),
             (K::DivisionByZero, B::DivisionByZero),
-            (K::Overflow, B::Overflow),
+            (
+                K::Overflow,
+                B::Overflow {
+                    smallest: written("-9223372036854775808"),
+                    largest: written("9223372036854775807"),
+                },
+            ),
             (K::TextTooLong, B::TextTooLong { limit: 1_000 }),
         ] {
             assert_eq!(B::new(&core), expected);

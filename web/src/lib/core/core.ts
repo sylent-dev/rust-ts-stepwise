@@ -32,12 +32,18 @@ export {
 } from '#lib/wasm/stepwise.js';
 
 /**
- * The words of the language that an error carries (see crates/wasm/src/word.rs), each list a
- * union of the words as they are written: a table keyed by one of them, written
+ * The words of the language that an error carries (see crates/wasm/src/word.rs), the operators
+ * among them, each list a union of the words as they are written: a table keyed by one of them, written
  * `satisfies Record<ForeignWord, …>`, names every word, and a word added to the core is refused
  * until it is placed. The colors have their type with the world (`Color`).
  */
-export { type Builtin, type ForeignWord, type Keyword } from '#lib/wasm/stepwise.js';
+export {
+	type BinaryOperator,
+	type Builtin,
+	type ForeignWord,
+	type Keyword,
+	type UnaryOperator
+} from '#lib/wasm/stepwise.js';
 
 /**
  * What each stretch of a line of code is (see crates/wasm/src/stretch.rs), to call once
