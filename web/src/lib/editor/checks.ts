@@ -119,12 +119,16 @@ const MISSING = new MissingMark();
  */
 const NOTES = new WeakMap<Decoration, Note>();
 
+/** The marks of the errors, among those of the lines too long: the number of errors counts them. */
+const ERRORS = new WeakSet<Decoration>();
+
 function markOf({ from, to, kind, note }: Underline): Range<Decoration> {
 	const mark =
 		from === to
 			? Decoration.widget({ widget: MISSING, side: 1 })
 			: Decoration.mark({ class: kind === 'error' ? 'underline-error' : 'underline-long' });
 	NOTES.set(mark, note);
+	if (kind === 'error') ERRORS.add(mark);
 	return mark.range(from, to);
 }
 
@@ -162,6 +166,19 @@ const underlines = StateField.define<DecorationSet>({
 	// one piece: each piece would start its wave again.
 	provide: (field) => EditorView.outerDecorations.from(field)
 });
+
+/**
+ * The number of errors that the waves show, which the status bar of the screen writes: it
+ * changes with them, a moment after the last change, and when a change takes the stretch of a
+ * wave away. Nothing in an editor without the checks.
+ */
+export function errorCount(state: EditorState): number {
+	let count = 0;
+	state.field(underlines, false)?.between(0, state.doc.length, (_from, _to, mark) => {
+		if (ERRORS.has(mark)) count += 1;
+	});
+	return count;
+}
 
 /** Checks the code again once it hasn't changed for `CHECK_DELAY`. */
 const scheduler = ViewPlugin.fromClass(

@@ -326,7 +326,7 @@ Little moves in the interface, so that what moves is seen: the robot on the map 
 | `--duration-fade` | `100ms` | What gives way under the pointer: the number of the level to play under the face of the robot, the shadow of a level done. A menu of the header that opens. |
 | `--duration-appear` | `200ms` | What appears, or goes back to rest: the face of the robot on the level to play, **Unlock** turning amber, a bubble of the manual, the success panel; the paint leaving a main button; the fill of a choice of the settings, sliding to the other one. |
 | `--duration-stroke` | `850ms` | The robot crossing a main button under the pointer, its paint behind it: **Let's go**, **Unlock**, the way back from the manual. |
-| `--duration-flash` | `1600ms` | What lights up to be noticed, then fades: the place reached in the manual; the status bar when the learner types in an editor that is locked. |
+| `--duration-flash` | `1600ms` | What lights up to be noticed, then fades: the place reached in the manual; the status bar when the learner types in an editor that is locked, which holds its reason on the amber for most of that time, then fades under the state (decided on 2026-11-23: faded whole, its reason crossed the tone of the bar in Night Desk). |
 
 ### Curves
 
