@@ -93,6 +93,6 @@
    up (decided on 2026-11-23). The cursor keeps room for `Ln 99, Col 80`, so that the speed stays
    in place as the learner types; tuned by eye. */
 .app-steps { margin-left: auto; }
-.app-cursor { min-width: 13ch; text-align: right; }
+.app-cursor { min-width: 10ch; text-align: right; }
 /* The texts of the bar sit half a pixel low, tuned by eye; the squares of the speed stay in place. */
 .app-status > b, .app-status > span, .app-speed span { position: relative; top: .5px; }

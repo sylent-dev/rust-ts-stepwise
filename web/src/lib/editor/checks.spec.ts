@@ -113,6 +113,10 @@ describe('errorCount', () => {
 		expect(errorCount(erased)).toBe(0);
 	});
 
+	it('counts the mark of what is missing at the end of the code', () => {
+		expect(errorCount(stateOf('let sides ='))).toBe(1);
+	});
+
 	it('finds nothing in an editor without the checks', () => {
 		expect(errorCount(EditorState.create({ doc: 'print(sidse)' }))).toBe(0);
 	});

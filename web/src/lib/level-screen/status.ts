@@ -32,9 +32,10 @@ export interface ProgramStatus {
 
 /**
  * What the bar says of a program, on the map numbered `mapNumber` among those of its level
- * (nothing in the sandbox): `Ready` until **Run** or **Step**, and while the screen has no program yet. While
- * the program runs or is paused, the code can't be changed, which the bar says; once it has
- * ended, the map shows the end of the run, not its start, which the bar says too.
+ * (nothing in the sandbox): `Ready` until **Run** or **Step**, and while the screen has no
+ * program yet. While the program runs or is paused, the code can't be changed, which the bar
+ * says; once it has ended, the map shows the end of the run, not its start, which the bar says
+ * too.
  */
 export function statusState(
 	program: ProgramStatus | undefined,

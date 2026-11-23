@@ -7,26 +7,34 @@
 export type FlashPhase = 'hold' | 'fade';
 
 export class LockFlash {
-	/**
-	 * The number of the flash shown, which each try changes, so that the bar starts it again;
-	 * 0 while none shows.
-	 */
-	number = $state(0);
-	/** Where the flash shown stands. */
-	phase = $state<FlashPhase>('hold');
+	#number = $state(0);
+	#phase = $state<FlashPhase>('hold');
 	/** The tries so far, which number the flashes. */
 	#tries = 0;
+
+	/**
+	 * The number of the flash shown, which each try changes, so that the bar starts it again
+	 * from its hold; 0 while none shows.
+	 */
+	get number(): number {
+		return this.#number;
+	}
+
+	/** Where the flash shown stands. */
+	get phase(): FlashPhase {
+		return this.#phase;
+	}
 
 	/** The learner tried to change the locked code: a flash starts, from its hold. */
 	refuse(): void {
 		this.#tries += 1;
-		this.number = this.#tries;
-		this.phase = 'hold';
+		this.#number = this.#tries;
+		this.#phase = 'hold';
 	}
 
 	/** The hold of the flash shown has ended: the amber fades under the state. */
 	held(): void {
-		if (this.number > 0) this.phase = 'fade';
+		if (this.#number > 0) this.#phase = 'fade';
 	}
 
 	/**
@@ -34,6 +42,6 @@ export class LockFlash {
 	 * none comes back with the next lock.
 	 */
 	end(): void {
-		this.number = 0;
+		this.#number = 0;
 	}
 }

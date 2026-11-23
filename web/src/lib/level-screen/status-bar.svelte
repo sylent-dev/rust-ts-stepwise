@@ -34,24 +34,30 @@
 
 	let { status, errors, steps, speed, cursor, flash }: Props = $props();
 
-	/**
-	 * The flash shown, by the parity of its number: two flashes in a row have two names, the same
-	 * but for them, so that a new name starts the animation again at each try. Nothing while none
-	 * shows.
-	 */
-	const parity = $derived(flash.number === 0 ? undefined : flash.number % 2 === 1 ? 'odd' : 'even');
+	/** The bar, whose animations a new try starts again. */
+	let bar = $state<HTMLElement>();
 
-	/** Whether the reason shows in place of the state: while the amber holds. */
-	const holding = $derived(parity !== undefined && flash.phase === 'hold');
+	/** Whether a flash shows, and whether its reason shows in place of the state, as it holds. */
+	const flashing = $derived(flash.number > 0);
+	const holding = $derived(flashing && flash.phase === 'hold');
 
-	/**
-	 * Follows the flash shown: its hold, then its fade, end. An animation of the flash before
-	 * has another name, and the bar's own alone count.
-	 */
+	// Each try starts the flash again from its hold, whatever the bar has drawn meanwhile: two
+	// tries in one frame of the page would leave its class as the page saw it, and an animation
+	// that has ended can't be found on the bar to start again. So its class goes, the style of
+	// the bar is brought up to date (`getAnimations`), which ends the animations of the flash,
+	// and it comes back, which starts them anew.
+	$effect(() => {
+		if (flash.number === 0 || !bar) return;
+		bar.classList.remove('flashing');
+		bar.getAnimations();
+		bar.classList.add('flashing');
+	});
+
+	/** Follows the flash: its hold, then its fade, end. The animations of the bar alone count. */
 	function onanimationend(event: AnimationEvent) {
-		if (event.target !== event.currentTarget || parity === undefined) return;
-		if (event.animationName.endsWith(`status-hold-${parity}`)) flash.held();
-		else if (event.animationName.endsWith(`status-fade-${parity}`)) flash.end();
+		if (event.target !== event.currentTarget || !flashing) return;
+		if (event.animationName.endsWith('status-hold')) flash.held();
+		else if (event.animationName.endsWith('status-fade')) flash.end();
 	}
 
 	/** The squares lit: those of the speeds up to the one in use. */
@@ -63,13 +69,7 @@
 	}
 </script>
 
-<div
-	class="status-bar {status.tone}"
-	class:flash-odd={parity === 'odd'}
-	class:flash-even={parity === 'even'}
-	class:holding
-	{onanimationend}
->
+<div class="status-bar {status.tone}" class:flashing class:holding {onanimationend} bind:this={bar}>
 	<!-- Read to a screen reader as it changes: the state alone, since the steps change too
 	     often. -->
 	<span class="state" role="status">{holding ? t('status-locked') : status.text}</span>
@@ -162,19 +162,13 @@
 	   reason, then the amber fades under the state and the texts, in their own colors. While the
 	   program is paused, the bar is amber already: its text alone changes. Kept for a learner who
 	   asked for less motion: it is a change of tone, nothing moves. */
-	.flash-odd {
+	.flashing {
 		animation:
-			status-hold-odd var(--hold) linear,
-			status-fade-odd var(--fade) var(--ease-appear) var(--hold);
+			status-hold var(--hold) linear,
+			status-fade var(--fade) var(--ease-appear) var(--hold);
 	}
 
-	.flash-even {
-		animation:
-			status-hold-even var(--hold) linear,
-			status-fade-even var(--fade) var(--ease-appear) var(--hold);
-	}
-
-	@keyframes status-hold-odd {
+	@keyframes status-hold {
 		from,
 		to {
 			background: var(--accent);
@@ -182,21 +176,7 @@
 		}
 	}
 
-	@keyframes status-hold-even {
-		from,
-		to {
-			background: var(--accent);
-			color: var(--on-accent);
-		}
-	}
-
-	@keyframes status-fade-odd {
-		from {
-			background: var(--accent);
-		}
-	}
-
-	@keyframes status-fade-even {
+	@keyframes status-fade {
 		from {
 			background: var(--accent);
 		}
@@ -241,10 +221,11 @@
 		background: currentColor;
 	}
 
-	/* Room for `Ln 99, Col 80`, so that the speed stays in place as the learner types: tuned by
-	   eye, the figures being of one width and the words around them not. */
+	/* Room for `Ln 99, Col 80`, a program of fewer than 100 lines kept under 80 characters, so that
+	   the speed stays in place as the learner types: tuned by eye, the figures being of one width
+	   and the words around them not. */
 	.cursor {
-		min-width: 13ch;
+		min-width: 10ch;
 		text-align: right;
 	}
 
