@@ -11,8 +11,9 @@ import type { LevelCommands } from './level-commands.ts';
 /**
  * The groups of the panel, **Run** on the left, **Edit** on the right, as in the mock-up. Each
  * row of a command says its text, as its row of a menu does; **Run**, whose text follows the
- * program, says the three. Tab and Shift+Tab indent and unindent the lines, and Escape, then Tab,
- * leaves the code: keys of the editor (`editor/typing.ts`), which the screen doesn't hear.
+ * program, says the three. Tab and Shift+Tab indent and unindent the lines (`editor/typing.ts`),
+ * and Escape, then Tab, leaves the code, as CodeMirror lets it while no key of the editor takes
+ * Escape: keys of the editor, which the screen doesn't hear.
  */
 export function levelShortcuts(commands: LevelCommands): ShortcutColumns {
 	return [

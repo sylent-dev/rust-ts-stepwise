@@ -179,8 +179,9 @@ theme-night-desk = Night Desk
 
 shortcuts-group-run = Run
 shortcuts-group-edit = Edit
-# The row of one command, one shortcut, which the menu names by what it does now.
-shortcuts-run = Run, Pause, Resume
+# The row of one command, one shortcut, which the menu names by what it does now: its three
+# texts, as the menu writes them.
+shortcuts-run = { command-run }, { command-pause }, { command-resume }
 # Tab and Shift+Tab, on the selected lines, or on the line of the cursor.
 shortcuts-indent-lines = Indent lines
 shortcuts-unindent-lines = Unindent lines

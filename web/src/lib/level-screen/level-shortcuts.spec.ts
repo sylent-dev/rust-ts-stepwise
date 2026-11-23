@@ -1,8 +1,7 @@
-import { EditorState } from '@codemirror/state';
-import { keymap } from '@codemirror/view';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { loadTestCore } from '#lib/core/test-support.ts';
 import { editorSetup } from '#lib/editor/setup.ts';
+import { stateOf, takes } from '#lib/editor/test-support.ts';
 import { errorText } from '#lib/errors/error-text.ts';
 import type { Platform } from '#lib/platform.ts';
 import { keyParts } from '#lib/shell/commands.ts';
@@ -94,13 +93,14 @@ describe('levelShortcuts', () => {
 		// The editor asks the core what its code is, and checks it, as soon as it is made.
 		beforeAll(loadTestCore);
 
-		it('are Tab and Shift+Tab in the editor, which the panel lists without a command', () => {
-			const tab = EditorState.create({ extensions: editorSetup('Your code', errorText) })
-				.facet(keymap)
-				.flat()
-				.filter((binding) => binding.key === 'Tab');
+		it('are taken by the editor as the panel lists them, without a command', () => {
+			const code = stateOf('forward()|\n', editorSetup('Your code', errorText));
 
-			expect(tab.some((binding) => binding.run && binding.shift)).toBe(true);
+			// Tab and Shift+Tab indent and unindent the lines.
+			expect([takes(code, 'Tab'), takes(code, 'Tab', true)]).toEqual([true, true]);
+			// Escape, then Tab, leaves the code: CodeMirror lets Tab go to the browser for a
+			// moment after an Escape that no key of the editor took.
+			expect(takes(code, 'Escape')).toBe(false);
 		});
 	});
 });
