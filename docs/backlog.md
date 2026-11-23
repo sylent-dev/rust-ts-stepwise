@@ -18,6 +18,7 @@ The ideas, polish and edge cases found along the way that the current step doesn
 ## Interface
 
 - The French translation of the interface, the levels and the manual; the comments of the starting code of the levels too, which stay in English in the level files for now (seen at step 8b).
+- The status bar in a longer language (with the French translation): in a window of 1280 pixels, the English of its longest states fills the half of the code, and a French sentence would pass it by about 17 pixels; the bar hides what doesn't fit rather than pushing it past its edge (measured in the code review of step 17d).
 - The code normalized to NFC in the editor (step 16): a name pasted with its accents decomposed (`côté` written `co` + U+0302 + …) is cut before the accent by the lexer, which reads the combining mark as an unexpected character (seen in the review of step 5).
 - A breakpoint set on a line that never starts a step (step 19): the line of an `else:`, of a `function`, a blank line, a comment. `specs.md` says nothing of it, and such a breakpoint would never pause the program. Either the editor refuses it, or it moves it to the next line that starts a step, as VS Code does; the bridge would then give the lines of a program that start a step (seen at step 10c).
 - The variables panel once a program has ended without error (step 19): `specs.md` opens it when the program pauses or stops on an error, and says nothing of the end. The bridge gives the calls in progress and their variables at any time, as they were at the last step (seen at step 10c).

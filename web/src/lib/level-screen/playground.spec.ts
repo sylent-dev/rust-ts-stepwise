@@ -62,7 +62,7 @@ describe('the playground of a map of a level', () => {
 		expect(second?.world.width).toBe(5);
 		expect(second?.goals?.robotAt).toEqual({ x: 3, y: 0 });
 		// Numbered from 1, as its tab names it.
-		expect(second?.map).toBe(2);
+		expect(second?.mapNumber).toBe(2);
 	});
 
 	it('starts a program on its map, with the goals of that map', () => {
@@ -105,7 +105,7 @@ describe('the playground of the sandbox', () => {
 		expect(playground.startingCode).toBe('# Try anything\n');
 		expect(playground.world).toEqual(sandbox.world());
 		expect(playground.goals).toBeUndefined();
-		expect(playground.map).toBeUndefined();
+		expect(playground.mapNumber).toBeUndefined();
 	});
 
 	it('starts a program on its map, which ends without goal to meet', () => {

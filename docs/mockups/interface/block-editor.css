@@ -77,6 +77,9 @@
 .app-status.is-paused, .app-status.is-flash { background: var(--accent); color: var(--on-accent); }
 .app-status.is-failed { background: var(--error); color: var(--on-error); }
 .app-status.is-paused b, .app-status.is-failed b, .app-status.is-flash b { color: inherit; }
+/* On a colored bar, the number of errors takes its color, which red wouldn't read on (decided on
+   2026-11-23). */
+.app-status:is(.is-paused, .is-failed, .is-flash, .is-passed) .app-status-errors { color: inherit; }
 /* A map or the level passed: the teal of the tabs of the maps. A goal not met keeps the neutral bar: it
    isn't an error of the program, and the flags of the map already say it. */
 .app-status.is-passed { background: var(--passed); color: var(--on-passed); }
@@ -85,6 +88,11 @@
 .app-speed span { margin-right: var(--space-6); }
 .app-speed i { width: 9px; height: 13px; box-sizing: border-box; border: 1px solid currentColor; border-radius: var(--radius-mark); }
 .app-speed i.is-on { background: currentColor; }
-.app-cursor { margin-left: auto; }
+/* The state and the errors on the left; the steps, the speed and the cursor on the right, as in a
+   code editor, so that nothing moves when the state changes its length, nor while the steps count
+   up (decided on 2026-11-23). The cursor keeps room for `Ln 99, Col 80`, so that the speed stays
+   in place as the learner types; tuned by eye. */
+.app-steps { margin-left: auto; }
+.app-cursor { min-width: 13ch; text-align: right; }
 /* The texts of the bar sit half a pixel low, tuned by eye; the squares of the speed stay in place. */
 .app-status > b, .app-status > span, .app-speed span { position: relative; top: .5px; }

@@ -62,7 +62,7 @@ function appEditor({ lines, next, error, breakpoints = [], underlines = [], hint
     <div class="app-status ${tone ? `is-${tone}` : ""}">
       <b>${state}</b>
       ${errors ? `<span class="app-status-errors">${errors}</span>` : ""}
-      <span>${steps} steps</span>
+      <span class="app-steps">${steps} steps</span>
       <div class="app-speed"><span>Speed</span>${[1, 2, 3, 4, 5].map(speed => `<i class="${speed <= 3 ? "is-on" : ""}"></i>`).join("")}</div>
       <span class="app-cursor">${cursor}</span>
     </div>

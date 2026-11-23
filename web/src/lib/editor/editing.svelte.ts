@@ -20,10 +20,11 @@ export interface FollowedEditing {
 
 /**
  * Follows an editor for the screen: the editor on its page, or what stands for it in a test.
- * `can`, `text`, `cursor` and `errors` read the state last said to `follow`, kept as a signal, never the editor
- * itself: a row of a menu that read it is then drawn again once the code has changed, greyed or
- * not. `restart` gives the editor a new state, made from a text with the parts of the editor;
- * the editor says no change then, so `reopen` follows its state itself.
+ * `can`, `text`, `cursor` and `errors` read the state last said to `follow`, kept as a signal,
+ * never the editor itself: a row of a menu or the status bar that read it is then drawn again
+ * once the code or the cursor has changed. `restart` gives the editor a new state, made from a
+ * text with the parts of the editor; the editor says no change then, so `reopen` follows its
+ * state itself.
  */
 export function followEditing(
 	editor: Parameters<StateCommand>[0],

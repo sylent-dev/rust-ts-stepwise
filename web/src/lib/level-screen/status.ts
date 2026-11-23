@@ -31,14 +31,14 @@ export interface ProgramStatus {
 }
 
 /**
- * What the bar says of a program, on the map numbered `map` among those of its level (nothing in
- * the sandbox): `Ready` until **Run** or **Step**, and while the screen has no program yet. While
+ * What the bar says of a program, on the map numbered `mapNumber` among those of its level
+ * (nothing in the sandbox): `Ready` until **Run** or **Step**, and while the screen has no program yet. While
  * the program runs or is paused, the code can't be changed, which the bar says; once it has
  * ended, the map shows the end of the run, not its start, which the bar says too.
  */
 export function statusState(
 	program: ProgramStatus | undefined,
-	map: number | undefined
+	mapNumber: number | undefined
 ): StatusState {
 	if (!program) return { text: t('status-ready'), tone: 'band' };
 	switch (program.status) {
@@ -48,7 +48,8 @@ export function statusState(
 			return { text: t('status-running'), tone: 'band' };
 		case 'paused':
 			// A program paused always has a line: the one of its next step, or of the step under
-			// way. Without it, the bar would still say that the code can't be changed.
+			// way (run/playback.svelte.ts). Without one, which can't happen, the bar would still
+			// say that the code can't be changed.
 			return {
 				text:
 					program.line === undefined
@@ -58,9 +59,11 @@ export function statusState(
 			};
 		case 'ended':
 		case 'failed':
+			// Both are read from how the program stopped, which a program that has stopped always
+			// has. Without it, which can't happen, the bar would still say that it ended.
 			return program.outcome
-				? endState(program.outcome, map)
-				: { text: t('status-ready'), tone: 'band' };
+				? endState(program.outcome, mapNumber)
+				: { text: t('status-ended'), tone: 'band' };
 	}
 }
 
@@ -68,13 +71,15 @@ export function statusState(
  * What the bar says once the program has stopped. A map passed says its number, as its tab;
  * the level done, every map passed with the same code, comes with the tabs of the maps (step 21).
  */
-function endState(outcome: Outcome, map: number | undefined): StatusState {
+function endState(outcome: Outcome, mapNumber: number | undefined): StatusState {
 	switch (outcome.type) {
 		case 'failed':
 			return { text: t('status-failed', { line: outcome.error.span.line }), tone: 'failed' };
 		case 'passed':
 			return {
-				text: map === undefined ? t('status-ended') : t('status-map-passed', { map }),
+				// A map passed is always one of a level: the sandbox has no goal to meet.
+				text:
+					mapNumber === undefined ? t('status-ended') : t('status-map-passed', { map: mapNumber }),
 				tone: 'passed'
 			};
 		case 'goals-not-met':

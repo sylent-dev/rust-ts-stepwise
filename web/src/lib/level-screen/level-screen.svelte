@@ -31,6 +31,7 @@
 	import ScreenShortcuts from '#lib/shell/screen-shortcuts.svelte';
 	import { levelCommands } from './level-commands.ts';
 	import { levelMenus, type LevelScreenKind } from './level-menus.ts';
+	import { LockFlash } from './lock-flash.svelte.ts';
 	import MapBlock from './map-block.svelte';
 	import type { Playground } from './playground.ts';
 	import { Program } from './program.ts';
@@ -120,15 +121,17 @@
 		if (event.movementX !== 0 || event.movementY !== 0) typing = false;
 	}
 
+	/**
+	 * The flash of the status bar, when the learner tries to change the code while it is locked:
+	 * it ends once the code is free again, so that its reason never shows over a code that can
+	 * be changed.
+	 */
+	const lockFlash = new LockFlash();
+
 	$effect(() => {
 		if (program.current?.locked) typing = false;
+		else lockFlash.end();
 	});
-
-	/**
-	 * How many times the learner has tried to change the code while it was locked: the status bar
-	 * lights up at each one.
-	 */
-	let refusals = $state(0);
 
 	/** What the status bar says of the program of the map shown. */
 	const status = $derived.by(() => {
@@ -139,7 +142,7 @@
 				line: current.played.line,
 				outcome: current.played.outcome
 			},
-			playground?.map
+			playground?.mapNumber
 		);
 	});
 
@@ -234,7 +237,9 @@
 							bind:editing
 							onchange={keep}
 							ontype={() => (typing = true)}
-							onrefuse={() => (refusals += 1)}
+							onrefuse={() => {
+								lockFlash.refuse();
+							}}
 						/>
 					{/key}
 					<!-- A click on a control keeps the focus where it was: only the keyboard brings
@@ -250,7 +255,7 @@
 				steps={program.current?.played.steps ?? 0}
 				{speed}
 				cursor={editing?.cursor}
-				{refusals}
+				flash={lockFlash}
 			/>
 		</div>
 		<div class="map"><MapBlock scene={program.current?.played} goals={playground?.goals} /></div>

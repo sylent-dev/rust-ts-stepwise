@@ -55,4 +55,17 @@ describe('statusState', () => {
 			tone: 'band'
 		});
 	});
+
+	it('still says what it can in a state that a program never reaches', () => {
+		// Paused without a line, stopped without an outcome, a map passed in the sandbox.
+		expect(statusState(program('paused'), 1)).toEqual({
+			text: 'Running · Reset to edit',
+			tone: 'paused'
+		});
+		expect(statusState(program('ended'), 1)).toEqual({ text: 'Ended', tone: 'band' });
+		expect(statusState(program('ended', undefined, { type: 'passed' }), undefined)).toEqual({
+			text: 'Ended',
+			tone: 'passed'
+		});
+	});
 });

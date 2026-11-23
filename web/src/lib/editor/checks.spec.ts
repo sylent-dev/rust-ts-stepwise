@@ -107,6 +107,12 @@ describe('errorCount', () => {
 		expect(errorCount(broken.update({ effects: checkAgain.of(null) }).state)).toBe(1);
 	});
 
+	it('forgets a wave whose stretch a change takes away, as the editor does', () => {
+		// `sidse` erased whole: its wave goes at once, before the next check.
+		const erased = stateOf('print(sidse)').update({ changes: { from: 6, to: 11 } }).state;
+		expect(errorCount(erased)).toBe(0);
+	});
+
 	it('finds nothing in an editor without the checks', () => {
 		expect(errorCount(EditorState.create({ doc: 'print(sidse)' }))).toBe(0);
 	});
