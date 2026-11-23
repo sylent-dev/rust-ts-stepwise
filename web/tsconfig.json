@@ -18,8 +18,10 @@
 	},
 	"include": [
 		"src",
+		"e2e",
 		"scripts",
 		"vite.config.ts",
+		"playwright.config.ts",
 		"vitest-node-client.ts",
 		"prettier.config.js",
 		"eslint.config.js"

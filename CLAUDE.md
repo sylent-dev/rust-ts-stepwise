@@ -118,7 +118,7 @@ Follow [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.
   - `cargo clippy --workspace --all-targets --all-features -- -D warnings`
   - `cargo clippy --workspace --all-features --target wasm32-unknown-unknown -- -D warnings`
   - `cargo test --workspace --all-features`
-  - in `web/`, when it or the Rust code changed: `npm run lint`, `npm run check`, `npm test` and `npm run build`
+  - in `web/`, when it or the Rust code changed: `npm run lint`, `npm run check`, `npm test`, `npm run build` and `npm run test:e2e` (the tests in a real browser, which build the website again; their browser installed once with `npx playwright install --only-shell chromium`)
 - The same checks run in CI (`.github/workflows/ci.yml`) on every pull request; a pull request that changes only documentation skips them.
 - `unsafe` code is forbidden and Clippy pedantic lints are enabled (see `[workspace.lints]` in `Cargo.toml`); an exception to a lint is an `#[expect(..., reason = "...")]`, never an `#[allow]`.
 - The core never panics: the lints at the top of `crates/core/src/lib.rs` and the methods forbidden by `clippy.toml` rule out `unwrap`, `expect`, indexing, `panic!`, unchecked arithmetic and the like outside the tests, in `crates/core` and `crates/wasm`. A panic would abort the WebAssembly module and the page; return an error instead.

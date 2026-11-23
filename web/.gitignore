@@ -8,6 +8,10 @@ node_modules
 /.svelte-kit
 /build
 
+# The results of the tests in a real browser, and their report.
+/test-results
+/playwright-report
+
 # OS
 .DS_Store
 Thumbs.db

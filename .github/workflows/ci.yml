@@ -104,6 +104,19 @@ jobs:
       - run: npm run check
       - run: npm test
       - run: npm run build
+      # The tests in a real browser (web/playwright.config.ts): Chromium alone, its headless
+      # shell, with the packages of the system that it needs. They build the website again, which
+      # the caches of the step above make quick.
+      - run: npx playwright install --with-deps --only-shell chromium
+      - run: npm run test:e2e
+      # The report of the tests and the trace of each one that failed, to open with
+      # `npx playwright show-report`.
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: playwright-report
+          path: web/playwright-report/
+          retention-days: 14
 
   # The one check the ruleset of `main` requires: it fails when a job above failed or was
   # cancelled, and passes when they passed or were skipped. A skipped job alone would count
