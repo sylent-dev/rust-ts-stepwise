@@ -9,8 +9,11 @@ import type { IconName } from '#lib/icon-name.ts';
 import { t } from '#lib/i18n.ts';
 import type { Platform } from '#lib/platform.ts';
 
-/** A key that writes no character, named as a keyboard event names it (`key`). */
-export type NamedKey = 'ArrowUp' | 'ArrowDown' | 'Enter' | 'F10';
+/**
+ * A key that writes no character, named as a keyboard event names it (`key`). Tab is no shortcut
+ * of a command, since it belongs to the code: the panel of the shortcuts shows it (Shift+Tab).
+ */
+export type NamedKey = 'ArrowUp' | 'ArrowDown' | 'Enter' | 'Tab' | 'F10';
 
 /** The keys held with the key of a shortcut. */
 interface Held {
@@ -125,7 +128,7 @@ export function runsOn(press: KeyPress, command: ScreenCommand): boolean {
 }
 
 /** The keys that a shortcut names by a word, which a language may write its own way. */
-export const KEY_NAMES = ['ctrl', 'cmd', 'shift', 'alt', 'enter'] as const;
+export const KEY_NAMES = ['ctrl', 'cmd', 'shift', 'alt', 'enter', 'tab'] as const;
 
 /** A key named by a word. */
 export type KeyName = (typeof KEY_NAMES)[number];
@@ -135,29 +138,35 @@ export function keyMessage(key: KeyName): string {
 	return `key-${key}`;
 }
 
-/** A key of a shortcut as the interface shows it: its name or its character, or a drawing. */
-export type KeyPart = { text: string } | { icon: IconName };
+/**
+ * A key of a shortcut as the interface shows it: its name or its character, or a drawing, with
+ * the character that a screen reader reads in its place (`↑`, which it says as an arrow).
+ */
+export type KeyPart = { text: string } | { icon: IconName; spoken: string };
 
 /**
  * How a key without a character is shown. An arrow is drawn, as the one printed on the key: the
- * character `↑` reads as a circumflex accent in a small text. Enter has its name in each
- * language, and a function key is written as it is printed.
+ * character `↑` reads as a circumflex accent in a small text, but a screen reader says it as an
+ * arrow. Enter and Tab have their names in each language, and a function key is written as it
+ * is printed.
  */
 function namedKey(key: NamedKey): KeyPart {
 	switch (key) {
 		case 'ArrowUp':
-			return { icon: 'arrow-up' };
+			return { icon: 'arrow-up', spoken: '↑' };
 		case 'ArrowDown':
-			return { icon: 'arrow-down' };
+			return { icon: 'arrow-down', spoken: '↓' };
 		case 'Enter':
 			return { text: t(keyMessage('enter')) };
+		case 'Tab':
+			return { text: t(keyMessage('tab')) };
 		case 'F10':
 			return { text: key };
 	}
 }
 
 /** A key held with the key of a shortcut, by its name. */
-type HeldKey = Exclude<KeyName, 'enter'>;
+type HeldKey = Extract<KeyName, 'ctrl' | 'cmd' | 'shift' | 'alt'>;
 
 /** The keys held for a shortcut on this computer, in the order they are said: Ctrl, Shift, Alt. */
 function heldKeys(shortcut: Shortcut, platform: Platform): HeldKey[] {

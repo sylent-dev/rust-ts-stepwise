@@ -40,7 +40,7 @@ describe('levelMenus', () => {
 			['level', 'all-levels', 'sandbox', '-', 'restore-starting-code'],
 			['edit', 'undo', 'redo', '-', 'comment-lines', 'move-line-up', 'move-line-down'],
 			['run', 'run', 'step', 'reset', '-', 'speed'],
-			['help', 'manual']
+			['help', 'manual', '-', 'keyboard-shortcuts']
 		]);
 		expect(names('sandbox')).toEqual(names('level'));
 	});

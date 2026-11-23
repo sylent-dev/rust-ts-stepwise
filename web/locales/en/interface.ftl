@@ -65,6 +65,8 @@ command-pause = Pause
 command-resume = Resume
 command-step = Step
 command-reset = Reset
+# In the menu Help, and the title of the panel that it opens.
+command-keyboard-shortcuts = Keyboard shortcuts
 
 ## The three controls of a program, in the corner of the editor: each names itself in its tip
 ## by its command.
@@ -158,6 +160,9 @@ key-cmd = Cmd
 key-shift = Shift
 key-alt = Alt
 key-enter = Enter
+key-tab = Tab
+# The key Escape, as printed on most keyboards: only keys pressed one after the other name it.
+-key-escape = Esc
 
 ## The settings: the panel, which a header opens by its name or by a gear.
 
@@ -168,6 +173,22 @@ settings-theme-note = Only the interface changes: the map keeps its look.
 # (`themeMessage`).
 theme-day-desk = Day Desk
 theme-night-desk = Night Desk
+
+## The panel of the keyboard shortcuts: the titles of its groups, then the rows that the text of
+## a command doesn't name. Its title is the text of the command that opens it.
+
+shortcuts-group-run = Run
+shortcuts-group-edit = Edit
+# The row of one command, one shortcut, which the menu names by what it does now: its three
+# texts, as the menu writes them.
+shortcuts-run = { command-run }, { command-pause }, { command-resume }
+# Tab and Shift+Tab, on the selected lines, or on the line of the cursor.
+shortcuts-indent-lines = Indent lines
+shortcuts-unindent-lines = Unindent lines
+# Tab belongs to the code: the keyboard leaves it with Escape, then Tab.
+shortcuts-leave-editor = Leave the editor
+# The keys of `shortcuts-leave-editor`, pressed one after the other.
+shortcuts-leave-editor-keys = { -key-escape }, then { key-tab }
 
 ## What a panel over the screen shares.
 

@@ -2,7 +2,7 @@
 // a program in specs.md): each one once, with its text, its shortcut, its state and what it
 // runs. The rows of the menus (level-menus.ts) and the shortcuts of the screen read them here. A
 // command arrives with the step that codes it: the edits of the editor first, then **Restore
-// starting code**, then the three of the program.
+// starting code**, then the three of the program, then **Keyboard shortcuts**.
 
 import { EDITS, type Edit, type Editing } from '#lib/editor/edits.ts';
 import { t } from '#lib/i18n.ts';
@@ -14,7 +14,14 @@ import type { ProgramControls, RunAction } from './program.ts';
  * The names of the commands of the screen. `run` is **Run**, **Pause** and **Resume**: one
  * command, which does what the program allows now.
  */
-export const LEVEL_COMMANDS = ['restore-starting-code', ...EDITS, 'run', 'step', 'reset'] as const;
+export const LEVEL_COMMANDS = [
+	'restore-starting-code',
+	...EDITS,
+	'run',
+	'step',
+	'reset',
+	'keyboard-shortcuts'
+] as const;
 
 /** A command of the level screen, by its name. */
 export type LevelCommand = (typeof LEVEL_COMMANDS)[number];
@@ -43,6 +50,8 @@ export interface CommandTarget {
 	confirmRestore(): void;
 	/** The program of the screen; nothing until the core has given the map. */
 	program(): ProgramControls | undefined;
+	/** Opens the panel of the keyboard shortcuts. */
+	showShortcuts(): void;
 }
 
 /** The commands of the screen, each under its name. */
@@ -156,6 +165,15 @@ export function levelCommands(target: CommandTarget, platform: Platform): LevelC
 			},
 			run() {
 				target.program()?.reset();
+			}
+		},
+		// No shortcut, as the other commands of the menu **Help**: few shortcuts to learn.
+		'keyboard-shortcuts': {
+			id: 'keyboard-shortcuts',
+			label: t(commandMessage('keyboard-shortcuts')),
+			enabled: true,
+			run() {
+				target.showShortcuts();
 			}
 		}
 	};
