@@ -1,0 +1,9 @@
+/* Section: from the place to fill in to the line of the block, live (step 20a, to decide). */
+.commands-fill-intro { max-width: 880px; margin: 4px 0 12px; color: #dee2e6; }
+.commands-fill-intro ol { margin: 6px 0 0; padding-left: 22px; }
+.commands-fill-inserts { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; color: #adb5bd; font-size: 12px; }
+.commands-fill-inserts button { padding: 4px 10px; border: 1px solid #495057; border-radius: 4px; background: #212529; color: #dee2e6; font: 13px/1.4 "Source Code Pro", monospace; cursor: pointer; }
+.commands-fill-inserts button:hover { background: #343a40; }
+.app-window.commands-fill-board { width: 640px; height: 250px; box-shadow: none; }
+/* The code, typed for real: the font, the size and the colors of the editor, without the colors of the code. */
+.commands-fill-code { flex: 1; width: 100%; margin: 0; padding: var(--space-12) var(--space-12) var(--space-12) 52px; border: 0; outline: 0; resize: none; background: var(--surface); color: var(--text); caret-color: var(--text); font: var(--weight-code) var(--size-code)/var(--line-code) var(--font-code); font-variant-ligatures: none; tab-size: 4; white-space: pre; }

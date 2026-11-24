@@ -136,7 +136,7 @@ Left to step 17, with their first use: the row that opens a menu beside it (`sub
 
 Settled at step 16a (2026-11-20): the lists of words cross as types that the bridge generates from mirror enums, as `Color` (`crates/wasm/src/word.rs`; see Words of the language in `docs/technical-choices.md`). The finding was that nothing typed came out of the four lists of the core (`word_enum!`), so each table of the interface would have listed the words again, with nothing to keep them in step.
 
-Left to step 20, with its first reader: one exported function of the bridge, built from `ALL`, `vocabulary() -> { keywords, foreignWords, builtins: { name, parameters }[], colors, indentWidth }`. The category of a built-in function stays in the interface, with the structure of the menu.
+Left to step 20, with its first reader: one exported function of the bridge, built from `ALL`, `vocabulary() -> { keywords, foreignWords, builtins: { name, parameters }[], colors, indentWidth }`. The category of a built-in function stays in the interface, with the structure of the menu. Settled at step 20a (2026-11-24): `vocabulary() -> { builtins: { name, parameters }[], indentWidth }`, what a table keyed by a word can't say; the keywords and the colors are keys of the table of the command menu, which needs no list of them at runtime (see Words of the language in `docs/technical-choices.md`).
 
 ### Step 16: where the highlighting comes from
 

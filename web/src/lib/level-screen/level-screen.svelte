@@ -18,6 +18,7 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import { differsFromStart, type LevelCode } from '#lib/code/code.ts';
+	import { CommandMenu } from '#lib/command-menu/command-menu.svelte.ts';
 	import { keepCode, openingCode, restoreCode } from '#lib/code/current-code.ts';
 	import { kept } from '#lib/core/core-ready.svelte.ts';
 	import CodeEditor from '#lib/editor/code-editor.svelte';
@@ -215,6 +216,9 @@
 		return editing && { text: editing.text, breakpoints: editing.breakpoints };
 	}
 
+	/** The command menu, in the editor of the level shown. */
+	const commandMenu = new CommandMenu();
+
 	/** The commands of the screen: the rows of its menus run them, and its shortcuts. */
 	const commands = levelCommands(
 		{
@@ -233,6 +237,10 @@
 			program: () => program.current,
 			showShortcuts: () => {
 				showingShortcuts = true;
+			},
+			canOpenCommands: () => editing !== undefined && program.current?.locked !== true,
+			toggleCommands: () => {
+				commandMenu.toggle();
 			}
 		},
 		currentPlatform()
@@ -304,6 +312,7 @@
 							text={opening.text}
 							breakpoints={opening.breakpoints}
 							explain={errorText}
+							parts={commandMenu.parts()}
 							locked={program.current?.locked}
 							next={program.current?.played.line}
 							failed={failedLine}
@@ -386,8 +395,12 @@
 		}
 	}
 
-	/* The code on the whole height, its status bar under it. */
+	/* The code on the whole height, its status bar under it. What opens from the code, the tip
+	   of an error or the command menu, stands over the map and the panels beside it, which come
+	   later in the page. */
 	.code {
+		position: relative;
+		z-index: var(--layer-code);
 		display: flex;
 		flex-direction: column;
 		grid-row: 1 / 3;

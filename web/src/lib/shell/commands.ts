@@ -17,8 +17,12 @@ export type NamedKey = 'ArrowUp' | 'ArrowDown' | 'Enter' | 'Tab' | 'F9' | 'F10';
 
 /** The keys held with the key of a shortcut. */
 interface Held {
-	/** The key of the shortcuts: Ctrl, and Cmd on a computer of Apple. */
-	ctrl?: true;
+	/**
+	 * The key of the shortcuts: Ctrl, and Cmd on a computer of Apple; `'control'`, the key Ctrl
+	 * itself on every computer, for Ctrl+Space alone: Cmd+Space opens Spotlight on a computer of
+	 * Apple, and the page never hears it.
+	 */
+	ctrl?: true | 'control';
 	/**
 	 * Never written beside a sign or a digit: the keyboard decides whether writing it takes
 	 * Shift (`:` alone on an AZERTY keyboard, with Shift on a QWERTY one), and a press is
@@ -84,13 +88,22 @@ function hasNoCase(character: string): boolean {
 	return character.toLowerCase() === character.toUpperCase();
 }
 
+/**
+ * Whether the key of a shortcut is Cmd on this computer: the key of the shortcuts on a computer of
+ * Apple, but for a shortcut that keeps the key Ctrl itself (Ctrl+Space).
+ */
+function isCmd(shortcut: Shortcut, platform: Platform): boolean {
+	return platform === 'mac' && shortcut.ctrl !== 'control';
+}
+
 /** Whether a press of the keyboard is this shortcut, on this computer. */
 function isPressed(shortcut: Shortcut, press: KeyPress, platform: Platform): boolean {
 	// The key of the shortcuts of the other kind of computer names another shortcut. With Alt
 	// too: AltGr, which writes `#`, is Ctrl and Alt for Windows.
-	const [main, other] =
-		platform === 'mac' ? [press.metaKey, press.ctrlKey] : [press.ctrlKey, press.metaKey];
-	if (other || main !== (shortcut.ctrl ?? false) || press.altKey !== (shortcut.alt ?? false)) {
+	const [main, other] = isCmd(shortcut, platform)
+		? [press.metaKey, press.ctrlKey]
+		: [press.ctrlKey, press.metaKey];
+	if (other || main !== (shortcut.ctrl !== undefined) || press.altKey !== (shortcut.alt ?? false)) {
 		return false;
 	}
 	const shift = press.shiftKey === (shortcut.shift ?? false);
@@ -128,7 +141,16 @@ export function runsOn(press: KeyPress, command: ScreenCommand): boolean {
 }
 
 /** The keys that a shortcut names by a word, which a language may write its own way. */
-export const KEY_NAMES = ['ctrl', 'cmd', 'shift', 'alt', 'enter', 'tab'] as const;
+export const KEY_NAMES = [
+	'ctrl',
+	'cmd',
+	'shift',
+	'alt',
+	'enter',
+	'tab',
+	'space',
+	'escape'
+] as const;
 
 /** A key named by a word. */
 export type KeyName = (typeof KEY_NAMES)[number];
@@ -166,13 +188,18 @@ function namedKey(key: NamedKey): KeyPart {
 	}
 }
 
+/** How a key that writes a character is shown: the space by its name, any other in capitals. */
+function characterKey(character: string): KeyPart {
+	return { text: character === ' ' ? t(keyMessage('space')) : character.toUpperCase() };
+}
+
 /** A key held with the key of a shortcut, by its name. */
 type HeldKey = Extract<KeyName, 'ctrl' | 'cmd' | 'shift' | 'alt'>;
 
 /** The keys held for a shortcut on this computer, in the order they are said: Ctrl, Shift, Alt. */
 function heldKeys(shortcut: Shortcut, platform: Platform): HeldKey[] {
 	const held: HeldKey[] = [];
-	if (shortcut.ctrl) held.push(platform === 'mac' ? 'cmd' : 'ctrl');
+	if (shortcut.ctrl) held.push(isCmd(shortcut, platform) ? 'cmd' : 'ctrl');
 	if (shortcut.shift) held.push('shift');
 	if (shortcut.alt) held.push('alt');
 	return held;
@@ -185,7 +212,7 @@ function heldKeys(shortcut: Shortcut, platform: Platform): HeldKey[] {
 export function keyParts(shortcut: Shortcut, platform: Platform): KeyPart[] {
 	return [
 		...heldKeys(shortcut, platform).map((key) => ({ text: t(keyMessage(key)) })),
-		'key' in shortcut ? namedKey(shortcut.key) : { text: shortcut.character.toUpperCase() }
+		'key' in shortcut ? namedKey(shortcut.key) : characterKey(shortcut.character)
 	];
 }
 
@@ -197,6 +224,11 @@ const SPOKEN_KEYS = {
 	alt: 'Alt'
 } satisfies Record<HeldKey, string>;
 
+/** A key that writes a character, as `aria-keyshortcuts` names it: `Space`, `Z`. */
+function spokenCharacter(character: string): string {
+	return character === ' ' ? 'Space' : character.toUpperCase();
+}
+
 /**
  * A shortcut as a screen reader is told it (`aria-keyshortcuts`): the names of the keys as a
  * keyboard event gives them, in English whatever the language, `Control+Z`.
@@ -204,6 +236,6 @@ const SPOKEN_KEYS = {
 export function spokenShortcut(shortcut: Shortcut, platform: Platform): string {
 	return [
 		...heldKeys(shortcut, platform).map((key) => SPOKEN_KEYS[key]),
-		'key' in shortcut ? shortcut.key : shortcut.character.toUpperCase()
+		'key' in shortcut ? shortcut.key : spokenCharacter(shortcut.character)
 	].join('+');
 }

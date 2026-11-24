@@ -16,6 +16,8 @@
 	/** The shapes of each icon: a name without shapes doesn't compile. */
 	const shapes: Record<IconName, Snippet> = {
 		'arrow-down': arrowDown,
+		'arrow-left': arrowLeft,
+		'arrow-right': arrowRight,
 		'arrow-up': arrowUp,
 		check,
 		chevron,
@@ -32,6 +34,14 @@
 
 {#snippet arrowDown()}
 	<path d="M8 2.8v10.4M3.8 9 8 13.2 12.2 9" />
+{/snippet}
+
+{#snippet arrowLeft()}
+	<path d="M13.2 8H2.8M7 3.8 2.8 8 7 12.2" />
+{/snippet}
+
+{#snippet arrowRight()}
+	<path d="M2.8 8h10.4M9 3.8 13.2 8 9 12.2" />
 {/snippet}
 
 {#snippet arrowUp()}

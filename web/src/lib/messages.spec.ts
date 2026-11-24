@@ -15,6 +15,15 @@ import {
 	type TermReference
 } from '@fluent/syntax';
 import { describe, expect, it } from 'vitest';
+import {
+	CATEGORIES,
+	categoryMessage,
+	GIVEN_NAMES,
+	givenMessage,
+	MENU_WORDS,
+	WORD_PARTS,
+	wordMessage
+} from '#lib/command-menu/words.ts';
 import { ERROR_PARTS, ERROR_SUBJECTS, errorMessage } from '#lib/errors/error-text.ts';
 import { RUNTIME_ERROR_SUBJECTS } from '#lib/errors/runtime-error-text.ts';
 import { COMMAND_TEXTS, commandMessage } from '#lib/level-screen/level-commands.ts';
@@ -41,6 +50,12 @@ const FAMILIES: Readonly<Record<string, { prefix: string; names: readonly string
 	adviceMessage: { prefix: 'window-advice-', names: WINDOW_ADVICES.map(adviceMessage) },
 	commandMessage: { prefix: 'command-', names: COMMAND_TEXTS.map(commandMessage) },
 	keyMessage: { prefix: 'key-', names: KEY_NAMES.map(keyMessage) },
+	categoryMessage: { prefix: 'commands-category-', names: CATEGORIES.map(categoryMessage) },
+	wordMessage: {
+		prefix: 'commands-word-',
+		names: MENU_WORDS.flatMap((word) => WORD_PARTS.map((part) => wordMessage(word, part)))
+	},
+	givenMessage: { prefix: 'commands-given-', names: GIVEN_NAMES.map(givenMessage) },
 	errorMessage: {
 		prefix: 'error-',
 		names: [...ERROR_SUBJECTS, ...RUNTIME_ERROR_SUBJECTS].flatMap((subject) =>

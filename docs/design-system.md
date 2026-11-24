@@ -301,6 +301,7 @@ What stands over the screen has a layer: its place in the stacking order, by its
 
 | Token | Value | Role |
 |---|---|---|
+| `--layer-code` | `5` | The column of the code of the level screen, whose tips and command menu open over the map and the panels beside it (step 20a): under what opens from the header. |
 | `--layer-pop` | `10` | What opens from a control, over the blocks of the screen: a menu of the header. |
 | `--layer-screen-message` | `20` | A message of the application in place of the screen: over the screen and what it opened. |
 | `--layer-page-message` | `30` | A message of the page itself, which says that nothing runs: over one of the application. |

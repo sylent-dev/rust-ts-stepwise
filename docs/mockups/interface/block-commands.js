@@ -1,5 +1,6 @@
 // The command menu (Ctrl+Space), at the cursor of the editor: the categories, the commands, the details.
-const COMMAND_CATEGORIES = ["Move", "Paint", "Carry", "Sense", "Write", "Colors", "Control", "Variables", "Functions", "Your names"];
+// Logic holds not, and, or, true and false (decided at step 20a).
+const COMMAND_CATEGORIES = ["Move", "Paint", "Carry", "Sense", "Write", "Colors", "Control", "Logic", "Variables", "Functions", "Your names"];
 
 // `category` is the category chosen; `counts` gives the results of a filter, the categories without
 // result growing pale; `groups` are the rows of the middle column, [title or null, [commands]];

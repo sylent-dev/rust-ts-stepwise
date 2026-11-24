@@ -9,7 +9,7 @@
      the editor hides no line once the code has scrolled to its end: the padding of the code by
      default. -->
 <script lang="ts">
-	import { EditorState } from '@codemirror/state';
+	import { EditorState, type Extension } from '@codemirror/state';
 	import { EditorView } from '@codemirror/view';
 	import { untrack } from 'svelte';
 	import { t } from '#lib/i18n.ts';
@@ -35,6 +35,11 @@
 		 * as the editor is made.
 		 */
 		explain: Explain;
+		/**
+		 * The parts that the screen adds to the editor, which the editor doesn't know: the command
+		 * menu. Read once, as the editor is made.
+		 */
+		parts?: Extension;
 		/**
 		 * Whether the code can't be changed: while its program runs or is paused. The cursor
 		 * still moves in it.
@@ -80,6 +85,7 @@
 		text,
 		breakpoints = [],
 		explain,
+		parts = [],
 		locked = false,
 		next,
 		failed,
@@ -121,6 +127,7 @@
 				doc,
 				extensions: [
 					extensions,
+					untrack(() => parts),
 					breakpointsOn(saved),
 					lockOf(
 						untrack(() => locked),
@@ -199,9 +206,6 @@
 		--margin: 52px;
 		--marks: 21px;
 		height: 100%;
-		/* CodeMirror stacks what it draws with figures of its own (200 for its margin): an order
-		   inside the block, which is never compared with the layers of the page. */
-		isolation: isolate;
 	}
 
 	.editor :global {
@@ -387,6 +391,15 @@
 				4px 4px repeat-x;
 		}
 
+		/* What opens from the code, the tip of an underline or the command menu, stands over the
+		   controls that float in its corner: a small figure, in the order of the column of the
+		   code, which has a layer (level-screen.svelte), rather than the 500 of CodeMirror.
+		   CodeMirror keeps the order of what it draws in its scroller (`z-index: 0` there, in
+		   its own style): its margin at 200 and its layers stay inside it. */
+		.cm-editor .cm-tooltip {
+			z-index: 2;
+		}
+
 		/* What the underlines say under the pointer, under the line: on one line, and on several
 		   once it is longer than 60 characters. */
 		.cm-editor .cm-tooltip {
@@ -413,6 +426,16 @@
 		.cm-editor .underline-tip strong {
 			display: block;
 			font-weight: var(--weight-code-strong);
+		}
+
+		/* The places to fill in of a statement that the command menu inserted aren't drawn (see
+		   Command menu in specs.md): Tab or Enter goes from one to the next. */
+		.cm-editor .cm-snippetField {
+			background: none;
+		}
+
+		.cm-editor .cm-snippetFieldPosition {
+			display: none;
 		}
 
 		/* The selection keeps its color while the keyboard is elsewhere. */

@@ -3,10 +3,11 @@ import { getIndentUnit } from '@codemirror/language';
 import { EditorState } from '@codemirror/state';
 import { keymap } from '@codemirror/view';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { check } from '#lib/core/core.ts';
+import { check, vocabulary } from '#lib/core/core.ts';
 import { loadTestCore } from '#lib/core/test-support.ts';
 import { after, press, shown, stateOf as markedState } from './test-support.ts';
 import {
+	INDENT_WIDTH,
 	indentation,
 	indentOrInsertSpaces,
 	insertNewLine,
@@ -283,5 +284,11 @@ describe('the indentation', () => {
 
 		expect(getIndentUnit(state)).toBe(4);
 		expect(state.tabSize).toBe(4);
+	});
+});
+
+describe('INDENT_WIDTH', () => {
+	it('is the width of an indentation for the core', () => {
+		expect(INDENT_WIDTH).toBe(vocabulary().indentWidth);
 	});
 });
