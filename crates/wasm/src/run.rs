@@ -11,7 +11,7 @@ use std::error::Error;
 use std::fmt;
 
 use serde::Serialize;
-use stepwise_core::interpreter::{Action, CallInProgress, Event, State};
+use stepwise_core::interpreter::{self, Action, CallInProgress, Event, State};
 use stepwise_core::program::{self, Checked};
 use stepwise_core::{level, run};
 use tsify::{Ts, Tsify};
@@ -22,6 +22,17 @@ use crate::position::Offsets;
 use crate::runtime_error::RuntimeError;
 use crate::value::Value;
 use crate::world::{Color, Point, World};
+
+/// The lines of the program of `source` where a step starts, from 1, in order and each once:
+/// where a breakpoint can pause it, which the editor moves a breakpoint to (see *Code editor*
+/// in `specs.md`). Nothing when the checks before running refuse it: the editor then leaves a
+/// breakpoint where it was asked, since nothing can run.
+#[wasm_bindgen(js_name = stepLines)]
+#[must_use]
+pub fn step_lines(source: &str) -> Option<Vec<u32>> {
+    let program = program::check(source).ok()?;
+    Some(interpreter::step_lines(&program))
+}
 
 /// A program being run on a map of a level or in the sandbox, paused before its next step.
 /// It stays in the module, with its own copy of the world: the interface frees it at
@@ -353,7 +364,7 @@ mod tests {
     use stepwise_core::level::GoalNotMet as CoreGoal;
     use stepwise_core::world;
 
-    use super::{Call, GoalNotMet, Outcome, Run, StartError, StepEvent, Variable};
+    use super::{Call, GoalNotMet, Outcome, Run, StartError, StepEvent, Variable, step_lines};
     use crate::level::{Level, Sandbox};
     use crate::position::Span;
     use crate::runtime_error::{RuntimeError, RuntimeErrorKind};
@@ -446,6 +457,15 @@ robot = { at = [0, 0], facing = "east" }
             value,
             changed,
         }
+    }
+
+    #[test]
+    fn the_lines_that_start_a_step_are_given_for_a_program_that_the_checks_take() {
+        let source = "# Go\nfunction go():\n    forward()\n\ngo()\n";
+        assert_eq!(step_lines(source), Some(vec![3, 5]));
+        assert_eq!(step_lines(""), Some(vec![]));
+        assert_eq!(step_lines("forward(\n"), None);
+        assert_eq!(step_lines("sidse = 1\n"), None);
     }
 
     #[test]

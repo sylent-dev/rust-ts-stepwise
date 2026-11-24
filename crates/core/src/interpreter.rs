@@ -34,3 +34,25 @@ pub use event::{Action, Event};
 pub use machine::{Machine, State};
 pub use memory::{CallInProgress, MAX_CALL_DEPTH, Variable};
 pub use value::{MAX_TEXT_LENGTH, Value, ValueType};
+
+use crate::program::Checked;
+
+/// The lines of `program` where a step starts, from 1, in order and each once: those a
+/// breakpoint can pause the program on (see *Code editor* in `specs.md`). Every statement but
+/// the definition of a function, and each `else if`; never the line of an `else:`, a blank
+/// line nor a comment. The lines of a function that no call enters are among them: a step
+/// would start there if one did.
+///
+/// They are read in the instructions that the machine runs, where a step ends on each
+/// [`Line`](code::Instruction::Line): a rule written once. Should the compiler refuse a
+/// checked program, a mistake of the core, there is none.
+#[must_use]
+pub fn step_lines(program: &Checked) -> Vec<u32> {
+    let Ok(code) = compiler::compile(program.program()) else {
+        return Vec::new();
+    };
+    let mut lines: Vec<u32> = code.step_lines().collect();
+    lines.sort_unstable();
+    lines.dedup();
+    lines
+}
