@@ -64,6 +64,21 @@ describe('commandFor', () => {
 		expect(named(press('z', 'ctrl', 'shift'))).toBe('redo');
 	});
 
+	it('hears the key Ctrl itself for a shortcut that keeps it, on every computer', () => {
+		const space: ScreenCommand = {
+			id: 'menu',
+			label: 'Menu',
+			shortcut: { character: ' ', ctrl: 'control' },
+			enabled: true,
+			run: () => undefined
+		};
+		for (const platform of ['other', 'mac'] as const) {
+			expect(commandFor(press(' ', 'ctrl'), [space], platform)).toBe(space);
+			expect(commandFor(press(' ', 'meta'), [space], platform)).toBeUndefined();
+			expect(commandFor(press(' ', 'ctrl', 'meta'), [space], platform)).toBeUndefined();
+		}
+	});
+
 	it('tells a letter with Shift from the letter alone', () => {
 		expect(named(press('y', 'ctrl', 'shift'))).toBeUndefined();
 	});
@@ -180,6 +195,12 @@ describe('keyParts', () => {
 		expect(shown({ key: 'F10' })).toEqual(['F10']);
 	});
 
+	it('names the space, and Ctrl on a computer of Apple too for a shortcut that keeps it', () => {
+		expect(shown({ character: ' ', ctrl: 'control' })).toEqual(['Ctrl', 'Space']);
+		expect(shown({ character: ' ', ctrl: 'control' }, 'mac')).toEqual(['Ctrl', 'Space']);
+		expect(spokenShortcut({ character: ' ', ctrl: 'control' }, 'mac')).toBe('Control+Space');
+	});
+
 	it('names Cmd in place of Ctrl on a computer of Apple', () => {
 		expect(shown({ character: 'z', ctrl: true, shift: true }, 'mac')).toEqual([
 			'Cmd',
@@ -211,7 +232,9 @@ describe('keyMessage', () => {
 			'key-shift',
 			'key-alt',
 			'key-enter',
-			'key-tab'
+			'key-tab',
+			'key-space',
+			'key-escape'
 		]);
 	});
 });

@@ -44,6 +44,7 @@ export function levelShortcuts(commands: LevelCommands): ShortcutColumns {
 					...commandRow(commands['comment-lines']),
 					...commandRow(commands['move-line-up']),
 					...commandRow(commands['move-line-down']),
+					...commandRow(commands.commands),
 					{
 						id: 'leave-editor',
 						label: t('shortcuts-leave-editor'),

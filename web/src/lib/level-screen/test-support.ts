@@ -55,17 +55,18 @@ export function programFor(
 
 /**
  * What a screen gives its commands: the editor shown, if any, whether its code has something
- * to restore, and its program, if any. It counts the confirmations and the panels of the
- * shortcuts it was asked to open.
+ * to restore, and its program, if any. It counts the confirmations, the panels of the shortcuts
+ * and the command menus it was asked to open; the menu can open while there is an editor.
  */
 export function screenWith(
 	editing: () => Editing | undefined = () => undefined,
 	restorable = false,
 	program: () => ProgramControls | undefined = () => undefined
-): CommandTarget & { confirmations: number; shortcutPanels: number } {
+): CommandTarget & { confirmations: number; shortcutPanels: number; commandMenus: number } {
 	const screen = {
 		confirmations: 0,
 		shortcutPanels: 0,
+		commandMenus: 0,
 		editing,
 		canRestore: () => restorable,
 		confirmRestore: () => {
@@ -74,6 +75,10 @@ export function screenWith(
 		program,
 		showShortcuts: () => {
 			screen.shortcutPanels += 1;
+		},
+		canOpenCommands: () => editing() !== undefined,
+		toggleCommands: () => {
+			screen.commandMenus += 1;
 		}
 	};
 	return screen;

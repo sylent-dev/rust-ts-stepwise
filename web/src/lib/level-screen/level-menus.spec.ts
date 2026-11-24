@@ -47,6 +47,8 @@ describe('levelMenus', () => {
 				'move-line-up',
 				'move-line-down',
 				'-',
+				'commands',
+				'-',
 				'toggle-breakpoint',
 				'remove-all-breakpoints'
 			],

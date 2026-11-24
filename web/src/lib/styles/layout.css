@@ -15,6 +15,9 @@
 	   `z-index`. They are only compared with each other; a new one takes its place in this
 	   order, the figures spaced so that the others keep theirs. An order inside a block (behind
 	   its own text, over its own fill) is no layer: see the rule in the design system. */
+	/* The column of the code of the level screen, whose tips and command menu open over the
+	   map and the panels beside it: under what opens from the header. */
+	--layer-code: 5;
 	/* What opens from a control, over the blocks of the screen: a menu of the header. */
 	--layer-pop: 10;
 	/* A message of the application in place of the screen, over it and what it opened. */

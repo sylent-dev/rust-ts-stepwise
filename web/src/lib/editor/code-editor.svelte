@@ -9,7 +9,7 @@
      the editor hides no line once the code has scrolled to its end: the padding of the code by
      default. -->
 <script lang="ts">
-	import { EditorState } from '@codemirror/state';
+	import { EditorState, type Extension } from '@codemirror/state';
 	import { EditorView } from '@codemirror/view';
 	import { untrack } from 'svelte';
 	import { t } from '#lib/i18n.ts';
@@ -35,6 +35,11 @@
 		 * as the editor is made.
 		 */
 		explain: Explain;
+		/**
+		 * The parts that the screen adds to the editor, which the editor doesn't know: the command
+		 * menu. Read once, as the editor is made.
+		 */
+		parts?: Extension;
 		/**
 		 * Whether the code can't be changed: while its program runs or is paused. The cursor
 		 * still moves in it.
@@ -80,6 +85,7 @@
 		text,
 		breakpoints = [],
 		explain,
+		parts = [],
 		locked = false,
 		next,
 		failed,
@@ -121,6 +127,7 @@
 				doc,
 				extensions: [
 					extensions,
+					untrack(() => parts),
 					breakpointsOn(saved),
 					lockOf(
 						untrack(() => locked),
@@ -413,6 +420,16 @@
 		.cm-editor .underline-tip strong {
 			display: block;
 			font-weight: var(--weight-code-strong);
+		}
+
+		/* The places to fill in of a statement that the command menu inserted aren't drawn (see
+		   Command menu in specs.md): Tab or Enter goes from one to the next. */
+		.cm-editor .cm-snippetField {
+			background: none;
+		}
+
+		.cm-editor .cm-snippetFieldPosition {
+			display: none;
 		}
 
 		/* The selection keeps its color while the keyboard is elsewhere. */

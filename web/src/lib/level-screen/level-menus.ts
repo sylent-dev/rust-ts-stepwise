@@ -58,6 +58,8 @@ export function levelMenus(
 				command('move-line-up'),
 				command('move-line-down'),
 				SEPARATOR,
+				command('commands'),
+				SEPARATOR,
 				command('toggle-breakpoint'),
 				command('remove-all-breakpoints')
 			]

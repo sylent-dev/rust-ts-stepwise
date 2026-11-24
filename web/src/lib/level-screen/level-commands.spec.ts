@@ -1,6 +1,9 @@
 import { EditorState } from '@codemirror/state';
 import { keymap } from '@codemirror/view';
 import { beforeAll, describe, expect, it } from 'vitest';
+import { editorMenu } from '#lib/command-menu/editor-menu.ts';
+import { menuEntries } from '#lib/command-menu/words.ts';
+import { vocabulary } from '#lib/core/core.ts';
 import { loadTestCore } from '#lib/core/test-support.ts';
 import { type Editing, EDITS } from '#lib/editor/edits.ts';
 import { editorSetup } from '#lib/editor/setup.ts';
@@ -62,9 +65,10 @@ function normalized(name: string): string {
 	);
 }
 
-/** A shortcut of the screen, written the same way. */
+/** A shortcut of the screen, written the same way; the space by its name, as CodeMirror names it. */
 function written(shortcut: Shortcut): string {
-	const key = 'key' in shortcut ? shortcut.key : shortcut.character;
+	const key =
+		'key' in shortcut ? shortcut.key : shortcut.character === ' ' ? 'Space' : shortcut.character;
 	return normalized(
 		[shortcut.ctrl && 'Mod', shortcut.shift && 'Shift', shortcut.alt && 'Alt', key]
 			.filter(Boolean)
@@ -87,6 +91,7 @@ describe('levelCommands', () => {
 			'Comment lines',
 			'Move line up',
 			'Move line down',
+			'Commands',
 			'Toggle breakpoint',
 			'Remove all breakpoints',
 			'Run',
@@ -195,6 +200,7 @@ describe('levelCommands', () => {
 		expect(LEVEL_COMMANDS.filter((name) => commands[name].enabled)).toEqual([
 			'redo',
 			'comment-lines',
+			'commands',
 			'toggle-breakpoint',
 			'keyboard-shortcuts'
 		]);
@@ -306,6 +312,7 @@ describe('levelCommands', () => {
 			'Ctrl+:',
 			'Alt+arrow-up',
 			'Alt+arrow-down',
+			'Ctrl+Space',
 			'F9',
 			undefined,
 			'Ctrl+Enter',
@@ -324,6 +331,28 @@ describe('levelCommands', () => {
 		expect(commandFor(press('F10'), all, 'other')).toBe(commands.step);
 		expect(commandFor(press('Enter'), all, 'other')).toBeUndefined();
 		expect(shownKeys(levelCommands(screenWith(), 'mac').run, 'mac')).toBe('Cmd+Enter');
+	});
+
+	it('opens the command menu with Ctrl+Space, the key Ctrl itself on a computer of Apple', () => {
+		for (const platform of PLATFORMS) {
+			const commands = levelCommands(screenWith(), platform);
+			const all = Object.values(commands);
+
+			expect(shownKeys(commands.commands, platform)).toBe('Ctrl+Space');
+			expect(commandFor(press(' ', 'ctrl'), all, platform)).toBe(commands.commands);
+			expect(commandFor(press(' ', 'meta'), all, platform)).toBeUndefined();
+		}
+	});
+
+	it('asks the screen to open or close the command menu, while it has an editor', () => {
+		const screen = screenWith(() => editorFor());
+		const { commands } = levelCommands(screen, 'other');
+
+		expect(commands.enabled).toBe(true);
+		commands.run();
+		expect(screen.commandMenus).toBe(1);
+		expect(commands.repeats).toBeUndefined();
+		expect(levelCommands(screenWith(), 'other').commands.enabled).toBe(false);
 	});
 
 	it('hears Ctrl+Y and Ctrl+Shift+Z for Redo', () => {
@@ -392,8 +421,13 @@ describe('the keys of the editor', () => {
 	// The editor asks the core what its code is, and checks it, as soon as it is made.
 	beforeAll(loadTestCore);
 
-	it('are none of the shortcuts of the commands, which the screen alone hears', () => {
-		const bindings = EditorState.create({ extensions: editorSetup('Your code', errorText) })
+	it('are none of the shortcuts of the commands, which the screen alone hears, those of the command menu included', () => {
+		const bindings = EditorState.create({
+			extensions: [
+				editorSetup('Your code', errorText),
+				editorMenu(menuEntries(vocabulary()), 'command-menu')
+			]
+		})
 			.facet(keymap)
 			.flat();
 		// A binding names its key for every computer, or for one; with `shift`, it takes the key

@@ -3,7 +3,7 @@
 // runs. The rows of the menus (level-menus.ts) and the shortcuts of the screen read them here. A
 // command arrives with the step that codes it: the edits of the editor first, then **Restore
 // starting code**, then the three of the program, then **Keyboard shortcuts**, then the two of
-// the breakpoints.
+// the breakpoints, then **Commands**.
 
 import { EDITS, type Edit, type Editing } from '#lib/editor/edits.ts';
 import { t } from '#lib/i18n.ts';
@@ -18,6 +18,7 @@ import type { ProgramControls, RunAction } from './program.ts';
 export const LEVEL_COMMANDS = [
 	'restore-starting-code',
 	...EDITS,
+	'commands',
 	'toggle-breakpoint',
 	'remove-all-breakpoints',
 	'run',
@@ -55,6 +56,10 @@ export interface CommandTarget {
 	program(): ProgramControls | undefined;
 	/** Opens the panel of the keyboard shortcuts. */
 	showShortcuts(): void;
+	/** Whether the command menu can open: there is an editor, and its code can be changed. */
+	canOpenCommands(): boolean;
+	/** Opens the command menu at the cursor of the code, or closes it when it is open. */
+	toggleCommands(): void;
 }
 
 /** The commands of the screen, each under its name. */
@@ -130,6 +135,21 @@ export function levelCommands(target: CommandTarget, platform: Platform): LevelC
 		'comment-lines': edit('comment-lines'),
 		'move-line-up': edit('move-line-up'),
 		'move-line-down': edit('move-line-down'),
+		// Ctrl+Space, as in a code editor, with the key Ctrl itself on a computer of Apple too, where
+		// Cmd+Space opens Spotlight (see Command menu in specs.md). Held down, it opens the menu
+		// once; pressed again, it closes it. Greyed while the code is locked, since the menu writes
+		// in the code.
+		commands: {
+			id: 'commands',
+			label: t(commandMessage('commands')),
+			shortcut: { character: ' ', ctrl: 'control' },
+			get enabled() {
+				return target.canOpenCommands();
+			},
+			run() {
+				target.toggleCommands();
+			}
+		},
 		// The breakpoints change no text: they can be set and removed while the code is locked
 		// too (see Code editor in specs.md). F9 is the key of the code editors; held down, it
 		// sets and removes a breakpoint once.

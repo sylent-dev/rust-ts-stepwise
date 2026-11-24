@@ -50,6 +50,7 @@ describe('levelShortcuts', () => {
 					'Comment lines: Ctrl+:',
 					'Move line up: Alt+arrow-up',
 					'Move line down: Alt+arrow-down',
+					'Commands: Ctrl+Space',
 					'Leave the editor: Esc, then Tab'
 				]
 			]
@@ -77,6 +78,7 @@ describe('levelShortcuts', () => {
 					'Comment lines: Cmd+:',
 					'Move line up: Alt+arrow-up',
 					'Move line down: Alt+arrow-down',
+					'Commands: Ctrl+Space',
 					'Leave the editor: Esc, then Tab'
 				]
 			]
