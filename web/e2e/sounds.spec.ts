@@ -9,11 +9,16 @@ interface Heard {
 	contexts: number;
 	/** Each note by its first frequency, rounded to the hertz; `noise` for a burst of noise. */
 	notes: (number | 'noise')[];
+	/** The fades to silence asked for: each one a stop of what plays. */
+	fades: number;
 }
 
 declare global {
 	interface Window {
-		/** Written by the init script of this file, before the application loads. */
+		/**
+		 * Written by the init script of this file, before the application loads. Every file of
+		 * `tsconfig.json` sees it, those of the application too, which never write it.
+		 */
 		heard?: Heard;
 	}
 }
@@ -31,7 +36,7 @@ const BUMPING = 'forward()\nturn_left()\nforward()\n';
 test.beforeEach(async ({ page }) => {
 	// Every audio context of the page writes down what it is asked, before the application loads.
 	await page.addInitScript(() => {
-		const heard: Heard = { contexts: 0, notes: [] };
+		const heard: Heard = { contexts: 0, notes: [], fades: 0 };
 		window.heard = heard;
 		class HeardContext extends AudioContext {
 			constructor(options?: AudioContextOptions) {
@@ -61,6 +66,17 @@ test.beforeEach(async ({ page }) => {
 				return oscillator;
 			}
 
+			override createGain(): GainNode {
+				const gain = super.createGain();
+				const level = gain.gain;
+				const target = level.setTargetAtTime.bind(level);
+				level.setTargetAtTime = (value, time, constant) => {
+					if (value === 0) heard.fades += 1;
+					return target(value, time, constant);
+				};
+				return gain;
+			}
+
 			override createBufferSource(): AudioBufferSourceNode {
 				heard.notes.push('noise');
 				return super.createBufferSource();
@@ -76,7 +92,7 @@ async function heardIn(page: Page): Promise<Heard> {
 	return page.evaluate(() => {
 		const { heard } = window;
 		if (!heard) throw new Error('the init script of the test wrote nothing');
-		return { contexts: heard.contexts, notes: [...heard.notes] };
+		return { contexts: heard.contexts, notes: [...heard.notes], fades: heard.fades };
 	});
 }
 
@@ -85,6 +101,13 @@ async function forget(page: Page): Promise<void> {
 	await page.evaluate(() => {
 		if (window.heard) window.heard.notes.length = 0;
 	});
+}
+
+/** Turns **Sounds** off in the panel of the settings, then closes it. */
+async function turnSoundsOff(page: Page): Promise<void> {
+	await page.getByRole('button', { name: 'Settings' }).click();
+	await page.getByRole('radio', { name: 'Off' }).click();
+	await page.keyboard.press('Escape');
 }
 
 /** Turns **Sounds** on in the panel of the settings, then closes it. */
@@ -98,7 +121,7 @@ test('the sounds stay off at first: a run opens no audio of the system', async (
 	await writeCode(page, BUMPING);
 	await control(page, 'Run').click();
 	await expect(stateOf(page)).toHaveText('Error at line 3');
-	expect(await heardIn(page)).toEqual({ contexts: 0, notes: [] });
+	expect(await heardIn(page)).toEqual({ contexts: 0, notes: [], fades: 0 });
 });
 
 test('Sounds turned on plays a success once, then a run plays its move, its turn and its bump', async ({
@@ -111,9 +134,11 @@ test('Sounds turned on plays a success once, then a run plays its move, its turn
 	await writeCode(page, BUMPING);
 	await control(page, 'Run').click();
 	await expect(stateOf(page)).toHaveText('Error at line 3');
+	// The Run fades out what the success still played.
 	expect(await heardIn(page)).toEqual({
 		contexts: 1,
-		notes: [...MOVE, ...TURN, ...BUMP]
+		notes: [...MOVE, ...TURN, ...BUMP],
+		fades: 1
 	});
 });
 
@@ -125,4 +150,19 @@ test('a Run that the checks refuse plays the soft slide', async ({ page }) => {
 	await control(page, 'Run').click();
 	await expect(page.getByText('Fix this error to run the program.')).toBeVisible();
 	await expect.poll(async () => (await heardIn(page)).notes).toEqual(FAILURE);
+});
+
+test('Sounds turned off fades out what still plays, in this tab and from another one', async ({
+	page
+}) => {
+	await turnSoundsOn(page);
+	await turnSoundsOff(page);
+	await expect.poll(async () => (await heardIn(page)).fades).toBe(1);
+
+	// Turned on again here, then off in another tab, which this one follows.
+	await turnSoundsOn(page);
+	const other = await page.context().newPage();
+	await openSandbox(other);
+	await turnSoundsOff(other);
+	await expect.poll(async () => (await heardIn(page)).fades).toBe(2);
 });

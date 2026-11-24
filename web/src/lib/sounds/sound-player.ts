@@ -8,11 +8,14 @@ import { playSound, VOLUME, type Sound } from './recipes.ts';
 const FADE = 0.01;
 
 /**
- * How long after it is asked a sound starts at the soonest, in seconds: one frame of the page.
- * The clock of a context moves on by blocks of about 10 ms, so a sound asked for its present
- * may start in its past and lose its attack, the whole rise of a blip of 40 ms; a frame later,
- * it starts with the frame that draws its action (measured by the review of the animations of
- * step 18).
+ * How long after it is asked every sound starts, in seconds, the same for all, so that they keep
+ * their moments between them: 1/60 s, whatever the screen. It must stay longer than a block of
+ * the clock of a context (10.7 ms in Chromium at 48 kHz, measured on 2026-11-24): a sound asked
+ * for the present of a clock about to move on would start in its past and lose its attack, the
+ * whole rise of a blip of 40 ms. A blip, asked as its move starts, then plays with the first
+ * frame where the robot moves; a sound asked later, such as the spring at the contact, plays up
+ * to a frame after its moment, too little to hear: a sound late on its picture passes far better
+ * than one ahead of it.
  */
 const LEAD = 1 / 60;
 
@@ -49,9 +52,9 @@ export class SoundPlayer {
 	}
 
 	/**
-	 * Plays `sound` in `delay` milliseconds, or at once, one frame later both ways. A sound that the browser
-	 * refuses is skipped: a sound is never worth stopping a run, which the page would take for
-	 * an error of the application.
+	 * Plays `sound` in `delay` milliseconds, or at once, `LEAD` later both ways. A sound that the
+	 * browser refuses is skipped: a sound is never worth stopping a run, which the page would
+	 * take for an error of the application.
 	 */
 	play(sound: Sound, delay = 0): void {
 		this.wake();

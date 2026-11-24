@@ -368,7 +368,7 @@ describe('the sounds of the program of a screen', () => {
 		program.runOrPause();
 		program.runOrPause();
 		program.runOrPause();
-		expect(heard.filter((asked) => asked === 'wake')).toHaveLength(4);
+		expect(heard).toEqual(['stop', 'wake', 'wake', 'move 0', 'wake', 'wake']);
 		program.free();
 	});
 

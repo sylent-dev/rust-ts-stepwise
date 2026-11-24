@@ -227,7 +227,8 @@ export class Program implements ProgramControls {
 	 * Checks the code as it is now, before the program starts on it. With an error nothing
 	 * starts, and the map goes back to its start all the same: what it showed was the end of
 	 * another program. The editor underlines the errors, the console lists them, and the soft
-	 * slide says it, so that each **Run** has an answer. What the run before played stops.
+	 * slide says it, so that each press that asks for a run has an answer. What the run before
+	 * played stops.
 	 */
 	#check(): boolean {
 		const text = this.#text();

@@ -31,7 +31,7 @@ describe('the player of the sounds', () => {
 		expect(made[0]?.sources).toHaveLength(3);
 	});
 
-	it('plays a sound at once, or after its delay', () => {
+	it('plays a sound a frame after it is asked, or after its delay', () => {
 		const { player, made } = playerOf();
 		player.play('move');
 		const [context] = made;
@@ -86,6 +86,20 @@ describe('the player of the sounds', () => {
 			player.play('move');
 		}).not.toThrow();
 		expect(warn).toHaveBeenCalledOnce();
+		// The next sound plays once the browser takes it again.
+		Reflect.deleteProperty(context, 'createOscillator');
+		player.play('move');
+		expect(heardIn(context)).toHaveLength(1);
+	});
+
+	it('says it to the console when the browser refuses to wake the context', async () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+		const context = new FakeAudioContext('suspended');
+		context.resume = () => Promise.reject(new Error('refused'));
+		new SoundPlayer(() => context.typed).wake();
+		await vi.waitFor(() => {
+			expect(warn).toHaveBeenCalledOnce();
+		});
 	});
 
 	it('fades out what plays at a stop, and plays what comes next anew', () => {
