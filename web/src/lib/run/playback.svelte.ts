@@ -11,9 +11,9 @@ import {
 	isRunEnd,
 	robotFailure,
 	runEnd,
-	type Action,
-	type Motion
-} from '#lib/map/motion.ts';
+	type Action
+} from '#lib/map/actions.ts';
+import type { Motion } from '#lib/map/motion.ts';
 import type { Scene } from '#lib/map/scene.ts';
 import { isInstant, NORMAL_SPEED, paceFrame, runInstant, SPEEDS, START_CARRY } from './pace.ts';
 

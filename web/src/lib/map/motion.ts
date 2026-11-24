@@ -1,123 +1,11 @@
-// The animation of a step on the map (see Animations in specs.md): which actions the map
-// animates, how long they take at each speed, and where the robot stands at each moment, with
-// full motion or less of it. The reference is the mock-up, `docs/mockups/world-elements/motion.js`.
+// Where the robot stands at each moment of what the map animates (see Animations in specs.md),
+// with full motion or less of it. Which actions the map animates, and how long they take, is
+// actions.ts. The reference is the mock-up, `docs/mockups/world-elements/motion.js`.
 
-import type {
-	Direction,
-	Outcome,
-	Robot,
-	RuntimeErrorKind,
-	StepEvent,
-	World
-} from '#lib/core/core.ts';
+import type { Direction, Robot, World } from '#lib/core/core.ts';
+import { BUMP_TOUCH, FAILURE_SHAKE, type Action } from './actions.ts';
 import { clamp01, easeOut, overshoot, smooth, smoothBetween } from './easing.ts';
 import { STEPS } from './geometry.ts';
-
-/**
- * The time each event of a step takes on the map at the normal speed, 2 steps per second (decided
- * at step 11a): a move, a turn or a tool put down 300 ms; an item 400 ms, since it travels between
- * the floor and the bay. Nothing for what the map doesn't animate, where the highlighted line
- * moves on at once: a line without action, a line printed, a tool lifted. Its keys are every
- * event of the core: a new one doesn't compile until it is placed here.
- */
-const EVENT_TIMES = {
-	nothing: undefined,
-	printed: undefined,
-	moved: 300,
-	'turned-left': 300,
-	'turned-right': 300,
-	'started-painting': 300,
-	'stopped-painting': undefined,
-	'started-erasing': 300,
-	'stopped-erasing': undefined,
-	'picked-up': 400,
-	dropped: 400
-} as const satisfies Record<StepEvent, number | undefined>;
-
-/**
- * The actions of a program that the map animates: a move, a turn, a tool put down, an item. They
- * are the events that have a time above.
- */
-export type AnimatedEvent = {
-	[Name in StepEvent]: (typeof EVENT_TIMES)[Name] extends number ? Name : never;
-}[StepEvent];
-
-/**
- * The errors of the robot that the map shows: the bump into a wall or the edge of the map, and
- * the `pick_up()` and `drop()` that fail. The others show nothing on the map.
- */
-export type RobotFailure = Extract<
-	RuntimeErrorKind['code'],
-	'bump' | 'already-carrying' | 'no-item-here' | 'not-carrying' | 'item-already-here'
->;
-
-/**
- * The ends of a run that the robot shows, once its last action has ended: every goal met, or a
- * goal not met. A run of the sandbox, which has no goal, and a run stopped on an error show none.
- */
-export type RunEnd = Extract<Outcome['type'], 'passed' | 'goals-not-met'>;
-
-/**
- * What the map animates: the action of a step, the one the robot failed, or the end of the run
- * after its last step.
- */
-export type Action = AnimatedEvent | RobotFailure | RunEnd;
-
-/**
- * The time each error of the robot that the map shows takes, at every animated speed: a bump
- * 450 ms, and a `pick_up()` or a `drop()` that fails 650 ms, since they show what goes wrong before
- * the robot shakes. Its keys are the errors shown.
- */
-const FAILURE_TIMES = {
-	bump: 450,
-	'already-carrying': 650,
-	'no-item-here': 650,
-	'not-carrying': 650,
-	'item-already-here': 650
-} as const satisfies Record<RobotFailure, number>;
-
-/**
- * The time each end of a run takes, at every animated speed, since no step waits after it: the
- * eyes and a hop, or the eyes, a shake of the head and the flags, 900 ms. The success panel of a
- * level appears after it (step 21).
- */
-const END_TIMES = {
-	passed: 900,
-	'goals-not-met': 900
-} as const satisfies Record<RunEnd, number>;
-
-/**
- * Whether the map animates what a step showed. A line without action, a line printed and a tool
- * lifted show nothing: the highlighted line moves on at once.
- */
-export function isAnimated(event: StepEvent): event is AnimatedEvent {
-	return EVENT_TIMES[event] !== undefined;
-}
-
-/** Whether an action, or the code of an error, is an error of the robot that the map shows. */
-function isFailure(code: string): code is RobotFailure {
-	return Object.hasOwn(FAILURE_TIMES, code);
-}
-
-/**
- * The error of the robot that stopped a run, which the map shows; nothing for a run that ended
- * well, or that another error stopped.
- */
-export function robotFailure(outcome: Outcome | undefined): RobotFailure | undefined {
-	if (outcome?.type !== 'failed') return undefined;
-	const { code } = outcome.error.kind;
-	return isFailure(code) ? code : undefined;
-}
-
-/** Whether an action is the end of a run, rather than a step. */
-export function isRunEnd(action: Action): action is RunEnd {
-	return Object.hasOwn(END_TIMES, action);
-}
-
-/** The end of a run that the robot shows; nothing for the sandbox, an error, or a run under way. */
-export function runEnd(outcome: Outcome | undefined): RunEnd | undefined {
-	return outcome?.type === 'passed' || outcome?.type === 'goals-not-met' ? outcome.type : undefined;
-}
 
 /**
  * What the map animates, a step or the end of the run: its action, and the world as it leaves it.
@@ -132,28 +20,6 @@ export interface Motion {
 	 * shakes (see Animations in specs.md).
 	 */
 	lessMotion?: boolean;
-}
-
-/**
- * The share of a step that an action takes at most, so that the robot rests between two: 160 ms
- * at 5 steps per second, 40 ms at 20 (tried on the bench of step 14, decided on 2026-11-18).
- */
-const ACTION_SHARE = 0.8;
-
-/**
- * The time `action` takes at `rate` steps per second: the one of the normal speed, shortened when
- * a step is shorter, so that the robot still rests a moment between two steps. An error of the
- * robot and the end of a run keep their whole time at every animated speed: no step waits after
- * them. Nothing at **Instant**, which draws no animation.
- *
- * With less motion, a `pick_up()` or a `drop()` that fails is shown by its error alone, and the
- * end of a run by the eyes and the flags alone: both take no time, the bump keeps its own.
- */
-export function actionTime(action: Action, rate: number, lessMotion = false): number {
-	if (!Number.isFinite(rate)) return 0;
-	if (isRunEnd(action)) return lessMotion ? 0 : END_TIMES[action];
-	if (isFailure(action)) return lessMotion && action !== 'bump' ? 0 : FAILURE_TIMES[action];
-	return Math.min(EVENT_TIMES[action], (ACTION_SHARE * 1000) / rate);
 }
 
 /** Where the robot stands: its place in cells, which may lie between two, and its angle. */
@@ -203,7 +69,8 @@ function shaken(pose: Pose, t: number, from: number): Pose {
  * until its front touches the border of its cell, then back onto it.
  */
 function touching(t: number): number {
-	return t < 0.3 ? TOUCH * (t / 0.3) ** 2 : TOUCH * (1 - easeOut(clamp01((t - 0.3) / 0.4)));
+	if (t < BUMP_TOUCH) return TOUCH * (t / BUMP_TOUCH) ** 2;
+	return TOUCH * (1 - easeOut(clamp01((t - BUMP_TOUCH) / 0.4)));
 }
 
 /** The share of the end of a run that the hop takes, the robot resting afterwards. */
@@ -268,15 +135,15 @@ export function poseAt(robot: Robot, motion: Motion, t: number): Pose {
 			);
 		case 'bump': {
 			const touched = ahead(rest, direction, touching(t));
-			return full ? shaken(touched, t, 0.3) : touched;
+			return full ? shaken(touched, t, BUMP_TOUCH) : touched;
 		}
 		case 'already-carrying':
 		case 'no-item-here':
 		case 'not-carrying':
 		case 'item-already-here': {
 			if (!full) return rest;
-			const back = smoothBetween(t, 0, 0.2) - smoothBetween(t, 0.45, 0.6);
-			return shaken(ahead(rest, direction, -STEP_BACK * back), t, 0.6);
+			const back = smoothBetween(t, 0, 0.2) - smoothBetween(t, 0.45, FAILURE_SHAKE);
+			return shaken(ahead(rest, direction, -STEP_BACK * back), t, FAILURE_SHAKE);
 		}
 		case 'passed':
 			return full ? hopped(rest, t) : rest;

@@ -4,7 +4,7 @@
 
 use serde::Serialize;
 use stepwise_core::interpreter::{self, MAX_CALL_DEPTH, MAX_TEXT_LENGTH};
-use stepwise_core::world::RobotError;
+use stepwise_core::world;
 use tsify::Tsify;
 
 use crate::count;
@@ -26,8 +26,8 @@ pub struct RuntimeError {
 /// (`{ code: "no-value", function: "forward" }`).
 ///
 /// Each variant is the error of the same name in the core, where it is described: those of
-/// `RuntimeErrorKind`, the ones of the robot (`RobotError`) among them, each with its own
-/// code. No code is one of the checks before running (`ProgramErrorKind`). An operator is given
+/// `RuntimeErrorKind`, the ones of the robot among them, each with its own code, which
+/// `RobotError` also gives as one group. No code is one of the checks before running (`ProgramErrorKind`). An operator is given
 /// by its type, as it is written (`word.rs`), so that the interface places each one; a function
 /// as it is written, a built-in function that the error can only come from by its type; a whole
 /// number of the program as its digits (see `Value`), and a limit of the language with the
@@ -101,6 +101,45 @@ pub enum RuntimeErrorKind {
     Internal,
 }
 
+/// The errors of the robot, as one group: the codes of `RuntimeErrorKind` that an action of the
+/// robot gives when it fails (`world::RobotError`), which the map shows and the sounds play (see
+/// *Animations* and *Sounds* in `specs.md`). The interface reads the group by this type, never by
+/// a list of its own: a new error of the robot is refused there until it is placed.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Tsify)]
+#[serde(rename_all = "kebab-case")]
+pub enum RobotError {
+    Bump,
+    AlreadyCarrying,
+    NoItemHere,
+    NotCarrying,
+    ItemAlreadyHere,
+}
+
+impl From<world::RobotError> for RobotError {
+    fn from(error: world::RobotError) -> Self {
+        match error {
+            world::RobotError::Bump => Self::Bump,
+            world::RobotError::AlreadyCarrying => Self::AlreadyCarrying,
+            world::RobotError::NoItemHere => Self::NoItemHere,
+            world::RobotError::NotCarrying => Self::NotCarrying,
+            world::RobotError::ItemAlreadyHere => Self::ItemAlreadyHere,
+        }
+    }
+}
+
+impl From<RobotError> for RuntimeErrorKind {
+    /// The variant of the same name, so that its `code` is the name of the error in the group.
+    fn from(error: RobotError) -> Self {
+        match error {
+            RobotError::Bump => Self::Bump,
+            RobotError::AlreadyCarrying => Self::AlreadyCarrying,
+            RobotError::NoItemHere => Self::NoItemHere,
+            RobotError::NotCarrying => Self::NotCarrying,
+            RobotError::ItemAlreadyHere => Self::ItemAlreadyHere,
+        }
+    }
+}
+
 impl RuntimeError {
     /// The error `error` of a program whose source has the lines of `offsets`.
     #[must_use]
@@ -157,13 +196,7 @@ impl RuntimeErrorKind {
                 function: function.clone(),
                 limit: count(MAX_CALL_DEPTH),
             },
-            K::Robot(error) => match error {
-                RobotError::Bump => Self::Bump,
-                RobotError::AlreadyCarrying => Self::AlreadyCarrying,
-                RobotError::NoItemHere => Self::NoItemHere,
-                RobotError::NotCarrying => Self::NotCarrying,
-                RobotError::ItemAlreadyHere => Self::ItemAlreadyHere,
-            },
+            K::Robot(error) => RobotError::from(error).into(),
             K::ValueNotColor { function, found } => Self::ValueNotColor {
                 function: function.into(),
                 found: found.into(),

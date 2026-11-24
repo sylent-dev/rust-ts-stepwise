@@ -107,6 +107,7 @@ export {
 	type Call,
 	type GoalNotMet,
 	type Outcome,
+	type RobotError,
 	type RuntimeError,
 	type RuntimeErrorKind,
 	type StepEvent,
