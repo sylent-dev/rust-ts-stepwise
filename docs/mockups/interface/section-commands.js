@@ -9,12 +9,14 @@ const COMMAND_FORWARD = { name: "forward()", text: "Moves the robot one cell in 
 const COMMAND_PAINT = { name: "start_painting(color)", text: "Puts the brush down with the color: paints every cell the robot moves into.", example: ["start_painting(red)", "forward()"] };
 const COMMAND_IF = { name: "if", text: "Runs its block when the condition is true.", example: ["if front_is_clear():", "    forward()"] };
 const COMMAND_SIDES = { name: "sides", text: "A variable of your program.", example: ["sides = sides + 1"] };
+const COMMAND_NOT = { name: "not", text: "Turns a condition around: true when it is false.", example: ["while not front_is_clear():", "    turn_left()"] };
 
 const commandMenuMove = options => appCommandMenu({ category: "Move", groups: [[null, ["forward()", "turn_left()", "turn_right()"]]], chosen: "forward()", details: COMMAND_FORWARD, ...options });
 const commandMenuFiltered = options => appCommandMenu({ category: "Paint", counts: { Paint: 2, Sense: 1 }, groups: [["Paint", ["start_painting(color)", "stop_painting()"]], ["Sense", ["is_painting()"]]], chosen: "start_painting(color)", details: COMMAND_PAINT, ...options });
 
 const commandBoards = () => [
   ["Control: the statements", appCommandMenu({ category: "Control", groups: [[null, ["if", "else if", "else", "while", "repeat", "break"]]], chosen: "if", details: COMMAND_IF, left: 0, top: 0 })],
+  ["Logic: the words of the conditions and their two values", appCommandMenu({ category: "Logic", groups: [[null, ["not", "and", "or", "true", "false"]]], chosen: "not", details: COMMAND_NOT, left: 0, top: 0 })],
   ["Your names: what can be used at the cursor", appCommandMenu({ category: "Your names", groups: [[null, ["paint_side(length)", "sides"]]], chosen: "sides", details: COMMAND_SIDES, left: 0, top: 0 })],
   ["Nothing found", appCommandMenu({ category: "Move", counts: {}, groups: [], empty: "No command found with “pizza”.", left: 0, top: 0 })],
 ];
