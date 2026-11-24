@@ -46,6 +46,14 @@ export {
 } from '#lib/wasm/stepwise.js';
 
 /**
+ * What the interface reads of the language at runtime (see crates/wasm/src/vocabulary.rs), to
+ * call once `loadCore` has resolved: each built-in function with the number of values that a call
+ * gives it (none for `print`, which takes any number), in the order of the specifications, and
+ * the number of spaces that a block is indented by. A new object at each call: read it once.
+ */
+export { type BuiltinFunction, type Vocabulary, vocabulary } from '#lib/wasm/stepwise.js';
+
+/**
  * What each stretch of a line of code is (see crates/wasm/src/stretch.rs), to call once
  * `loadCore` has resolved: a keyword, a function, a number, a text, a color, a comment…, from
  * left to right, the spaces left out, and any blank character before the first stretch. It is

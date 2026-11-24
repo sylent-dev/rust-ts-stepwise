@@ -26,6 +26,7 @@ mod run;
 mod runtime_error;
 mod stretch;
 mod value;
+mod vocabulary;
 mod word;
 mod world;
 
