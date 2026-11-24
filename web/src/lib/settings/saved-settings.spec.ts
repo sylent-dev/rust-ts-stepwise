@@ -38,34 +38,46 @@ describe('the settings saved', () => {
 		expect(loadSettings(store)).toEqual({ ...DEFAULT_SETTINGS, speed });
 	});
 
+	it.each([true, false])('come back as they were saved, with the sounds %s', (sounds) => {
+		const { store } = storeWith();
+		saveSettings(store, { ...DEFAULT_SETTINGS, sounds });
+		expect(loadSettings(store)).toEqual({ ...DEFAULT_SETTINGS, sounds });
+	});
+
 	it('are saved with the version of their shape, the speed as its steps per second', () => {
 		const { store, held } = storeWith();
-		saveSettings(store, { theme: 'night-desk', speed: 5 });
+		saveSettings(store, { theme: 'night-desk', speed: 5, sounds: true });
 		expect(JSON.parse(held[SETTINGS_KEY] ?? '')).toEqual({
 			theme: 'night-desk',
 			speed: 5,
+			sounds: true,
 			version: 1
 		});
 	});
 
 	it('keep beside them a field that a later version saved', () => {
-		const { store, held } = storeWith('{"theme":"day-desk","sounds":true,"version":1}');
-		saveSettings(store, { theme: 'night-desk', speed: 5 });
+		const { store, held } = storeWith('{"theme":"day-desk","language":"fr","version":1}');
+		saveSettings(store, { theme: 'night-desk', speed: 5, sounds: false });
 		expect(JSON.parse(held[SETTINGS_KEY] ?? '')).toEqual({
 			theme: 'night-desk',
-			sounds: true,
+			language: 'fr',
 			speed: 5,
+			sounds: false,
 			version: 1
 		});
 	});
 
 	it('replace what they can’t read, and what another version saved', () => {
-		for (const value of ['{"theme":"night-de', '{"theme":"day-desk","sounds":true,"version":2}']) {
+		for (const value of [
+			'{"theme":"night-de',
+			'{"theme":"day-desk","language":"fr","version":2}'
+		]) {
 			const { store, held } = storeWith(value);
-			saveSettings(store, { theme: 'night-desk', speed: 5 });
+			saveSettings(store, { theme: 'night-desk', speed: 5, sounds: false });
 			expect(JSON.parse(held[SETTINGS_KEY] ?? '')).toEqual({
 				theme: 'night-desk',
 				speed: 5,
+				sounds: false,
 				version: 1
 			});
 		}
@@ -73,7 +85,7 @@ describe('the settings saved', () => {
 
 	it('are saved with Instant by its name, which JSON has no number for', () => {
 		const { store, held } = storeWith();
-		saveSettings(store, { theme: 'day-desk', speed: Infinity });
+		saveSettings(store, { ...DEFAULT_SETTINGS, speed: Infinity });
 		expect(JSON.parse(held[SETTINGS_KEY] ?? '')).toMatchObject({ speed: 'instant' });
 	});
 
@@ -111,16 +123,32 @@ describe('the settings saved', () => {
 		expect(loadSettings(storeWith(value).store).speed).toBe(DEFAULT_SETTINGS.speed);
 	});
 
-	it('keep the theme beside a speed they can’t read, and the speed beside such a theme', () => {
+	it.each([
+		['no sounds', '{"theme":"night-desk","version":1}'],
+		['sounds written as a text', '{"sounds":"true","version":1}'],
+		['sounds written as a number', '{"sounds":1,"version":1}'],
+		['sounds that JSON couldn’t write', '{"sounds":null,"version":1}'],
+		['another version', '{"sounds":true,"version":2}']
+	])('take no sound with %s', (_, value) => {
+		expect(loadSettings(storeWith(value).store).sounds).toBe(false);
+	});
+
+	it('keep each setting beside one they can’t read', () => {
 		expect(
-			loadSettings(storeWith('{"theme":"night-desk","speed":"fast","version":1}').store)
+			loadSettings(
+				storeWith('{"theme":"night-desk","speed":"fast","sounds":true,"version":1}').store
+			)
 		).toEqual({
 			theme: 'night-desk',
-			speed: DEFAULT_SETTINGS.speed
+			speed: DEFAULT_SETTINGS.speed,
+			sounds: true
 		});
-		expect(loadSettings(storeWith('{"theme":"dusk-desk","speed":20,"version":1}').store)).toEqual({
+		expect(
+			loadSettings(storeWith('{"theme":"dusk-desk","speed":20,"sounds":"on","version":1}').store)
+		).toEqual({
 			theme: DEFAULT_SETTINGS.theme,
-			speed: 20
+			speed: 20,
+			sounds: false
 		});
 	});
 });

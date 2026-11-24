@@ -25,6 +25,15 @@ export function chooseSpeed(speed: number): void {
 	saveSettings(store, current);
 }
 
+/**
+ * Turns the sounds of a run on or off: it applies at once, to a program that runs too, and is
+ * saved. The panel plays the sound of a success as they are turned on.
+ */
+export function chooseSounds(on: boolean): void {
+	current.sounds = on;
+	saveSettings(store, current);
+}
+
 /** Takes the settings as the browser holds them now: another tab has just saved them. */
 export function followSavedSettings(): void {
 	Object.assign(current, loadSettings(store));

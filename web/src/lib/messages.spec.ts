@@ -19,7 +19,7 @@ import { ERROR_PARTS, ERROR_SUBJECTS, errorMessage } from '#lib/errors/error-tex
 import { RUNTIME_ERROR_SUBJECTS } from '#lib/errors/runtime-error-text.ts';
 import { COMMAND_TEXTS, commandMessage } from '#lib/level-screen/level-commands.ts';
 import { LEVEL_PARTS, levelMessage, levels } from '#lib/levels/levels.ts';
-import { themeMessage, THEMES } from '#lib/settings/settings.ts';
+import { SOUNDS, soundsMessage, themeMessage, THEMES } from '#lib/settings/settings.ts';
 import { KEY_NAMES, keyMessage } from '#lib/shell/commands.ts';
 import { adviceMessage, WINDOW_ADVICES } from '#lib/shell/window-size.ts';
 import page from '../app.html?raw';
@@ -37,6 +37,7 @@ const FAMILIES: Readonly<Record<string, { prefix: string; names: readonly string
 		names: levels.flatMap(({ name }) => LEVEL_PARTS.map((part) => levelMessage(name, part)))
 	},
 	themeMessage: { prefix: 'theme-', names: THEMES.map(themeMessage) },
+	soundsMessage: { prefix: 'sounds-', names: SOUNDS.map(soundsMessage) },
 	adviceMessage: { prefix: 'window-advice-', names: WINDOW_ADVICES.map(adviceMessage) },
 	commandMessage: { prefix: 'command-', names: COMMAND_TEXTS.map(commandMessage) },
 	keyMessage: { prefix: 'key-', names: KEY_NAMES.map(keyMessage) },

@@ -749,6 +749,104 @@ describe('the end of a run', () => {
 	});
 });
 
+describe('the actions told', () => {
+	/** What `onAction` was told: each action, its time and its speed. */
+	function told() {
+		const actions: [string, number, number][] = [];
+		return {
+			actions,
+			onAction: (action: string, time: number, speed: number) => actions.push([action, time, speed])
+		};
+	}
+
+	it('tells each action that a step shows as it starts, with its time and its speed', () => {
+		const { actions, onAction } = told();
+		using playback = play('forward()\nprint(1)\nturn_left()\nstart_painting(red)\n', {
+			onAction
+		});
+		playback.play();
+		playback.tick(0);
+		expect(actions).toEqual([['moved', 300, 2]]);
+		for (let time = 500; playback.tick(time); time += 500);
+		// A line printed shows nothing; the end of a run of the sandbox neither.
+		expect(actions).toEqual([
+			['moved', 300, 2],
+			['turned-left', 300, 2],
+			['started-painting', 300, 2]
+		]);
+	});
+
+	it('tells the action of a Step at the slowest speed, whatever the speed chosen', () => {
+		const { actions, onAction } = told();
+		using playback = play('forward()\n', { onAction });
+		rate = 20;
+		playback.step();
+		expect(actions).toEqual([]);
+		playback.step();
+		expect(actions).toEqual([['moved', 300, 1]]);
+	});
+
+	it('tells the error of the robot that stopped the program, then nothing more', () => {
+		const { actions, onAction } = told();
+		using playback = play('repeat 4:\n    forward()\n', { onAction });
+		rate = 20;
+		playback.play();
+		for (let time = 0; playback.tick(time); time += 50);
+		expect(actions.at(-1)).toEqual(['bump', 450, 20]);
+		expect(actions.filter(([action]) => action !== 'moved')).toHaveLength(1);
+	});
+
+	it('tells nothing of an error that the map doesn’t show', () => {
+		const { actions, onAction } = told();
+		using playback = play('print(1 / 0)\n', { onAction });
+		playback.play();
+		playback.tick(0);
+		expect({ actions, type: playback.outcome?.type }).toEqual({ actions: [], type: 'failed' });
+	});
+
+	it('tells the end of a run on a map of a level once the last action has ended', () => {
+		const { actions, onAction } = told();
+		using playback = playLevel('forward()\n', { onAction });
+		playback.play();
+		playback.tick(0);
+		expect(actions).toEqual([['moved', 300, 2]]);
+		playback.tick(300);
+		expect(actions).toEqual([
+			['moved', 300, 2],
+			['passed', 900, 2]
+		]);
+	});
+
+	it('tells the end of a program without a step on Run, a goal not met', () => {
+		const { actions, onAction } = told();
+		using playback = playLevel('# nothing yet\n', { onAction });
+		playback.play();
+		expect(actions).toEqual([['goals-not-met', 900, 2]]);
+	});
+
+	it('tells the end with no time with less motion, the map showing it at once', () => {
+		const { actions, onAction } = told();
+		using playback = playLevel('forward()\n', { onAction, lessMotion: () => true });
+		playback.play();
+		for (let time = 0; playback.tick(time); time += 500);
+		expect(actions.at(-1)).toEqual(['passed', 0, 2]);
+	});
+
+	it('tells at Instant only the error of the robot and the end of a run, with no time', () => {
+		const bumped = told();
+		using bump = play('repeat 4:\n    forward()\n', { onAction: bumped.onAction, now: ticking() });
+		rate = Infinity;
+		bump.play();
+		bump.tick(0);
+		expect(bumped.actions).toEqual([['bump', 0, Infinity]]);
+		const passed = told();
+		using onLevel = playLevel('forward()\n', { onAction: passed.onAction, now: ticking() });
+		onLevel.play();
+		onLevel.tick(0);
+		expect(passed.actions).toEqual([['passed', 0, Infinity]]);
+	});
+});
+
 describe('the frames of the page', () => {
 	it('asks for none at rest', () => {
 		const page = pageOf();

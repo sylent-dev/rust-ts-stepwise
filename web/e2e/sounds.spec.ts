@@ -1,0 +1,122 @@
+// The sounds of a run (see Sounds in specs.md), wired to the setting **Sounds** and to the program
+// that runs. A test hears nothing: the page writes down each note that it asks the Web Audio API
+// for, by its first frequency, and the noise of a click, so that a test reads which sound played.
+import type { Page } from '@playwright/test';
+import { control, expect, openSandbox, stateOf, test, writeCode } from './test-support.ts';
+
+/** What the page asked the Web Audio API for: the contexts made, the notes started. */
+interface Heard {
+	contexts: number;
+	/** Each note by its first frequency, rounded to the hertz; `noise` for a burst of noise. */
+	notes: (number | 'noise')[];
+}
+
+/** The first notes of each sound, by their frequencies (the recipes of `lib/sounds/recipes.ts`). */
+const SUCCESS = [523, 1047, 659, 1319, 784, 1568, 1047, 2093];
+const FAILURE = [392];
+const BUMP = [180, 432, 'noise'];
+const MOVE = [659];
+const TURN = [784, 659];
+
+/** A move, a turn, then a bump into the top edge of the map of the sandbox. */
+const BUMPING = 'forward()\nturn_left()\nforward()\n';
+
+test.beforeEach(async ({ page }) => {
+	// Every audio context of the page writes down what it is asked, before the application loads.
+	await page.addInitScript(() => {
+		const heard = { contexts: 0, notes: [] as (number | 'noise')[] };
+		Object.assign(window, { heard });
+		class HeardContext extends AudioContext {
+			constructor(options?: AudioContextOptions) {
+				super(options);
+				heard.contexts += 1;
+			}
+
+			override createOscillator(): OscillatorNode {
+				const oscillator = super.createOscillator();
+				const { frequency } = oscillator;
+				const at = frequency.setValueAtTime.bind(frequency);
+				const curve = frequency.setValueCurveAtTime.bind(frequency);
+				let first = true;
+				const note = (value: number | undefined) => {
+					if (first && value !== undefined) heard.notes.push(Math.round(value));
+					first = false;
+				};
+				frequency.setValueAtTime = (value, time) => {
+					note(value);
+					return at(value, time);
+				};
+				// The recipes give their curves as a `Float32Array`.
+				frequency.setValueCurveAtTime = (values: Float32Array, time: number, length: number) => {
+					note(values[0]);
+					return curve(values, time, length);
+				};
+				return oscillator;
+			}
+
+			override createBufferSource(): AudioBufferSourceNode {
+				heard.notes.push('noise');
+				return super.createBufferSource();
+			}
+		}
+		window.AudioContext = HeardContext;
+	});
+	await openSandbox(page);
+});
+
+/** What the page has asked for so far. */
+async function heardIn(page: Page): Promise<Heard> {
+	return page.evaluate(() => {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- written by the init script of this file, before the application loads
+		const { heard } = window as unknown as { heard: Heard };
+		return { contexts: heard.contexts, notes: [...heard.notes] };
+	});
+}
+
+/** Forgets the notes asked for so far, to read the ones that come next. */
+async function forget(page: Page): Promise<void> {
+	await page.evaluate(() => {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- as in `heardIn`
+		(window as unknown as { heard: Heard }).heard.notes.length = 0;
+	});
+}
+
+/** Turns **Sounds** on in the panel of the settings, then closes it. */
+async function turnSoundsOn(page: Page): Promise<void> {
+	await page.getByRole('button', { name: 'Settings' }).click();
+	await page.getByRole('radio', { name: 'On' }).click();
+	await page.keyboard.press('Escape');
+}
+
+test('the sounds stay off at first: a run opens no audio of the system', async ({ page }) => {
+	await writeCode(page, BUMPING);
+	await control(page, 'Run').click();
+	await expect(stateOf(page)).toHaveText('Error at line 3');
+	expect(await heardIn(page)).toEqual({ contexts: 0, notes: [] });
+});
+
+test('Sounds turned on plays a success once, then a run plays its move, its turn and its bump', async ({
+	page
+}) => {
+	await turnSoundsOn(page);
+	await expect.poll(async () => (await heardIn(page)).notes).toEqual(SUCCESS);
+	await forget(page);
+
+	await writeCode(page, BUMPING);
+	await control(page, 'Run').click();
+	await expect(stateOf(page)).toHaveText('Error at line 3');
+	expect(await heardIn(page)).toEqual({
+		contexts: 1,
+		notes: [...MOVE, ...TURN, ...BUMP]
+	});
+});
+
+test('a Run that the checks refuse plays the soft slide', async ({ page }) => {
+	await turnSoundsOn(page);
+	await forget(page);
+
+	await writeCode(page, 'forwrd()\n');
+	await control(page, 'Run').click();
+	await expect(page.getByText('Fix this error to run the program.')).toBeVisible();
+	await expect.poll(async () => (await heardIn(page)).notes).toEqual(FAILURE);
+});
