@@ -26,6 +26,8 @@ export interface ProgramStatus {
 	readonly status: PlaybackStatus;
 	/** The line of the next step, or of the step under way while it ends. */
 	readonly line: number | undefined;
+	/** Whether a breakpoint paused the program, rather than **Pause** or **Step**. */
+	readonly atBreakpoint: boolean;
 	/** How the program stopped, once its last action has ended. */
 	readonly outcome: Outcome | undefined;
 }
@@ -50,12 +52,13 @@ export function statusState(
 		case 'paused':
 			// A program paused always has a line: the one of its next step, or of the step under
 			// way (run/playback.svelte.ts). Without one, which can't happen, the bar would still
-			// say that the code can't be changed.
+			// say that the code can't be changed. A breakpoint that paused it is named, as in the
+			// mock-up: the learner sees why it stopped there.
+			if (program.line === undefined) return { text: t('status-running'), tone: 'paused' };
 			return {
-				text:
-					program.line === undefined
-						? t('status-running')
-						: t('status-paused', { line: program.line }),
+				text: program.atBreakpoint
+					? t('status-paused-breakpoint', { line: program.line })
+					: t('status-paused', { line: program.line }),
 				tone: 'paused'
 			};
 		case 'ended':

@@ -99,9 +99,21 @@ export interface Editing {
 	 */
 	readonly errors: number;
 	/**
-	 * Opens the editor again on a text, as the first time: the code is replaced for good, and its
-	 * history starts again, with nothing to undo. It isn't a change that the learner made: the
-	 * editor doesn't say it as one (`onchange` of code-editor.svelte).
+	 * The lines that hold a breakpoint, by their numbers from 1, in order. It follows them as
+	 * they are set and removed, and as the code changes around them (breakpoints.ts).
+	 */
+	readonly breakpoints: readonly number[];
+	/**
+	 * Sets or removes a breakpoint on the line of the cursor, as a click in the margin does: on a
+	 * line where no step starts, it goes to the next one that does. Even while the code is locked.
+	 */
+	toggleBreakpoint(): void;
+	/** Takes every breakpoint away, even while the code is locked. */
+	removeBreakpoints(): void;
+	/**
+	 * Opens the editor again on a text, as the first time, without breakpoints: the code is
+	 * replaced for good, and its history starts again, with nothing to undo. It isn't a change
+	 * that the learner made: the editor doesn't say it as one (`onchange` of code-editor.svelte).
 	 */
 	reopen(text: string): void;
 	/**

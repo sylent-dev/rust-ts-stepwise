@@ -2,7 +2,8 @@
 // a program in specs.md): each one once, with its text, its shortcut, its state and what it
 // runs. The rows of the menus (level-menus.ts) and the shortcuts of the screen read them here. A
 // command arrives with the step that codes it: the edits of the editor first, then **Restore
-// starting code**, then the three of the program, then **Keyboard shortcuts**.
+// starting code**, then the three of the program, then **Keyboard shortcuts**, then the two of
+// the breakpoints.
 
 import { EDITS, type Edit, type Editing } from '#lib/editor/edits.ts';
 import { t } from '#lib/i18n.ts';
@@ -17,6 +18,8 @@ import type { ProgramControls, RunAction } from './program.ts';
 export const LEVEL_COMMANDS = [
 	'restore-starting-code',
 	...EDITS,
+	'toggle-breakpoint',
+	'remove-all-breakpoints',
 	'run',
 	'step',
 	'reset',
@@ -127,6 +130,32 @@ export function levelCommands(target: CommandTarget, platform: Platform): LevelC
 		'comment-lines': edit('comment-lines'),
 		'move-line-up': edit('move-line-up'),
 		'move-line-down': edit('move-line-down'),
+		// The breakpoints change no text: they can be set and removed while the code is locked
+		// too (see Code editor in specs.md). F9 is the key of the code editors; held down, it
+		// sets and removes a breakpoint once.
+		'toggle-breakpoint': {
+			id: 'toggle-breakpoint',
+			label: t(commandMessage('toggle-breakpoint')),
+			shortcut: { key: 'F9' },
+			get enabled() {
+				return target.editing() !== undefined;
+			},
+			run() {
+				target.editing()?.toggleBreakpoint();
+			}
+		},
+		// No shortcut, as in specs.md: few to learn, and a key pressed by mistake would take away
+		// what the learner set line by line.
+		'remove-all-breakpoints': {
+			id: 'remove-all-breakpoints',
+			label: t(commandMessage('remove-all-breakpoints')),
+			get enabled() {
+				return (target.editing()?.breakpoints.length ?? 0) > 0;
+			},
+			run() {
+				target.editing()?.removeBreakpoints();
+			}
+		},
 		// The three of the program (see Running a program in specs.md). None is run again by a
 		// key held down: the program would start and pause many times a second, and each step is
 		// there to be looked at.

@@ -114,6 +114,36 @@ export async function expectNoFlash(page: Page, timeout?: number): Promise<void>
 	await expect(statusBar(page)).not.toHaveClass(/flashing/, { timeout });
 }
 
+/**
+ * Clicks the margin of a line, left of its number, where a click sets or removes a breakpoint.
+ */
+export async function clickMargin(page: Page, number: number): Promise<void> {
+	const line = await lineOf(page, number).boundingBox();
+	const margin = await page.locator('.margin-marks').boundingBox();
+	if (!line || !margin) throw new Error('The margin of the code, or its line, isn’t drawn.');
+	await page.mouse.click(margin.x + margin.width / 2, line.y + line.height / 2);
+}
+
+/** The dots of the breakpoints in the margin. */
+export function breakpointDots(page: Page): Locator {
+	return page.locator('.breakpoint-dot');
+}
+
+/** The lines of the breakpoints saved with the code of the sandbox, as the browser keeps them. */
+export async function savedBreakpoints(page: Page): Promise<unknown> {
+	return page.evaluate(() => {
+		const saved: unknown = JSON.parse(localStorage.getItem('stepwise.code') ?? 'null');
+		if (typeof saved !== 'object' || saved === null || !('levels' in saved)) return undefined;
+		const { levels } = saved;
+		if (typeof levels !== 'object' || levels === null || !('sandbox' in levels)) return undefined;
+		const { sandbox } = levels;
+		if (typeof sandbox !== 'object' || sandbox === null || !('breakpoints' in sandbox)) {
+			return undefined;
+		}
+		return sandbox.breakpoints;
+	});
+}
+
 /** The line of the next step, lit in the editor. */
 export function litLine(page: Page): Locator {
 	return page.locator('.cm-line.run-next');

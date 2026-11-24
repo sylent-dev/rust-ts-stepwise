@@ -2,7 +2,8 @@
 // no signal of Svelte, to a screen that reads again what it showed once a signal has changed.
 // Without a page, so that this link is tested (editing.svelte.spec.ts).
 
-import type { EditorState, StateCommand } from '@codemirror/state';
+import type { EditorState, StateCommand, TransactionSpec } from '@codemirror/state';
+import { breakpointsOf, removeBreakpoints, toggleBreakpointAt } from './breakpoints.ts';
 import { errorCount } from './checks.ts';
 import { cursorOf } from './cursor.ts';
 import { applyEdit, canEdit, type Editing } from './edits.ts';
@@ -20,9 +21,9 @@ export interface FollowedEditing {
 
 /**
  * Follows an editor for the screen: the editor on its page, or what stands for it in a test.
- * `can`, `text`, `cursor` and `errors` read the state last said to `follow`, kept as a signal,
- * never the editor itself: a row of a menu or the status bar that read it is then drawn again
- * once the code or the cursor has changed. `restart` gives the editor a new state, made from a
+ * `can`, `text`, `cursor`, `errors` and `breakpoints` read the state last said to `follow`, kept
+ * as a signal, never the editor itself: a row of a menu or the status bar that read it is then
+ * drawn again once the code, the cursor or a breakpoint has changed. `restart` gives the editor a new state, made from a
  * text with the parts of the editor; the editor says no change then, so `reopen` follows its
  * state itself. `focus` gives the code the keyboard.
  */
@@ -32,6 +33,10 @@ export function followEditing(
 	focus: () => void
 ): FollowedEditing {
 	let latest = $state.raw(editor.state);
+	/** Gives the editor a change of its breakpoints, if it has one. */
+	const change = (spec: TransactionSpec | undefined) => {
+		if (spec) editor.dispatch(editor.state.update(spec));
+	};
 	return {
 		editing: {
 			can: (edit) => canEdit(edit, latest),
@@ -46,6 +51,16 @@ export function followEditing(
 			},
 			get errors() {
 				return errorCount(latest);
+			},
+			get breakpoints() {
+				return breakpointsOf(latest);
+			},
+			toggleBreakpoint: () => {
+				const { state } = editor;
+				change(toggleBreakpointAt(state, state.doc.lineAt(state.selection.main.head).number));
+			},
+			removeBreakpoints: () => {
+				change(removeBreakpoints(editor.state));
 			},
 			reopen: (text) => {
 				restart(text);

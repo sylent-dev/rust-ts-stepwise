@@ -2,7 +2,8 @@
      setup.ts, with our look. It opens on a text and keeps its own document from then on, until
      the screen opens it again on another (`reopen` of `Editing`): the screen shows one editor
      per level, made again when the level changes. Made once the core has loaded, which gives the
-     code its colors. It shows the lines of a run that the screen gives it (run-lines.ts).
+     code its colors. It shows the lines of a run that the screen gives it (run-lines.ts), and the
+     breakpoints, in the margin before the numbers (breakpoints.ts, margin.ts).
 
      `--below`, the room under the last line of the code, so that what floats in the corner of
      the editor hides no line once the code has scrolled to its end: the padding of the code by
@@ -12,6 +13,7 @@
 	import { EditorView } from '@codemirror/view';
 	import { untrack } from 'svelte';
 	import { t } from '#lib/i18n.ts';
+	import { breakpoints as breakpointsOn, breakpointsOf } from './breakpoints.ts';
 	import type { Explain } from './checks.ts';
 	import { followEditing } from './editing.svelte.ts';
 	import { type CodeChange, codeChange, type Editing } from './edits.ts';
@@ -23,6 +25,11 @@
 	interface Props {
 		/** The code that the editor opens on; a change of it later is not followed. */
 		text: string;
+		/**
+		 * The lines of the breakpoints that the editor opens with, saved with the code; a change of
+		 * them later is not followed. None by default.
+		 */
+		breakpoints?: readonly number[];
 		/**
 		 * Writes the sentences of an error of the checks, which the editor underlines; read once,
 		 * as the editor is made.
@@ -52,6 +59,11 @@
 		 */
 		onchange?: (change: CodeChange) => void;
 		/**
+		 * Says that the breakpoints have changed, set or removed, once `editing` holds them; not
+		 * when they follow a change of the code, which `onchange` says.
+		 */
+		onbreakpoints?: () => void;
+		/**
 		 * Says that the learner typed in the code: a character written or erased, a line
 		 * broken, an indentation (`isTyped`). Not a line moved nor a change undone.
 		 */
@@ -66,12 +78,14 @@
 
 	let {
 		text,
+		breakpoints = [],
 		explain,
 		locked = false,
 		next,
 		failed,
 		editing = $bindable(),
 		onchange,
+		onbreakpoints,
 		ontype,
 		onrefuse
 	}: Props = $props();
@@ -92,35 +106,48 @@
 				if (update.docChanged) {
 					const { changes, startState, state } = update;
 					onchange?.(codeChange({ changes, before: startState.doc, after: state.doc }));
+				} else if (breakpointsOf(update.startState) !== breakpointsOf(update.state)) {
+					onbreakpoints?.();
 				}
 				if (update.transactions.some(isTyped)) ontype?.();
 			})
 		];
-		/** A state of the editor on a text, its code locked or not as the screen says now. */
-		const stateOn = (doc: string) =>
+		/**
+		 * A state of the editor on a text and its breakpoints, its code locked or not as the screen
+		 * says now.
+		 */
+		const stateOn = (doc: string, saved: readonly number[]) =>
 			EditorState.create({
 				doc,
 				extensions: [
 					extensions,
+					breakpointsOn(saved),
 					lockOf(
 						untrack(() => locked),
 						() => onrefuse?.()
 					)
 				]
 			});
-		const view = new EditorView({ parent: block, state: stateOn(untrack(() => text)) });
+		const view = new EditorView({
+			parent: block,
+			state: stateOn(
+				untrack(() => text),
+				untrack(() => breakpoints)
+			)
+		});
 		/** Shows a line of the run as the screen gives it now, unless it stands there already. */
 		const showNow = (line: RunLine, at: number | undefined) => {
 			const shown = showLine(view.state, line, at);
 			if (shown) view.dispatch(shown);
 		};
-		// A new state, rather than a change of the text: the history starts again with it. The
-		// editor keeps its page, so the keyboard stays in the code if it was there. A new state
-		// has no line of a run: they come back as the screen gives them, whatever it did before.
+		// A new state, rather than a change of the text: the history starts again with it, and no
+		// breakpoint. The editor keeps its page, so the keyboard stays in the code if it was there.
+		// A new state has no line of a run: they come back as the screen gives them, whatever it
+		// did before.
 		const { editing: own, follow } = followEditing(
 			view,
 			(reopened) => {
-				view.setState(stateOn(reopened));
+				view.setState(stateOn(reopened, []));
 				untrack(() => {
 					showNow('next', next);
 					showNow('failed', failed);
@@ -223,16 +250,47 @@
 			font-size: 0.88em;
 		}
 
-		/* The marks of a run, before the numbers: an icon of 13 pixels in the middle of its
-		   line. */
-		.cm-editor .run-marks {
+		/* The marks of the margin, before the numbers: a breakpoint, an icon of a run of 13
+		   pixels, or both, in the middle of their line. A click there sets or removes a
+		   breakpoint. */
+		.cm-editor .margin-marks {
 			width: var(--marks);
+			/* CodeMirror hides what passes its gutters: the arrow beside a breakpoint passes. */
+			overflow: visible;
+			cursor: pointer;
 		}
 
-		.cm-editor .run-marks .cm-gutterElement {
+		.cm-editor .margin-marks .cm-gutterElement {
 			display: flex;
 			align-items: center;
 			padding-left: var(--space-6);
+		}
+
+		/* Over the place of the numbers, whose line may be lit, where the arrow beside a
+		   breakpoint stands. */
+		.cm-editor .margin-mark {
+			position: relative;
+			z-index: 1;
+			display: flex;
+			align-items: center;
+		}
+
+		/* A breakpoint: a dot of 11 pixels, as in the mock-up. */
+		.cm-editor .breakpoint-dot {
+			width: 11px;
+			height: 11px;
+			border-radius: 50%;
+			background: var(--breakpoint);
+		}
+
+		.cm-editor .margin-icon {
+			display: flex;
+		}
+
+		/* A breakpoint on the line of the next step: the dot and the arrow side by side, 3 pixels
+		   from the edge, before the numbers of two figures, as in the mock-up. */
+		.cm-editor .margin-mark.is-breakpoint-next {
+			margin-left: -3px;
 		}
 
 		/* The line of the next step, and the one where an error stopped the program: lit on the
@@ -258,11 +316,11 @@
 			font-weight: var(--weight-code-strong);
 		}
 
-		.cm-editor .run-mark.run-next {
+		.cm-editor .margin-mark.run-next {
 			color: var(--accent-text);
 		}
 
-		.cm-editor .run-mark.run-failed {
+		.cm-editor .margin-mark.run-failed {
 			color: var(--error);
 		}
 

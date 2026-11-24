@@ -19,10 +19,10 @@ export type RunAction = 'run' | 'pause' | 'resume';
 
 /**
  * What a screen reads of its program as it is played: what the map draws, the line of the next
- * step and the steps run. It only reads: what starts and stops the program asks the `Program`,
- * which checks the code first.
+ * step, the steps run, and whether a breakpoint paused it. It only reads: what starts and stops
+ * the program asks the `Program`, which checks the code first.
  */
-export type PlayedProgram = Scene & Readonly<Pick<Playback, 'line' | 'steps'>>;
+export type PlayedProgram = Scene & Readonly<Pick<Playback, 'line' | 'steps' | 'atBreakpoint'>>;
 
 /** The program of a screen, as its commands ask it. */
 export interface ProgramControls {

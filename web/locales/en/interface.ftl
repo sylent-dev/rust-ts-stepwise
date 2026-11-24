@@ -59,6 +59,9 @@ command-redo = Redo
 command-comment-lines = Comment lines
 command-move-line-up = Move line up
 command-move-line-down = Move line down
+# Sets or removes a breakpoint on the line of the cursor.
+command-toggle-breakpoint = Toggle breakpoint
+command-remove-all-breakpoints = Remove all breakpoints
 # The same command while no program runs, while one runs, and while one is paused.
 command-run = Run
 command-pause = Pause
@@ -99,6 +102,9 @@ status-ready = Ready
 status-running = Running · Reset to edit
 # $line (Number): the line of the next step, highlighted in the editor.
 status-paused = Paused at line { NUMBER($line, useGrouping: 0) } · Reset to edit
+# The same, once a breakpoint of that line has paused the program.
+# $line (Number): the line of the breakpoint, highlighted in the editor.
+status-paused-breakpoint = Paused at line { NUMBER($line, useGrouping: 0) } · breakpoint · Reset to edit
 # An error stopped the program; the code can be changed again.
 # $line (Number): the line of the error, marked in the editor.
 status-failed = Error at line { NUMBER($line, useGrouping: 0) }

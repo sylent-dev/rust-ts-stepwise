@@ -13,7 +13,7 @@ import type { Platform } from '#lib/platform.ts';
  * A key that writes no character, named as a keyboard event names it (`key`). Tab is no shortcut
  * of a command, since it belongs to the code: the panel of the shortcuts shows it (Shift+Tab).
  */
-export type NamedKey = 'ArrowUp' | 'ArrowDown' | 'Enter' | 'Tab' | 'F10';
+export type NamedKey = 'ArrowUp' | 'ArrowDown' | 'Enter' | 'Tab' | 'F9' | 'F10';
 
 /** The keys held with the key of a shortcut. */
 interface Held {
@@ -160,6 +160,7 @@ function namedKey(key: NamedKey): KeyPart {
 			return { text: t(keyMessage('enter')) };
 		case 'Tab':
 			return { text: t(keyMessage('tab')) };
+		case 'F9':
 		case 'F10':
 			return { text: key };
 	}

@@ -86,6 +86,16 @@ export {
 } from '#lib/wasm/stepwise.js';
 
 /**
+ * The lines of a program where a step starts (see crates/wasm/src/run.rs), to call once
+ * `loadCore` has resolved: those a breakpoint can pause it on, from 1, in order and each once;
+ * `undefined` when the checks refuse the program, since nothing can run then. Every statement
+ * but the definition of a function, and each `else if`: never an `else:`, a blank line nor a
+ * comment. It checks the text again at each call: call it for a press of the learner, never at
+ * each step.
+ */
+export { stepLines } from '#lib/wasm/stepwise.js';
+
+/**
  * A program being run (see crates/wasm/src/run.rs): `level.start(map, text)` and
  * `sandbox.start(text)` give a `Run` paused before its first line, on its own copy of the world.
  * Check the text first: they throw for a program that has errors. The places of an error while

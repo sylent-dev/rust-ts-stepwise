@@ -6,9 +6,18 @@ import type { CommandTarget } from './level-commands.ts';
 import type { ProgramControls, RunAction } from './program.ts';
 import type { SpeedSetting } from './speeds.ts';
 
-/** An editor that can do the given edits, and remembers the ones it was asked. */
-export function editorFor(able: readonly Edit[] = EDITS): Editing & { asked: Edit[] } {
-	const asked: Edit[] = [];
+/** What an editor of the tests was asked: an edit, or a change of its breakpoints. */
+export type EditorAsk = Edit | 'toggle-breakpoint' | 'remove-breakpoints';
+
+/**
+ * An editor that can do the given edits, holds the given breakpoints, and remembers what it was
+ * asked.
+ */
+export function editorFor(
+	able: readonly Edit[] = EDITS,
+	breakpoints: readonly number[] = []
+): Editing & { asked: EditorAsk[] } {
+	const asked: EditorAsk[] = [];
 	return {
 		asked,
 		can: (edit) => able.includes(edit),
@@ -16,6 +25,9 @@ export function editorFor(able: readonly Edit[] = EDITS): Editing & { asked: Edi
 		text: '',
 		cursor: { line: 1, column: 1 },
 		errors: 0,
+		breakpoints,
+		toggleBreakpoint: () => asked.push('toggle-breakpoint'),
+		removeBreakpoints: () => asked.push('remove-breakpoints'),
 		reopen: () => {},
 		showPlace: () => {}
 	};

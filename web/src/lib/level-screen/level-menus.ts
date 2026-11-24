@@ -56,7 +56,10 @@ export function levelMenus(
 				SEPARATOR,
 				command('comment-lines'),
 				command('move-line-up'),
-				command('move-line-down')
+				command('move-line-down'),
+				SEPARATOR,
+				command('toggle-breakpoint'),
+				command('remove-all-breakpoints')
 			]
 		},
 		{
