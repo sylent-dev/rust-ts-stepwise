@@ -113,6 +113,14 @@ describe('the messages of the menu', () => {
 		expect(text.split('`').length % 2).toBe(1);
 	});
 
+	// The details of the menu hold 30 characters of an example on a line, at the size of its code
+	// (command-panel.svelte): a longer line is cut at their edge.
+	it.each(MENU_WORDS)('give %s an example whose lines hold in the details', (word) => {
+		const lines = t(wordMessage(word, 'example')).split('\n');
+
+		expect(lines.filter((line) => line.length > 30)).toEqual([]);
+	});
+
 	it.each(MENU_WORDS)('give %s an example that the checks accept, and that writes it', (word) => {
 		const example = t(wordMessage(word, 'example'));
 

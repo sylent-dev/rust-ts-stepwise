@@ -24,15 +24,16 @@ import { type Category, type MenuEntry, menuEntries } from './words.ts';
 /** The menus made so far, which give each list an id of its own in the page. */
 let made = 0;
 
+/**
+ * The category that the menu opens on: Move the first time, then the one chosen last, by the keys,
+ * the mouse or the letters typed, as long as the page stays open, from a screen to the next.
+ */
+let lastCategory: Category = 'move';
+
 /** The command menu of a screen, in the editor that it shows. */
 export class CommandMenu {
 	/** The editor shown, while it is there. */
 	#view: EditorView | undefined;
-	/**
-	 * The category that the menu opens on: Move the first time, then the one chosen last, as long
-	 * as the page stays open.
-	 */
-	#category: Category = 'move';
 	readonly #listId = `command-menu-${String((made += 1))}`;
 
 	/**
@@ -63,7 +64,7 @@ export class CommandMenu {
 		const view = this.#view;
 		if (!view) return;
 		view.dispatch(
-			openMenuOf(view.state) ? { effects: closeMenu } : openMenu(view.state, this.#category)
+			openMenuOf(view.state) ? { effects: closeMenu } : openMenu(view.state, lastCategory)
 		);
 		view.focus();
 	}
@@ -98,7 +99,7 @@ export class CommandMenu {
 				const next = menuViewOf(state, entries);
 				if (!next) return;
 				current = next;
-				this.#category = next.categories.find(({ chosen }) => chosen)?.category ?? this.#category;
+				lastCategory = next.categories.find(({ chosen }) => chosen)?.category ?? lastCategory;
 			},
 			destroy: () => {
 				void unmount(panel);

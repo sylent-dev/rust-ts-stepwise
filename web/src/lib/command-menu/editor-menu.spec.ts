@@ -135,6 +135,19 @@ describe('the open menu', () => {
 		expect(state.doc.toString()).toContain('pai');
 	});
 
+	it('chooses the first word again once the cursor moves in the name', () => {
+		const state = changed(pressed(opened('paint|'), 'ArrowDown'), { selection: { anchor: 3 } });
+
+		expect(menuOf(state)).toEqual({ letters: 'pai', chosen: 'start_painting(color)' });
+	});
+
+	it('leaves Escape to the code once it has closed the menu, so that Tab then leaves the code', () => {
+		const state = opened('pai|');
+
+		expect(takes(state, 'Escape')).toBe(false);
+		expect(openMenuOf(press(state, 'Escape'))).toBeNull();
+	});
+
 	it('closes once the keyboard leaves the code', () => {
 		const state = opened('pai|');
 		const effects = state
@@ -157,6 +170,10 @@ describe('the open menu', () => {
 			'aria-activedescendant': optionId('menu', 'start_painting')
 		});
 		expect(attributes(stateOf('pai|'))['aria-controls']).toBeUndefined();
+		expect(attributes(opened('pizza|'))).toEqual({
+			'aria-autocomplete': 'list',
+			'aria-haspopup': 'listbox'
+		});
 		expect(optionId('menu', 'else if')).toBe('menu-else-if');
 	});
 });
@@ -246,10 +263,13 @@ describe('what the menu inserts', () => {
 	});
 
 	it('ends the places with Escape, Tab and Enter being the keys of the code again', () => {
-		const state = press(pressed(opened('whi|'), 'Enter'), 'Escape');
+		const inserted = pressed(opened('whi|'), 'Enter');
+		const state = press(inserted, 'Escape');
 
 		expect(hasNextSnippetField(state)).toBe(false);
 		expect(takes(state, 'Tab')).toBe(false);
+		// The Escape of the code too, so that Tab then leaves the code.
+		expect(takes(inserted, 'Escape')).toBe(false);
 	});
 
 	it('chooses a word of the code once a place holds one', () => {

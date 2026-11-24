@@ -51,8 +51,9 @@ export function matches(entry: MenuEntry, letters: string): boolean {
 /**
  * What the menu shows: without letters, the words of the category chosen; with letters, every
  * word that matches them, under the name of its category, the category chosen being the one of
- * the word chosen. Until the learner chooses one, the word chosen is the first that starts with
- * the letters, or else the first that holds them: `re` chooses `red` rather than `here_is`.
+ * the word chosen. Until the learner chooses one, the word chosen is the one written as the
+ * letters, or else the first that starts with them, or else the first that holds them: `else`
+ * chooses `else` rather than `else if`, and `re` chooses `red` rather than `here_is`.
  */
 export function menuView(entries: readonly MenuEntry[], letters: string, choice: Choice): MenuView {
 	if (letters === '') {
@@ -69,10 +70,11 @@ export function menuView(entries: readonly MenuEntry[], letters: string, choice:
 		};
 	}
 	const results = entries.filter((entry) => matches(entry, letters));
-	const start = letters.toLowerCase();
+	const typed = letters.toLowerCase();
 	const chosen =
 		results.find(({ word }) => word === choice.word) ??
-		results.find(({ word }) => word.startsWith(start)) ??
+		results.find(({ word }) => word === typed) ??
+		results.find(({ word }) => word.startsWith(typed)) ??
 		results[0];
 	const chosenCategory = chosen?.category ?? choice.category;
 	const groups = CATEGORIES.flatMap((category) => {

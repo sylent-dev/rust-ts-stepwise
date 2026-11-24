@@ -206,9 +206,6 @@
 		--margin: 52px;
 		--marks: 21px;
 		height: 100%;
-		/* CodeMirror stacks what it draws with figures of its own (200 for its margin): an order
-		   inside the block, which is never compared with the layers of the page. */
-		isolation: isolate;
 	}
 
 	.editor :global {
@@ -392,6 +389,15 @@
 		.cm-editor .underline-long::after {
 			background: radial-gradient(circle at 1.5px 2px, var(--weak) 1.1px, transparent 1.4px) 0 0 /
 				4px 4px repeat-x;
+		}
+
+		/* What opens from the code, the tip of an underline or the command menu, stands over the
+		   controls that float in its corner: a small figure, in the order of the column of the
+		   code, which has a layer (level-screen.svelte), rather than the 500 of CodeMirror.
+		   CodeMirror keeps the order of what it draws in its scroller (`z-index: 0` there, in
+		   its own style): its margin at 200 and its layers stay inside it. */
+		.cm-editor .cm-tooltip {
+			z-index: 2;
 		}
 
 		/* What the underlines say under the pointer, under the line: on one line, and on several

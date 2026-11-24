@@ -88,14 +88,21 @@ function hasNoCase(character: string): boolean {
 	return character.toLowerCase() === character.toUpperCase();
 }
 
+/**
+ * Whether the key of a shortcut is Cmd on this computer: the key of the shortcuts on a computer of
+ * Apple, but for a shortcut that keeps the key Ctrl itself (Ctrl+Space).
+ */
+function isCmd(shortcut: Shortcut, platform: Platform): boolean {
+	return platform === 'mac' && shortcut.ctrl !== 'control';
+}
+
 /** Whether a press of the keyboard is this shortcut, on this computer. */
 function isPressed(shortcut: Shortcut, press: KeyPress, platform: Platform): boolean {
 	// The key of the shortcuts of the other kind of computer names another shortcut. With Alt
 	// too: AltGr, which writes `#`, is Ctrl and Alt for Windows.
-	const [main, other] =
-		platform === 'mac' && shortcut.ctrl !== 'control'
-			? [press.metaKey, press.ctrlKey]
-			: [press.ctrlKey, press.metaKey];
+	const [main, other] = isCmd(shortcut, platform)
+		? [press.metaKey, press.ctrlKey]
+		: [press.ctrlKey, press.metaKey];
 	if (other || main !== (shortcut.ctrl !== undefined) || press.altKey !== (shortcut.alt ?? false)) {
 		return false;
 	}
@@ -192,7 +199,7 @@ type HeldKey = Extract<KeyName, 'ctrl' | 'cmd' | 'shift' | 'alt'>;
 /** The keys held for a shortcut on this computer, in the order they are said: Ctrl, Shift, Alt. */
 function heldKeys(shortcut: Shortcut, platform: Platform): HeldKey[] {
 	const held: HeldKey[] = [];
-	if (shortcut.ctrl) held.push(platform === 'mac' && shortcut.ctrl !== 'control' ? 'cmd' : 'ctrl');
+	if (shortcut.ctrl) held.push(isCmd(shortcut, platform) ? 'cmd' : 'ctrl');
 	if (shortcut.shift) held.push('shift');
 	if (shortcut.alt) held.push('alt');
 	return held;

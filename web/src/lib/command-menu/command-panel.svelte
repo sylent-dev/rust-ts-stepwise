@@ -12,10 +12,10 @@
 	import { t } from '#lib/i18n.ts';
 	import Icon from '#lib/icon.svelte';
 	import { keyMessage } from '#lib/shell/commands.ts';
-	import { codePieces, textPieces } from './code-text.ts';
 	import { optionId } from './editor-menu.ts';
 	import type { MenuView } from './results.ts';
-	import { type Category, categoryMessage, type MenuEntry, wordMessage } from './words.ts';
+	import WordDetails from './word-details.svelte';
+	import { type Category, categoryMessage, type MenuEntry } from './words.ts';
 
 	interface Props {
 		/** What the menu shows. */
@@ -47,6 +47,28 @@
 	});
 </script>
 
+{#snippet rows(entries: readonly MenuEntry[])}
+	{#each entries as entry (entry.word)}
+		<!-- svelte-ignore a11y_click_events_have_key_events (the keys of the menu are heard by the code, which keeps the focus) -->
+		<div
+			class="row"
+			class:chosen={entry === view.chosen}
+			id={optionId(listId, entry.word)}
+			role="option"
+			tabindex="-1"
+			aria-selected={entry === view.chosen}
+			onpointermove={() => {
+				if (entry !== view.chosen) onpoint(entry);
+			}}
+			onclick={() => {
+				onpick(entry);
+			}}
+		>
+			{entry.label}
+		</div>
+	{/each}
+{/snippet}
+
 <!-- A press keeps the focus where it is: in the code. -->
 <div class="panel" role="presentation" onmousedown={(event) => event.preventDefault()}>
 	<div class="columns" class:merged={nothing}>
@@ -70,7 +92,8 @@
 			{/each}
 		</div>
 		{#if nothing}
-			<div class="empty">
+			<!-- The sentence is said by the status of the panel, under it. -->
+			<div class="empty" aria-hidden="true">
 				<img src={logoDisappointed} alt="" height="56" />
 				<span>{t('commands-empty', { letters: view.letters })}</span>
 			</div>
@@ -84,50 +107,30 @@
 			>
 				{#each view.groups as group (group.category)}
 					{#if group.titled}
-						<div class="title" role="presentation">{t(categoryMessage(group.category))}</div>
-					{/if}
-					{#each group.entries as entry (entry.word)}
-						<!-- svelte-ignore a11y_click_events_have_key_events (the keys of the menu are heard by the code, which keeps the focus) -->
-						<div
-							class="row"
-							class:chosen={entry === view.chosen}
-							id={optionId(listId, entry.word)}
-							role="option"
-							tabindex="-1"
-							aria-selected={entry === view.chosen}
-							onpointermove={() => {
-								if (entry !== view.chosen) onpoint(entry);
-							}}
-							onclick={() => {
-								onpick(entry);
-							}}
-						>
-							{entry.label}
+						<!-- While letters filter the words, the words of each category are a group, named
+						     by its title. -->
+						<div role="group" aria-labelledby={`${listId}-${group.category}`}>
+							<div class="title" id={`${listId}-${group.category}`} role="presentation">
+								{t(categoryMessage(group.category))}
+							</div>
+							{@render rows(group.entries)}
 						</div>
-					{/each}
+					{:else}
+						{@render rows(group.entries)}
+					{/if}
 				{/each}
 			</div>
 			<div class="details">
 				{#if view.chosen}
-					{@const word = view.chosen.word}
-					<div class="name">{view.chosen.label}</div>
-					<!-- Without a space between two pieces: each holds its own. -->
-					<p>
-						{#each textPieces(t(wordMessage(word, 'text'))) as piece, index (index)}{#if piece.code}<code
-									>{piece.text}</code
-								>{:else}{piece.text}{/if}{/each}
-					</p>
-					<code class="example"
-						>{#each t(wordMessage(word, 'example')).split('\n') as line, index (index)}<span
-								class="line"
-								>{#each codePieces(line) as piece, at (at)}<span class={piece.color}
-										>{piece.text}</span
-									>{/each}</span
-							>{/each}</code
-					>
+					<WordDetails entry={view.chosen} />
 				{/if}
 			</div>
 		{/if}
+	</div>
+	<!-- What a screen reader is told when nothing matches: a status that the panel holds from its
+	     opening, so that the sentence is said as it comes. -->
+	<div class="said" role="status">
+		{nothing ? t('commands-empty', { letters: view.letters }) : ''}
 	</div>
 	<div class="keys" aria-hidden="true">
 		<span>
@@ -253,35 +256,14 @@
 		background: var(--band);
 	}
 
-	.name {
-		font: var(--weight-code-strong) var(--size-code) var(--font-code);
-		font-variant-ligatures: none;
-	}
-
-	.details p {
-		margin: var(--space-8) 0;
-		line-height: var(--line-text);
-	}
-
-	/* Code in a sentence (see Code in a message in docs/design-system.md). */
-	.details p code {
-		font: var(--weight-code) 0.92em var(--font-code);
-		font-variant-ligatures: none;
-	}
-
-	.example {
-		display: block;
-		padding: var(--space-8) var(--space-12);
-		border-radius: var(--radius);
-		background: var(--surface);
-		font: var(--weight-code) var(--size-code-small) / var(--line-code-small) var(--font-code);
-		font-variant-ligatures: none;
-	}
-
-	/* Each line of the example as it is written, its spaces kept. */
-	.line {
-		display: block;
-		white-space: pre;
+	/* Said, never shown: the size of one pixel, cut away, as a text for a screen reader alone. */
+	.said {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
 	}
 
 	.keys {

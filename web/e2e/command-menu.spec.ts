@@ -78,9 +78,11 @@ test('The mouse chooses a category and inserts a word; nothing found shows the r
 
 	await page.keyboard.type(' pizza');
 	await page.keyboard.press('Control+Space');
-	await expect(page.getByText('No command found with “pizza”.')).toBeVisible();
+	// What a screen reader is told, beside the robot and its sentence.
+	const nothing = page.getByRole('status').filter({ hasText: 'No command found with “pizza”.' });
+	await expect(nothing).toHaveCount(1);
 	await page.keyboard.press('Escape');
-	await expect(page.getByText('No command found with “pizza”.')).toBeHidden();
+	await expect(nothing).toHaveCount(0);
 	await expectCode(page, 'blue pizza');
 });
 
@@ -104,4 +106,61 @@ test('Edit › Commands opens the menu in the code, and is greyed while the prog
 	await page.keyboard.press('Escape');
 	await page.keyboard.press('Control+Space');
 	await expect(menuList(page)).toBeHidden();
+});
+
+test('Escape closes the menu or ends the places, and Tab then leaves the code', async ({
+	page
+}) => {
+	await writeCode(page, '');
+	await page.keyboard.press('Control+Space');
+	await page.keyboard.press('Escape');
+	await expect(menuList(page)).toBeHidden();
+	await page.keyboard.press('Tab');
+	await expect(control(page, 'Run')).toBeFocused();
+	await expectCode(page, '');
+
+	await codeOf(page).click();
+	await page.keyboard.type('rep');
+	await page.keyboard.press('Control+Space');
+	await page.keyboard.press('Enter');
+	await page.keyboard.press('Escape');
+	await page.keyboard.press('Tab');
+	await expect(control(page, 'Run')).toBeFocused();
+	await expectCode(page, 'repeat :\n    ');
+});
+
+test('The menu opens on the category chosen last, after Restore starting code too', async ({
+	page
+}) => {
+	await writeCode(page, 'forward()\n');
+	await page.keyboard.press('Control+Space');
+	await page.keyboard.press('ArrowRight');
+	await page.keyboard.press('ArrowRight');
+	await expect(chosenWord(page)).toHaveText('pick_up()');
+	await page.keyboard.press('Escape');
+
+	await menuName(page, 'Level').click();
+	await page.getByRole('menuitem', { name: 'Restore starting code…' }).click();
+	await page
+		.getByRole('alertdialog', { name: 'Restore the starting code of the sandbox?' })
+		.getByRole('button', { name: 'Restore starting code' })
+		.click();
+	await expect(codeOf(page)).toBeFocused();
+	await page.keyboard.press('Control+End');
+	await page.keyboard.press('Enter');
+	await page.keyboard.press('Control+Space');
+	await expect(chosenWord(page)).toHaveText('pick_up()');
+});
+
+test('The menu opens over the controls in the corner of the code', async ({ page }) => {
+	await writeCode(page, 'forward()\n'.repeat(13) + 'pai');
+	await page.keyboard.press('Control+Space');
+	const run = await control(page, 'Run').boundingBox();
+	if (!run) throw new Error('The control Run isn’t drawn.');
+
+	const onTop = await page.evaluate(
+		({ x, y }) => document.elementFromPoint(x, y)?.closest('.cm-tooltip') !== null,
+		{ x: run.x + run.width / 2, y: run.y + run.height / 2 }
+	);
+	expect(onTop).toBe(true);
 });

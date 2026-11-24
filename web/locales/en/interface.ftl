@@ -122,7 +122,7 @@ commands-word-turn-right-text = Turns the robot a quarter turn to its right, on 
 commands-word-turn-right-example =
     turn_right()
     forward()
-commands-word-start-painting-text = Puts the brush down with a color: paints every cell the robot moves into.
+commands-word-start-painting-text = Puts the brush down with a color: paints the cell of the robot, then every cell it moves into.
 commands-word-start-painting-example =
     start_painting(red)
     forward()
@@ -132,7 +132,7 @@ commands-word-stop-painting-example =
     forward()
     stop_painting()
     forward()
-commands-word-start-erasing-text = Puts the eraser down: takes the paint away from every cell the robot moves into.
+commands-word-start-erasing-text = Puts the eraser down: takes the paint away from the cell of the robot, then from every cell it moves into.
 commands-word-start-erasing-example =
     start_erasing()
     forward()
@@ -163,19 +163,19 @@ commands-word-right-is-clear-text = `true` when the cell on the right is a floor
 commands-word-right-is-clear-example =
     if right_is_clear():
         turn_right()
-commands-word-here-is-text = `true` when the cell of the robot has the paint of a color.
+commands-word-here-is-text = `true` when the cell of the robot has that paint.
 commands-word-here-is-example =
     if here_is(red):
         turn_right()
-commands-word-front-is-text = `true` when the cell in front has the paint of a color.
+commands-word-front-is-text = `true` when the cell in front has that paint, `false` for a wall.
 commands-word-front-is-example =
     if front_is(blue):
         forward()
-commands-word-left-is-text = `true` when the cell on the left has the paint of a color.
+commands-word-left-is-text = `true` when the cell on the left has that paint, `false` for a wall.
 commands-word-left-is-example =
     if left_is(yellow):
         turn_left()
-commands-word-right-is-text = `true` when the cell on the right has the paint of a color.
+commands-word-right-is-text = `true` when the cell on the right has that paint, `false` for a wall.
 commands-word-right-is-example =
     if right_is(yellow):
         turn_right()
@@ -199,7 +199,7 @@ commands-word-is-erasing-text = `true` when the eraser is down.
 commands-word-is-erasing-example =
     if is_erasing():
         stop_erasing()
-commands-word-print-text = Writes its values in the console, on one line.
+commands-word-print-text = Writes its values to the console, on one line, separated by spaces.
 commands-word-print-example =
     let sides = 4
     print("Sides:", sides)
@@ -252,11 +252,13 @@ commands-word-not-example =
         turn_left()
 commands-word-and-text = `true` when the conditions on both sides are `true`.
 commands-word-and-example =
-    if front_is_clear() and not item_here():
+    let busy = is_carrying()
+    if busy and item_here():
         forward()
 commands-word-or-text = `true` when one of the two conditions is `true`, or both.
 commands-word-or-example =
-    if here_is(red) or here_is(blue):
+    let done = item_here()
+    if done or here_is(blue):
         turn_left()
 commands-word-true-text = The value of a condition that holds.
 commands-word-true-example =

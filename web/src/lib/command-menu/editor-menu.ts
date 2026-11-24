@@ -51,12 +51,19 @@ export interface OpenMenu {
 export const setMenu = StateEffect.define<OpenMenu | null>();
 
 /** The characters of a name, in any alphabet, as the letters that the menu reads. */
-const NAME = /^[\p{L}\p{N}_]*$/u;
+const NAME_CHARACTER = String.raw`[\p{L}\p{N}_]`;
+
+/** A text made of the characters of a name, or none. */
+const NAME = new RegExp(`^${NAME_CHARACTER}*$`, 'u');
+
+/** The characters of a name at the end of a text: the letters before the cursor. */
+const NAME_END = new RegExp(`${NAME_CHARACTER}*$`, 'u');
 
 /**
  * Whether the menu stays open after a change: while the cursor stays alone after the start of the
  * name, with nothing but the characters of a name between the two, and the code can be changed.
- * Letters typed or erased choose the first word again. The word that the menu inserts closes it.
+ * Letters typed or erased, or the cursor moved in the name, choose the first word again. The word
+ * that the menu inserts closes it.
  */
 function stillOpen(menu: OpenMenu, transaction: Transaction): OpenMenu | null {
 	const { state, changes, docChanged } = transaction;
@@ -65,7 +72,8 @@ function stillOpen(menu: OpenMenu, transaction: Transaction): OpenMenu | null {
 	const { ranges, main } = state.selection;
 	if (ranges.length > 1 || !main.empty || main.head < menu.from) return null;
 	if (!NAME.test(state.sliceDoc(menu.from, main.head))) return null;
-	return docChanged ? { ...menu, choice: { category: menu.choice.category } } : menu;
+	const moved = docChanged || transaction.selection !== undefined;
+	return moved ? { ...menu, choice: { category: menu.choice.category } } : menu;
 }
 
 /** The menu open in the editor, or nothing. */
@@ -118,7 +126,7 @@ export function openMenu(state: EditorState, category: Category): TransactionSpe
 	const { head } = state.selection.main;
 	const line = state.doc.lineAt(head);
 	const before = line.text.slice(0, head - line.from);
-	const from = head - (/[\p{L}\p{N}_]*$/u.exec(before)?.[0].length ?? 0);
+	const from = head - (NAME_END.exec(before)?.[0].length ?? 0);
 	const tooltip: Tooltip = {
 		pos: from,
 		above: false,
@@ -172,7 +180,11 @@ export function insertEntry(editor: Editor, entry: MenuEntry): void {
 	);
 }
 
-/** The keys of the open menu: none of them reaches the code while it is open. */
+/**
+ * The keys of the open menu: none of them reaches the code while it is open, but Escape, which
+ * closes the menu and is the Escape of the code too: Tab within two seconds leaves the code, as
+ * everywhere in it (decided on 2026-11-24).
+ */
 function menuBindings(entries: readonly MenuEntry[]): KeyBinding[] {
 	/** Runs `act` on the open menu, and takes the key; leaves the key to the code otherwise. */
 	const whileOpen =
@@ -199,24 +211,35 @@ function menuBindings(entries: readonly MenuEntry[]): KeyBinding[] {
 		{ key: 'ArrowRight', run: move('right') },
 		{ key: 'Tab', run: insert },
 		{ key: 'Enter', run: insert },
-		{
-			key: 'Escape',
-			run: whileOpen((editor) => {
-				editor.dispatch(editor.state.update({ effects: closeMenu }));
-			})
-		}
+		{ key: 'Escape', run: (editor) => leaving(editor, closeMenuIn) }
 	];
+}
+
+/** Closes the open menu, if any. */
+function closeMenuIn(editor: Editor): void {
+	if (openMenuOf(editor.state)) editor.dispatch(editor.state.update({ effects: closeMenu }));
+}
+
+/**
+ * Escape, which does what it does here and leaves the key to the code after it: CodeMirror then
+ * lets Tab leave the code within two seconds, which it does only for an Escape that no key of the
+ * editor took (see Code editor in specs.md).
+ */
+function leaving(editor: Editor, act: (editor: Editor) => unknown): false {
+	act(editor);
+	return false;
 }
 
 /**
  * The keys of the places to fill in, once a statement is inserted: Tab or Enter goes on to the next
- * place, and at the last one they are Tab and Enter again; Escape ends the places (decided on
- * 2026-11-24). Shift+Tab keeps its own meaning, which unindents the line.
+ * place, and at the last one they are Tab and Enter again; Escape ends the places, and is the
+ * Escape of the code too (decided on 2026-11-24). Shift+Tab keeps its own meaning, which unindents
+ * the line.
  */
 const PLACES: readonly KeyBinding[] = [
 	{ key: 'Tab', run: nextSnippetField },
 	{ key: 'Enter', run: nextSnippetField },
-	{ key: 'Escape', run: clearSnippet }
+	{ key: 'Escape', run: (editor) => leaving(editor, clearSnippet) }
 ];
 
 /** The menu closes once the keyboard leaves the code. */
@@ -235,13 +258,16 @@ export function optionId(listId: string, word: MenuWord): string {
  */
 function spokenMenu(entries: readonly MenuEntry[], listId: string): Extension {
 	return EditorView.contentAttributes.compute([menuField], (state) => {
-		const chosen = menuViewOf(state, entries)?.chosen;
-		if (!openMenuOf(state)) return {};
+		const view = menuViewOf(state, entries);
+		if (!view) return {};
+		// While nothing matches the letters, there is no list: the panel says so instead.
+		const { chosen } = view;
 		return {
 			'aria-autocomplete': 'list',
 			'aria-haspopup': 'listbox',
-			'aria-controls': listId,
-			...(chosen ? { 'aria-activedescendant': optionId(listId, chosen.word) } : {})
+			...(chosen
+				? { 'aria-controls': listId, 'aria-activedescendant': optionId(listId, chosen.word) }
+				: {})
 		};
 	});
 }

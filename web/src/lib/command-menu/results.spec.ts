@@ -77,7 +77,8 @@ describe('menuView', () => {
 		expect(categories('paint', { category: 'move' })).toEqual(['[paint 2]', 'sense 1']);
 	});
 
-	it('chooses first a word that starts with the letters, or else the first that holds them', () => {
+	it('chooses first the word written as the letters, then one that starts with them, then one that holds them', () => {
+		expect(menuView(entries, 'if', { category: 'move' }).chosen?.word).toBe('if');
 		expect(menuView(entries, 're', { category: 'move' }).chosen?.word).toBe('red');
 		expect(menuView(entries, 'lef', { category: 'move' }).chosen?.word).toBe('left_is_clear');
 		expect(menuView(entries, 'ward', { category: 'move' }).chosen?.word).toBe('forward');
@@ -95,7 +96,7 @@ describe('menuView', () => {
 			'SENSE',
 			'is_erasing()'
 		]);
-		expect(rows('else', { category: 'move' })).toEqual(['CONTROL', '[else if]', 'else']);
+		expect(rows('else', { category: 'move' })).toEqual(['CONTROL', 'else if', '[else]']);
 	});
 
 	it('shows nothing when nothing holds the letters, the category chosen pale', () => {
