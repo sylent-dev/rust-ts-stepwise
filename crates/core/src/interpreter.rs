@@ -44,8 +44,8 @@ use crate::program::Checked;
 /// would start there if one did.
 ///
 /// They are read in the instructions that the machine runs, where a step ends at the start of
-/// each line: a rule written once. Nothing should the compiler refuse a checked program, a
-/// mistake of the core, which the machine would start on as an internal error.
+/// each line: a rule written once. The compiler never refuses a checked program; if it did, a
+/// mistake of the core that the machine would start on as an internal error, there are none.
 #[must_use]
 pub fn step_lines(program: &Checked) -> Option<Vec<u32>> {
     let code = compiler::compile(program.program()).ok()?;

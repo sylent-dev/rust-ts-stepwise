@@ -684,6 +684,65 @@ describe('the breakpoints', () => {
 		}).toEqual({ status: 'paused', atBreakpoint: true, line: 2, steps: 1 });
 	});
 
+	it('pause on the next line after a Step, when Resume comes while its action plays', () => {
+		const { breakpoints } = at(2, 3);
+		using playback = play('forward()\nforward()\nforward()\n', { breakpoints });
+		playback.play();
+		playback.tick(0);
+		playback.tick(300);
+		playback.tick(500);
+		expect({ line: playback.line, atBreakpoint: playback.atBreakpoint }).toEqual({
+			line: 2,
+			atBreakpoint: true
+		});
+		playback.step();
+		playback.tick(600);
+		playback.play();
+		playback.tick(800);
+		playback.tick(1700);
+		expect({
+			status: playback.status,
+			atBreakpoint: playback.atBreakpoint,
+			line: playback.line,
+			steps: playback.steps
+		}).toEqual({ status: 'paused', atBreakpoint: true, line: 3, steps: 2 });
+	});
+
+	it('pause on the next line when Resume follows a Pause during an action', () => {
+		const { breakpoints } = at(3);
+		using playback = play('forward()\nforward()\nforward()\n', { breakpoints });
+		playback.play();
+		playback.tick(0);
+		playback.tick(300);
+		playback.tick(500);
+		playback.pause();
+		playback.play();
+		playback.tick(800);
+		expect({
+			status: playback.status,
+			atBreakpoint: playback.atBreakpoint,
+			line: playback.line,
+			steps: playback.steps
+		}).toEqual({ status: 'paused', atBreakpoint: true, line: 3, steps: 2 });
+	});
+
+	it('pause on the next line when Instant is chosen during the action before it', () => {
+		const { breakpoints } = at(3);
+		using playback = play('forward()\nforward()\nforward()\n', { breakpoints, now: ticking() });
+		playback.play();
+		playback.tick(0);
+		playback.tick(300);
+		playback.tick(500);
+		rate = Infinity;
+		playback.tick(516);
+		expect({
+			status: playback.status,
+			atBreakpoint: playback.atBreakpoint,
+			line: playback.line,
+			steps: playback.steps
+		}).toEqual({ status: 'paused', atBreakpoint: true, line: 3, steps: 2 });
+	});
+
 	it('pause before a line set while the action before it plays, and not one removed', () => {
 		const { set, breakpoints } = at(3);
 		using playback = play('forward()\nforward()\nforward()\nforward()\n', { breakpoints });

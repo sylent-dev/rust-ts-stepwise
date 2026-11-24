@@ -47,6 +47,10 @@ function editorOf(text: string) {
 		moveTo(place: number) {
 			editor.dispatch(state.update({ selection: { anchor: place } }));
 		},
+		/** Writes a text at a place of the code. */
+		write(at: number, written: string) {
+			editor.dispatch(state.update({ changes: { from: at, insert: written } }));
+		},
 		/** Types a text at the end of the code. */
 		type(typed: string) {
 			editor.dispatch(
@@ -181,6 +185,19 @@ describe('followEditing', () => {
 		expect(editor.editing.breakpoints).toEqual([3]);
 		editor.editing.removeBreakpoints();
 		expect(editor.editing.breakpoints).toEqual([]);
+	});
+
+	it('puts each breakpoint on a line where a step starts, as the program starts', () => {
+		const editor = editorOf('forward()\nturn_right()\nturn_left()');
+		editor.moveTo(10);
+		editor.editing.toggleBreakpoint();
+		expect(editor.editing.breakpoints).toEqual([2]);
+		// The line becomes a comment: its breakpoint stays with it.
+		editor.write(10, '# ');
+		expect(editor.editing.breakpoints).toEqual([2]);
+
+		editor.editing.settleBreakpoints();
+		expect(editor.editing.breakpoints).toEqual([3]);
 	});
 
 	it('has what read the breakpoints read them again once they have changed', () => {

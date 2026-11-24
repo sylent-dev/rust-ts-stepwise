@@ -279,7 +279,9 @@ export class Playback implements Scene {
 		if (starts) this.#start();
 		this.running = true;
 		this.atBreakpoint = false;
-		this.#pastBreakpoint = !starts;
+		// The line lit runs whatever it holds when the program waits on it, nothing moving; while
+		// the action of a step plays, the line of the next one isn't reached yet.
+		this.#pastBreakpoint = !starts && this.motion === undefined;
 		this.#last = undefined;
 		this.#carry = START_CARRY;
 		if (starts) {
@@ -481,7 +483,7 @@ export class Playback implements Scene {
 	/**
 	 * Runs one step of the program, and gives what it showed. The one place where a step runs, at
 	 * every speed: what comes out of a step beside its action is read here, so that **Instant**
-	 * never loses it. A line printed today. The sounds follow the actions that the map shows
+	 * never loses it: the line printed. The sounds follow the actions that the map shows
 	 * (`onAction`), not the steps. The line paused on has run: a breakpoint on the next one
 	 * pauses the program again.
 	 */
