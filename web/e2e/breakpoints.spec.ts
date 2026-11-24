@@ -40,6 +40,31 @@ test('A click in the margin sets a breakpoint, which pauses the program before i
 	await expect.poll(() => savedBreakpoints(page)).toEqual([]);
 });
 
+test('A click in the margin under the code sets nothing', async ({ page }) => {
+	await writeCode(page, 'forward()');
+	await clickMargin(page, 1, 40);
+	await expect(page.locator('.margin-marks')).toBeVisible();
+	await expect(breakpointDots(page)).toHaveCount(0);
+});
+
+test('Run puts a breakpoint whose line no longer runs on the next line that does', async ({
+	page
+}) => {
+	await writeCode(page, 'forward()\nturn_right()\nforward()\n');
+	await clickMargin(page, 2);
+	await expect.poll(() => savedBreakpoints(page)).toEqual([2]);
+	// The line becomes a comment: its breakpoint, which stays with it, would pause nothing.
+	await lineOf(page, 2).click();
+	await page.keyboard.press('Home');
+	await page.keyboard.type('# ');
+	await expect(lineOf(page, 2)).toHaveText('# turn_right()');
+	await expect.poll(() => savedBreakpoints(page)).toEqual([2]);
+
+	await control(page, 'Run').click();
+	await expect(stateOf(page)).toHaveText('Paused at line 3 · breakpoint · Reset to edit');
+	await expect.poll(() => savedBreakpoints(page)).toEqual([3]);
+});
+
 test('F9 sets a breakpoint on the next line that runs, while the program runs too', async ({
 	page
 }) => {

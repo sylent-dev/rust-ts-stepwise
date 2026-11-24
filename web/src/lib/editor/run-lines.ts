@@ -82,8 +82,11 @@ function placed(state: EditorState): { line: RunLine; from: number }[] {
 	return [...at('failed'), ...at('next')].sort((first, second) => first.from - second.from);
 }
 
-/** The class of a line of a run, on its code and on its place in each gutter. */
-const CLASSES = {
+/**
+ * The class of a line of a run, on its code and on its place in each gutter, and on its icon in
+ * the margin of the marks (margin.ts).
+ */
+export const RUN_LINE_CLASSES = {
 	next: 'run-next',
 	failed: 'run-failed'
 } as const satisfies Record<RunLine, string>;
@@ -94,7 +97,7 @@ class LineTone extends GutterMarker {
 
 	constructor(line: RunLine) {
 		super();
-		this.elementClass = CLASSES[line];
+		this.elementClass = RUN_LINE_CLASSES[line];
 	}
 
 	override eq(other: GutterMarker): boolean {
@@ -107,8 +110,8 @@ const TONES = {
 	failed: new LineTone('failed')
 } as const satisfies Record<RunLine, LineTone>;
 const LINE_LOOKS = {
-	next: Decoration.line({ class: CLASSES.next }),
-	failed: Decoration.line({ class: CLASSES.failed })
+	next: Decoration.line({ class: RUN_LINE_CLASSES.next }),
+	failed: Decoration.line({ class: RUN_LINE_CLASSES.failed })
 } as const satisfies Record<RunLine, Decoration>;
 
 /**

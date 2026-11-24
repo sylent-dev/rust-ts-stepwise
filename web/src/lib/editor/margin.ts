@@ -3,31 +3,31 @@
 // of the next step and the cross of an error. A click in the margin sets or removes a breakpoint.
 
 import { type EditorState, type Extension, RangeSet } from '@codemirror/state';
-import { type EditorView, GutterMarker, gutter } from '@codemirror/view';
+import { type BlockInfo, type EditorView, GutterMarker, gutter } from '@codemirror/view';
 import { mount, unmount } from 'svelte';
 import type { IconName } from '#lib/icon-name.ts';
 import Icon from '#lib/icon.svelte';
 import { breakpointsOf, toggleBreakpointAt } from './breakpoints.ts';
-import { type RunLine, runLinesOf } from './run-lines.ts';
+import { RUN_LINE_CLASSES, type RunLine, runLinesOf } from './run-lines.ts';
 
 /**
- * What the margin shows on a line: a breakpoint, the arrow of the next step, both side by side,
- * or the cross of an error, which a breakpoint on that line stands behind, as in the mock-up:
- * the program has stopped there.
+ * What the margin shows on a line: a breakpoint, the arrow of the next step or the cross of an
+ * error, or a breakpoint beside one of them, as in the mock-up.
  */
-export type MarginMark = 'breakpoint' | 'next' | 'breakpoint-next' | 'failed';
+export type MarginMark = 'breakpoint' | 'next' | 'breakpoint-next' | 'failed' | 'breakpoint-failed';
 
 /** The marks of the margin of each line that has one, by the number of the line, in order. */
 export function marginMarks(state: EditorState): { line: number; mark: MarginMark }[] {
 	const { next, failed } = runLinesOf(state);
-	const lines = new Set(breakpointsOf(state));
+	const held = breakpointsOf(state);
+	const lines = new Set(held);
 	if (next !== undefined) lines.add(next);
 	if (failed !== undefined) lines.add(failed);
 	const markOf = (line: number): MarginMark => {
-		if (line === failed) return 'failed';
-		const breakpoint = breakpointsOf(state).includes(line);
-		if (line !== next) return 'breakpoint';
-		return breakpoint ? 'breakpoint-next' : 'next';
+		const breakpoint = held.includes(line);
+		if (line === next) return breakpoint ? 'breakpoint-next' : 'next';
+		if (line === failed) return breakpoint ? 'breakpoint-failed' : 'failed';
+		return 'breakpoint';
 	};
 	return [...lines]
 		.filter((line) => line >= 1 && line <= state.doc.lines)
@@ -40,8 +40,18 @@ const RUN_LINES = {
 	breakpoint: undefined,
 	next: 'next',
 	'breakpoint-next': 'next',
-	failed: 'failed'
+	failed: 'failed',
+	'breakpoint-failed': 'failed'
 } as const satisfies Record<MarginMark, RunLine | undefined>;
+
+/** Whether a mark draws a breakpoint. */
+const WITH_BREAKPOINT = {
+	breakpoint: true,
+	next: false,
+	'breakpoint-next': true,
+	failed: false,
+	'breakpoint-failed': true
+} as const satisfies Record<MarginMark, boolean>;
 
 /** The icon of a line of a run in the margin: the arrow of the next step, the cross of an error. */
 const ICONS = {
@@ -71,8 +81,11 @@ class Mark extends GutterMarker {
 	override toDOM(): Node {
 		const box = document.createElement('span');
 		const run = RUN_LINES[this.#mark];
-		box.className = `margin-mark is-${this.#mark}${run ? ` run-${run}` : ''}`;
-		if (this.#mark === 'breakpoint' || this.#mark === 'breakpoint-next') {
+		const both = WITH_BREAKPOINT[this.#mark] && run !== undefined;
+		box.className = ['margin-mark', both && 'with-breakpoint', run && RUN_LINE_CLASSES[run]]
+			.filter(Boolean)
+			.join(' ');
+		if (WITH_BREAKPOINT[this.#mark]) {
 			const dot = document.createElement('span');
 			dot.className = 'breakpoint-dot';
 			box.append(dot);
@@ -97,17 +110,21 @@ const MARKS = {
 	breakpoint: new Mark('breakpoint'),
 	next: new Mark('next'),
 	'breakpoint-next': new Mark('breakpoint-next'),
-	failed: new Mark('failed')
+	failed: new Mark('failed'),
+	'breakpoint-failed': new Mark('breakpoint-failed')
 } as const satisfies Record<MarginMark, Mark>;
 
 /**
  * Sets or removes a breakpoint on the line clicked in the margin. The press of the mouse is
  * taken, so that the keyboard stays where it was, and the cursor too: a click of the main button
- * alone.
+ * alone. CodeMirror gives the line nearest to a press past the code, in the room under its last
+ * line or above its first one, where the press sets nothing.
  */
-function pressed(view: EditorView, from: number, event: Event): boolean {
+function pressed(view: EditorView, block: BlockInfo, event: Event): boolean {
 	if (!(event instanceof MouseEvent) || event.button !== 0) return false;
-	const toggled = toggleBreakpointAt(view.state, view.state.doc.lineAt(from).number);
+	const y = event.clientY - view.documentTop;
+	if (y < block.top || y > block.bottom) return true;
+	const toggled = toggleBreakpointAt(view.state, view.state.doc.lineAt(block.from).number);
 	if (toggled) view.dispatch(toggled);
 	return true;
 }
@@ -125,6 +142,6 @@ export const margin: Extension = gutter({
 			)
 		),
 	domEventHandlers: {
-		mousedown: (view, block, event) => pressed(view, block.from, event)
+		mousedown: (view, block, event) => pressed(view, block, event)
 	}
 });

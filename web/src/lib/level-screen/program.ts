@@ -64,6 +64,11 @@ export interface ProgramOptions extends Omit<
 > {
 	/** Where its sounds play; none by default. */
 	sounds?: ProgramSounds;
+	/**
+	 * Told once the checks have taken the code, as **Run** or **Step** starts the program on it,
+	 * before its first step: the screen puts its breakpoints on lines where a step starts.
+	 */
+	onStart?: () => void;
 }
 
 export class Program implements ProgramControls {
@@ -78,6 +83,7 @@ export class Program implements ProgramControls {
 	readonly #playback: Playback;
 	readonly #text: () => string | undefined;
 	readonly #sounds: ProgramSounds | undefined;
+	readonly #onStart: (() => void) | undefined;
 	/** The code as it was last checked, which a run starts on. */
 	#checked = '';
 
@@ -89,10 +95,11 @@ export class Program implements ProgramControls {
 	constructor(
 		playground: Playground,
 		text: () => string | undefined,
-		{ sounds, ...options }: ProgramOptions = {}
+		{ sounds, onStart, ...options }: ProgramOptions = {}
 	) {
 		this.#text = text;
 		this.#sounds = sounds;
+		this.#onStart = onStart;
 		this.log = this.#log;
 		this.#playback = new Playback(
 			{ world: playground.world, start: () => playground.start(this.#checked) },
@@ -228,7 +235,7 @@ export class Program implements ProgramControls {
 	 * starts, and the map goes back to its start all the same: what it showed was the end of
 	 * another program. The editor underlines the errors, the console lists them, and the soft
 	 * slide says it, so that each press that asks for a run has an answer. What the run before
-	 * played stops.
+	 * played stops. A code taken is told to the screen (`onStart`).
 	 */
 	#check(): boolean {
 		const text = this.#text();
@@ -243,6 +250,7 @@ export class Program implements ProgramControls {
 			return false;
 		}
 		this.#checked = text;
+		this.#onStart?.();
 		return true;
 	}
 

@@ -287,9 +287,10 @@
 			display: flex;
 		}
 
-		/* A breakpoint on the line of the next step: the dot and the arrow side by side, 3 pixels
-		   from the edge, before the numbers of two figures, as in the mock-up. */
-		.cm-editor .margin-mark.is-breakpoint-next {
+		/* A breakpoint on the line of the next step or of an error: the dot and the arrow, or the
+		   cross, side by side, 3 pixels from the edge, before the numbers of two figures, as in
+		   the mock-up. */
+		.cm-editor .margin-mark.with-breakpoint {
 			margin-left: -3px;
 		}
 

@@ -3,7 +3,12 @@
 // Without a page, so that this link is tested (editing.svelte.spec.ts).
 
 import type { EditorState, StateCommand, TransactionSpec } from '@codemirror/state';
-import { breakpointsOf, removeBreakpoints, toggleBreakpointAt } from './breakpoints.ts';
+import {
+	breakpointsOf,
+	removeBreakpoints,
+	settleBreakpointsNow,
+	toggleBreakpointAt
+} from './breakpoints.ts';
 import { errorCount } from './checks.ts';
 import { cursorOf } from './cursor.ts';
 import { applyEdit, canEdit, type Editing } from './edits.ts';
@@ -20,12 +25,12 @@ export interface FollowedEditing {
 }
 
 /**
- * Follows an editor for the screen: the editor on its page, or what stands for it in a test.
- * `can`, `text`, `cursor`, `errors` and `breakpoints` read the state last said to `follow`, kept
- * as a signal, never the editor itself: a row of a menu or the status bar that read it is then
- * drawn again once the code, the cursor or a breakpoint has changed. `restart` gives the editor a new state, made from a
- * text with the parts of the editor; the editor says no change then, so `reopen` follows its
- * state itself. `focus` gives the code the keyboard.
+ * Follows an editor for the screen: the editor on its page, or what stands for it in a test. `can`,
+ * `text`, `cursor`, `errors` and `breakpoints` read the state last said to `follow`, kept as a
+ * signal, never the editor itself: a row of a menu or the status bar that read it is then drawn
+ * again once the code, the cursor or a breakpoint has changed. `restart` gives the editor a new
+ * state, made from a text with the parts of the editor; the editor says no change then, so `reopen`
+ * follows its state itself. `focus` gives the code the keyboard.
  */
 export function followEditing(
 	editor: Parameters<StateCommand>[0],
@@ -61,6 +66,9 @@ export function followEditing(
 			},
 			removeBreakpoints: () => {
 				change(removeBreakpoints(editor.state));
+			},
+			settleBreakpoints: () => {
+				change(settleBreakpointsNow(editor.state));
 			},
 			reopen: (text) => {
 				restart(text);

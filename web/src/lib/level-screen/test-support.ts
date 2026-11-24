@@ -7,7 +7,7 @@ import type { ProgramControls, RunAction } from './program.ts';
 import type { SpeedSetting } from './speeds.ts';
 
 /** What an editor of the tests was asked: an edit, or a change of its breakpoints. */
-export type EditorAsk = Edit | 'toggle-breakpoint' | 'remove-breakpoints';
+export type EditorAsk = Edit | 'toggle-breakpoint' | 'remove-breakpoints' | 'settle-breakpoints';
 
 /**
  * An editor that can do the given edits, holds the given breakpoints, and remembers what it was
@@ -28,6 +28,7 @@ export function editorFor(
 		breakpoints,
 		toggleBreakpoint: () => asked.push('toggle-breakpoint'),
 		removeBreakpoints: () => asked.push('remove-breakpoints'),
+		settleBreakpoints: () => asked.push('settle-breakpoints'),
 		reopen: () => {},
 		showPlace: () => {}
 	};

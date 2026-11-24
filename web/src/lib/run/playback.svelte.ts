@@ -59,8 +59,9 @@ export interface PlaybackOptions {
 	/**
 	 * The lines that hold a breakpoint: the program pauses before it runs one of them, once, as
 	 * the line starts, never when it is highlighted again after a call of that line has ended;
-	 * at **Instant** too. Read at each frame and as the program starts, so that a breakpoint
-	 * set while it runs is followed at once. None by default.
+	 * at **Instant** too. Read as the program starts, then at each frame where the line of the
+	 * next step is lit and nothing moves, so that a breakpoint set while the program runs, on
+	 * the line lit too, is followed at once. None by default.
 	 */
 	breakpoints?: () => ReadonlySet<number>;
 	/**
@@ -215,10 +216,10 @@ export class Playback implements Scene {
 	/** Whether a step due waits for the action under way to end. */
 	#waiting = false;
 	/**
-	 * Whether a breakpoint has paused the program in this frame: a plain field, which the loop of
-	 * **Instant** reads after each step, where a signal would cost at each of them.
+	 * Whether the next step runs whatever its line holds: the line that the program was paused
+	 * on, which **Resume** runs, rather than pause on its breakpoint again.
 	 */
-	#halted = false;
+	#pastBreakpoint = false;
 	/** When the step under way started: nothing until the frame that draws it first. */
 	#motionStart: number | undefined;
 	#motionTime = 0;
@@ -278,13 +279,14 @@ export class Playback implements Scene {
 		if (starts) this.#start();
 		this.running = true;
 		this.atBreakpoint = false;
+		this.#pastBreakpoint = !starts;
 		this.#last = undefined;
 		this.#carry = START_CARRY;
 		if (starts) {
 			this.#endWithoutStep();
 			// A breakpoint on the first line pauses the program before it, as on any line that
 			// starts; on **Resume**, the line paused on runs.
-			if (this.#run) this.#haltBefore(this.#run, this.#breakpoints());
+			this.#pauseAtBreakpoint();
 		}
 		this.#wake();
 	}
@@ -310,7 +312,7 @@ export class Playback implements Scene {
 		} else {
 			this.#guarded(() => {
 				this.#endMotion();
-				this.#runStep(undefined, SLOWEST_SPEED, NO_BREAKPOINTS);
+				this.#runStep(undefined, SLOWEST_SPEED);
 			});
 		}
 		this.#wake();
@@ -325,6 +327,7 @@ export class Playback implements Scene {
 		this.#stopTold = false;
 		this.running = false;
 		this.atBreakpoint = false;
+		this.#pastBreakpoint = false;
 		this.#rewind();
 	}
 
@@ -364,8 +367,10 @@ export class Playback implements Scene {
 				this.progress = progress;
 			}
 		}
+		// The line of the next step is lit and nothing moves: a breakpoint on it, set since too,
+		// pauses the program before it.
+		if (this.running && !this.motion) this.#pauseAtBreakpoint();
 		if (this.running && this.#stepsLeft) {
-			this.#halted = false;
 			if (!instant) {
 				const elapsed = this.#last === undefined ? 0 : time - this.#last;
 				const paced = paceFrame(rate, elapsed, this.#carry);
@@ -382,7 +387,7 @@ export class Playback implements Scene {
 					// the next one.
 					this.#carry = this.#waiting ? 0 : paced.carry;
 					this.#waiting = false;
-					this.#runStep(time, rate, this.#breakpoints());
+					this.#runStep(time, rate);
 				}
 			} else {
 				this.#runInstant();
@@ -448,6 +453,7 @@ export class Playback implements Scene {
 		this.#run = run;
 		this.#started = true;
 		this.#stopTold = false;
+		this.#pastBreakpoint = false;
 		this.#rewind();
 	}
 
@@ -475,41 +481,43 @@ export class Playback implements Scene {
 	/**
 	 * Runs one step of the program, and gives what it showed. The one place where a step runs, at
 	 * every speed: what comes out of a step beside its action is read here, so that **Instant**
-	 * never loses it: the line printed, then a breakpoint on the line of the next step, which
-	 * pauses the program before it, `breakpoints` being none for a **Step**, which pauses it
-	 * anyway. The sounds follow the actions that the map shows (`onAction`), not the steps.
+	 * never loses it. A line printed today. The sounds follow the actions that the map shows
+	 * (`onAction`), not the steps. The line paused on has run: a breakpoint on the next one
+	 * pauses the program again.
 	 */
-	#advance(run: Run, breakpoints: ReadonlySet<number>): StepEvent {
+	#advance(run: Run): StepEvent {
 		const event = run.step();
+		this.#pastBreakpoint = false;
 		if (event === 'printed') this.#onPrinted?.(run.printed() ?? '');
-		this.#haltBefore(run, breakpoints);
 		return event;
 	}
 
 	/**
-	 * Pauses the program before its next step when a breakpoint stands on its line, and the line
-	 * starts: not when it is highlighted again after a call of that line has ended. The action
-	 * under way still ends, as after **Pause**.
+	 * Pauses the program before its next step, and tells it, when a breakpoint stands on its line
+	 * and the line starts: not when it is highlighted again after a call of that line has ended,
+	 * nor on the line paused on, which **Resume** runs. Called while nothing moves, the line of
+	 * the next step lit, or before each step of a batch of **Instant**, which draws none.
 	 */
-	#haltBefore(run: Run, breakpoints: ReadonlySet<number>): void {
-		if (breakpoints.size === 0) return;
+	#pauseAtBreakpoint(breakpoints = this.#breakpoints()): boolean {
+		const run = this.#run;
+		if (this.#pastBreakpoint || !run || breakpoints.size === 0) return false;
 		const line = run.line;
-		if (line === undefined || !breakpoints.has(line) || run.afterCall) return;
-		this.#halted = true;
+		if (line === undefined || !breakpoints.has(line) || run.afterCall) return false;
 		this.running = false;
 		this.atBreakpoint = true;
+		return true;
 	}
 
 	/**
 	 * Runs a step, and animates its action, or the error of the robot that stopped the program,
 	 * when it has one and a time to show it at `rate` steps per second.
 	 */
-	#runStep(start: number | undefined, rate: number, breakpoints: ReadonlySet<number>): void {
+	#runStep(start: number | undefined, rate: number): void {
 		const run = this.#run;
 		// A run that has stopped has no step left: its last action, or the error it stopped on, was
 		// shown already.
 		if (run?.line === undefined) return;
-		const event = this.#advance(run, breakpoints);
+		const event = this.#advance(run);
 		this.steps = run.steps;
 		const action = this.#actionOf(run, event);
 		const lessMotion = this.#lessMotion();
@@ -549,8 +557,9 @@ export class Playback implements Scene {
 		if (!run) return;
 		const breakpoints = this.#breakpoints();
 		const step = (): boolean => {
-			this.#advance(run, breakpoints);
-			return run.line !== undefined && !this.#halted;
+			if (this.#pauseAtBreakpoint(breakpoints)) return false;
+			this.#advance(run);
+			return run.line !== undefined;
 		};
 		runInstant(step, this.#now(), INSTANT_BUDGET, this.#now);
 		// The error of the robot that stopped the program in this frame shows at once.

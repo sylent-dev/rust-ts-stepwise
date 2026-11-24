@@ -115,13 +115,14 @@ export async function expectNoFlash(page: Page, timeout?: number): Promise<void>
 }
 
 /**
- * Clicks the margin of a line, left of its number, where a click sets or removes a breakpoint.
+ * Clicks the margin of a line, left of its number, where a click sets or removes a breakpoint;
+ * or `below` pixels under the middle of the line.
  */
-export async function clickMargin(page: Page, number: number): Promise<void> {
+export async function clickMargin(page: Page, number: number, below = 0): Promise<void> {
 	const line = await lineOf(page, number).boundingBox();
 	const margin = await page.locator('.margin-marks').boundingBox();
 	if (!line || !margin) throw new Error('The margin of the code, or its line, isn’t drawn.');
-	await page.mouse.click(margin.x + margin.width / 2, line.y + line.height / 2);
+	await page.mouse.click(margin.x + margin.width / 2, line.y + line.height / 2 + below);
 }
 
 /** The dots of the breakpoints in the margin. */

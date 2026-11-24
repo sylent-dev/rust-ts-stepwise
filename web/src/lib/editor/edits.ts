@@ -111,6 +111,12 @@ export interface Editing {
 	/** Takes every breakpoint away, even while the code is locked. */
 	removeBreakpoints(): void;
 	/**
+	 * Puts each breakpoint on a line where a step starts, by the rule of a breakpoint asked, as
+	 * the program starts on the code: one on a line that no longer starts a step would never
+	 * pause it.
+	 */
+	settleBreakpoints(): void;
+	/**
 	 * Opens the editor again on a text, as the first time, without breakpoints: the code is
 	 * replaced for good, and its history starts again, with nothing to undo. It isn't a change
 	 * that the learner made: the editor doesn't say it as one (`onchange` of code-editor.svelte).

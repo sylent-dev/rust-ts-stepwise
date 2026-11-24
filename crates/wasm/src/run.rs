@@ -26,12 +26,13 @@ use crate::world::{Color, Point, World};
 /// The lines of the program of `source` where a step starts, from 1, in order and each once:
 /// where a breakpoint can pause it, which the editor moves a breakpoint to (see *Code editor*
 /// in `specs.md`). Nothing when the checks before running refuse it: the editor then leaves a
-/// breakpoint where it was asked, since nothing can run.
+/// breakpoint where it was asked, since nothing can run; nor should the core fail to read
+/// them, which it never does.
 #[wasm_bindgen(js_name = stepLines)]
 #[must_use]
 pub fn step_lines(source: &str) -> Option<Vec<u32>> {
     let program = program::check(source).ok()?;
-    Some(interpreter::step_lines(&program))
+    interpreter::step_lines(&program)
 }
 
 /// A program being run on a map of a level or in the sandbox, paused before its next step.

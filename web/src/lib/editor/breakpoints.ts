@@ -3,7 +3,9 @@
 // A breakpoint belongs to a line: it follows it as the code changes, by the rules of the marks of
 // a run (follow.ts), and goes with it. It changes no text, so it can be set or removed at any
 // moment, while the code is locked too, and it is no step of the history: **Undo** undoes a change
-// of the text alone. The screen saves them with the code, and the program that runs reads them.
+// of the text alone. As the program starts, each goes to a line where a step starts, by the rule
+// of a breakpoint asked. The screen saves them with the code, and the program that runs reads
+// them.
 
 import {
 	type EditorState,
@@ -107,6 +109,36 @@ export function toggleBreakpoint(
 export function toggleBreakpointAt(state: EditorState, asked: number): TransactionSpec | undefined {
 	const steps = stepLines(state.doc.toString());
 	return toggleBreakpoint(state, asked, steps && Array.from(steps));
+}
+
+/**
+ * What puts each breakpoint on a line where a step starts, by the rule of a breakpoint asked
+ * (`breakpointLine`), `steps` being where a step starts: the code may have changed since one
+ * was set, and a breakpoint on a line commented since, become an `else:`, or set while the code
+ * had an error, would never pause the program. One that no step follows goes. Nothing when each
+ * stands on a line where a step starts, or when the checks refuse the code.
+ */
+export function settleBreakpoints(
+	state: EditorState,
+	steps: readonly number[] | undefined
+): TransactionSpec | undefined {
+	if (!steps) return undefined;
+	const lines = breakpointsOf(state);
+	const settled = ordered(
+		lines.flatMap((line) => {
+			const to = breakpointLine(line, steps);
+			return to === undefined ? [] : [to];
+		})
+	);
+	const same = settled.length === lines.length && settled.every((line, at) => line === lines[at]);
+	return same ? undefined : { effects: replace.of(settled) };
+}
+
+/** What puts each breakpoint on a line where a step starts in the code as it is now. */
+export function settleBreakpointsNow(state: EditorState): TransactionSpec | undefined {
+	if (breakpointsOf(state).length === 0) return undefined;
+	const steps = stepLines(state.doc.toString());
+	return settleBreakpoints(state, steps && Array.from(steps));
 }
 
 /** What takes every breakpoint away; nothing when there is none. */

@@ -43,16 +43,14 @@ use crate::program::Checked;
 /// line nor a comment. The lines of a function that no call enters are among them: a step
 /// would start there if one did.
 ///
-/// They are read in the instructions that the machine runs, where a step ends on each
-/// [`Line`](code::Instruction::Line): a rule written once. Should the compiler refuse a
-/// checked program, a mistake of the core, there is none.
+/// They are read in the instructions that the machine runs, where a step ends at the start of
+/// each line: a rule written once. Nothing should the compiler refuse a checked program, a
+/// mistake of the core, which the machine would start on as an internal error.
 #[must_use]
-pub fn step_lines(program: &Checked) -> Vec<u32> {
-    let Ok(code) = compiler::compile(program.program()) else {
-        return Vec::new();
-    };
+pub fn step_lines(program: &Checked) -> Option<Vec<u32>> {
+    let code = compiler::compile(program.program()).ok()?;
     let mut lines: Vec<u32> = code.step_lines().collect();
     lines.sort_unstable();
     lines.dedup();
-    lines
+    Some(lines)
 }

@@ -1,20 +1,18 @@
 <!-- The level screen, and the sandbox, the level screen without goal (see Level screen in
      specs.md): under its header, the code on the left on the whole height, the map on top on the
-     right, the console under it, the variables coming beside it at step 19. The blocks meet
-     without any line, each zone in its own tone. A route gives it what it plays on, and it wires
-     the rest: the same for a level and for the sandbox. The code of each level is
-     saved as the learner changes it, with its breakpoints, and comes back with the level, until
-     **Restore starting code** puts the level back in its first state (see Code editor in
-     specs.md). **Run** plays
-     that code on the map shown, at the speed of the settings, which **Run › Speed** chooses
-     (see Running a program in specs.md), and pauses it on its breakpoints; the editor lights the
-     line of its next step, and marks the line where an error stopped it, and its three controls
-     stand in the corner of the code.
-     The status bar, under the code, says where the program stands, in the color of its state.
-     The console shows the log of the last **Run**: what the program printed and the error that
-     stopped it, or the errors that kept it from starting, a click on one putting the cursor at
-     its place. **Help › Keyboard shortcuts** lists the shortcuts of the screen in a panel. A
-     run plays its sounds while the setting **Sounds** is on (see Sounds in specs.md). -->
+     right, the console under it, the variables coming beside it at step 19. The blocks meet without
+     any line, each zone in its own tone. A route gives it what it plays on, and it wires the rest:
+     the same for a level and for the sandbox. The code of each level is saved as the learner
+     changes it, with its breakpoints, and comes back with the level, until **Restore starting
+     code** puts the level back in its first state (see Code editor in specs.md). **Run** plays that
+     code on the map shown, at the speed of the settings, which **Run › Speed** chooses (see Running
+     a program in specs.md), and pauses it on its breakpoints; the editor lights the line of its
+     next step, and marks the line where an error stopped it, and its three controls stand in the
+     corner of the code. The status bar, under the code, says where the program stands, in the color
+     of its state. The console shows the log of the last **Run**: what the program printed and the
+     error that stopped it, or the errors that kept it from starting, a click on one putting the
+     cursor at its place. **Help › Keyboard shortcuts** lists the shortcuts of the screen in a
+     panel. A run plays its sounds while the setting **Sounds** is on (see Sounds in specs.md). -->
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import { differsFromStart, type LevelCode } from '#lib/code/code.ts';
@@ -113,6 +111,9 @@
 					new Program(ground, () => editing?.text, {
 						rate: () => settings.speed,
 						breakpoints: () => breakpointLines,
+						onStart: () => {
+							editing?.settleBreakpoints();
+						},
 						onBroken: loadFailed,
 						sounds
 					})
@@ -239,7 +240,8 @@
 	/**
 	 * Puts the level shown back in its first state, once the learner has confirmed: its program
 	 * ends, as by **Reset**, its code is forgotten, and the editor opens again on its starting
-	 * code, without breakpoints and with nothing to undo. The console forgets what it said of the code that is gone.
+	 * code, without breakpoints and with nothing to undo. The console forgets what it said of the
+	 * code that is gone.
 	 */
 	function restore() {
 		if (!playground) return;

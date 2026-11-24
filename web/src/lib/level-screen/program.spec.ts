@@ -122,6 +122,30 @@ describe('the program of a screen', () => {
 		program.free();
 	});
 
+	it('tells the screen that the code is taken as Run or Step starts the program on it', () => {
+		const code = { text: 'forward()\n' };
+		let started = 0;
+		page = pageOf();
+		const program = new Program(sandboxPlayground(sandbox), () => code.text, {
+			frames: page.frames,
+			onStart: () => (started += 1)
+		});
+		program.runOrPause();
+		expect(started).toBe(1);
+		program.runOrPause();
+		program.runOrPause();
+		expect(started).toBe(1);
+		program.reset();
+		program.step();
+		program.step();
+		expect(started).toBe(2);
+		program.reset();
+		code.text = 'forward(\n';
+		program.runOrPause();
+		program.step();
+		expect(started).toBe(2);
+	});
+
 	it('can’t step while it runs', () => {
 		const program = programOf({ text: 'forward()\nforward()\n' });
 		expect(program.canStep).toBe(true);

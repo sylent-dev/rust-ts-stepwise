@@ -87,7 +87,7 @@ fn assert_step_lines(program: &Checked) {
     let mut expected: Vec<u32> = spans.iter().map(|span| span.start.line).collect();
     expected.sort_unstable();
     expected.dedup();
-    assert_eq!(step_lines(program), expected);
+    assert_eq!(step_lines(program), Some(expected));
 }
 
 /// Runs `source` without the checks before running, which would refuse it.
@@ -475,17 +475,17 @@ while sides < 2:
 ";
     assert_eq!(
         step_lines(&checked(source)),
-        [3, 5, 6, 7, 8, 9, 10, 11, 13, 14]
+        Some(vec![3, 5, 6, 7, 8, 9, 10, 11, 13, 14])
     );
 }
 
 #[test]
 fn a_program_of_comments_has_no_step_line_and_a_function_never_called_has_its_own() {
     for source in ["", "\n\n", "# Nothing yet\n"] {
-        assert_eq!(step_lines(&checked(source)), [], "in {source:?}");
+        assert_eq!(step_lines(&checked(source)), Some(vec![]), "in {source:?}");
     }
     let unused = "function unused():\n    # later\n    print(\"never\")\n";
-    assert_eq!(step_lines(&checked(unused)), [3]);
+    assert_eq!(step_lines(&checked(unused)), Some(vec![3]));
 }
 
 // `if`, `else if`, `else`.

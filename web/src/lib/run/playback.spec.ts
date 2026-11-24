@@ -542,23 +542,33 @@ describe('the breakpoints', () => {
 		return { set, breakpoints: () => set };
 	};
 
-	it('pause the program before their line, the action under way ending', () => {
+	it('pause the program before their line, once the action under way has ended', () => {
 		const { breakpoints } = at(3);
 		using playback = play('forward()\nforward()\nforward()\n', { breakpoints });
 		playback.play();
 		playback.tick(0);
 		playback.tick(300);
 		playback.tick(500);
-		// The second move is under way: the program has paused before the third line.
+		// The second move is under way: the program still runs it, its line lit.
 		expect({
 			status: playback.status,
 			atBreakpoint: playback.atBreakpoint,
-			steps: playback.steps,
+			line: playback.line,
 			action: playback.motion?.action
-		}).toEqual({ status: 'paused', atBreakpoint: true, steps: 2, action: 'moved' });
+		}).toEqual({ status: 'running', atBreakpoint: false, line: 2, action: 'moved' });
+		// It ends, the line of the breakpoint is lit, and the program pauses before it.
 		expect(playback.tick(800)).toBe(false);
-		expect({ line: playback.line, position: playback.world.robot.position }).toEqual({
+		expect({
+			status: playback.status,
+			atBreakpoint: playback.atBreakpoint,
+			line: playback.line,
+			steps: playback.steps,
+			position: playback.world.robot.position
+		}).toEqual({
+			status: 'paused',
+			atBreakpoint: true,
 			line: 3,
+			steps: 2,
 			position: { x: 2, y: 0 }
 		});
 		playback.tick(2000);
@@ -658,17 +668,43 @@ describe('the breakpoints', () => {
 		});
 	});
 
-	it('are followed at the next frame when set while the program runs', () => {
+	it('pause before the line lit when one is set there while the program runs', () => {
 		const { set, breakpoints } = at();
-		using playback = play('turn_left()\nturn_left()\nturn_left()\n', { breakpoints });
+		using playback = play('print(1)\nprint(2)\nprint(3)\n', { breakpoints });
 		playback.play();
 		playback.tick(0);
-		set.add(3);
+		expect(playback.line).toBe(2);
+		set.add(2);
 		playback.tick(500);
-		expect({ status: playback.status, steps: playback.steps }).toEqual({
-			status: 'paused',
-			steps: 2
-		});
+		expect({
+			status: playback.status,
+			atBreakpoint: playback.atBreakpoint,
+			line: playback.line,
+			steps: playback.steps
+		}).toEqual({ status: 'paused', atBreakpoint: true, line: 2, steps: 1 });
+	});
+
+	it('pause before a line set while the action before it plays, and not one removed', () => {
+		const { set, breakpoints } = at(3);
+		using playback = play('forward()\nforward()\nforward()\nforward()\n', { breakpoints });
+		playback.play();
+		playback.tick(0);
+		playback.tick(300);
+		playback.tick(500);
+		// The second move is under way: the breakpoint of its next line is taken away, and one is
+		// set on the line after.
+		set.delete(3);
+		set.add(4);
+		playback.tick(800);
+		expect(playback.status).toBe('running');
+		playback.tick(1000);
+		playback.tick(1300);
+		expect({
+			status: playback.status,
+			atBreakpoint: playback.atBreakpoint,
+			line: playback.line,
+			steps: playback.steps
+		}).toEqual({ status: 'paused', atBreakpoint: true, line: 4, steps: 3 });
 	});
 
 	it('leave a Step alone, which pauses anyway, and say no breakpoint once it has run', () => {

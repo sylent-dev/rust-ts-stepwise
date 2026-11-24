@@ -39,10 +39,14 @@ describe('marginMarks', () => {
 		expect(marginMarks(stateOf([2], { next: 2 }))).toEqual([{ line: 2, mark: 'breakpoint-next' }]);
 	});
 
-	it('marks the line of an error by its cross alone, a breakpoint there standing behind it', () => {
-		expect(marginMarks(stateOf([2, 4], { failed: 4 }))).toEqual([
+	it('marks the line of an error by its cross, with its breakpoint beside it when it has one', () => {
+		expect(marginMarks(stateOf([2], { failed: 4 }))).toEqual([
 			{ line: 2, mark: 'breakpoint' },
 			{ line: 4, mark: 'failed' }
+		]);
+		expect(marginMarks(stateOf([2, 4], { failed: 4 }))).toEqual([
+			{ line: 2, mark: 'breakpoint' },
+			{ line: 4, mark: 'breakpoint-failed' }
 		]);
 	});
 

@@ -10,6 +10,8 @@ import {
 	breakpoints,
 	breakpointsOf,
 	removeBreakpoints,
+	settleBreakpoints,
+	settleBreakpointsNow,
 	toggleBreakpoint,
 	toggleBreakpointAt
 } from './breakpoints.ts';
@@ -141,6 +143,30 @@ describe('toggleBreakpointAt', () => {
 	it('sets where it is asked in a code with an error', () => {
 		const state = stateOf([], '\nforward(\n');
 		expect(breakpointsOf(given(state, toggleBreakpointAt(state, 1)))).toEqual([1]);
+	});
+});
+
+describe('settleBreakpoints', () => {
+	it('puts each breakpoint on the next line where a step starts', () => {
+		const state = stateOf([1, 3]);
+		expect(breakpointsOf(given(state, settleBreakpoints(state, [2, 4])))).toEqual([2, 4]);
+	});
+
+	it('makes one of two that go to the same line, and takes away one that no step follows', () => {
+		const state = stateOf([1, 2, 4]);
+		expect(breakpointsOf(given(state, settleBreakpoints(state, [2])))).toEqual([2]);
+	});
+
+	it('changes nothing when each stands on a line where a step starts, or the code is refused', () => {
+		expect(settleBreakpoints(stateOf([1, 4]), [1, 2, 4])).toBeUndefined();
+		expect(settleBreakpoints(stateOf([3]), undefined)).toBeUndefined();
+	});
+
+	it('asks the core where a step starts in the code as it is now', () => {
+		// A breakpoint set on a blank line while the code had an error, then the error fixed.
+		const state = stateOf([2], 'forward()\n\n# turn\nturn_left()');
+		expect(breakpointsOf(given(state, settleBreakpointsNow(state)))).toEqual([4]);
+		expect(settleBreakpointsNow(stateOf([], CODE))).toBeUndefined();
 	});
 });
 
