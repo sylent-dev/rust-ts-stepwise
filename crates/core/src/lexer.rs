@@ -36,7 +36,7 @@ pub use error::{LexError, LexErrorKind};
 pub use token::Keyword;
 pub(crate) use token::{Token, TokenKind};
 
-use std::iter::Peekable;
+use std::iter::{self, Peekable};
 use std::str::Chars;
 
 use crate::span::{Position, Span};
@@ -86,6 +86,23 @@ pub(crate) fn tokenize(source: &str) -> Result<Lexed, LexError> {
         tokens: lexer.tokens,
         comments: lexer.comments,
     })
+}
+
+/// The text `text` as a program writes it: between its quotes, its `"`, its `\` and its line
+/// breaks escaped (`\"`, `\\`, `\n`), so that the lexer reads it back as it is. What the
+/// variables panel shows of a text (see *Variables panel* in `specs.md`), character by
+/// character, so that it takes the first ones of a long text alone.
+pub fn text_literal(text: &str) -> impl Iterator<Item = char> {
+    let escaped = text.chars().flat_map(|character| {
+        let escape = match character {
+            '"' | '\\' => Some(character),
+            '\n' => Some('n'),
+            _ => None,
+        };
+        let written = escape.map_or([Some(character), None], |escape| [Some('\\'), Some(escape)]);
+        written.into_iter().flatten()
+    });
+    iter::once('"').chain(escaped).chain(iter::once('"'))
 }
 
 /// The state kept from one line to the next.

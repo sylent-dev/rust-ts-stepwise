@@ -105,8 +105,12 @@ export { stepLines } from '#lib/wasm/stepwise.js';
  * enough to be read after every step, even at **Instant**. `line` is `undefined` once the program
  * has stopped, at its end or on an error: `outcome()` then says how. `printed()` gives the line
  * of the last step, a text that may be empty, when `step()` gave `printed`. What `world()`,
- * `outcome()` and `calls()` give are plain objects built again at each call: read them when they
- * are needed (once per frame, at a pause), and keep the world in `$state.raw`.
+ * `outcome()`, `calls()` and `variables(call)` give are plain objects built again at each call:
+ * read them when they are needed (once per frame, at a pause), and keep the world in `$state.raw`.
+ * `calls()` lists the calls in progress, each with its line and its number, and `variables(call)`
+ * gives those of one call, by its index among them: it throws for an index that has no call. A
+ * value is written as in a program, a text between its quotes, its first 200 characters at most
+ * (`cut` then says that there are more).
  *
  * A run stays in the module, as its level, which it outlives: free it at **Reset** and before
  * starting another one (`using`, or `free()`), and don't call it afterwards: it throws. An

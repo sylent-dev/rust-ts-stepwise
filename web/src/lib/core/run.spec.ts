@@ -427,7 +427,7 @@ print("never")
 });
 
 describe('the calls in progress of a program', () => {
-	it('give their lines and their variables, the ones the last step wrote marked', () => {
+	it('give their lines and their numbers, then the variables of one, those the last step wrote marked', () => {
 		const source = `function paint_side(length):
     let done = 0
     while done < length:
@@ -445,24 +445,23 @@ paint_side(3)
 		runToLine(run, 3);
 		// The main program has no `function`: the key is left out rather than undefined.
 		expect(run.calls()).toStrictEqual([
-			{
-				line: 10,
-				variables: [
-					{ name: 'sides', value: { type: 'number', text: '4' }, changed: false },
-					{ name: 'name', value: { type: 'text', text: 'côté 🤖' }, changed: false },
-					{ name: 'tint', value: { type: 'color', text: 'red' }, changed: false },
-					{ name: 'ready', value: { type: 'boolean', text: 'true' }, changed: false }
-				]
-			},
-			{
-				function: 'paint_side',
-				line: 3,
-				variables: [
-					{ name: 'length', value: { type: 'number', text: '3' }, changed: false },
-					{ name: 'done', value: { type: 'number', text: '0' }, changed: true }
-				]
-			}
+			{ line: 10, number: 0 },
+			{ function: 'paint_side', line: 3, number: 1 }
 		]);
+		// A value is written as in a program: a text between its quotes.
+		const value = (type: string, text: string) => ({ type, text, cut: false });
+		expect(run.variables(0)).toStrictEqual([
+			{ name: 'sides', value: value('number', '4'), changed: false },
+			{ name: 'name', value: value('text', '"côté 🤖"'), changed: false },
+			{ name: 'tint', value: value('color', 'red'), changed: false },
+			{ name: 'ready', value: value('boolean', 'true'), changed: false }
+		]);
+		expect(run.variables(1)).toStrictEqual([
+			{ name: 'length', value: value('number', '3'), changed: false },
+			{ name: 'done', value: value('number', '0'), changed: true }
+		]);
+		// An index without a call is a mistake of the interface, which reads the calls first.
+		expect(() => run.variables(2)).toThrow('no call in progress has the index 2');
 	});
 
 	it('give a whole number beyond what JavaScript holds exactly with every digit', () => {
@@ -470,8 +469,12 @@ paint_side(3)
 		using sandbox = new Sandbox(SMALL_SANDBOX);
 		using run = sandbox.start(source);
 		finish(run);
-		expect(run.calls()[0]?.variables).toStrictEqual([
-			{ name: 'most', value: { type: 'number', text: '9223372036854775807' }, changed: false }
+		expect(run.variables(0)).toStrictEqual([
+			{
+				name: 'most',
+				value: { type: 'number', text: '9223372036854775807', cut: false },
+				changed: false
+			}
 		]);
 		const outcome = run.outcome();
 		expect(outcome?.type === 'failed' ? outcome.error.kind : undefined).toStrictEqual({
@@ -509,11 +512,10 @@ paint_side(3)
 		// The main program, then the 200 calls, the last one refused its own call.
 		const calls = run.calls();
 		expect(calls).toHaveLength(201);
-		expect(calls.at(-1)).toStrictEqual({
-			function: 'down',
-			line: 2,
-			variables: [{ name: 'depth', value: { type: 'number', text: '200' }, changed: false }]
-		});
+		expect(calls.at(-1)).toStrictEqual({ function: 'down', line: 2, number: 200 });
+		expect(run.variables(200)).toStrictEqual([
+			{ name: 'depth', value: { type: 'number', text: '200', cut: false }, changed: false }
+		]);
 	});
 });
 

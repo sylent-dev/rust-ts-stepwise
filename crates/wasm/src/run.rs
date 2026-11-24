@@ -5,7 +5,8 @@
 //! boolean: at **Instant**, thousands of steps run between two frames, and an object would
 //! cost several times the step itself. Everything else is a plain object built when the
 //! interface asks for it, once per frame or when the program pauses: the world, how the run
-//! ended, the calls in progress (see Bridge in `docs/technical-choices.md`).
+//! ended, the calls in progress, then the variables of the one call the panel shows (see
+//! Bridge in `docs/technical-choices.md`).
 
 use std::error::Error;
 use std::fmt;
@@ -141,6 +142,19 @@ impl Run {
         let calls = self.core.machine().calls();
         calls.iter().map(Call::from).collect()
     }
+
+    /// The variables of the call of index `call`, as [`Run::variables`] gives them, before
+    /// they cross to JavaScript; nothing when there is no such call.
+    #[must_use]
+    pub fn variables_of(&self, call: usize) -> Option<Vec<Variable>> {
+        let calls = self.core.machine().calls();
+        let variables = calls.get(call)?.variables().map(|variable| Variable {
+            name: variable.name.to_owned(),
+            value: variable.value.into(),
+            changed: variable.changed,
+        });
+        Some(variables.collect())
+    }
 }
 
 #[wasm_bindgen]
@@ -228,8 +242,9 @@ impl Run {
     }
 
     /// The calls in progress, from the main program to the function being run, each with its
-    /// line and its variables: what the variables panel shows. They stay as they were once
-    /// the program has stopped.
+    /// line and its number: what the variables panel lists. They stay as they were once the
+    /// program has stopped. Their variables are read one call at a time
+    /// ([`Run::variables`]): a recursion of 200 calls may hold thousands of them.
     ///
     /// # Errors
     ///
@@ -238,6 +253,25 @@ impl Run {
         self.calls_in_progress()
             .iter()
             .map(|call| Ok(Ts::from_rust(call)?))
+            .collect()
+    }
+
+    /// The variables of the call of index `call` among [`Run::calls`], 0 for the main
+    /// program: those alive, in the order they were declared, its parameters first. They stay
+    /// as they were once the program has stopped.
+    ///
+    /// # Errors
+    ///
+    /// It throws when there is no call of that index, a mistake of the interface, which reads
+    /// the calls first; or when a variable can't be made a JavaScript object, which none
+    /// does.
+    pub fn variables(&self, call: usize) -> Result<Vec<Ts<Variable>>, JsError> {
+        let variables = self
+            .variables_of(call)
+            .ok_or_else(|| JsError::new(&format!("no call in progress has the index {call}")))?;
+        variables
+            .iter()
+            .map(|variable| Ok(Ts::from_rust(variable)?))
             .collect()
     }
 }
@@ -287,7 +321,7 @@ pub enum GoalNotMet {
 
 /// A call in progress: the main program, or a function that has been called and hasn't
 /// ended.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Tsify)]
+#[derive(Debug, Clone, PartialEq, Serialize, Tsify)]
 pub struct Call {
     /// The name of its function; none for the main program.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -296,8 +330,10 @@ pub struct Call {
     /// last one run once the program has stopped. For the others: the line of the call they
     /// wait for.
     pub line: u32,
-    /// Its variables alive, in the order they were declared, its parameters first.
-    pub variables: Vec<Variable>,
+    /// Its number: 0 for the main program, then 1, 2… in the order the calls were made, never
+    /// the same for two calls of a run. The panel follows the call that the learner chose by
+    /// it.
+    pub number: f64,
 }
 
 /// A variable of a call in progress.
@@ -345,16 +381,15 @@ impl From<level::GoalNotMet> for GoalNotMet {
 }
 
 impl From<&CallInProgress<'_>> for Call {
+    #[expect(
+        clippy::cast_precision_loss,
+        reason = "a number of JavaScript counts exactly up to 2^53 calls, as many as the steps"
+    )]
     fn from(call: &CallInProgress<'_>) -> Self {
-        let variables = call.variables.iter().map(|variable| Variable {
-            name: variable.name.to_owned(),
-            value: variable.value.into(),
-            changed: variable.changed,
-        });
         Self {
             function: call.function.map(str::to_owned),
             line: call.line.start.line,
-            variables: variables.collect(),
+            number: call.number as f64,
         }
     }
 }
@@ -449,6 +484,15 @@ robot = { at = [0, 0], facing = "east" }
         Value {
             value_type: ValueType::Number,
             text: text.to_owned(),
+            cut: false,
+        }
+    }
+
+    fn call(function: Option<&str>, line: u32, number: f64) -> Call {
+        Call {
+            function: function.map(str::to_owned),
+            line,
+            number,
         }
     }
 
@@ -637,7 +681,30 @@ drop()
     }
 
     #[test]
-    fn the_calls_in_progress_give_their_lines_and_their_variables() {
+    fn the_calls_in_progress_give_their_lines_and_their_numbers() {
+        let source = "\
+function paint_side(length):
+    let done = 0
+    done = done + 1
+
+let sides = 4
+paint_side(3)
+paint_side(5)
+";
+        let mut run = run(source);
+        // Up to the line 3 of the first call: the `let` of the function has just run.
+        run_to_line(&mut run, 3);
+        let first = [call(None, 6, 0.0), call(Some("paint_side"), 3, 1.0)];
+        assert_eq!(run.calls_in_progress(), first);
+        // The second call, from the next line, has a number of its own.
+        run.step();
+        run_to_line(&mut run, 3);
+        let second = [call(None, 7, 0.0), call(Some("paint_side"), 3, 2.0)];
+        assert_eq!(run.calls_in_progress(), second);
+    }
+
+    #[test]
+    fn the_variables_are_given_one_call_at_a_time() {
         let source = "\
 function paint_side(length):
     let done = 0
@@ -647,26 +714,19 @@ let sides = 4
 paint_side(3)
 ";
         let mut run = run(source);
-        // Up to the line 3: the `let` of the function has just run.
         run_to_line(&mut run, 3);
         assert_eq!(
-            run.calls_in_progress(),
-            [
-                Call {
-                    function: None,
-                    line: 6,
-                    variables: vec![variable("sides", number("4"), false)],
-                },
-                Call {
-                    function: Some("paint_side".to_owned()),
-                    line: 3,
-                    variables: vec![
-                        variable("length", number("3"), false),
-                        variable("done", number("0"), true),
-                    ],
-                },
-            ]
+            run.variables_of(0),
+            Some(vec![variable("sides", number("4"), false)])
         );
+        assert_eq!(
+            run.variables_of(1),
+            Some(vec![
+                variable("length", number("3"), false),
+                variable("done", number("0"), true),
+            ])
+        );
+        assert_eq!(run.variables_of(2), None);
     }
 
     #[test]
@@ -675,15 +735,13 @@ paint_side(3)
         finish(&mut run);
         let text = Value {
             value_type: ValueType::Text,
-            text: "north".to_owned(),
+            text: "\"north\"".to_owned(),
+            cut: false,
         };
+        assert_eq!(run.calls_in_progress(), [call(None, 2, 0.0)]);
         assert_eq!(
-            run.calls_in_progress(),
-            [Call {
-                function: None,
-                line: 2,
-                variables: vec![variable("side", text, false)],
-            }]
+            run.variables_of(0),
+            Some(vec![variable("side", text, false)])
         );
     }
 }

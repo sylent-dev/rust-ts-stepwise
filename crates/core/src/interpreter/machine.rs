@@ -113,8 +113,8 @@ impl Machine {
     }
 
     /// The calls in progress, from the main program to the function being run, each with
-    /// its line and its variables: what the variables panel shows. They stay as they were
-    /// once the program has ended or stopped on an error.
+    /// its line, its number and its variables: what the variables panel shows. They stay as
+    /// they were once the program has ended or stopped on an error.
     #[must_use]
     pub fn calls(&self) -> Vec<CallInProgress<'_>> {
         self.memory.calls()
