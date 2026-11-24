@@ -360,6 +360,18 @@ describe('the sounds of the program of a screen', () => {
 		program.free();
 	});
 
+	it('wakes the sounds at each press that moves a paused program on: Resume, Step', () => {
+		const { program, heard } = soundsOf('forward()\nforward()\n');
+		// Step starts the program, Step runs its first line, Resume, Pause, Resume.
+		program.step();
+		program.step();
+		program.runOrPause();
+		program.runOrPause();
+		program.runOrPause();
+		expect(heard.filter((asked) => asked === 'wake')).toHaveLength(4);
+		program.free();
+	});
+
 	it('stops what plays on Reset, and once the screen is done with it', () => {
 		const { program, heard } = soundsOf('forward()\n');
 		program.runOrPause();

@@ -11,8 +11,8 @@ import type { Sound } from './recipes.ts';
 
 /** A sound to play, and in how long, in milliseconds. */
 export interface Cue {
-	sound: Sound;
-	delay: number;
+	readonly sound: Sound;
+	readonly delay: number;
 }
 
 /**

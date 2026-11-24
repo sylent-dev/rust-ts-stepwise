@@ -11,7 +11,8 @@
      The status bar, under the code, says where the program stands, in the color of its state.
      The console shows the log of the last **Run**: what the program printed and the error that
      stopped it, or the errors that kept it from starting, a click on one putting the cursor at
-     its place. **Help › Keyboard shortcuts** lists the shortcuts of the screen in a panel. -->
+     its place. **Help › Keyboard shortcuts** lists the shortcuts of the screen in a panel. A
+     run plays its sounds while the setting **Sounds** is on (see Sounds in specs.md). -->
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import { differsFromStart, type LevelCode } from '#lib/code/code.ts';
@@ -70,7 +71,8 @@
 
 	/**
 	 * The sounds of the programs, while the setting **Sounds** is on, read at each sound: turned
-	 * off in the settings, or in another tab, nothing more plays.
+	 * off in the settings, or in another tab, nothing more plays (and the layout stops what still
+	 * plays). `stop` reads no signal, since a cleanup calls it.
 	 */
 	const sounds: ProgramSounds = {
 		wake() {

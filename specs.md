@@ -432,7 +432,7 @@ When the setting **Sounds** is on, a run plays a few sounds, synthesized in the 
 | When | Sound | Length |
 |---|---|---|
 | A run where every goal is met | **41. Arpeggio**: four soft bell notes that rise (C5, E5, G5, C6, 70 ms apart), as the robot hops. | 0.7 s |
-| A goal not met, an error that the robot doesn't show (a division by zero, too many calls in progress…), or a **Run** that the checks refuse, nothing moving on the map (decided on 2026-11-24: each **Run** has an answer) | **48. Soft slide down**: one soft note that slides down from G4 to D4, never scolding; as the robot shakes its head, as the line of the error is marked, or as the console lists the errors found before running. | 0.4 s |
+| A goal not met, an error that the robot doesn't show (a division by zero, too many calls in progress…), or a **Run** or a **Step** that the checks refuse, nothing moving on the map (decided on 2026-11-24: each **Run** has an answer) | **48. Soft slide down**: one soft note that slides down from G4 to D4, never scolding; as the robot shakes its head, as the line of the error is marked, or as the console lists the errors found before running. | 0.4 s |
 | A bump into a wall or the edge of the map, or a `pick_up()` or a `drop()` that fails | **90. Spring** (77 ported): a low tone that wobbles 18 times a second and settles, with a click; when the front of the robot touches the border of its cell, or as it starts to shake after an action that fails. | 0.4 s |
 | `forward()` | **91. Tiny blip** (88 ported): one short note, E5, that rises a little, 10 dB quieter than the other sounds, as the move starts. | 0.04 s |
 | `turn_left()`, `turn_right()` | The tiny blip twice, G5 then E5. | 0.1 s |

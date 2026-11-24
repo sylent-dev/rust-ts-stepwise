@@ -44,12 +44,16 @@ export interface ProgramControls {
  */
 export interface ProgramSounds {
 	/**
-	 * Called as a press of the learner starts the program, or asks for it: a browser plays the
-	 * sounds of a page only after one, and the ones of a run come at its frames.
+	 * Called at each press of the learner that moves the program on, or asks for it (**Run**,
+	 * **Resume**, **Step**): a browser plays the sounds of a page only after one, and the ones of
+	 * a run come at its frames.
 	 */
 	wake(): void;
 	play(cue: Cue): void;
-	/** Stops what plays, and what was to play: the map is put back. */
+	/**
+	 * Stops what plays, and what was to play: the map is put back. It reads no signal: `free`
+	 * calls it in the cleanup of an effect (see `kept` in core/core-ready.svelte.ts).
+	 */
 	stop(): void;
 }
 
@@ -145,6 +149,7 @@ export class Program implements ProgramControls {
 				this.#playback.pause();
 				break;
 			case 'resume':
+				this.#sounds?.wake();
 				this.#playback.play();
 				break;
 			case 'run':
@@ -160,6 +165,7 @@ export class Program implements ProgramControls {
 		// A program that waits runs its next step; one that hasn't started, or has stopped, is
 		// checked as for **Run**, then only starts.
 		if (this.status === 'paused') {
+			this.#sounds?.wake();
 			this.#playback.step();
 		} else if (this.canStep && this.#check()) {
 			this.#log.start();

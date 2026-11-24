@@ -27,11 +27,11 @@ pub struct RuntimeError {
 ///
 /// Each variant is the error of the same name in the core, where it is described: those of
 /// `RuntimeErrorKind`, the ones of the robot among them, each with its own code, which
-/// `RobotError` also gives as one group. No code is one of the checks before running (`ProgramErrorKind`). An operator is given
-/// by its type, as it is written (`word.rs`), so that the interface places each one; a function
-/// as it is written, a built-in function that the error can only come from by its type; a whole
-/// number of the program as its digits (see `Value`), and a limit of the language with the
-/// error that it stops.
+/// `RobotError` also gives as one group. No code is one of the checks before running
+/// (`ProgramErrorKind`). An operator is given by its type, as it is written (`word.rs`), so that
+/// the interface places each one; a function as it is written, a built-in function that the error
+/// can only come from by its type; a whole number of the program as its digits (see `Value`), and
+/// a limit of the language with the error that it stops.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Tsify)]
 #[serde(
     tag = "code",

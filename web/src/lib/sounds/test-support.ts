@@ -83,7 +83,8 @@ export class FakeSource extends FakeNode {
 export class FakeAudioContext {
 	readonly sampleRate = 48_000;
 	currentTime = 0;
-	state: 'suspended' | 'running' | 'closed';
+	/** `interrupted` is a state of Safari alone, which the types of a browser don't know. */
+	state: 'suspended' | 'running' | 'closed' | 'interrupted';
 	resumed = 0;
 	readonly destination: FakeNode;
 	/** The sources made, in order. */

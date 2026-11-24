@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { SoundPlayer } from './sound-player.ts';
 import { FakeAudioContext, heardIn } from './test-support.ts';
 
@@ -38,7 +38,8 @@ describe('the player of the sounds', () => {
 		if (!context) throw new Error('no context made');
 		context.currentTime = 1;
 		player.play('bump', 135);
-		expect(heardIn(context).map(({ at }) => at)).toEqual([0, 1135, 1135, 1135]);
+		// One frame later, every sound.
+		expect(heardIn(context).map(({ at }) => at)).toEqual([17, 1152, 1152, 1152]);
 	});
 
 	it('plays every sound at the volume of every sound, into the speakers', () => {
@@ -56,6 +57,35 @@ describe('the player of the sounds', () => {
 		expect(made[0]?.state).toBe('running');
 		player.play('move');
 		expect(made[0]?.resumed).toBe(1);
+	});
+
+	it('wakes a context that Safari interrupted, and leaves a closed one', () => {
+		const { player, made } = playerOf();
+		player.play('move');
+		const [context] = made;
+		if (!context) throw new Error('no context made');
+		context.state = 'interrupted';
+		player.wake();
+		expect({ resumed: context.resumed, state: context.state }).toEqual({
+			resumed: 1,
+			state: 'running'
+		});
+		context.state = 'closed';
+		player.wake();
+		expect(context.resumed).toBe(1);
+	});
+
+	it('skips a sound that the browser refuses, and says it to the console', () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+		const context = new FakeAudioContext();
+		context.createOscillator = () => {
+			throw new RangeError('refused');
+		};
+		const player = new SoundPlayer(() => context.typed);
+		expect(() => {
+			player.play('move');
+		}).not.toThrow();
+		expect(warn).toHaveBeenCalledOnce();
 	});
 
 	it('fades out what plays at a stop, and plays what comes next anew', () => {

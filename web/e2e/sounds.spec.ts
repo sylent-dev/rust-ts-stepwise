@@ -11,6 +11,13 @@ interface Heard {
 	notes: (number | 'noise')[];
 }
 
+declare global {
+	interface Window {
+		/** Written by the init script of this file, before the application loads. */
+		heard?: Heard;
+	}
+}
+
 /** The first notes of each sound, by their frequencies (the recipes of `lib/sounds/recipes.ts`). */
 const SUCCESS = [523, 1047, 659, 1319, 784, 1568, 1047, 2093];
 const FAILURE = [392];
@@ -24,8 +31,8 @@ const BUMPING = 'forward()\nturn_left()\nforward()\n';
 test.beforeEach(async ({ page }) => {
 	// Every audio context of the page writes down what it is asked, before the application loads.
 	await page.addInitScript(() => {
-		const heard = { contexts: 0, notes: [] as (number | 'noise')[] };
-		Object.assign(window, { heard });
+		const heard: Heard = { contexts: 0, notes: [] };
+		window.heard = heard;
 		class HeardContext extends AudioContext {
 			constructor(options?: AudioContextOptions) {
 				super(options);
@@ -67,8 +74,8 @@ test.beforeEach(async ({ page }) => {
 /** What the page has asked for so far. */
 async function heardIn(page: Page): Promise<Heard> {
 	return page.evaluate(() => {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- written by the init script of this file, before the application loads
-		const { heard } = window as unknown as { heard: Heard };
+		const { heard } = window;
+		if (!heard) throw new Error('the init script of the test wrote nothing');
 		return { contexts: heard.contexts, notes: [...heard.notes] };
 	});
 }
@@ -76,8 +83,7 @@ async function heardIn(page: Page): Promise<Heard> {
 /** Forgets the notes asked for so far, to read the ones that come next. */
 async function forget(page: Page): Promise<void> {
 	await page.evaluate(() => {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- as in `heardIn`
-		(window as unknown as { heard: Heard }).heard.notes.length = 0;
+		if (window.heard) window.heard.notes.length = 0;
 	});
 }
 
