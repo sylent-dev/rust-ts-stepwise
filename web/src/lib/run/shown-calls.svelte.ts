@@ -21,32 +21,53 @@ export class ShownCalls {
 	variables = $state.raw<readonly Variable[]>([]);
 	/** The number of the call that the learner chose; nothing while the call being run is shown. */
 	#chosen: number | undefined;
+	/**
+	 * The variables of the call being run, as the last read found them: what a click on that call
+	 * shows while the action of a step plays, the core having run that step already.
+	 */
+	#running: readonly Variable[] = [];
 
 	/**
 	 * Reads the calls of `run` as they are now, nothing when there is no run: the call chosen while
-	 * it is in progress, else the call being run. The run must not be freed.
+	 * it is in progress, else the call being run, whose variables are kept too. The run must not be
+	 * freed.
 	 */
 	read(run: Run | undefined): void {
 		const calls = run?.calls() ?? [];
+		const running = calls.length - 1;
 		let shown = calls.findIndex((call) => call.number === this.#chosen);
 		if (shown < 0) {
 			this.#chosen = undefined;
-			shown = calls.length - 1;
+			shown = running;
 		}
 		this.calls = calls;
-		this.shown = shown < 0 ? undefined : shown;
-		this.variables = run && shown >= 0 ? run.variables(shown) : [];
+		if (!run || running < 0) {
+			this.shown = undefined;
+			this.#running = [];
+			this.variables = [];
+			return;
+		}
+		this.shown = shown;
+		this.#running = run.variables(running);
+		this.variables = shown === running ? this.#running : run.variables(shown);
 	}
 
 	/**
 	 * Shows the call of index `index` among `calls`, which the learner chose, from `run`: the call
-	 * being run follows the program again, into the calls it makes.
+	 * being run follows the program again, into the calls it makes. A click is answered at once, as
+	 * the line lit finds the calls, even while the action of a step plays, `run` being a step ahead
+	 * then: the list isn't read again. Such a step, an action alone on its line, writes no variable,
+	 * and may end the call being run, never another one; and only the call being run holds the
+	 * variables that the step before changed. So another call reads the same in `run`, at the same
+	 * index, and the call being run is the one kept from the last read.
 	 */
 	choose(index: number, run: Run | undefined): void {
 		const call = this.calls[index];
-		if (!call) return;
-		this.#chosen = index === this.calls.length - 1 ? undefined : call.number;
-		this.read(run);
+		if (!call || !run) return;
+		const running = index === this.calls.length - 1;
+		this.#chosen = running ? undefined : call.number;
+		this.shown = index;
+		this.variables = running ? this.#running : run.variables(index);
 	}
 
 	/** Forgets the call chosen: the program starts again, or the map is put back. */

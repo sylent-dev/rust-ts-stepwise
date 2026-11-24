@@ -80,6 +80,15 @@ paint_square(3)
 paint_square(4)
 `;
 
+/** A walk of one cell, the last line of a function. */
+const WALK = `function walk(steps):
+    let done = steps
+    forward()
+
+let n = 1
+walk(n)
+`;
+
 describe('the calls that the variables panel shows', () => {
 	it('are none at rest, then the main program from its first line', () => {
 		using playback = play(SQUARE);
@@ -150,6 +159,37 @@ describe('the calls that the variables panel shows', () => {
 		playback.showCall(1);
 		playback.step();
 		expect(shown(playback)).toMatchObject({ shown: 2, variables: ['*length=4'] });
+	});
+
+	it('answer a click while the robot moves with the state of the line lit', () => {
+		using playback = play(WALK);
+		stepTo(playback, 3);
+		playback.showCall(0);
+		expect(shown(playback)).toEqual({
+			calls: ['main · 6', 'walk · 3'],
+			shown: 0,
+			variables: ['n=1']
+		});
+		// The move of the last line of `walk` plays: the core has run it, and ended the call.
+		playback.step();
+		expect(playback.motion?.action).toBe('moved');
+		playback.showCall(1);
+		expect(shown(playback)).toEqual({
+			calls: ['main · 6', 'walk · 3'],
+			shown: 1,
+			variables: ['steps=1', '*done=1']
+		});
+		playback.showCall(0);
+		expect(shown(playback)).toEqual({
+			calls: ['main · 6', 'walk · 3'],
+			shown: 0,
+			variables: ['n=1']
+		});
+		// The move ends: the line of the call is lit again, `walk` has ended.
+		playback.tick(0);
+		playback.tick(5000);
+		expect(playback.motion).toBeUndefined();
+		expect(shown(playback)).toEqual({ calls: ['main · 6'], shown: 0, variables: ['n=1'] });
 	});
 
 	it('forget the call chosen once the map is put back, and show none until the program starts', () => {
