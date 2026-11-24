@@ -311,3 +311,73 @@ describe('the console of the program of a screen', () => {
 		program.free();
 	});
 });
+
+describe('the sounds of the program of a screen', () => {
+	/** A program of an editor that holds `text`, and what it asks of its sounds, in order. */
+	function soundsOf(text: string) {
+		const heard: string[] = [];
+		page = pageOf();
+		const program = new Program(sandboxPlayground(sandbox), () => text, {
+			frames: page.frames,
+			sounds: {
+				wake: () => heard.push('wake'),
+				play: ({ sound, delay }) => heard.push(`${sound} ${String(delay)}`),
+				stop: () => heard.push('stop')
+			}
+		});
+		return { program, heard };
+	}
+
+	it('stops what played before and wakes the sounds as Run starts the program', () => {
+		const { program, heard } = soundsOf('forward()\n');
+		program.runOrPause();
+		finish();
+		expect(heard).toEqual(['stop', 'wake', 'move 0']);
+		program.free();
+	});
+
+	it('plays the soft slide when the checks refuse a Run or a Step', () => {
+		const { program, heard } = soundsOf('forwrd()\n');
+		program.runOrPause();
+		program.step();
+		expect(heard).toEqual(['stop', 'wake', 'failure 0', 'stop', 'wake', 'failure 0']);
+		program.free();
+	});
+
+	it('plays the spring of a bump as the robot touches its wall, and nothing more', () => {
+		const { program, heard } = soundsOf('repeat 4:\n    forward()\n');
+		program.runOrPause();
+		finish();
+		expect(heard).toEqual(['stop', 'wake', 'move 0', 'move 0', 'move 0', 'bump 135']);
+		program.free();
+	});
+
+	it('plays the soft slide as the line of an error that the map doesn’t show is marked', () => {
+		const { program, heard } = soundsOf('print(1 / 0)\n');
+		program.runOrPause();
+		finish();
+		expect(heard).toEqual(['stop', 'wake', 'failure 0']);
+		program.free();
+	});
+
+	it('wakes the sounds at each press that moves a paused program on: Resume, Step', () => {
+		const { program, heard } = soundsOf('forward()\nforward()\n');
+		// Step starts the program, Step runs its first line, Resume, Pause, Resume.
+		program.step();
+		program.step();
+		program.runOrPause();
+		program.runOrPause();
+		program.runOrPause();
+		expect(heard).toEqual(['stop', 'wake', 'wake', 'move 0', 'wake', 'wake']);
+		program.free();
+	});
+
+	it('stops what plays on Reset, and once the screen is done with it', () => {
+		const { program, heard } = soundsOf('forward()\n');
+		program.runOrPause();
+		page.draw(0);
+		program.reset();
+		program.free();
+		expect(heard).toEqual(['stop', 'wake', 'move 0', 'stop', 'stop']);
+	});
+});

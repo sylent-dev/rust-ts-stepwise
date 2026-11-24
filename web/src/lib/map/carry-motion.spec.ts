@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { Robot } from '#lib/core/core.ts';
 import { BAY, carryAt, IN_BAY } from './carry-motion.ts';
-import type { Action, Motion } from './motion.ts';
+import type { Action } from './actions.ts';
+import type { Motion } from './motion.ts';
 import { worldOf } from './test-support.ts';
 
 /** The motion of `action`, with full motion or less of it; `carryAt` reads nothing else of it. */

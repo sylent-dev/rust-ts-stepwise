@@ -1,10 +1,10 @@
 // The settings as a browser keeps them (see Local files in specs.md): under one name, their
-// fields beside the version of their shape, `{"theme":"night-desk","speed":5,"version":1}`. A
-// field that is missing, or that can't be read, takes its default: a setting added later needs
-// no new version. A save keeps the fields that it doesn't know: a tab still open on the version
-// before, which goes on saving, drops no setting added since. The script of `src/app.html` reads
-// the same value before the first paint: a test keeps the two in step
-// (lib/page/page-theme.spec.ts).
+// fields beside the version of their shape:
+// `{"theme":"night-desk","speed":5,"sounds":true,"version":1}`. A field that is missing, or that
+// can't be read, takes its default: a setting added later needs no new version. A save keeps the
+// fields that it doesn't know: a tab still open on the version before, which goes on saving,
+// drops no setting added since. The script of `src/app.html` reads the same value before the
+// first paint: a test keeps the two in step (lib/page/page-theme.spec.ts).
 
 import { isInstant, nearestSpeed } from '#lib/run/pace.ts';
 import { keyOf, type Store } from '#lib/storage/store.ts';
@@ -37,7 +37,8 @@ export function loadSettings(store: Store): Settings {
 	const saved = store.read(NAME, VERSION);
 	return {
 		theme: isTheme(saved?.theme) ? saved.theme : DEFAULT_SETTINGS.theme,
-		speed: speedFrom(saved?.speed) ?? DEFAULT_SETTINGS.speed
+		speed: speedFrom(saved?.speed) ?? DEFAULT_SETTINGS.speed,
+		sounds: typeof saved?.sounds === 'boolean' ? saved.sounds : DEFAULT_SETTINGS.sounds
 	};
 }
 

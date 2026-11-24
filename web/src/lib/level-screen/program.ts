@@ -1,13 +1,14 @@
 // The program of a level screen (see Running a program in specs.md): the code of the editor,
-// checked, then played on the map shown. The commands **Run**, **Step** and **Reset** ask it
-// (level-commands.ts), and the screen reads on it what its map draws, whether its code can be
-// changed, and what its console shows.
+// checked, then played on the map shown, with its sounds (see Sounds in specs.md). The commands
+// **Run**, **Step** and **Reset** ask it (level-commands.ts), and the screen reads on it what its
+// map draws, whether its code can be changed, and what its console shows.
 
 import { ConsoleLog, type LogView } from '#lib/console/console-log.svelte.ts';
 import { check } from '#lib/core/core.ts';
 import type { CodeChange } from '#lib/editor/edits.ts';
 import type { Scene } from '#lib/map/scene.ts';
 import { Playback, type PlaybackOptions, type PlaybackStatus } from '#lib/run/playback.svelte.ts';
+import { actionSound, REFUSED_SOUND, stopSound, type Cue } from '#lib/sounds/run-sounds.ts';
 import type { Playground } from './playground.ts';
 
 /**
@@ -37,6 +38,34 @@ export interface ProgramControls {
 	reset(): void;
 }
 
+/**
+ * Where a program plays its sounds: the screen gives the player of the page, which plays only
+ * while the setting **Sounds** is on.
+ */
+export interface ProgramSounds {
+	/**
+	 * Called at each press of the learner that moves the program on, or asks for it (**Run**,
+	 * **Resume**, **Step**): a browser plays the sounds of a page only after one, and the ones of
+	 * a run come at its frames.
+	 */
+	wake(): void;
+	play(cue: Cue): void;
+	/**
+	 * Stops what plays, and what was to play: the map is put back. It reads no signal: `free`
+	 * calls it in the cleanup of an effect (see `kept` in core/core-ready.svelte.ts).
+	 */
+	stop(): void;
+}
+
+/** How a screen makes its program: as a `Playback`, and the sounds it plays. */
+export interface ProgramOptions extends Omit<
+	PlaybackOptions,
+	'onPrinted' | 'onStopped' | 'onAction'
+> {
+	/** Where its sounds play; none by default. */
+	sounds?: ProgramSounds;
+}
+
 export class Program implements ProgramControls {
 	/** The program as it is played, for the screen to read. It follows the program. */
 	readonly played: PlayedProgram;
@@ -48,6 +77,7 @@ export class Program implements ProgramControls {
 	readonly #log = new ConsoleLog();
 	readonly #playback: Playback;
 	readonly #text: () => string | undefined;
+	readonly #sounds: ProgramSounds | undefined;
 	/** The code as it was last checked, which a run starts on. */
 	#checked = '';
 
@@ -59,9 +89,10 @@ export class Program implements ProgramControls {
 	constructor(
 		playground: Playground,
 		text: () => string | undefined,
-		options?: Omit<PlaybackOptions, 'onPrinted' | 'onStopped'>
+		{ sounds, ...options }: ProgramOptions = {}
 	) {
 		this.#text = text;
+		this.#sounds = sounds;
 		this.log = this.#log;
 		this.#playback = new Playback(
 			{ world: playground.world, start: () => playground.start(this.#checked) },
@@ -72,6 +103,10 @@ export class Program implements ProgramControls {
 				},
 				onStopped: (outcome) => {
 					if (outcome.type === 'failed') this.#log.fail(outcome.error);
+					this.#play(stopSound(outcome));
+				},
+				onAction: (action, time, rate) => {
+					this.#play(actionSound(action, time, rate));
 				}
 			}
 		);
@@ -114,6 +149,7 @@ export class Program implements ProgramControls {
 				this.#playback.pause();
 				break;
 			case 'resume':
+				this.#sounds?.wake();
 				this.#playback.play();
 				break;
 			case 'run':
@@ -129,6 +165,7 @@ export class Program implements ProgramControls {
 		// A program that waits runs its next step; one that hasn't started, or has stopped, is
 		// checked as for **Run**, then only starts.
 		if (this.status === 'paused') {
+			this.#sounds?.wake();
 			this.#playback.step();
 		} else if (this.canStep && this.#check()) {
 			this.#log.start();
@@ -136,9 +173,13 @@ export class Program implements ProgramControls {
 		}
 	}
 
-	/** **Reset**: the map goes back to its start, and the console keeps the log of the last run. */
+	/**
+	 * **Reset**: the map goes back to its start, and the console keeps the log of the last run.
+	 * What the run played stops.
+	 */
 	reset(): void {
 		this.#playback.reset();
+		this.#sounds?.stop();
 	}
 
 	/**
@@ -179,23 +220,34 @@ export class Program implements ProgramControls {
 	 */
 	free(): void {
 		this.#playback.free();
+		this.#sounds?.stop();
 	}
 
 	/**
 	 * Checks the code as it is now, before the program starts on it. With an error nothing
 	 * starts, and the map goes back to its start all the same: what it showed was the end of
-	 * another program. The editor underlines the errors, and the console lists them.
+	 * another program. The editor underlines the errors, the console lists them, and the soft
+	 * slide says it, so that each press that asks for a run has an answer. What the run before
+	 * played stops.
 	 */
 	#check(): boolean {
 		const text = this.#text();
 		if (text === undefined) return false;
+		this.#sounds?.stop();
+		this.#sounds?.wake();
 		const errors = check(text);
 		if (errors.length > 0) {
 			this.#playback.reset();
 			this.#log.list(errors);
+			this.#play(REFUSED_SOUND);
 			return false;
 		}
 		this.#checked = text;
 		return true;
+	}
+
+	/** Plays a sound of the program, if it has one. */
+	#play(cue: Cue | undefined): void {
+		if (cue) this.#sounds?.play(cue);
 	}
 }

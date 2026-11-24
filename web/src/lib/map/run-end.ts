@@ -6,7 +6,8 @@
 import type { Outcome, Point } from '#lib/core/core.ts';
 import type { WorldElement } from '#lib/elements.ts';
 import { clamp01, overshoot } from './easing.ts';
-import { HEAD_SHAKE_SHARE, runEnd, type Motion, type Pose, type RunEnd } from './motion.ts';
+import { runEnd, type RunEnd } from './actions.ts';
+import { HEAD_SHAKE_SHARE, type Motion, type Pose } from './motion.ts';
 
 /** The eyes of the robot at each end of a run, drawn over its own. */
 const EYES = {

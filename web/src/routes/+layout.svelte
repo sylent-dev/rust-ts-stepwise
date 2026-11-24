@@ -1,5 +1,6 @@
 <!-- What every page shares: its styles (lib/styles/app.css); the settings, which the page
-     follows; and the message of a window too small, which takes the place of any screen. -->
+     follows, its sounds included; and the message of a window too small, which takes the place
+     of any screen. -->
 <script lang="ts">
 	import '#lib/styles/app.css';
 	import { onMount } from 'svelte';
@@ -8,6 +9,7 @@
 	import { SETTINGS_KEY } from '#lib/settings/saved-settings.ts';
 	import { currentWindow } from '#lib/shell/current-window.svelte.ts';
 	import WindowMessage from '#lib/shell/window-message.svelte';
+	import { pageSounds } from '#lib/sounds/page-sounds.ts';
 	import type { LayoutProps } from './$types';
 
 	let { children }: LayoutProps = $props();
@@ -35,6 +37,12 @@
 	// theme saved before its first paint; from then on, a change applies at once.
 	$effect(() => {
 		document.documentElement.dataset.theme = settings.theme;
+	});
+
+	// The sounds turned off, here or in another tab, stop what still plays: the end of an
+	// arpeggio, a spring due in a moment. What comes next asks the setting at each sound.
+	$effect(() => {
+		if (!settings.sounds) pageSounds.stop();
 	});
 
 	/**

@@ -1,6 +1,6 @@
 // The settings (see Settings in specs.md): what the learner chooses for the whole application,
-// not for a level. A setting arrives with the step that codes it: **Sounds** with the sounds
-// (step 18). Nothing here knows how they are saved (saved-settings.ts).
+// not for a level. A setting arrives with the step that codes it. Nothing here knows how they are
+// saved (saved-settings.ts).
 
 import { NORMAL_SPEED } from '#lib/run/pace.ts';
 
@@ -29,10 +29,27 @@ export interface Settings {
 	 * the status bar of a level choose it (see Running a program in specs.md).
 	 */
 	speed: number;
+	/** Whether a run plays its sounds (see Sounds in specs.md). */
+	sounds: boolean;
 }
 
 /**
- * The settings of a first visit: Day Desk, so that a whole class sees the same screen, and the
- * normal speed.
+ * The settings of a first visit: Day Desk, so that a whole class sees the same screen, the normal
+ * speed, and no sound, so that a classroom stays quiet.
  */
-export const DEFAULT_SETTINGS: Readonly<Settings> = { theme: 'day-desk', speed: NORMAL_SPEED };
+export const DEFAULT_SETTINGS: Readonly<Settings> = {
+	theme: 'day-desk',
+	speed: NORMAL_SPEED,
+	sounds: false
+};
+
+/** The two values of **Sounds**, as its segments show them, from left to right. */
+export const SOUNDS = ['off', 'on'] as const;
+
+/** A value of **Sounds**, as its segments show it. */
+export type SoundsValue = (typeof SOUNDS)[number];
+
+/** The name of the message that holds a value of **Sounds**: `sounds-on`. */
+export function soundsMessage(value: SoundsValue): string {
+	return `sounds-${value}`;
+}

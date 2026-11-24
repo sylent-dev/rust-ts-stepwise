@@ -11,9 +11,9 @@ import {
 	isRunEnd,
 	robotFailure,
 	runEnd,
-	type Action,
-	type Motion
-} from '#lib/map/motion.ts';
+	type Action
+} from '#lib/map/actions.ts';
+import type { Motion } from '#lib/map/motion.ts';
 import type { Scene } from '#lib/map/scene.ts';
 import { isInstant, NORMAL_SPEED, paceFrame, runInstant, SPEEDS, START_CARRY } from './pace.ts';
 
@@ -66,6 +66,14 @@ export interface PlaybackOptions {
 	 * once its last action has ended, the end of the run playing afterwards.
 	 */
 	onStopped?: (outcome: Outcome) => void;
+	/**
+	 * Told each action that the map shows, as it starts: the action of a step, the error of the
+	 * robot that stopped the program, then the end of the run; with the time it takes there, 0
+	 * when it shows at once, and the speed it is played at, the slowest one after a **Step**. At
+	 * **Instant**, which draws no step, only the error of the robot and the end of the run are
+	 * told. The sounds of a run follow it.
+	 */
+	onAction?: (action: Action, time: number, rate: number) => void;
 	/**
 	 * Told that a step threw, at a frame or at a **Step**, with what it threw. A step never
 	 * throws: the errors of a program are its outcome, so this is an error of the bridge, or of
@@ -162,6 +170,7 @@ export class Playback implements Scene {
 	readonly #frames: Frames;
 	readonly #onPrinted: ((line: string) => void) | undefined;
 	readonly #onStopped: ((outcome: Outcome) => void) | undefined;
+	readonly #onAction: ((action: Action, time: number, rate: number) => void) | undefined;
 	readonly #onBroken: ((error: unknown) => void) | undefined;
 	readonly #timeAt: (action: Action, rate: number, lessMotion: boolean) => number;
 	readonly #now: () => number;
@@ -201,6 +210,7 @@ export class Playback implements Scene {
 			frames = pageFrames,
 			onPrinted,
 			onStopped,
+			onAction,
 			onBroken,
 			timeAt = actionTime,
 			now = () => performance.now(),
@@ -212,6 +222,7 @@ export class Playback implements Scene {
 		this.#frames = frames;
 		this.#onPrinted = onPrinted;
 		this.#onStopped = onStopped;
+		this.#onAction = onAction;
 		this.#onBroken = onBroken;
 		this.#timeAt = timeAt;
 		this.#now = now;
@@ -432,8 +443,8 @@ export class Playback implements Scene {
 	/**
 	 * Runs one step of the program, and gives what it showed. The one place where a step runs, at
 	 * every speed: what comes out of a step beside its action is read here, so that **Instant**
-	 * never loses it. A line printed today; a breakpoint and a sound come here too (steps 18 and
-	 * 19).
+	 * never loses it. A line printed today; a breakpoint comes here too (step 19). The sounds
+	 * follow the actions that the map shows (`onAction`), not the steps.
 	 */
 	#advance(run: Run): StepEvent {
 		const event = run.step();
@@ -455,6 +466,7 @@ export class Playback implements Scene {
 		const action = this.#actionOf(run, event);
 		const lessMotion = this.#lessMotion();
 		const time = action ? this.#timeAt(action, rate, lessMotion) : 0;
+		if (action) this.#onAction?.(action, time, rate);
 		if (action && time > 0) {
 			this.#animate({ action, after: run.world(), lessMotion }, start, time);
 		} else {
@@ -489,6 +501,9 @@ export class Playback implements Scene {
 			return run.line !== undefined;
 		};
 		runInstant(step, this.#now(), INSTANT_BUDGET, this.#now);
+		// The error of the robot that stopped the program in this frame shows at once.
+		const failure = run.line === undefined ? robotFailure(run.outcome()) : undefined;
+		if (failure) this.#onAction?.(failure, 0, this.#rate());
 		this.#rest(run, true);
 		this.#showEnd(undefined);
 	}
@@ -525,7 +540,9 @@ export class Playback implements Scene {
 		const end = runEnd(this.outcome);
 		if (!end) return;
 		const lessMotion = this.#lessMotion();
-		const time = this.#timeAt(end, this.running ? this.#rate() : SLOWEST_SPEED, lessMotion);
+		const rate = this.running ? this.#rate() : SLOWEST_SPEED;
+		const time = this.#timeAt(end, rate, lessMotion);
+		this.#onAction?.(end, time, rate);
 		if (time > 0) this.#animate({ action: end, after: this.world, lessMotion }, start, time);
 	}
 

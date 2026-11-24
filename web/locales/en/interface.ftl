@@ -173,6 +173,11 @@ settings-theme-note = Only the interface changes: the map keeps its look.
 # (`themeMessage`).
 theme-day-desk = Day Desk
 theme-night-desk = Night Desk
+# Whether a run plays its sounds, without a sentence: its two values say it.
+settings-sounds = Sounds
+# The family of the values of Sounds: `sounds-<value>` (`soundsMessage`).
+sounds-off = Off
+sounds-on = On
 
 ## The panel of the keyboard shortcuts: the titles of its groups, then the rows that the text of
 ## a command doesn't name. Its title is the text of the command that opens it.

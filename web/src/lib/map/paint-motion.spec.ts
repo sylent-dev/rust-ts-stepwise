@@ -4,7 +4,8 @@ import { describe, expect, it } from 'vitest';
 import { Sandbox, type Point, type World } from '#lib/core/core.ts';
 import { corridor, loadTestCore, sandboxOf } from '#lib/core/test-support.ts';
 import type { Rect } from './ground.ts';
-import { isAnimated, poseAt, type Motion } from './motion.ts';
+import { isAnimated } from './actions.ts';
+import { poseAt, type Motion } from './motion.ts';
 import {
 	aheadOfBack,
 	fadeOut,

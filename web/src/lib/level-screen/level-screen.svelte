@@ -11,7 +11,8 @@
      The status bar, under the code, says where the program stands, in the color of its state.
      The console shows the log of the last **Run**: what the program printed and the error that
      stopped it, or the errors that kept it from starting, a click on one putting the cursor at
-     its place. **Help › Keyboard shortcuts** lists the shortcuts of the screen in a panel. -->
+     its place. **Help › Keyboard shortcuts** lists the shortcuts of the screen in a panel. A
+     run plays its sounds while the setting **Sounds** is on (see Sounds in specs.md). -->
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import { differsFromStart, type LevelCode } from '#lib/code/code.ts';
@@ -33,13 +34,14 @@
 	import Place from '#lib/shell/place.svelte';
 	import ScreenShortcuts from '#lib/shell/screen-shortcuts.svelte';
 	import ShortcutsPanel from '#lib/shell/shortcuts-panel.svelte';
+	import { pageSounds } from '#lib/sounds/page-sounds.ts';
 	import { levelCommands } from './level-commands.ts';
 	import { levelMenus, type LevelScreenKind } from './level-menus.ts';
 	import { levelShortcuts } from './level-shortcuts.ts';
 	import { LockFlash } from './lock-flash.svelte.ts';
 	import MapBlock from './map-block.svelte';
 	import type { Playground } from './playground.ts';
-	import { Program } from './program.ts';
+	import { Program, type ProgramSounds } from './program.ts';
 	import RunControls from './run-controls.svelte';
 	import type { SpeedSetting } from './speeds.ts';
 	import { statusState } from './status.ts';
@@ -68,6 +70,23 @@
 	let editing = $state.raw<Editing>();
 
 	/**
+	 * The sounds of the programs, while the setting **Sounds** is on, read at each sound: turned
+	 * off in the settings, or in another tab, nothing more plays (and the layout stops what still
+	 * plays). `stop` reads no signal, since a cleanup calls it.
+	 */
+	const sounds: ProgramSounds = {
+		wake() {
+			if (settings.sounds) pageSounds.wake();
+		},
+		play({ sound, delay }) {
+			if (settings.sounds) pageSounds.play(sound, delay);
+		},
+		stop() {
+			pageSounds.stop();
+		}
+	};
+
+	/**
 	 * The program of the screen: the code of the editor, played on the map shown. A program of
 	 * its own for each map, made with it, so that the map never draws the program of another
 	 * one, and freed with its run once another one has taken its place or the screen closes; at
@@ -85,7 +104,8 @@
 				() =>
 					new Program(ground, () => editing?.text, {
 						rate: () => settings.speed,
-						onBroken: loadFailed
+						onBroken: loadFailed,
+						sounds
 					})
 			)
 		);
