@@ -8,6 +8,7 @@ import { drawSelection, dropCursor, EditorView, keymap, lineNumbers } from '@cod
 import { checks, type Explain } from './checks.ts';
 import { codeColors } from './code-colors.ts';
 import { comments } from './edits.ts';
+import { margin } from './margin.ts';
 import { matchingParentheses } from './matching.ts';
 import { pairKeys, pairs } from './pairs.ts';
 import { runLinesShown } from './run-lines.ts';
@@ -36,9 +37,10 @@ const browserHistory: Extension = Prec.highest(
  * every text field (the arrows, Home and End, Backspace, select all), the numbers of the lines,
  * the colors of the code, the pair of parentheses at the cursor, the checks as the learner types
  * (whose errors `explain` writes), the lines of a run that the screen shows, whose marks stand
- * in the margin before the numbers. A key is tried in the order of the list: Backspace takes a
- * pair of signs before it takes an indentation or a character, and Enter is ours before it is
- * the one of every text field. The selection and the cursor are drawn by the editor rather than
+ * in the margin before the numbers, with the breakpoints that the editor opening on a code gives
+ * (`breakpoints`). A key is tried in the order of the list: Backspace takes a pair of signs
+ * before it takes an indentation or a character, and Enter is ours before it is the one of
+ * every text field. The selection and the cursor are drawn by the editor rather than
  * by the browser, so that they take our look. `label` names the code for a screen reader.
  *
  * The editor has the keys of typing alone. The shortcut of a command (Ctrl+Z, Ctrl+:, Alt+↑) is
@@ -54,6 +56,7 @@ export function editorSetup(label: string, explain: Explain): Extension {
 		comments,
 		keymap.of([...pairKeys, ...indentationKeys, ...standardKeymap]),
 		runLinesShown,
+		margin,
 		lineNumbers(),
 		drawSelection(),
 		dropCursor(),

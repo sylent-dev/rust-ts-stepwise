@@ -9,7 +9,7 @@ use super::code::{Code, Instruction};
 use super::compiler::compile;
 use super::{
     Action, Event, MAX_CALL_DEPTH, MAX_TEXT_LENGTH, Machine, RuntimeError, RuntimeErrorKind as E,
-    State, ValueType,
+    State, ValueType, step_lines,
 };
 use crate::ast::{BinaryOperator, Program, Statement, StatementKind, UnaryOperator};
 use crate::builtin::Builtin;
@@ -74,7 +74,20 @@ fn checked(source: &str) -> Checked {
 #[track_caller]
 fn run_on(rows: &[&str], source: &str) -> Run {
     let checked = checked(source);
+    assert_step_lines(&checked);
     run_program(checked.program(), Machine::new(&checked, world(rows)))
+}
+
+/// Checks the lines where a step of `program` starts, read in its instructions, against the
+/// rule written on its tree: every program that a test runs holds the two alike.
+#[track_caller]
+fn assert_step_lines(program: &Checked) {
+    let mut spans = Vec::new();
+    lines_run(&program.program().statements, &mut spans);
+    let mut expected: Vec<u32> = spans.iter().map(|span| span.start.line).collect();
+    expected.sort_unstable();
+    expected.dedup();
+    assert_eq!(step_lines(program), Some(expected));
 }
 
 /// Runs `source` without the checks before running, which would refuse it.
@@ -440,6 +453,39 @@ fn a_program_of_definitions_only_ends_before_any_step() {
     let run = run("function unused():\n    print(\"never\")\n");
     assert_eq!(run.lines, []);
     assert_eq!(run.state, State::Ended);
+}
+
+#[test]
+fn a_step_starts_on_every_statement_but_a_definition_an_else_a_blank_line_and_a_comment() {
+    let source = "\
+# Paint a side
+function side(length):
+    repeat length:
+
+        forward()
+let sides = 0
+while sides < 2:
+    if sides == 0:
+        side(2)
+    else if sides == 1:
+        side(1)
+    else:
+        print(\"done\")  # never
+    sides = sides + 1
+";
+    assert_eq!(
+        step_lines(&checked(source)),
+        Some(vec![3, 5, 6, 7, 8, 9, 10, 11, 13, 14])
+    );
+}
+
+#[test]
+fn a_program_of_comments_has_no_step_line_and_a_function_never_called_has_its_own() {
+    for source in ["", "\n\n", "# Nothing yet\n"] {
+        assert_eq!(step_lines(&checked(source)), Some(vec![]), "in {source:?}");
+    }
+    let unused = "function unused():\n    # later\n    print(\"never\")\n";
+    assert_eq!(step_lines(&checked(unused)), Some(vec![3]));
 }
 
 // `if`, `else if`, `else`.
@@ -2502,6 +2548,7 @@ fn random_checked_programs_never_stop_on_a_mistake_of_the_core() {
         with_else += usize::from(source.contains("else"));
         with_logic += usize::from(source.contains(" and ") || source.contains(" or "));
         with_break += usize::from(source.contains("break"));
+        assert_step_lines(&program);
         let machine = Machine::new(&program, world(RANDOM_WORLD));
         let run = run_program(program.program(), machine);
         with_action += usize::from(!run.actions.is_empty());

@@ -30,29 +30,32 @@ describe('the code saved', () => {
 
 	it('comes back as it was saved, under the stable name of its level', () => {
 		const { store } = storeWith();
-		saveCode(store, 'paint-a-square', { text: 'forward()\n' });
+		saveCode(store, 'paint-a-square', { text: 'forward()\n', breakpoints: [] });
 
-		expect(loadCode(store, 'paint-a-square')).toEqual({ text: 'forward()\n' });
+		expect(loadCode(store, 'paint-a-square')).toEqual({ text: 'forward()\n', breakpoints: [] });
 		expect(loadCode(store, 'two-squares')).toBeUndefined();
 	});
 
 	it('is saved under one key, each level by its name, with the version of its shape', () => {
 		const { store, held } = storeWith();
-		saveCode(store, 'paint-a-square', { text: 'forward()' });
-		saveCode(store, 'sandbox', { text: 'turn_left()' });
+		saveCode(store, 'paint-a-square', { text: 'forward()', breakpoints: [] });
+		saveCode(store, 'sandbox', { text: 'turn_left()', breakpoints: [] });
 
 		expect(heldCode(held)).toEqual({
-			levels: { 'paint-a-square': { text: 'forward()' }, sandbox: { text: 'turn_left()' } },
+			levels: {
+				'paint-a-square': { text: 'forward()', breakpoints: [] },
+				sandbox: { text: 'turn_left()', breakpoints: [] }
+			},
 			version: 1
 		});
 	});
 
 	it('replaces the code of the same level', () => {
 		const { store } = storeWith();
-		saveCode(store, 'paint-a-square', { text: 'forward()' });
-		saveCode(store, 'paint-a-square', { text: 'turn_left()' });
+		saveCode(store, 'paint-a-square', { text: 'forward()', breakpoints: [] });
+		saveCode(store, 'paint-a-square', { text: 'turn_left()', breakpoints: [] });
 
-		expect(loadCode(store, 'paint-a-square')).toEqual({ text: 'turn_left()' });
+		expect(loadCode(store, 'paint-a-square')).toEqual({ text: 'turn_left()', breakpoints: [] });
 	});
 
 	it('keeps the code that another tab saved for another level', () => {
@@ -65,21 +68,24 @@ describe('the code saved', () => {
 			() => backend,
 			() => {}
 		);
-		saveCode(here, 'paint-a-square', { text: 'forward()' });
-		saveCode(there, 'two-squares', { text: 'turn_left()' });
-		saveCode(here, 'paint-a-square', { text: 'back()' });
+		saveCode(here, 'paint-a-square', { text: 'forward()', breakpoints: [] });
+		saveCode(there, 'two-squares', { text: 'turn_left()', breakpoints: [] });
+		saveCode(here, 'paint-a-square', { text: 'back()', breakpoints: [] });
 
-		expect(loadCode(here, 'two-squares')).toEqual({ text: 'turn_left()' });
+		expect(loadCode(here, 'two-squares')).toEqual({ text: 'turn_left()', breakpoints: [] });
 	});
 
 	it('forgets the code of a level, and keeps the others', () => {
 		const { store, held } = storeWith();
-		saveCode(store, 'paint-a-square', { text: 'forward()' });
-		saveCode(store, 'sandbox', { text: 'turn_left()' });
+		saveCode(store, 'paint-a-square', { text: 'forward()', breakpoints: [] });
+		saveCode(store, 'sandbox', { text: 'turn_left()', breakpoints: [] });
 		forgetCode(store, 'paint-a-square');
 
 		expect(loadCode(store, 'paint-a-square')).toBeUndefined();
-		expect(heldCode(held)).toEqual({ levels: { sandbox: { text: 'turn_left()' } }, version: 1 });
+		expect(heldCode(held)).toEqual({
+			levels: { sandbox: { text: 'turn_left()', breakpoints: [] } },
+			version: 1
+		});
 	});
 
 	it.each([
@@ -99,24 +105,60 @@ describe('the code saved', () => {
 			'{"levels":{"paint-a-square":{"text":42},"sandbox":{"text":"forward()"}},"version":1}'
 		);
 
-		expect(loadCode(store, 'sandbox')).toEqual({ text: 'forward()' });
-		saveCode(store, 'two-squares', { text: 'turn_left()' });
-		expect(loadCode(store, 'sandbox')).toEqual({ text: 'forward()' });
+		expect(loadCode(store, 'sandbox')).toEqual({ text: 'forward()', breakpoints: [] });
+		saveCode(store, 'two-squares', { text: 'turn_left()', breakpoints: [] });
+		expect(loadCode(store, 'sandbox')).toEqual({ text: 'forward()', breakpoints: [] });
 	});
 
-	// A version of the website may add a field to a level, as its breakpoints, without a new
-	// version of the shape: a tab still open on the version before keeps it in the other levels.
-	it('keeps what it doesn’t know of the other levels', () => {
-		const { store, held } = storeWith(
-			'{"levels":{"paint-a-square":{"text":"forward()","breakpoints":[2]}},"version":1}'
+	it('comes back with its breakpoints', () => {
+		const { store, held } = storeWith();
+		saveCode(store, 'paint-a-square', { text: 'forward()\nforward()', breakpoints: [1, 2] });
+
+		expect(loadCode(store, 'paint-a-square')).toEqual({
+			text: 'forward()\nforward()',
+			breakpoints: [1, 2]
+		});
+		expect(heldCode(held)).toEqual({
+			levels: { 'paint-a-square': { text: 'forward()\nforward()', breakpoints: [1, 2] } },
+			version: 1
+		});
+	});
+
+	// The code saved before step 19 has no breakpoints: the field was added without a new version
+	// of the shape, and is read alone.
+	it.each([
+		['no breakpoints', ''],
+		['breakpoints that aren’t a list', ',"breakpoints":3'],
+		['breakpoints that are no lines', ',"breakpoints":["2",0,-1,1.5,null]']
+	])('comes back without breakpoints from a level with %s', (_, field) => {
+		const { store } = storeWith(
+			`{"levels":{"paint-a-square":{"text":"forward()"${field}}},"version":1}`
 		);
 
-		expect(loadCode(store, 'paint-a-square')).toEqual({ text: 'forward()' });
-		saveCode(store, 'sandbox', { text: 'turn_left()' });
+		expect(loadCode(store, 'paint-a-square')).toEqual({ text: 'forward()', breakpoints: [] });
+	});
+
+	it('keeps the lines of the breakpoints alone, each once and in order', () => {
+		const { store } = storeWith(
+			'{"levels":{"paint-a-square":{"text":"forward()","breakpoints":[3,"x",1,3,0]}},"version":1}'
+		);
+
+		expect(loadCode(store, 'paint-a-square')).toEqual({ text: 'forward()', breakpoints: [1, 3] });
+	});
+
+	// A later version of the website may add a field to a level without a new version of the
+	// shape, as the breakpoints were: a tab still open on this version keeps it in the other levels.
+	it('keeps what it doesn’t know of the other levels', () => {
+		const { store, held } = storeWith(
+			'{"levels":{"paint-a-square":{"text":"forward()","folded":[2]}},"version":1}'
+		);
+
+		expect(loadCode(store, 'paint-a-square')).toEqual({ text: 'forward()', breakpoints: [] });
+		saveCode(store, 'sandbox', { text: 'turn_left()', breakpoints: [] });
 		expect(heldCode(held)).toEqual({
 			levels: {
-				'paint-a-square': { text: 'forward()', breakpoints: [2] },
-				sandbox: { text: 'turn_left()' }
+				'paint-a-square': { text: 'forward()', folded: [2] },
+				sandbox: { text: 'turn_left()', breakpoints: [] }
 			},
 			version: 1
 		});
@@ -124,22 +166,22 @@ describe('the code saved', () => {
 
 	it('writes the level saved whole, as this version knows it', () => {
 		const { store, held } = storeWith(
-			'{"levels":{"paint-a-square":{"text":"forward()","breakpoints":[2]}},"version":1}'
+			'{"levels":{"paint-a-square":{"text":"forward()","folded":[2]}},"version":1}'
 		);
-		saveCode(store, 'paint-a-square', { text: 'back()' });
+		saveCode(store, 'paint-a-square', { text: 'back()', breakpoints: [] });
 
 		expect(heldCode(held)).toEqual({
-			levels: { 'paint-a-square': { text: 'back()' } },
+			levels: { 'paint-a-square': { text: 'back()', breakpoints: [] } },
 			version: 1
 		});
 	});
 
 	it('takes the place of what can’t be read at the next save', () => {
 		const { store, held } = storeWith('{"levels":{"paint-a-squ');
-		saveCode(store, 'paint-a-square', { text: 'forward()' });
+		saveCode(store, 'paint-a-square', { text: 'forward()', breakpoints: [] });
 
 		expect(heldCode(held)).toEqual({
-			levels: { 'paint-a-square': { text: 'forward()' } },
+			levels: { 'paint-a-square': { text: 'forward()', breakpoints: [] } },
 			version: 1
 		});
 	});
@@ -156,7 +198,7 @@ describe('the code saved', () => {
 			() => (refused += 1)
 		);
 		refused = 0;
-		saveCode(store, 'paint-a-square', { text: 'forward()' });
+		saveCode(store, 'paint-a-square', { text: 'forward()', breakpoints: [] });
 
 		expect(refused).toBe(1);
 		expect(loadCode(store, 'paint-a-square')).toBeUndefined();

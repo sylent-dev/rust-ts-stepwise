@@ -5,7 +5,7 @@ import { type ProgramStatus, statusState } from './status.ts';
 
 /** A program where it stands, on its line, stopped as `outcome` says. */
 function program(status: PlaybackStatus, line?: number, outcome?: Outcome): ProgramStatus {
-	return { status, line, outcome };
+	return { status, line, atBreakpoint: false, outcome };
 }
 
 const FAILED: Outcome = {
@@ -26,6 +26,13 @@ describe('statusState', () => {
 		});
 		expect(statusState(program('paused', 5), 1)).toEqual({
 			text: 'Paused at line 5 · Reset to edit',
+			tone: 'paused'
+		});
+	});
+
+	it('names the breakpoint that paused the program', () => {
+		expect(statusState({ ...program('paused', 10), atBreakpoint: true }, 1)).toEqual({
+			text: 'Paused at line 10 · breakpoint · Reset to edit',
 			tone: 'paused'
 		});
 	});

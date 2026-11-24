@@ -42,7 +42,10 @@ function appEditor({ lines, next, error, breakpoints = [], underlines = [], hint
   const row = (text, index) => {
     const number = index + 1;
     const dot = breakpoints.includes(number) ? '<span class="app-breakpoint"></span>' : "";
-    const mark = number === next ? dot + ICONS.next(13) : number === error ? ICONS.close(13) : dot;
+    // A breakpoint stands beside the arrow of the next step, and beside the cross of an error
+    // (decided on 2026-11-24, step 19a: a click in the margin of that line is seen).
+    const mark = number === next ? dot + ICONS.next(13) : number === error ? dot + ICONS.close(13) : dot;
+    const both = dot !== "" && (number === next || number === error);
     const kind = number === next ? "is-next" : number === error ? "is-error" : "";
     const marks = underlines.filter(underline => underline.line === number).map(underline =>
       `<span class="app-underline is-${underline.kind ?? "error"}" style="left:calc(14px + ${underline.col - 1}ch);width:${underline.length}ch"></span>`).join("");
@@ -51,7 +54,7 @@ function appEditor({ lines, next, error, breakpoints = [], underlines = [], hint
     const textCursor = caret?.line === number ? `<span class="app-caret" style="left:calc(14px + ${caret.col - 1}ch)"></span>` : "";
     const pair = matches.filter(match => match.line === number).map(match =>
       `<span class="app-match" style="left:calc(var(--space-12) + ${match.col - 1}ch)"></span>`).join("");
-    return `<div class="app-line ${kind}"><div class="app-margin"><span class="app-mark ${dot && number === next ? "has-both" : ""}">${mark}</span><span class="app-number">${number}</span></div><div class="app-text">${selection}${pair}${highlightCode(text)}${marks}${note}${textCursor}</div></div>`;
+    return `<div class="app-line ${kind}"><div class="app-margin"><span class="app-mark ${both ? "has-both" : ""}">${mark}</span><span class="app-number">${number}</span></div><div class="app-text">${selection}${pair}${highlightCode(text)}${marks}${note}${textCursor}</div></div>`;
   };
   return `<div class="app-editor">
     <div class="app-code">

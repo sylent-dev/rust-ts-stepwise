@@ -154,6 +154,16 @@ impl Code {
         self.instructions.get(index)
     }
 
+    /// The line of each [`Instruction::Line`], from 1, in the order they are written: a line
+    /// may come back, as the one of a loop, which a step starts at each turn and once more at
+    /// its end.
+    pub(super) fn step_lines(&self) -> impl Iterator<Item = u32> + '_ {
+        self.instructions
+            .iter()
+            .filter(|(instruction, _)| *instruction == Instruction::Line)
+            .map(|(_, span)| span.start.line)
+    }
+
     /// The number of instructions.
     pub(super) const fn len(&self) -> usize {
         self.instructions.len()

@@ -1,18 +1,18 @@
 <!-- The level screen, and the sandbox, the level screen without goal (see Level screen in
      specs.md): under its header, the code on the left on the whole height, the map on top on the
-     right, the console under it, the variables coming beside it at step 19. The blocks meet
-     without any line, each zone in its own tone. A route gives it what it plays on, and it wires
-     the rest: the same for a level and for the sandbox. The code of each level is
-     saved as the learner changes it, and comes back with the level, until **Restore starting
-     code** puts the level back in its first state (see Code editor in specs.md). **Run** plays
-     that code on the map shown, at the speed of the settings, which **Run › Speed** chooses
-     (see Running a program in specs.md); the editor lights the line of its next step, and marks
-     the line where an error stopped it, and its three controls stand in the corner of the code.
-     The status bar, under the code, says where the program stands, in the color of its state.
-     The console shows the log of the last **Run**: what the program printed and the error that
-     stopped it, or the errors that kept it from starting, a click on one putting the cursor at
-     its place. **Help › Keyboard shortcuts** lists the shortcuts of the screen in a panel. A
-     run plays its sounds while the setting **Sounds** is on (see Sounds in specs.md). -->
+     right, the console under it, the variables coming beside it at step 19. The blocks meet without
+     any line, each zone in its own tone. A route gives it what it plays on, and it wires the rest:
+     the same for a level and for the sandbox. The code of each level is saved as the learner
+     changes it, with its breakpoints, and comes back with the level, until **Restore starting
+     code** puts the level back in its first state (see Code editor in specs.md). **Run** plays that
+     code on the map shown, at the speed of the settings, which **Run › Speed** chooses (see Running
+     a program in specs.md), and pauses it on its breakpoints; the editor lights the line of its
+     next step, and marks the line where an error stopped it, and its three controls stand in the
+     corner of the code. The status bar, under the code, says where the program stands, in the color
+     of its state. The console shows the log of the last **Run**: what the program printed and the
+     error that stopped it, or the errors that kept it from starting, a click on one putting the
+     cursor at its place. **Help › Keyboard shortcuts** lists the shortcuts of the screen in a
+     panel. A run plays its sounds while the setting **Sounds** is on (see Sounds in specs.md). -->
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import { differsFromStart, type LevelCode } from '#lib/code/code.ts';
@@ -70,6 +70,12 @@
 	let editing = $state.raw<Editing>();
 
 	/**
+	 * The lines of the breakpoints of the code shown, which the program reads at each of its
+	 * frames: a breakpoint set while it runs pauses it at once.
+	 */
+	const breakpointLines = $derived(new Set(editing?.breakpoints));
+
+	/**
 	 * The sounds of the programs, while the setting **Sounds** is on, read at each sound: turned
 	 * off in the settings, or in another tab, nothing more plays (and the layout stops what still
 	 * plays). `stop` reads no signal, since a cleanup calls it.
@@ -104,6 +110,10 @@
 				() =>
 					new Program(ground, () => editing?.text, {
 						rate: () => settings.speed,
+						breakpoints: () => breakpointLines,
+						onStart: () => {
+							editing?.settleBreakpoints();
+						},
 						onBroken: loadFailed,
 						sounds
 					})
@@ -165,6 +175,7 @@
 			current && {
 				status: current.status,
 				line: current.played.line,
+				atBreakpoint: current.played.atBreakpoint,
 				outcome: current.played.outcome
 			},
 			playground?.mapNumber
@@ -181,11 +192,11 @@
 	let showingShortcuts = $state(false);
 
 	/**
-	 * The code of the level shown, as the editor holds it: what is saved, and what is compared
-	 * with the starting code. Nothing while the screen has no editor.
+	 * The code of the level shown, as the editor holds it, with its breakpoints: what is saved,
+	 * and what is compared with the starting code. Nothing while the screen has no editor.
 	 */
 	function shownCode(): LevelCode | undefined {
-		return editing && { text: editing.text };
+		return editing && { text: editing.text, breakpoints: editing.breakpoints };
 	}
 
 	/** The commands of the screen: the rows of its menus run them, and its shortcuts. */
@@ -211,20 +222,26 @@
 		currentPlatform()
 	);
 
+	/** Keeps the code of the level shown, with its breakpoints, as it is now. */
+	function keepShown() {
+		const code = shownCode();
+		if (playground && code) keepCode(playground.name, code);
+	}
+
 	/**
 	 * Keeps the code of the level shown, at each change that the learner makes to it, and the
 	 * errors that the console lists at their places in it.
 	 */
 	function onchange(change: CodeChange) {
-		const code = shownCode();
-		if (playground && code) keepCode(playground.name, code);
+		keepShown();
 		program.current?.follow(change);
 	}
 
 	/**
 	 * Puts the level shown back in its first state, once the learner has confirmed: its program
 	 * ends, as by **Reset**, its code is forgotten, and the editor opens again on its starting
-	 * code, with nothing to undo. The console forgets what it said of the code that is gone.
+	 * code, without breakpoints and with nothing to undo. The console forgets what it said of the
+	 * code that is gone.
 	 */
 	function restore() {
 		if (!playground) return;
@@ -261,19 +278,22 @@
 				{#if playground}
 					<!-- One editor per level, whichever of its maps is shown: the code belongs to the
 					     level, which its name tells from the others. It opens on the code saved for
-					     the level, read once as the editor is made. Its code can't be changed while
-					     its program runs or is paused. -->
+					     the level and its breakpoints, read once as the editor is made. Its code can't
+					     be changed while its program runs or is paused; its breakpoints can. -->
 					{#key playground.name}
+						{@const opening = openingCode(playground.name, playground.startingCode)}
 						<!-- Room under the last line for the controls, and as much again above them. -->
 						<CodeEditor
 							--below="calc(var(--control-side) + 2 * var(--space-12))"
-							text={openingCode(playground.name, playground.startingCode).text}
+							text={opening.text}
+							breakpoints={opening.breakpoints}
 							explain={errorText}
 							locked={program.current?.locked}
 							next={program.current?.played.line}
 							failed={failedLine}
 							bind:editing
 							{onchange}
+							onbreakpoints={keepShown}
 							ontype={() => (typing = true)}
 							onrefuse={() => {
 								lockFlash.refuse();

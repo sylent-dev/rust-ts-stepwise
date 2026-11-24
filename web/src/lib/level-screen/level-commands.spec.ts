@@ -2,7 +2,7 @@ import { EditorState } from '@codemirror/state';
 import { keymap } from '@codemirror/view';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { loadTestCore } from '#lib/core/test-support.ts';
-import { type Edit, type Editing, EDITS } from '#lib/editor/edits.ts';
+import { type Editing, EDITS } from '#lib/editor/edits.ts';
 import { editorSetup } from '#lib/editor/setup.ts';
 import { errorText } from '#lib/errors/error-text.ts';
 import type { Platform } from '#lib/platform.ts';
@@ -15,7 +15,7 @@ import {
 } from '#lib/shell/commands.ts';
 import { commandMessage, LEVEL_COMMANDS, levelCommands } from './level-commands.ts';
 import type { ProgramControls } from './program.ts';
-import { editorFor, programFor, screenWith } from './test-support.ts';
+import { type EditorAsk, editorFor, programFor, screenWith } from './test-support.ts';
 
 /** A new press of a key, with the keys held written as a keyboard event has them. */
 function press(key: string, ...held: ('ctrl' | 'shift' | 'alt' | 'meta')[]): KeyPress {
@@ -87,6 +87,8 @@ describe('levelCommands', () => {
 			'Comment lines',
 			'Move line up',
 			'Move line down',
+			'Toggle breakpoint',
+			'Remove all breakpoints',
 			'Run',
 			'Step',
 			'Reset',
@@ -193,8 +195,37 @@ describe('levelCommands', () => {
 		expect(LEVEL_COMMANDS.filter((name) => commands[name].enabled)).toEqual([
 			'redo',
 			'comment-lines',
+			'toggle-breakpoint',
 			'keyboard-shortcuts'
 		]);
+	});
+
+	it('can toggle a breakpoint whenever the screen has an editor, and remove them while it has some', () => {
+		const editor = editorFor([], [3]);
+		const commands = levelCommands(
+			screenWith(() => editor),
+			'other'
+		);
+
+		expect(commands['toggle-breakpoint'].enabled).toBe(true);
+		expect(commands['remove-all-breakpoints'].enabled).toBe(true);
+		commands['toggle-breakpoint'].run();
+		commands['remove-all-breakpoints'].run();
+		expect(editor.asked).toEqual(['toggle-breakpoint', 'remove-breakpoints']);
+		const none = levelCommands(
+			screenWith(() => editorFor([], [])),
+			'other'
+		);
+		expect(none['remove-all-breakpoints'].enabled).toBe(false);
+	});
+
+	it('gives Toggle breakpoint F9, and Remove all breakpoints no shortcut', () => {
+		const commands = levelCommands(screenWith(), 'other');
+		const all = Object.values(commands);
+
+		expect(commandFor(press('F9'), all, 'other')).toBe(commands['toggle-breakpoint']);
+		expect(commandFor(press('F9', 'ctrl'), all, 'other')).toBeUndefined();
+		expect(commands['remove-all-breakpoints'].shortcut).toBeUndefined();
 	});
 
 	it('can only show the shortcuts while the screen has neither editor nor program', () => {
@@ -207,7 +238,7 @@ describe('levelCommands', () => {
 	});
 
 	it('follows the editor of the level shown', () => {
-		let shown: (Editing & { asked: Edit[] }) | undefined;
+		let shown: (Editing & { asked: EditorAsk[] }) | undefined;
 		const commands = levelCommands(
 			screenWith(() => shown),
 			'other'
@@ -275,6 +306,8 @@ describe('levelCommands', () => {
 			'Ctrl+:',
 			'Alt+arrow-up',
 			'Alt+arrow-down',
+			'F9',
+			undefined,
 			'Ctrl+Enter',
 			'F10',
 			'Ctrl+Shift+Enter',

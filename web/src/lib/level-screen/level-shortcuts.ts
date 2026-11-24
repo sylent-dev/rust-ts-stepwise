@@ -1,8 +1,7 @@
 // The panel of the keyboard shortcuts of the level screen and of the sandbox (see Level screen
 // in specs.md): the shortcuts of its commands, grouped under **Run** and **Edit**, with the keys
 // of the code that are no command. A row arrives with the step that makes its keys work, as a
-// row of a menu does: **Toggle breakpoint** at step 19, **Commands** at step 20, the group
-// **Manual** at step 22.
+// row of a menu does: **Commands** at step 20, the group **Manual** at step 22.
 
 import { t } from '#lib/i18n.ts';
 import { commandRow, type ShortcutColumns } from '#lib/shell/shortcuts.ts';
@@ -24,7 +23,8 @@ export function levelShortcuts(commands: LevelCommands): ShortcutColumns {
 				rows: [
 					...commandRow(commands.run, t('shortcuts-run')),
 					...commandRow(commands.step),
-					...commandRow(commands.reset)
+					...commandRow(commands.reset),
+					...commandRow(commands['toggle-breakpoint'])
 				]
 			}
 		],

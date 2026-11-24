@@ -535,6 +535,276 @@ describe('a program played on the map', () => {
 	});
 });
 
+describe('the breakpoints', () => {
+	/** The lines with a breakpoint, which a test changes while its program runs. */
+	const at = (...lines: number[]) => {
+		const set = new Set(lines);
+		return { set, breakpoints: () => set };
+	};
+
+	it('pause the program before their line, once the action under way has ended', () => {
+		const { breakpoints } = at(3);
+		using playback = play('forward()\nforward()\nforward()\n', { breakpoints });
+		playback.play();
+		playback.tick(0);
+		playback.tick(300);
+		playback.tick(500);
+		// The second move is under way: the program still runs it, its line lit.
+		expect({
+			status: playback.status,
+			atBreakpoint: playback.atBreakpoint,
+			line: playback.line,
+			action: playback.motion?.action
+		}).toEqual({ status: 'running', atBreakpoint: false, line: 2, action: 'moved' });
+		// It ends, the line of the breakpoint is lit, and the program pauses before it.
+		expect(playback.tick(800)).toBe(false);
+		expect({
+			status: playback.status,
+			atBreakpoint: playback.atBreakpoint,
+			line: playback.line,
+			steps: playback.steps,
+			position: playback.world.robot.position
+		}).toEqual({
+			status: 'paused',
+			atBreakpoint: true,
+			line: 3,
+			steps: 2,
+			position: { x: 2, y: 0 }
+		});
+		playback.tick(2000);
+		expect(playback.steps).toBe(2);
+	});
+
+	it('let Resume run the line paused on, then pause again only on a line that starts', () => {
+		const { breakpoints } = at(3);
+		using playback = play('forward()\nforward()\nforward()\n', { breakpoints });
+		rate = Infinity;
+		playback.play();
+		playback.tick(0);
+		expect({ line: playback.line, steps: playback.steps }).toEqual({ line: 3, steps: 2 });
+		playback.play();
+		expect(playback.atBreakpoint).toBe(false);
+		playback.tick(16);
+		expect({ status: playback.status, steps: playback.steps }).toEqual({
+			status: 'ended',
+			steps: 3
+		});
+	});
+
+	it('pause the program before its first line on Run', () => {
+		const { breakpoints } = at(1);
+		using playback = play('forward()\n', { breakpoints });
+		playback.play();
+		expect({
+			status: playback.status,
+			atBreakpoint: playback.atBreakpoint,
+			line: playback.line,
+			steps: playback.steps
+		}).toEqual({ status: 'paused', atBreakpoint: true, line: 1, steps: 0 });
+		expect(playback.tick(0)).toBe(false);
+		expect(playback.steps).toBe(0);
+	});
+
+	it('pause at each turn of a loop, whose line runs again', () => {
+		const { breakpoints } = at(2);
+		using playback = play('repeat 3:\n    turn_left()\n', { breakpoints, now: ticking() });
+		rate = Infinity;
+		const pauses: number[] = [];
+		for (let frame = 0; frame < 10 && playback.status !== 'ended'; frame += 1) {
+			playback.play();
+			playback.tick(frame * 16);
+			if (playback.atBreakpoint) pauses.push(playback.steps);
+		}
+		// The line of the loop runs before each turn, and the line of its block after it.
+		expect(pauses).toEqual([1, 3, 5]);
+		expect(playback.status).toBe('ended');
+	});
+
+	it('don’t pause again when the line of a call is lit once the call has ended', () => {
+		const { breakpoints } = at(3);
+		const program = 'function go():\n    forward()\ngo()\nprint("after")\n';
+		using playback = play(program, { breakpoints, now: ticking() });
+		rate = Infinity;
+		playback.play();
+		expect({ line: playback.line, atBreakpoint: playback.atBreakpoint }).toEqual({
+			line: 3,
+			atBreakpoint: true
+		});
+		playback.play();
+		playback.tick(0);
+		expect({ status: playback.status, atBreakpoint: playback.atBreakpoint }).toEqual({
+			status: 'ended',
+			atBreakpoint: false
+		});
+	});
+
+	it('pause each call of a recursion that reaches the line of the call, never one that comes back', () => {
+		const { breakpoints } = at(3);
+		const program = 'function down(count):\n    if count > 0:\n        down(count - 1)\ndown(2)\n';
+		using playback = play(program, { breakpoints, now: ticking() });
+		rate = Infinity;
+		const pauses: number[] = [];
+		for (let frame = 0; frame < 10 && playback.status !== 'ended'; frame += 1) {
+			playback.play();
+			playback.tick(frame * 16);
+			if (playback.atBreakpoint) pauses.push(playback.steps);
+		}
+		// down(2) and down(1) reach the call after their `if`; down(0) doesn't, and each return
+		// lights it again.
+		expect(pauses).toEqual([2, 4]);
+		expect(playback.status).toBe('ended');
+	});
+
+	it('stop a frame of Instant in a loop that never ends', () => {
+		const { breakpoints } = at(2);
+		using playback = play('while true:\n    turn_left()\n', { breakpoints, now: ticking() });
+		rate = Infinity;
+		playback.play();
+		expect(playback.tick(0)).toBe(false);
+		expect({ status: playback.status, line: playback.line, steps: playback.steps }).toEqual({
+			status: 'paused',
+			line: 2,
+			steps: 1
+		});
+	});
+
+	it('pause before the line lit when one is set there while the program runs', () => {
+		const { set, breakpoints } = at();
+		using playback = play('print(1)\nprint(2)\nprint(3)\n', { breakpoints });
+		playback.play();
+		playback.tick(0);
+		expect(playback.line).toBe(2);
+		set.add(2);
+		playback.tick(500);
+		expect({
+			status: playback.status,
+			atBreakpoint: playback.atBreakpoint,
+			line: playback.line,
+			steps: playback.steps
+		}).toEqual({ status: 'paused', atBreakpoint: true, line: 2, steps: 1 });
+	});
+
+	it('pause on the next line after a Step, when Resume comes while its action plays', () => {
+		const { breakpoints } = at(2, 3);
+		using playback = play('forward()\nforward()\nforward()\n', { breakpoints });
+		playback.play();
+		playback.tick(0);
+		playback.tick(300);
+		playback.tick(500);
+		expect({ line: playback.line, atBreakpoint: playback.atBreakpoint }).toEqual({
+			line: 2,
+			atBreakpoint: true
+		});
+		playback.step();
+		playback.tick(600);
+		playback.play();
+		playback.tick(800);
+		playback.tick(1700);
+		expect({
+			status: playback.status,
+			atBreakpoint: playback.atBreakpoint,
+			line: playback.line,
+			steps: playback.steps
+		}).toEqual({ status: 'paused', atBreakpoint: true, line: 3, steps: 2 });
+	});
+
+	it('pause on the next line when Resume follows a Pause during an action', () => {
+		const { breakpoints } = at(3);
+		using playback = play('forward()\nforward()\nforward()\n', { breakpoints });
+		playback.play();
+		playback.tick(0);
+		playback.tick(300);
+		playback.tick(500);
+		playback.pause();
+		playback.play();
+		playback.tick(800);
+		expect({
+			status: playback.status,
+			atBreakpoint: playback.atBreakpoint,
+			line: playback.line,
+			steps: playback.steps
+		}).toEqual({ status: 'paused', atBreakpoint: true, line: 3, steps: 2 });
+	});
+
+	it('pause on the next line when Instant is chosen during the action before it', () => {
+		const { breakpoints } = at(3);
+		using playback = play('forward()\nforward()\nforward()\n', { breakpoints, now: ticking() });
+		playback.play();
+		playback.tick(0);
+		playback.tick(300);
+		playback.tick(500);
+		rate = Infinity;
+		playback.tick(516);
+		expect({
+			status: playback.status,
+			atBreakpoint: playback.atBreakpoint,
+			line: playback.line,
+			steps: playback.steps
+		}).toEqual({ status: 'paused', atBreakpoint: true, line: 3, steps: 2 });
+	});
+
+	it('pause before a line set while the action before it plays, and not one removed', () => {
+		const { set, breakpoints } = at(3);
+		using playback = play('forward()\nforward()\nforward()\nforward()\n', { breakpoints });
+		playback.play();
+		playback.tick(0);
+		playback.tick(300);
+		playback.tick(500);
+		// The second move is under way: the breakpoint of its next line is taken away, and one is
+		// set on the line after.
+		set.delete(3);
+		set.add(4);
+		playback.tick(800);
+		expect(playback.status).toBe('running');
+		playback.tick(1000);
+		playback.tick(1300);
+		expect({
+			status: playback.status,
+			atBreakpoint: playback.atBreakpoint,
+			line: playback.line,
+			steps: playback.steps
+		}).toEqual({ status: 'paused', atBreakpoint: true, line: 4, steps: 3 });
+	});
+
+	it('leave a Step alone, which pauses anyway, and say no breakpoint once it has run', () => {
+		const { breakpoints } = at(2, 3);
+		using playback = play('forward()\nforward()\nforward()\n', { breakpoints, now: ticking() });
+		rate = Infinity;
+		playback.play();
+		playback.tick(0);
+		expect({ line: playback.line, atBreakpoint: playback.atBreakpoint }).toEqual({
+			line: 2,
+			atBreakpoint: true
+		});
+		playback.step();
+		expect({
+			status: playback.status,
+			line: playback.line,
+			atBreakpoint: playback.atBreakpoint
+		}).toEqual({ status: 'paused', line: 2, atBreakpoint: false });
+		// Its move plays as at the slowest speed, then the line of the breakpoint is lit.
+		playback.tick(16);
+		playback.tick(5000);
+		expect({
+			status: playback.status,
+			line: playback.line,
+			steps: playback.steps,
+			atBreakpoint: playback.atBreakpoint
+		}).toEqual({ status: 'paused', line: 3, steps: 2, atBreakpoint: false });
+	});
+
+	it('say no breakpoint once the map is put back', () => {
+		const { breakpoints } = at(1);
+		using playback = play('forward()\n', { breakpoints });
+		playback.play();
+		playback.reset();
+		expect({ status: playback.status, atBreakpoint: playback.atBreakpoint }).toEqual({
+			status: 'ready',
+			atBreakpoint: false
+		});
+	});
+});
+
 describe('the end of a run', () => {
 	it('plays once the last action has ended, the program ended', () => {
 		using playback = playLevel('forward()\n');

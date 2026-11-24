@@ -13,7 +13,7 @@
 .app-line.is-next .app-mark { color: var(--accent-text); }
 .app-line.is-error { background: var(--error-soft); }
 .app-line.is-error .app-number, .app-line.is-error .app-mark { color: var(--error); font-weight: var(--weight-code-strong); }
-/* A breakpoint on the next line: the dot and the arrow side by side, before the numbers of two digits. */
+/* A breakpoint on the next line or on the line of an error: the dot and the arrow, or the cross, side by side, before the numbers of two digits. */
 .app-mark.has-both { left: 3px; align-items: center; }
 .app-breakpoint { width: 11px; height: 11px; border-radius: 50%; background: var(--breakpoint); }
 

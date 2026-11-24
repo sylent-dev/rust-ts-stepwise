@@ -38,7 +38,18 @@ describe('levelMenus', () => {
 			levelMenus(screen, commands, speed).map((menu) => [menu.id, ...menu.rows.map(nameOf)]);
 		expect(names('level')).toEqual([
 			['level', 'all-levels', 'sandbox', '-', 'restore-starting-code'],
-			['edit', 'undo', 'redo', '-', 'comment-lines', 'move-line-up', 'move-line-down'],
+			[
+				'edit',
+				'undo',
+				'redo',
+				'-',
+				'comment-lines',
+				'move-line-up',
+				'move-line-down',
+				'-',
+				'toggle-breakpoint',
+				'remove-all-breakpoints'
+			],
 			['run', 'run', 'step', 'reset', '-', 'speed'],
 			['help', 'manual', '-', 'keyboard-shortcuts']
 		]);

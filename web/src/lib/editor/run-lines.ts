@@ -1,8 +1,8 @@
 // The lines of a run in the editor (see Running a program in specs.md): the line of the next
 // step, lit with an arrow in the margin, and the line where an error stopped the program, marked
-// with a cross. The screen says which lines they are as its program goes; the editor shows each
-// one as it comes, the code scrolled just enough for it to be seen, and keeps it on its line
-// while the code changes, until the screen takes it away.
+// with a cross (the marks of the margin are in margin.ts). The screen says which lines they are
+// as its program goes; the editor shows each one as it comes, the code scrolled just enough for
+// it to be seen, and keeps it on its line while the code changes, until the screen takes it away.
 
 import {
 	type EditorState,
@@ -12,10 +12,7 @@ import {
 	StateField,
 	type TransactionSpec
 } from '@codemirror/state';
-import { Decoration, EditorView, GutterMarker, gutter, gutterLineClass } from '@codemirror/view';
-import { mount, unmount } from 'svelte';
-import type { IconName } from '#lib/icon-name.ts';
-import Icon from '#lib/icon.svelte';
+import { Decoration, EditorView, GutterMarker, gutterLineClass } from '@codemirror/view';
 import { changedBy, followLine } from './follow.ts';
 
 /** A line of a run: the one of the next step, or the one of the error that stopped it. */
@@ -85,17 +82,14 @@ function placed(state: EditorState): { line: RunLine; from: number }[] {
 	return [...at('failed'), ...at('next')].sort((first, second) => first.from - second.from);
 }
 
-/** The class of a line of a run, on its code and on its place in each gutter. */
-const CLASSES = {
+/**
+ * The class of a line of a run, on its code and on its place in each gutter, and on its icon in
+ * the margin of the marks (margin.ts).
+ */
+export const RUN_LINE_CLASSES = {
 	next: 'run-next',
 	failed: 'run-failed'
 } as const satisfies Record<RunLine, string>;
-
-/** The icon of a line of a run in the margin: the arrow of the next step, the cross of an error. */
-const ICONS = {
-	next: 'next',
-	failed: 'close'
-} as const satisfies Record<RunLine, IconName>;
 
 /** The tone of the place of a line of a run in each gutter: its number takes it too. */
 class LineTone extends GutterMarker {
@@ -103,7 +97,7 @@ class LineTone extends GutterMarker {
 
 	constructor(line: RunLine) {
 		super();
-		this.elementClass = CLASSES[line];
+		this.elementClass = RUN_LINE_CLASSES[line];
 	}
 
 	override eq(other: GutterMarker): boolean {
@@ -111,53 +105,19 @@ class LineTone extends GutterMarker {
 	}
 }
 
-/** The icons drawn in the margin, each by the box it was drawn in, to take it away with it. */
-const drawn = new WeakMap<Node, ReturnType<typeof mount>>();
-
-/** The icon of a line of a run, in the gutter of the marks. */
-class LineMark extends GutterMarker {
-	readonly #line: RunLine;
-
-	constructor(line: RunLine) {
-		super();
-		this.#line = line;
-	}
-
-	override eq(other: GutterMarker): boolean {
-		return other instanceof LineMark && other.#line === this.#line;
-	}
-
-	override toDOM(): Node {
-		const box = document.createElement('span');
-		box.className = `run-mark ${CLASSES[this.#line]}`;
-		drawn.set(box, mount(Icon, { target: box, props: { name: ICONS[this.#line], size: 13 } }));
-		return box;
-	}
-
-	override destroy(dom: Node): void {
-		const icon = drawn.get(dom);
-		drawn.delete(dom);
-		if (icon) void unmount(icon);
-	}
-}
-
-const MARKS = {
-	next: new LineMark('next'),
-	failed: new LineMark('failed')
-} as const satisfies Record<RunLine, LineMark>;
 const TONES = {
 	next: new LineTone('next'),
 	failed: new LineTone('failed')
 } as const satisfies Record<RunLine, LineTone>;
 const LINE_LOOKS = {
-	next: Decoration.line({ class: CLASSES.next }),
-	failed: Decoration.line({ class: CLASSES.failed })
+	next: Decoration.line({ class: RUN_LINE_CLASSES.next }),
+	failed: Decoration.line({ class: RUN_LINE_CLASSES.failed })
 } as const satisfies Record<RunLine, Decoration>;
 
 /**
- * The lines of a run in the editor: the line lit on its whole width, its number in the tone of
- * the line, and its icon in a gutter of its own, before the numbers, where the breakpoints of
- * step 19 come too. The look is with the editor's.
+ * The lines of a run in the editor: the line lit on its whole width, and its place in each
+ * gutter, its number included, in the tone of the line; its icon stands in the margin of the
+ * marks (margin.ts). The look is with the editor's.
  */
 export const runLinesShown: Extension = [
 	runLines,
@@ -167,10 +127,5 @@ export const runLinesShown: Extension = [
 	),
 	gutterLineClass.compute(['doc', runLines], (state) =>
 		RangeSet.of(placed(state).map(({ line, from }) => TONES[line].range(from)))
-	),
-	gutter({
-		class: 'run-marks',
-		markers: (view) =>
-			RangeSet.of(placed(view.state).map(({ line, from }) => MARKS[line].range(from)))
-	})
+	)
 ];

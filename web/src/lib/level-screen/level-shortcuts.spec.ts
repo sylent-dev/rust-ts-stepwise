@@ -31,7 +31,15 @@ function panel(platform: Platform = 'other', screen = screenWith()) {
 describe('levelShortcuts', () => {
 	it('lists the shortcuts under Run on the left and Edit on the right, as the menus name them', () => {
 		expect(panel()).toEqual([
-			[['Run', 'Run, Pause, Resume: Ctrl+Enter', 'Step: F10', 'Reset: Ctrl+Shift+Enter']],
+			[
+				[
+					'Run',
+					'Run, Pause, Resume: Ctrl+Enter',
+					'Step: F10',
+					'Reset: Ctrl+Shift+Enter',
+					'Toggle breakpoint: F9'
+				]
+			],
 			[
 				[
 					'Edit',
@@ -50,7 +58,15 @@ describe('levelShortcuts', () => {
 
 	it('names Cmd on a computer of Apple, and its own shortcut for Redo', () => {
 		expect(panel('mac')).toEqual([
-			[['Run', 'Run, Pause, Resume: Cmd+Enter', 'Step: F10', 'Reset: Cmd+Shift+Enter']],
+			[
+				[
+					'Run',
+					'Run, Pause, Resume: Cmd+Enter',
+					'Step: F10',
+					'Reset: Cmd+Shift+Enter',
+					'Toggle breakpoint: F9'
+				]
+			],
 			[
 				[
 					'Edit',
