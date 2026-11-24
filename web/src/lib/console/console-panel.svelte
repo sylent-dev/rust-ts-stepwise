@@ -2,8 +2,9 @@
      program shown (console-log.svelte.ts), in the font of the code. The lines that `print` wrote,
      in order, the last ones in sight while the program writes; the errors, each one big button
      that puts the cursor at its place in the code; under the errors that kept the program from
-     starting, why nothing moved. Alone under its tab until the variables come beside it (step
-     19), as a title from 1,600 pixels wide, where the two stand side by side without tabs.
+     starting, why nothing moved. The block that places it gives it its name and its role
+     (level-screen/panels.svelte): a tab beside the variables, or a title from 1,600 pixels wide,
+     where the two stand side by side.
 
      It isn't read to a screen reader as it changes: a program may print thousands of lines in a
      second, and the status bar says already where the program stands. Only why a **Run** started
@@ -11,21 +12,20 @@
      stop of Tab, so that the keyboard scrolls it in every browser, as Chrome and Firefox allow by
      themselves when it holds no button. -->
 <script lang="ts">
+	import type { HTMLAttributes } from 'svelte/elements';
 	import { errorText, type ErrorText } from '#lib/errors/error-text.ts';
 	import { runtimeErrorText } from '#lib/errors/runtime-error-text.ts';
 	import { t } from '#lib/i18n.ts';
 	import { KEPT_LINES, type ListedError, type LogView } from './console-log.svelte.ts';
 
-	interface Props {
+	interface Props extends HTMLAttributes<HTMLDivElement> {
 		/** The log of the program shown; nothing while the screen has no program. */
 		log: LogView | undefined;
 		/** Puts the cursor at a place of the code, that of an error clicked. */
 		onshow: (at: number) => void;
 	}
 
-	let { log, onshow }: Props = $props();
-
-	const nameId = $props.id();
+	let { log, onshow, ...attributes }: Props = $props();
 
 	/** The block that scrolls the lines. */
 	let panel = $state<HTMLElement>();
@@ -65,94 +65,48 @@
 	}
 </script>
 
-<section class="console">
-	<div class="tabs"><h2 class="tab" id={nameId}>{t('console-name')}</h2></div>
-	<!-- svelte-ignore a11y_no_noninteractive_tabindex (a block that scrolls is reached by Tab, so that the keyboard scrolls it) -->
-	<div
-		class="panel"
-		role="region"
-		aria-labelledby={nameId}
-		tabindex="0"
-		bind:this={panel}
-		{onscroll}
-	>
-		{#if !log || log.kind === 'empty'}
-			<p class="weak">{t('console-empty')}</p>
-		{:else}
-			{#if log.cut}
-				<p class="weak cut">{t('console-cut', { kept: KEPT_LINES })}</p>
-			{/if}
-			{#if log.lines.length > 0}
-				<div class="prints">
-					{#each log.lines as line, index (index)}
-						<div>{line}</div>
-					{/each}
-				</div>
-			{/if}
-			{#each log.errors as listed, index (index)}
-				{@const { title, rule } = sentences(listed)}
-				<button
-					type="button"
-					class="error"
-					onclick={() => {
-						onshow(listed.at);
-					}}
-				>
-					<span class="line">{t('console-line', { line: listed.line })}</span>
-					<span><strong>{title}</strong><br />{rule}</span>
-				</button>
-			{/each}
+<!-- svelte-ignore a11y_no_noninteractive_tabindex (a block that scrolls is reached by Tab, so that the keyboard scrolls it) -->
+<div {...attributes} class="panel" tabindex="0" bind:this={panel} {onscroll}>
+	{#if !log || log.kind === 'empty'}
+		<p class="weak">{t('console-empty')}</p>
+	{:else}
+		{#if log.cut}
+			<p class="weak cut">{t('console-cut', { kept: KEPT_LINES })}</p>
 		{/if}
-		<!-- Read as it comes: the region is on the page before its sentence. -->
-		<div role="status">
-			{#if log?.kind === 'checked'}
-				<p class="weak fix">{t('console-fix', { errors: log.errors.length })}</p>
-			{/if}
-		</div>
+		{#if log.lines.length > 0}
+			<div class="prints">
+				{#each log.lines as line, index (index)}
+					<div>{line}</div>
+				{/each}
+			</div>
+		{/if}
+		{#each log.errors as listed, index (index)}
+			{@const { title, rule } = sentences(listed)}
+			<button
+				type="button"
+				class="error"
+				onclick={() => {
+					onshow(listed.at);
+				}}
+			>
+				<span class="line">{t('console-line', { line: listed.line })}</span>
+				<span><strong>{title}</strong><br />{rule}</span>
+			</button>
+		{/each}
+	{/if}
+	<!-- Read as it comes: the region is on the page before its sentence. -->
+	<div role="status">
+		{#if log?.kind === 'checked'}
+			<p class="weak fix">{t('console-fix', { errors: log.errors.length })}</p>
+		{/if}
 	</div>
-</section>
+</div>
 
 <style>
-	/* The tab above, then the lines, which scroll past the height of the block. */
-	.console {
-		display: flex;
-		flex-direction: column;
-		height: 100%;
-	}
-
-	/* The tab starts where the text of the panel does. */
-	.tabs {
-		flex: none;
-		display: flex;
-		padding: var(--space-6) var(--space-16);
-	}
-
-	.tab {
-		margin: 0;
-		padding: var(--space-4) var(--space-12);
-		border-radius: var(--radius);
-		background: var(--chosen-soft);
-		color: var(--text);
-		font-size: var(--size-text);
-		font-weight: var(--weight-control);
-	}
-
-	/* From about 1,600 pixels wide, the panels stand side by side, each under its title. */
-	@media (min-width: 1600px) {
-		.tabs {
-			padding: var(--space-8) var(--space-16) var(--space-6);
-		}
-
-		.tab {
-			padding: 0;
-			background: none;
-		}
-	}
-
-	/* Everything in the console is in the font of the code, as the editor. */
+	/* Everything in the console is in the font of the code, as the editor. The lines scroll past
+	   the height of the block. */
 	.panel {
-		flex: 1;
-		min-height: 0;
+		height: 100%;
 		overflow: auto;
 		padding: var(--space-8) var(--space-16);
 		font: var(--weight-code) var(--size-code-small) / var(--line-code-small) var(--font-code);

@@ -1,7 +1,7 @@
 <!-- The level screen, and the sandbox, the level screen without goal (see Level screen in
      specs.md): under its header, the code on the left on the whole height, the map on top on the
-     right, the console under it, the variables coming beside it at step 19. The blocks meet without
-     any line, each zone in its own tone. A route gives it what it plays on, and it wires the rest:
+     right, the console and the variables under it. The blocks meet without any line, each zone in
+     its own tone. A route gives it what it plays on, and it wires the rest:
      the same for a level and for the sandbox. The code of each level is saved as the learner
      changes it, with its breakpoints, and comes back with the level, until **Restore starting
      code** puts the level back in its first state (see Code editor in specs.md). **Run** plays that
@@ -11,13 +11,14 @@
      corner of the code. The status bar, under the code, says where the program stands, in the color
      of its state. The console shows the log of the last **Run**: what the program printed and the
      error that stopped it, or the errors that kept it from starting, a click on one putting the
-     cursor at its place. **Help › Keyboard shortcuts** lists the shortcuts of the screen in a
+     cursor at its place. The variables panel shows the calls of the program and their variables;
+     its tab opens by itself at a pause (see Variables panel in specs.md). **Help › Keyboard
+     shortcuts** lists the shortcuts of the screen in a
      panel. A run plays its sounds while the setting **Sounds** is on (see Sounds in specs.md). -->
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import { differsFromStart, type LevelCode } from '#lib/code/code.ts';
 	import { keepCode, openingCode, restoreCode } from '#lib/code/current-code.ts';
-	import ConsolePanel from '#lib/console/console-panel.svelte';
 	import { kept } from '#lib/core/core-ready.svelte.ts';
 	import CodeEditor from '#lib/editor/code-editor.svelte';
 	import type { CodeChange, Editing } from '#lib/editor/edits.ts';
@@ -40,6 +41,8 @@
 	import { levelShortcuts } from './level-shortcuts.ts';
 	import { LockFlash } from './lock-flash.svelte.ts';
 	import MapBlock from './map-block.svelte';
+	import { PanelTabs } from './panel-tabs.svelte.ts';
+	import Panels from './panels.svelte';
 	import type { Playground } from './playground.ts';
 	import { Program, type ProgramSounds } from './program.ts';
 	import RunControls from './run-controls.svelte';
@@ -68,6 +71,9 @@
 
 	/** The editor shown; nothing until the core is ready. */
 	let editing = $state.raw<Editing>();
+
+	/** Which of the console and the variables the panels under the map show, below 1,600 pixels. */
+	const tabs = new PanelTabs();
 
 	/**
 	 * The lines of the breakpoints of the code shown, which the program reads at each of its
@@ -113,6 +119,7 @@
 						breakpoints: () => breakpointLines,
 						onStart: () => {
 							editing?.settleBreakpoints();
+							tabs.started();
 						},
 						onBroken: loadFailed,
 						sounds
@@ -128,6 +135,12 @@
 		},
 		choose: chooseSpeed
 	};
+
+	// The tabs under the map follow the program: a pause shows the variables, an error the console.
+	$effect(() => {
+		const status = program.current?.status;
+		if (status) untrack(() => tabs.follow(status));
+	});
 
 	// A run is paused while a message takes the place of the screen, and stays so once the screen
 	// is back (see Error handling in specs.md).
@@ -318,9 +331,14 @@
 			/>
 		</div>
 		<div class="map"><MapBlock scene={program.current?.played} goals={playground?.goals} /></div>
-		<!-- The zone of the console, and of the variables at step 19. -->
 		<div class="panels">
-			<ConsolePanel log={program.current?.log} onshow={(at: number) => editing?.showPlace(at)} />
+			<Panels
+				{tabs}
+				log={program.current?.log}
+				calls={program.current?.played.calls}
+				onshow={(at: number) => editing?.showPlace(at)}
+				onchoose={(index: number) => program.current?.showCall(index)}
+			/>
 		</div>
 	</main>
 </div>

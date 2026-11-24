@@ -157,6 +157,39 @@ console-fix = Fix { $errors ->
        *[other] these { $errors } errors
     } to run the program.
 
+## The variables panel, under the map beside the console: the variables of the call shown, and
+## the calls in progress. In the font of the code, as the console.
+
+# Its name, on its tab.
+variables-name = Variables
+# Before any Run or Step, and once Reset has put the map back.
+variables-empty = Pause the program to see its variables.
+# Above the variables of the main program.
+variables-in-main = in the main program
+# Above the variables of a function.
+# $function (String): its name, as the program writes it.
+variables-in-function = in { $function }
+# In place of the variables of a call that has none yet.
+variables-none = No variables yet.
+# Above the calls in progress, from the main program to the function being run.
+variables-calls = Calls
+# A call in progress: the main program, with the line it is on.
+# $line (Number): the line, from 1.
+variables-call-main = main program · Ln { NUMBER($line, useGrouping: 0) }
+# A call of a function in progress, with the line it is on: the line of its call when it waits
+# for another call to end.
+# $function (String): the name of the function, as the program writes it.
+# $line (Number): the line, from 1.
+variables-call-function = { $function } · Ln { NUMBER($line, useGrouping: 0) }
+# Read to a screen reader on the tab Variables, while a dot on it says that it holds the state of
+# the program at the error that stopped it.
+variables-dot = Holds the state at the error.
+
+## The two tabs of the console and the variables, under the map, below 1,600 pixels wide.
+
+# The name of the row of the tabs, read to a screen reader.
+panels-name = Console and variables
+
 ## The keys that a shortcut names by a word, written beside its command: `key-<name>`
 ## (`keyMessage`). A letter, a sign, an arrow and a function key (F10) are shown as they are.
 

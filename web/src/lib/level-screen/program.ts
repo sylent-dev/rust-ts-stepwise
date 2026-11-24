@@ -19,10 +19,11 @@ export type RunAction = 'run' | 'pause' | 'resume';
 
 /**
  * What a screen reads of its program as it is played: what the map draws, the line of the next
- * step, the steps run, and whether a breakpoint paused it. It only reads: what starts and stops
- * the program asks the `Program`, which checks the code first.
+ * step, the steps run, whether a breakpoint paused it, and what the variables panel shows. It
+ * only reads: what starts and stops the program asks the `Program`, which checks the code first.
  */
-export type PlayedProgram = Scene & Readonly<Pick<Playback, 'line' | 'steps' | 'atBreakpoint'>>;
+export type PlayedProgram = Scene &
+	Readonly<Pick<Playback, 'line' | 'steps' | 'atBreakpoint' | 'calls'>>;
 
 /** The program of a screen, as its commands ask it. */
 export interface ProgramControls {
@@ -218,6 +219,14 @@ export class Program implements ProgramControls {
 	/** Pauses the program, if it runs, as **Pause** does. */
 	pause(): void {
 		this.#playback.pause();
+	}
+
+	/**
+	 * Shows in the variables panel the call of index `index` among the calls in progress, which
+	 * the learner chose, while it is in progress.
+	 */
+	showCall(index: number): void {
+		this.#playback.showCall(index);
 	}
 
 	/**

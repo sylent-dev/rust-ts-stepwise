@@ -9,6 +9,7 @@ import {
 	lineOf,
 	litLine,
 	openSandbox,
+	panelOf,
 	pausedLine,
 	stateOf,
 	stepsRun,
@@ -69,7 +70,7 @@ test('An error that stops the program is in the console, and its click shows its
 
 	await page.keyboard.press('ControlOrMeta+Enter');
 	await expect(stateOf(page)).toHaveText('Error at line 3');
-	const consolePanel = page.getByRole('region', { name: 'Console' });
+	const consolePanel = panelOf(page, 'Console');
 	await expect(consolePanel).toContainText('start');
 	const error = consolePanel.getByRole('button', { name: /^Ln 3 / });
 	await expect(error).toContainText('The program divided by zero.');
