@@ -4,7 +4,7 @@
 // map draws, whether its code can be changed, and what its console shows.
 
 import { ConsoleLog, type LogView } from '#lib/console/console-log.svelte.ts';
-import { check } from '#lib/core/core.ts';
+import { check, type ProgramError } from '#lib/core/core.ts';
 import type { CodeChange } from '#lib/editor/edits.ts';
 import type { Scene } from '#lib/map/scene.ts';
 import { Playback, type PlaybackOptions, type PlaybackStatus } from '#lib/run/playback.svelte.ts';
@@ -19,10 +19,11 @@ export type RunAction = 'run' | 'pause' | 'resume';
 
 /**
  * What a screen reads of its program as it is played: what the map draws, the line of the next
- * step, the steps run, and whether a breakpoint paused it. It only reads: what starts and stops
- * the program asks the `Program`, which checks the code first.
+ * step, the steps run, whether a breakpoint paused it, and what the variables panel shows. It
+ * only reads: what starts and stops the program asks the `Program`, which checks the code first.
  */
-export type PlayedProgram = Scene & Readonly<Pick<Playback, 'line' | 'steps' | 'atBreakpoint'>>;
+export type PlayedProgram = Scene &
+	Readonly<Pick<Playback, 'line' | 'steps' | 'atBreakpoint' | 'calls'>>;
 
 /** The program of a screen, as its commands ask it. */
 export interface ProgramControls {
@@ -66,9 +67,15 @@ export interface ProgramOptions extends Omit<
 	sounds?: ProgramSounds;
 	/**
 	 * Told once the checks have taken the code, as **Run** or **Step** starts the program on it,
-	 * before its first step: the screen puts its breakpoints on lines where a step starts.
+	 * before its first step: the screen puts its breakpoints on lines where a step starts, and
+	 * shows the console.
 	 */
 	onStart?: () => void;
+	/**
+	 * Told when the console lists the errors of the code: a **Run** or a **Step** that the checks
+	 * refuse, or the number of errors of the status bar clicked. The screen shows the console.
+	 */
+	onListed?: () => void;
 }
 
 export class Program implements ProgramControls {
@@ -84,6 +91,7 @@ export class Program implements ProgramControls {
 	readonly #text: () => string | undefined;
 	readonly #sounds: ProgramSounds | undefined;
 	readonly #onStart: (() => void) | undefined;
+	readonly #onListed: (() => void) | undefined;
 	/** The code as it was last checked, which a run starts on. */
 	#checked = '';
 
@@ -95,11 +103,12 @@ export class Program implements ProgramControls {
 	constructor(
 		playground: Playground,
 		text: () => string | undefined,
-		{ sounds, onStart, ...options }: ProgramOptions = {}
+		{ sounds, onStart, onListed, ...options }: ProgramOptions = {}
 	) {
 		this.#text = text;
 		this.#sounds = sounds;
 		this.#onStart = onStart;
+		this.#onListed = onListed;
 		this.log = this.#log;
 		this.#playback = new Playback(
 			{ world: playground.world, start: () => playground.start(this.#checked) },
@@ -198,7 +207,7 @@ export class Program implements ProgramControls {
 		const text = this.#text();
 		if (text === undefined || this.locked) return;
 		const errors = check(text);
-		if (errors.length > 0) this.#log.list(errors);
+		if (errors.length > 0) this.#list(errors);
 	}
 
 	/** Follows a change of the code: the errors that the console lists stay at their places. */
@@ -218,6 +227,14 @@ export class Program implements ProgramControls {
 	/** Pauses the program, if it runs, as **Pause** does. */
 	pause(): void {
 		this.#playback.pause();
+	}
+
+	/**
+	 * Shows in the variables panel the call of index `index` among the calls in progress, which
+	 * the learner chose, while it is in progress.
+	 */
+	showCall(index: number): void {
+		this.#playback.showCall(index);
 	}
 
 	/**
@@ -245,13 +262,19 @@ export class Program implements ProgramControls {
 		const errors = check(text);
 		if (errors.length > 0) {
 			this.#playback.reset();
-			this.#log.list(errors);
+			this.#list(errors);
 			this.#play(REFUSED_SOUND);
 			return false;
 		}
 		this.#checked = text;
 		this.#onStart?.();
 		return true;
+	}
+
+	/** Lists the errors of the code in the console, and tells the screen. */
+	#list(errors: readonly ProgramError[]): void {
+		this.#log.list(errors);
+		this.#onListed?.();
 	}
 
 	/** Plays a sound of the program, if it has one. */

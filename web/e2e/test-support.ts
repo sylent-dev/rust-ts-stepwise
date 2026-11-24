@@ -173,6 +173,45 @@ export async function followLitLines(page: Page): Promise<() => Promise<string[]
 	return () => record.jsonValue();
 }
 
+/**
+ * A panel under the map, by its name: the panel of its tab in a window narrower than 1,600 pixels,
+ * as the one of the tests; a region under its title from there.
+ */
+export function panelOf(page: Page, name: 'Console' | 'Variables'): Locator {
+	return page.getByRole('tabpanel', { name }).or(page.getByRole('region', { name }));
+}
+
+/** The tab of a panel under the map. */
+export function panelTab(page: Page, name: 'Console' | 'Variables'): Locator {
+	return page.getByRole('tab', { name });
+}
+
+/** The dot of the state at an error, which only the tab of the variables shows. */
+export function variablesDot(page: Page): Locator {
+	return page.locator('.has-dot');
+}
+
+/**
+ * The variables that the panel shows, each as `<name>=<value>`, the ones that the last step
+ * changed after a `*`: read once, so read it again with `expect.poll`.
+ */
+export async function shownVariables(page: Page): Promise<string[]> {
+	return panelOf(page, 'Variables')
+		.locator('dl > div')
+		.evaluateAll((rows) =>
+			rows.map((row) => {
+				const name = row.querySelector('dt')?.textContent ?? '';
+				const value = row.querySelector('dd')?.textContent ?? '';
+				return `${row.classList.contains('is-changed') ? '*' : ''}${name}=${value}`;
+			})
+		);
+}
+
+/** The calls in progress that the panel lists, each a button by its function and its line. */
+export function callOf(page: Page, name: string): Locator {
+	return panelOf(page, 'Variables').getByRole('button', { name, exact: true });
+}
+
 /** The words that the checks underline as an error. */
 export function errorUnderlines(page: Page): Locator {
 	return page.locator('.underline-error');

@@ -23,8 +23,9 @@ use crate::world::World;
 pub const MAX_CALL_DEPTH: usize = 200;
 
 /// A call in progress, as the variables panel shows it: the main program, or a function that
-/// has been called and hasn't ended.
-#[derive(Debug, Clone, PartialEq, Eq)]
+/// has been called and hasn't ended. Its variables are read on demand ([`Self::variables`]):
+/// the panel shows those of one call at a time, among up to 201.
+#[derive(Debug, Clone, Copy)]
 pub struct CallInProgress<'a> {
     /// The name of its function, `None` for the main program.
     pub function: Option<&'a str>,
@@ -32,8 +33,26 @@ pub struct CallInProgress<'a> {
     /// one run once the program has ended or stopped on an error. For the others: the line
     /// of the call they wait for.
     pub line: Span,
+    /// Its number: 0 for the main program, then 1, 2… in the order the calls were made. No
+    /// two calls of a run have the same, even two calls of a function made one after the
+    /// other from the same line: the panel keeps showing the call that the learner chose
+    /// while it is in progress (see *Variables panel* in `specs.md`).
+    pub number: u64,
+    /// Its variables alive, each at the index of its slot.
+    slots: &'a [Slot],
+    /// The number of the last step, which tells the variables it wrote.
+    step: u64,
+}
+
+impl<'a> CallInProgress<'a> {
     /// Its variables alive, in the order they were declared, its parameters first.
-    pub variables: Vec<Variable<'a>>,
+    pub fn variables(self) -> impl Iterator<Item = Variable<'a>> {
+        self.slots.iter().map(move |slot| Variable {
+            name: &slot.name,
+            value: &slot.value,
+            changed: slot.written == self.step,
+        })
+    }
 }
 
 /// A variable of a call in progress.
@@ -72,6 +91,8 @@ struct Frame {
     line: Span,
     /// The number of operands when it started: the ones above are its own, and end with it.
     operands: usize,
+    /// Its number: 0 for the main program, then the calls in the order they were made.
+    number: u64,
 }
 
 /// What the machine does after an instruction.
@@ -107,6 +128,8 @@ pub(super) struct Memory {
     result: Option<Value>,
     /// The number of the step being run, from 1: 0 before the first.
     step: u64,
+    /// The number of calls made so far, which numbers the next one.
+    calls_made: u64,
 }
 
 impl Memory {
@@ -119,6 +142,7 @@ impl Memory {
             variables: Vec::new(),
             line: Span::at(Position::new(1, 1)),
             operands: 0,
+            number: 0,
         };
         Self {
             frame: main_program,
@@ -126,6 +150,7 @@ impl Memory {
             operands: Vec::new(),
             result: None,
             step: 0,
+            calls_made: 0,
         }
     }
 
@@ -156,15 +181,9 @@ impl Memory {
             .map(|frame| CallInProgress {
                 function: frame.function.as_deref(),
                 line: frame.line,
-                variables: frame
-                    .variables
-                    .iter()
-                    .map(|slot| Variable {
-                        name: &slot.name,
-                        value: &slot.value,
-                        changed: slot.written == self.step,
-                    })
-                    .collect(),
+                number: frame.number,
+                slots: &frame.variables,
+                step: self.step,
             })
             .collect()
     }
@@ -323,6 +342,7 @@ impl Memory {
         }
         let values = self.take_arguments(function.parameters.len())?;
         let parameters = function.parameters.iter().zip(values);
+        self.calls_made = self.calls_made.saturating_add(1);
         let entered = Frame {
             function: Some(Rc::clone(&function.name)),
             next: function.entry,
@@ -336,6 +356,7 @@ impl Memory {
             // Until its first line, the next instruction, where the step ends.
             line: span,
             operands: self.operands.len(),
+            number: self.calls_made,
         };
         let caller = mem::replace(&mut self.frame, entered);
         self.callers.push(caller);

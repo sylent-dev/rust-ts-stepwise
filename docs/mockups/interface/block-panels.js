@@ -10,9 +10,10 @@ const appPanels = ({ tab, content, dot = false, side }) => side
 </div>`;
 
 // `values` lists [name, value, changed by the last step]; `calls` lists [call, line], the last one
-// running; `chosen` is the index of the call shown, by default the one running.
-const appVariables = (where, values, calls, chosen = calls.length - 1) => `
-  <div class="app-values"><h4>in ${where}</h4>${values.map(([name, value, changed]) =>
+// running; `chosen` is the index of the call shown, by default the one running; `none` is what a call
+// without variables shows.
+const appVariables = (where, values, calls, chosen = calls.length - 1, none = "") => `
+  <div class="app-values"><h4>in ${where}</h4>${values.length === 0 ? `<div class="app-value">${none}</div>` : values.map(([name, value, changed]) =>
     `<div class="app-value ${changed ? "is-changed" : ""}"><span>${name}</span><span>${value}</span></div>`).join("")}</div>
   <h4>Calls</h4>${calls.map(([call, line], index) =>
     `<div class="app-call ${index === chosen ? "is-current" : ""}">${call} · Ln ${line}</div>`).join("")}`;

@@ -16,6 +16,7 @@ import {
 import type { Motion } from '#lib/map/motion.ts';
 import type { Scene } from '#lib/map/scene.ts';
 import { isInstant, NORMAL_SPEED, paceFrame, runInstant, SPEEDS, START_CARRY } from './pace.ts';
+import { ShownCalls, type CallsView } from './shown-calls.svelte.ts';
 
 /** The time an **Instant** frame spends running steps, so that the page still draws. */
 const INSTANT_BUDGET = 8;
@@ -180,8 +181,15 @@ export class Playback implements Scene {
 	 * on, or goes back to its start.
 	 */
 	atBreakpoint = $state(false);
+	/**
+	 * What the variables panel shows: the calls in progress as the line lit finds them, the one
+	 * shown and its variables; none at rest. They keep the state of the end once the program has
+	 * stopped.
+	 */
+	readonly calls: CallsView;
 
 	readonly #source: PlaybackSource;
+	readonly #calls = new ShownCalls();
 	readonly #rate: () => number;
 	readonly #frames: Frames;
 	readonly #breakpoints: () => ReadonlySet<number>;
@@ -252,6 +260,7 @@ export class Playback implements Scene {
 		this.#now = now;
 		this.#lessMotion = lessMotion;
 		this.world = $state.raw(source.world);
+		this.calls = this.#calls;
 	}
 
 	/**
@@ -318,6 +327,14 @@ export class Playback implements Scene {
 			});
 		}
 		this.#wake();
+	}
+
+	/**
+	 * Shows the variables of the call of index `index` among `calls`, which the learner chose: it
+	 * stays shown while it is in progress. The call being run follows the program again.
+	 */
+	showCall(index: number): void {
+		this.#calls.choose(index, this.#run);
 	}
 
 	/** Ends the program and puts the map back to its start: nothing runs until **Run** or **Step**. */
@@ -459,8 +476,12 @@ export class Playback implements Scene {
 		this.#rewind();
 	}
 
-	/** Shows the map as it starts, nothing moving: before the first step, or at rest. */
+	/**
+	 * Shows the map as it starts, nothing moving: before the first step, or at rest. The call
+	 * chosen in the variables panel is forgotten.
+	 */
 	#rewind(): void {
+		this.#calls.forget();
 		this.motion = undefined;
 		this.progress = 0;
 		this.#carry = START_CARRY;
@@ -611,11 +632,13 @@ export class Playback implements Scene {
 
 	/**
 	 * Highlights the line of the next step, or tells how the program stopped, once per run to
-	 * `onStopped`; neither before it starts.
+	 * `onStopped`; neither before it starts. The variables panel reads the calls as they are at
+	 * that line, once per step, or once per frame at **Instant**.
 	 */
 	#showLine(): void {
 		const run = this.#run;
 		this.line = run?.line;
+		this.#calls.read(run);
 		const outcome = run && run.line === undefined ? run.outcome() : undefined;
 		this.outcome = outcome;
 		if (outcome && !this.#stopTold) {

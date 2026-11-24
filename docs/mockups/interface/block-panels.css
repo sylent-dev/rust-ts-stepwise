@@ -9,8 +9,15 @@
 .app-panel { flex: 1; min-height: 0; padding: var(--space-8) var(--space-16); overflow: hidden; font: var(--weight-code) var(--size-code-small)/var(--line-code-small) var(--font-code); font-variant-ligatures: none; }
 .app-weak { color: var(--weak); }
 .app-panel h4 { margin: 0 0 var(--space-4); color: var(--weak); font: var(--weight-code) var(--size-code-small) var(--font-code); }
-.app-values { margin-bottom: var(--space-12); }
-.app-value { display: grid; grid-template-columns: 110px 1fr; }
+/* The names take one column, as wide as the longest one up to 24 characters, so that the values line
+   up; a longer name is cut. */
+.app-values { display: grid; grid-template-columns: minmax(110px, max-content) minmax(0, 1fr); margin-bottom: var(--space-12); }
+.app-values h4 { grid-column: 1 / -1; }
+.app-value { display: grid; grid-column: 1 / -1; grid-template-columns: subgrid; }
+.app-value > span:first-child { max-width: 24ch; padding-right: var(--space-12); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* A value stays on one line, cut at the edge of the panel: the bridge gives the first 200 characters of a
+   text, and `…` after them when it cut it. */
+.app-value > span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: pre; }
 /* A value changed by the last step stands out. */
 .app-value.is-changed { margin: 0 calc(-1 * var(--space-6)); padding: 0 var(--space-6); background: var(--accent-soft); border-radius: var(--radius); font-weight: var(--weight-code-strong); }
 .app-call:hover { background: var(--chosen-soft); cursor: pointer; }

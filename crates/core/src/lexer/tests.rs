@@ -1,7 +1,8 @@
 //! The tests of the lexer, grouped by the rules of the specifications.
 
 use super::{
-    Keyword as K, LexError, LexErrorKind as E, MAX_NUMBER, Token, TokenKind as T, tokenize,
+    Keyword as K, LexError, LexErrorKind as E, MAX_NUMBER, Token, TokenKind as T, text_literal,
+    tokenize,
 };
 use crate::span::{Position, Span};
 use crate::test_support::span;
@@ -1237,6 +1238,39 @@ mod texts {
     #[test]
     fn a_text_of_escaped_quotes() {
         assert_eq!(line_kinds(r#""\"\"""#), vec![text("\"\"")]);
+    }
+
+    #[test]
+    fn a_text_is_written_as_a_program_writes_it() {
+        for (content, written) in [
+            ("", r#""""#),
+            ("Sides done:", r#""Sides done:""#),
+            ("a\"b", r#""a\"b""#),
+            ("a\\b", r#""a\\b""#),
+            ("a\nb", r#""a\nb""#),
+            ("\\n", r#""\\n""#),
+            ("\"\\\n\"", r#""\"\\\n\"""#),
+            ("côté 🤖", r#""côté 🤖""#),
+        ] {
+            assert_eq!(text_literal(content).collect::<String>(), written);
+        }
+    }
+
+    #[test]
+    fn a_text_written_reads_back_as_it_is() {
+        for content in [
+            "",
+            "a\"b",
+            "a\\",
+            "\\n",
+            "\n\n",
+            "\"\"",
+            "# no comment",
+            "côté 🤖",
+        ] {
+            let written: String = text_literal(content).collect();
+            assert_eq!(line_kinds(&written), vec![text(content)], "{written}");
+        }
     }
 
     #[test]

@@ -292,7 +292,7 @@ fn no_value(function: &str) -> E {
 fn calls(machine: &Machine) -> Vec<String> {
     let written = |call: &super::CallInProgress| {
         let function = call.function.unwrap_or("main program");
-        let variables = call.variables.iter().map(|variable| {
+        let variables = call.variables().map(|variable| {
             let changed = if variable.changed { "*" } else { "" };
             format!(" {changed}{}={}", variable.name, variable.value)
         });
@@ -1741,6 +1741,35 @@ fn a_recursion_that_never_ends_stops_at_the_limit() {
 }
 
 // The calls in progress and their variables.
+
+#[test]
+fn each_call_has_a_number_of_its_own() {
+    // Two calls of the same function, from the same line, at the same depth.
+    let source = "\
+function side(length):
+    print(length)
+
+repeat 2:
+    side(3)
+";
+    let numbers = |machine: &Machine| -> Vec<u64> {
+        machine.calls().iter().map(|call| call.number).collect()
+    };
+    let mut machine = paused_on(source, 2);
+    assert_eq!(numbers(&machine), [0, 1]);
+    machine.step();
+    for _ in 0..MAX_STEPS {
+        if matches!(machine.state(), State::Running { line, .. } if line.start.line == 2) {
+            break;
+        }
+        machine.step();
+    }
+    assert_eq!(
+        calls(&machine),
+        ["main program · Ln 5:", "side · Ln 2: *length=3"]
+    );
+    assert_eq!(numbers(&machine), [0, 2]);
+}
 
 #[test]
 fn the_calls_in_progress_go_from_the_main_program_to_the_function_being_run() {
