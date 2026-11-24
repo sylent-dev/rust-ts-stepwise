@@ -67,6 +67,8 @@
 	}
 
 	function onkeydown(event: KeyboardEvent) {
+		// Alt+← goes back a page, and a shortcut of the screen holds Ctrl: only the keys alone.
+		if (event.ctrlKey || event.altKey || event.metaKey) return;
 		const panel = tabAfter(event.key);
 		if (!panel) return;
 		event.preventDefault();
@@ -91,7 +93,7 @@
 			<h2 class="title" id={nameId(panel)}>{names[panel]}</h2>
 		{/each}
 	{:else}
-		<div class="tabs" role="tablist" aria-label={t('panels-name')} tabindex="-1" {onkeydown}>
+		<div class="tabs" role="tablist" aria-label={t('panels-name')}>
 			{#each PANELS as panel (panel)}
 				{@const shown = tabs.shown === panel}
 				{@const dot = panel === 'variables' && tabs.dot}
@@ -107,6 +109,7 @@
 					aria-describedby={dot ? dotId : undefined}
 					tabindex={shown ? 0 : -1}
 					bind:this={buttons[panel]}
+					{onkeydown}
 					onclick={() => {
 						tabs.choose(panel);
 					}}>{names[panel]}</button
@@ -119,7 +122,12 @@
 		<ConsolePanel {log} {onshow} {...panelAttributes('console')} />
 	</div>
 	<div class="place variables" class:is-hidden={hidden('variables')}>
-		<VariablesPanel {calls} {onchoose} {...panelAttributes('variables')} />
+		<VariablesPanel
+			{calls}
+			{onchoose}
+			heading={side.current ? 3 : 2}
+			{...panelAttributes('variables')}
+		/>
 	</div>
 </div>
 

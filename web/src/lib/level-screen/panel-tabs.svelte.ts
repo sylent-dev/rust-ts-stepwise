@@ -1,10 +1,11 @@
 // Which of the console and the variables the panels under the map show, in a window narrower than
 // 1,600 pixels, where they are two tabs (see Variables panel in specs.md). **Run** shows the
-// console; a pause shows the variables, unless the learner has chosen the console since the
-// program started; an error brings the console forward, with a dot on the tab of the variables,
-// which holds the state at that moment, until the learner opens it or the program starts again or
-// goes back to its start. From 1,600 pixels wide, both stand side by side and the choice isn't
-// seen. Without a page, so that each case is tested; the panels draw it (panels.svelte).
+// console, as does a list of the errors of the code; a pause shows the variables, unless the
+// learner has chosen the console since the program started; an error brings the console forward,
+// with a dot on the tab of the variables, which holds the state at that moment, until the learner
+// opens it or the program starts again or goes back to its start. From 1,600 pixels wide, both
+// stand side by side and the choice isn't seen. Without a page, so that each case is tested; the
+// panels draw it (panels.svelte).
 
 import type { PlaybackStatus } from '#lib/run/playback.svelte.ts';
 
@@ -24,6 +25,14 @@ export class PanelTabs {
 		this.shown = 'console';
 		this.#consoleChosen = false;
 		this.dot = false;
+	}
+
+	/**
+	 * The console lists the errors of the code: a **Run** that the checks refuse, or the number of
+	 * errors of the status bar clicked. The dot stays with the state that it speaks of.
+	 */
+	listed(): void {
+		this.shown = 'console';
 	}
 
 	/**

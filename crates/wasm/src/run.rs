@@ -148,12 +148,7 @@ impl Run {
     #[must_use]
     pub fn variables_of(&self, call: usize) -> Option<Vec<Variable>> {
         let calls = self.core.machine().calls();
-        let variables = calls.get(call)?.variables().map(|variable| Variable {
-            name: variable.name.to_owned(),
-            value: variable.value.into(),
-            changed: variable.changed,
-        });
-        Some(variables.collect())
+        Some(calls.get(call)?.variables().map(Variable::from).collect())
     }
 }
 
@@ -376,6 +371,16 @@ impl From<level::GoalNotMet> for GoalNotMet {
             level::GoalNotMet::ItemMissing(at) => Self::ItemMissing { at: at.into() },
             level::GoalNotMet::NotCarrying => Self::NotCarrying,
             level::GoalNotMet::Carrying => Self::Carrying,
+        }
+    }
+}
+
+impl From<interpreter::Variable<'_>> for Variable {
+    fn from(variable: interpreter::Variable<'_>) -> Self {
+        Self {
+            name: variable.name.to_owned(),
+            value: variable.value.into(),
+            changed: variable.changed,
         }
     }
 }

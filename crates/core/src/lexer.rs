@@ -94,12 +94,11 @@ pub(crate) fn tokenize(source: &str) -> Result<Lexed, LexError> {
 /// character, so that it takes the first ones of a long text alone.
 pub fn text_literal(text: &str) -> impl Iterator<Item = char> {
     let escaped = text.chars().flat_map(|character| {
-        let escape = match character {
-            '"' | '\\' => Some(character),
-            '\n' => Some('n'),
-            _ => None,
+        let written = match character {
+            '"' | '\\' => [Some('\\'), Some(character)],
+            '\n' => [Some('\\'), Some('n')],
+            _ => [Some(character), None],
         };
-        let written = escape.map_or([Some(character), None], |escape| [Some('\\'), Some(escape)]);
         written.into_iter().flatten()
     });
     iter::once('"').chain(escaped).chain(iter::once('"'))

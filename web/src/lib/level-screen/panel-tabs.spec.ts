@@ -63,6 +63,16 @@ describe('the tabs of the panels under the map', () => {
 		expect(seen(tabs)).toEqual({ shown: 'console', dot: false });
 	});
 
+	it('show the console when it lists the errors of the code, the dot kept', () => {
+		const tabs = new PanelTabs();
+		tabs.started();
+		tabs.follow('failed');
+		tabs.choose('variables');
+		tabs.follow('failed');
+		tabs.listed();
+		expect(seen(tabs)).toEqual({ shown: 'console', dot: true });
+	});
+
 	it('take the dot away when the program starts again, or the map is put back', () => {
 		const tabs = new PanelTabs();
 		tabs.started();

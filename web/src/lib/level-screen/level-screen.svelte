@@ -121,6 +121,9 @@
 							editing?.settleBreakpoints();
 							tabs.started();
 						},
+						onListed: () => {
+							tabs.listed();
+						},
 						onBroken: loadFailed,
 						sounds
 					})

@@ -8,8 +8,9 @@
 
      It isn't read to a screen reader as it changes: at the faster speeds it changes at each frame,
      and the status bar says already where the program stands. The block that scrolls takes a stop
-     of Tab, as the console. The block that places it gives it its name and its role
-     (level-screen/panels.svelte). -->
+     of Tab, as the console. The block that places it gives it its name, its role and the level of
+     its titles (level-screen/panels.svelte): under a tab, they come right under the title of the
+     screen; side by side, under the title of the panel. -->
 <script lang="ts">
 	import type { HTMLAttributes } from 'svelte/elements';
 	import type { Call, Value } from '#lib/core/core.ts';
@@ -21,9 +22,14 @@
 		calls: CallsView | undefined;
 		/** Shows the call of an index among the calls in progress, which the learner clicked. */
 		onchoose: (index: number) => void;
+		/** The level of its titles: 2 under a tab, 3 under the title of the panel. */
+		heading: 2 | 3;
 	}
 
-	let { calls, onchoose, ...attributes }: Props = $props();
+	let { calls, onchoose, heading, ...attributes }: Props = $props();
+
+	/** The element of its titles. */
+	const title = $derived(`h${String(heading)}`);
 
 	/** The call shown; nothing before the program starts. */
 	const shown = $derived(calls?.shown === undefined ? undefined : calls.calls[calls.shown]);
@@ -53,7 +59,7 @@
 	{#if !calls || !shown}
 		<p class="weak">{t('variables-empty')}</p>
 	{:else}
-		<h3>{where(shown)}</h3>
+		<svelte:element this={title} class="title">{where(shown)}</svelte:element>
 		{#if calls.variables.length === 0}
 			<p class="weak none">{t('variables-none')}</p>
 		{:else}
@@ -66,7 +72,7 @@
 				{/each}
 			</dl>
 		{/if}
-		<h3>{t('variables-calls')}</h3>
+		<svelte:element this={title} class="title">{t('variables-calls')}</svelte:element>
 		<ol class="calls">
 			{#each calls.calls as call, index (call.number)}
 				{@const current = index === calls.shown}
@@ -100,11 +106,11 @@
 	}
 
 	.weak,
-	h3 {
+	.title {
 		color: var(--weak);
 	}
 
-	h3 {
+	.title {
 		margin: 0 0 var(--space-4);
 		font: inherit;
 	}
@@ -128,22 +134,24 @@
 		grid-template-columns: subgrid;
 	}
 
-	/* A name or a value too long for its place is cut, with an ellipsis: each stays on its line. */
+	/* A name or a value too long for its place is cut, with an ellipsis: each stays on its line. A
+	   value keeps its spaces as the program wrote them, several in a row too. */
 	dt,
 	dd {
 		overflow: hidden;
 		text-overflow: ellipsis;
-		white-space: nowrap;
 	}
 
 	dt {
 		max-width: 24ch;
 		padding-right: var(--space-12);
+		white-space: nowrap;
 	}
 
 	dd {
 		min-width: 0;
 		margin: 0;
+		white-space: pre;
 	}
 
 	/* A variable that the last step changed stands out, on the whole width of its line. */

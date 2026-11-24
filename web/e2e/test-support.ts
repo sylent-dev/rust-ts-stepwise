@@ -174,11 +174,11 @@ export async function followLitLines(page: Page): Promise<() => Promise<string[]
 }
 
 /**
- * A panel under the map, by its name: in the window of the tests, narrower than 1,600 pixels, the
- * panel of its tab.
+ * A panel under the map, by its name: the panel of its tab in a window narrower than 1,600 pixels,
+ * as the one of the tests; a region under its title from there.
  */
 export function panelOf(page: Page, name: 'Console' | 'Variables'): Locator {
-	return page.getByRole('tabpanel', { name });
+	return page.getByRole('tabpanel', { name }).or(page.getByRole('region', { name }));
 }
 
 /** The tab of a panel under the map. */
@@ -186,14 +186,14 @@ export function panelTab(page: Page, name: 'Console' | 'Variables'): Locator {
 	return page.getByRole('tab', { name });
 }
 
-/** Whether the tab of the variables shows the dot of the state at an error. */
+/** The dot of the state at an error, which only the tab of the variables shows. */
 export function variablesDot(page: Page): Locator {
-	return panelTab(page, 'Variables').and(page.locator('.has-dot'));
+	return page.locator('.has-dot');
 }
 
 /**
  * The variables that the panel shows, each as `<name>=<value>`, the ones that the last step
- * changed after a `*`.
+ * changed after a `*`: read once, so read it again with `expect.poll`.
  */
 export async function shownVariables(page: Page): Promise<string[]> {
 	return panelOf(page, 'Variables')

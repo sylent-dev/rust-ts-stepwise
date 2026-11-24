@@ -146,6 +146,26 @@ describe('the program of a screen', () => {
 		expect(started).toBe(2);
 	});
 
+	it('tells the screen that the console lists the errors of the code, and only then', () => {
+		const code = { text: 'forward(\n' };
+		let listed = 0;
+		page = pageOf();
+		const program = new Program(sandboxPlayground(sandbox), () => code.text, {
+			frames: page.frames,
+			onListed: () => (listed += 1)
+		});
+		program.runOrPause();
+		program.step();
+		program.listErrors();
+		expect(listed).toBe(3);
+		code.text = 'forward()\n';
+		program.listErrors();
+		program.runOrPause();
+		finish();
+		expect(listed).toBe(3);
+		program.free();
+	});
+
 	it('can’t step while it runs', () => {
 		const program = programOf({ text: 'forward()\nforward()\n' });
 		expect(program.canStep).toBe(true);

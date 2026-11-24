@@ -7,7 +7,7 @@
 import type { Call, Run, Variable } from '#lib/core/core.ts';
 
 /** What the panel reads of the calls shown, which only the program writes. */
-export type CallsView = Pick<ShownCalls, 'calls' | 'shown' | 'variables'>;
+export type CallsView = Readonly<Pick<ShownCalls, 'calls' | 'shown' | 'variables'>>;
 
 export class ShownCalls {
 	/**
