@@ -40,6 +40,26 @@ describe('a store', () => {
 		expect(store.read('settings', 2)).toEqual({ version: 2 });
 	});
 
+	it('saves over an older version, and never over a newer one', () => {
+		const backend = memoryBackend({ 'stepwise.code': '{"levels":{},"version":1}' });
+		const { store, onRefused } = open(backend);
+		store.write('code', 2, { levels: { first: 'forward()' } });
+		expect(store.read('code', 2)).toEqual({ levels: { first: 'forward()' }, version: 2 });
+		store.write('code', 1, { levels: {} });
+		expect(store.read('code', 2)).toEqual({ levels: { first: 'forward()' }, version: 2 });
+		expect(onRefused).not.toHaveBeenCalled();
+	});
+
+	it.each([
+		['damaged', '{"levels":{'],
+		['without a version', '{"levels":{}}'],
+		['of a version that is no number', '{"levels":{},"version":"3"}']
+	])('saves over what can’t be read: %s', (_, held) => {
+		const backend = memoryBackend({ 'stepwise.code': held });
+		open(backend).store.write('code', 1, { levels: {} });
+		expect(backend.held['stepwise.code']).toBe('{"levels":{},"version":1}');
+	});
+
 	it('leaves nothing behind when it opens', () => {
 		const backend = memoryBackend();
 		open(backend);

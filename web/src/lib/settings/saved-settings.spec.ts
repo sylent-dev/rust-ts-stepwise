@@ -67,10 +67,10 @@ describe('the settings saved', () => {
 		});
 	});
 
-	it('replace what they can’t read, and what another version saved', () => {
+	it('replace what they can’t read, and what an older version saved', () => {
 		for (const value of [
 			'{"theme":"night-de',
-			'{"theme":"day-desk","language":"fr","version":2}'
+			'{"theme":"day-desk","language":"fr","version":0}'
 		]) {
 			const { store, held } = storeWith(value);
 			saveSettings(store, { theme: 'night-desk', speed: 5, sounds: false });
@@ -81,6 +81,13 @@ describe('the settings saved', () => {
 				version: 1
 			});
 		}
+	});
+
+	it('leave what a newer version saved, which they can’t read', () => {
+		const newer = '{"theme":"day-desk","language":"fr","version":2}';
+		const { store, held } = storeWith(newer);
+		saveSettings(store, { theme: 'night-desk', speed: 5, sounds: false });
+		expect(held[SETTINGS_KEY]).toBe(newer);
 	});
 
 	it('are saved with Instant by its name, which JSON has no number for', () => {
