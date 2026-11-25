@@ -12,15 +12,25 @@
 		scene?: Scene;
 		/** The goals of a map of a level; the sandbox has none. */
 		goals?: Goals;
+		/** The id of the block, which the tabs of the maps show. */
+		id?: string;
+		/** The id of the tab of the map shown, when the level has tabs: the block is its panel. */
+		tab?: string;
 	}
 
-	let { scene, goals }: Props = $props();
+	let { scene, goals, id, tab }: Props = $props();
 
 	/** The room the map has, inside the margin of the block. */
 	let room = $state<DOMRectReadOnly>();
 </script>
 
-<div class="block" bind:contentRect={room}>
+<div
+	class="block"
+	{id}
+	role={tab === undefined ? undefined : 'tabpanel'}
+	aria-labelledby={tab}
+	bind:contentRect={room}
+>
 	{#if scene && room}
 		<MapView {scene} {goals} side={cellSide(room, scene.world)} />
 	{/if}

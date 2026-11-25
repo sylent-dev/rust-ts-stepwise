@@ -10,6 +10,9 @@
 	/* The side of a control that floats over the code, as in the mock-up: the three of a
 	   program. The code gives them room past its last line. */
 	--control-side: 44px;
+	/* The row above the map of a level, as in the mock-up: the tabs of its maps, whose text has
+	   room above and under it as the bands of the screen. */
+	--map-row-height: 34px;
 
 	/* The layers, from the lowest to the highest: where a block stands over the screen, as a
 	   `z-index`. They are only compared with each other; a new one takes its place in this

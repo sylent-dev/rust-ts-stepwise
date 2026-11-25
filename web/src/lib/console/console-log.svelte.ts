@@ -1,7 +1,9 @@
 // What the console of a program shows (see Console in specs.md): a log of its last **Run**, never
 // the state of the moment. The lines that `print` wrote, the last 1,000 of them, and the error
-// that stopped the program; or the errors that the checks found, which kept it from starting.
-// The log keeps them until the next **Run**: **Reset** puts the map back and leaves it. The line
+// that stopped the program, or the messages of the level once it ended: the goals not met, or the
+// map passed; or the errors that the checks found, which kept it from starting. The log keeps them
+// until the next **Run**: **Reset** puts the map back and leaves it, and so does another map of
+// the level, which the screen shows on the same log. The line
 // of each error and its place follow the code as the learner changes it, as the cross of the
 // margin does. Without a page, so that each case is tested; the panel draws it
 // (console-panel.svelte).
@@ -34,12 +36,22 @@ export type ListedError = Readonly<
 	}
 >;
 
-/** What the console reads of a log, which only the program writes. */
-export type LogView = Pick<ConsoleLog, 'kind' | 'report' | 'lines' | 'cut' | 'errors'>;
+/**
+ * A message of the level, once a program has ended without error: a goal not met, with the flag of
+ * the map, or a map passed, with a check. Its text is written by the screen, which knows the level.
+ */
+export interface ConsoleNote {
+	readonly kind: 'goal' | 'passed';
+	readonly text: string;
+}
+
+/** What the console reads of a log, which only the program and its screen write. */
+export type LogView = Pick<ConsoleLog, 'kind' | 'report' | 'lines' | 'cut' | 'errors' | 'notes'>;
 
 export class ConsoleLog {
 	#kind = $state<LogKind>('empty');
 	#errors = $state.raw<readonly ListedError[]>([]);
+	#notes = $state.raw<readonly ConsoleNote[]>([]);
 	/** The number of the report shown, which each **Run**, each list of errors, each clear changes. */
 	#report = $state(0);
 	/**
@@ -82,6 +94,11 @@ export class ConsoleLog {
 		return this.#errors;
 	}
 
+	/** The messages of the level, after the lines, once the program has ended without error. */
+	get notes(): readonly ConsoleNote[] {
+		return this.#notes;
+	}
+
 	/** A program starts, by **Run** or by **Step**: the log of the last one is cleared. */
 	start(): void {
 		this.#renew('ran');
@@ -97,6 +114,11 @@ export class ConsoleLog {
 	/** An error stopped the program, at a place of the code as it ran. */
 	fail(error: RuntimeError): void {
 		this.#errors = [{ found: 'run', error, at: error.span.from, line: error.span.line }];
+	}
+
+	/** The program ended without error: the messages of the level say how it went. */
+	note(notes: readonly ConsoleNote[]): void {
+		this.#notes = notes;
 	}
 
 	/**
@@ -131,6 +153,7 @@ export class ConsoleLog {
 	#renew(kind: LogKind): void {
 		this.#kind = kind;
 		this.#errors = [];
+		this.#notes = [];
 		this.#lines = [];
 		this.#written = 0;
 		this.#report += 1;

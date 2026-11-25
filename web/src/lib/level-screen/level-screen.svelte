@@ -14,12 +14,18 @@
      cursor at its place. The variables panel shows the calls of the program and their variables;
      its tab opens by itself at a pause (see Variables panel in specs.md). **Help › Keyboard
      shortcuts** lists the shortcuts of the screen in a
-     panel. A run plays its sounds while the setting **Sounds** is on (see Sounds in specs.md). -->
+     panel. A run plays its sounds while the setting **Sounds** is on (see Sounds in specs.md).
+     A level of more than one map shows a tab per map above it; showing another map ends the
+     program as **Reset** does, the console kept. Once a program of a level has ended, the console
+     says how its goals went, and a map passed is kept in the progress, its tab teal while the code
+     is the one that passed it (see Variants in specs.md). -->
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import { differsFromStart, type LevelCode } from '#lib/code/code.ts';
 	import { CommandMenu } from '#lib/command-menu/command-menu.svelte.ts';
+	import { ConsoleLog } from '#lib/console/console-log.svelte.ts';
 	import { keepCode, openingCode, restoreCode } from '#lib/code/current-code.ts';
+	import type { Outcome } from '#lib/core/core.ts';
 	import { kept } from '#lib/core/core-ready.svelte.ts';
 	import CodeEditor from '#lib/editor/code-editor.svelte';
 	import type { CodeChange, Editing } from '#lib/editor/edits.ts';
@@ -27,6 +33,8 @@
 	import { t } from '#lib/i18n.ts';
 	import { loadFailed } from '#lib/page/startup.svelte.ts';
 	import { currentPlatform } from '#lib/platform.ts';
+	import { keepPass, levelProgress } from '#lib/progress/current-progress.svelte.ts';
+	import { mapsPassedWith, passedEvery } from '#lib/progress/progress.ts';
 	import { chooseSpeed, settings } from '#lib/settings/current-settings.svelte.ts';
 	import SettingsButton from '#lib/settings/settings-button.svelte';
 	import Confirmation from '#lib/shell/confirmation.svelte';
@@ -39,9 +47,11 @@
 	import { pageSounds } from '#lib/sounds/page-sounds.ts';
 	import { levelCommands } from './level-commands.ts';
 	import { levelMenus, type LevelScreenKind } from './level-menus.ts';
+	import { goalNotes, passedNote } from './level-notes.ts';
 	import { levelShortcuts } from './level-shortcuts.ts';
 	import { LockFlash } from './lock-flash.svelte.ts';
 	import MapBlock from './map-block.svelte';
+	import MapTabs from './map-tabs.svelte';
 	import { PanelTabs } from './panel-tabs.svelte.ts';
 	import Panels from './panels.svelte';
 	import type { Playground } from './playground.ts';
@@ -59,6 +69,8 @@
 		title: string;
 		/** What the screen plays on; nothing until the core is ready. */
 		playground?: Playground;
+		/** Shows another map of the level, by its number, which its tab names. */
+		onchoosemap?: (map: number) => void;
 	} & (
 		| {
 				screen: 'level';
@@ -68,7 +80,16 @@
 		| { screen: 'sandbox'; number?: undefined }
 	);
 
-	let { screen, title, playground, number }: Props = $props();
+	let { screen, title, playground, onchoosemap, number }: Props = $props();
+
+	/** The stable name of the level shown, or of the sandbox; nothing until the core is ready. */
+	const shownName = $derived(playground?.name);
+
+	/**
+	 * The console of the level shown, which the programs of its maps write: showing another map
+	 * keeps what it says, and another level starts it anew.
+	 */
+	const log = $derived(shownName === undefined ? undefined : new ConsoleLog());
 
 	/** The editor shown; nothing until the core is ready. */
 	let editing = $state.raw<Editing>();
@@ -116,6 +137,7 @@
 			untrack(
 				() =>
 					new Program(ground, () => editing?.text, {
+						log,
 						rate: () => settings.speed,
 						breakpoints: () => breakpointLines,
 						onStart: () => {
@@ -125,12 +147,68 @@
 						onListed: () => {
 							tabs.listed();
 						},
+						onStopped: (outcome, code) => {
+							ended(ground, outcome, code);
+						},
 						onBroken: loadFailed,
 						sounds
 					})
 			)
 		);
 	});
+
+	/**
+	 * A program of a map of a level has ended, without error: the console says how its goals
+	 * went, and a map passed is kept in the progress. The sandbox has no goal.
+	 */
+	function ended(ground: Playground, outcome: Outcome, code: string) {
+		const { name, mapNumber, mapCount } = ground;
+		if (mapNumber === undefined || mapCount === undefined) return;
+		switch (outcome.type) {
+			case 'goals-not-met':
+				log?.note(goalNotes(outcome.goals));
+				break;
+			case 'passed': {
+				const passed = mapsPassedWith(keepPass(name, mapNumber, code, mapCount), code);
+				log?.note([passedNote(mapNumber, mapCount, passed)]);
+				break;
+			}
+			case 'ended':
+			case 'failed':
+				break;
+		}
+	}
+
+	/** The maps that the code as it is now has passed, whose tabs are teal. */
+	const passedMaps = $derived(
+		playground && editing
+			? mapsPassedWith(levelProgress(playground.name), editing.text)
+			: new Set<number>()
+	);
+
+	/** Whether the code that the program ran has passed every map of the level. */
+	const levelDone = $derived.by(() => {
+		const current = program.current;
+		return (
+			playground?.mapCount !== undefined &&
+			current !== undefined &&
+			passedEvery(levelProgress(playground.name), current.ran, playground.mapCount)
+		);
+	});
+
+	const id = $props.id();
+
+	/** The id of the block of the map, which the tabs of the maps show. */
+	const mapPanel = `${id}-map`;
+
+	/** The tabs of the maps of a level of more than one map: how many, and the one shown. */
+	const mapTabs = $derived(
+		playground?.mapNumber !== undefined &&
+			playground.mapCount !== undefined &&
+			playground.mapCount > 1
+			? { count: playground.mapCount, shown: playground.mapNumber }
+			: undefined
+	);
 
 	/** The speed of the programs: a setting, which the menu **Run** reads and chooses. */
 	const speed: SpeedSetting = {
@@ -195,7 +273,8 @@
 				atBreakpoint: current.played.atBreakpoint,
 				outcome: current.played.outcome
 			},
-			playground?.mapNumber
+			playground?.mapNumber,
+			levelDone
 		);
 	});
 
@@ -342,11 +421,27 @@
 				onerrors={() => program.current?.listErrors()}
 			/>
 		</div>
-		<div class="map"><MapBlock scene={program.current?.played} goals={playground?.goals} /></div>
+		<div class="map">
+			{#if mapTabs}
+				<MapTabs
+					count={mapTabs.count}
+					shown={mapTabs.shown}
+					passed={passedMaps}
+					panel={mapPanel}
+					onchoose={(map: number) => onchoosemap?.(map)}
+				/>
+			{/if}
+			<MapBlock
+				scene={program.current?.played}
+				goals={playground?.goals}
+				id={mapPanel}
+				tab={mapTabs && `${mapPanel}-tab-${String(mapTabs.shown)}`}
+			/>
+		</div>
 		<div class="panels">
 			<Panels
 				{tabs}
-				log={program.current?.log}
+				{log}
 				calls={program.current?.played.calls}
 				onshow={(at: number) => editing?.showPlace(at)}
 				onchoose={(index: number) => program.current?.showCall(index)}

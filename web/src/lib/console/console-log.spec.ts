@@ -92,16 +92,31 @@ describe('the log of a console', () => {
 		]);
 	});
 
+	it('keeps the messages of the level after the lines, until the next Run', () => {
+		const log = new ConsoleLog();
+		log.start();
+		log.print('Sides: 4');
+		log.note([{ kind: 'passed', text: 'Map 1 passed. Try map 2.' }]);
+		expect({ lines: log.lines, notes: log.notes }).toEqual({
+			lines: ['Sides: 4'],
+			notes: [{ kind: 'passed', text: 'Map 1 passed. Try map 2.' }]
+		});
+		log.start();
+		expect(log.notes).toEqual([]);
+	});
+
 	it('is back to its state before any Run once cleared', () => {
 		const log = new ConsoleLog();
 		log.start();
 		log.print('Sides: 1');
 		log.fail(bumpAt(5, 40));
+		log.note([{ kind: 'goal', text: 'The goal is not met: 1 cell is not red.' }]);
 		log.clear();
-		expect({ kind: log.kind, lines: log.lines, errors: log.errors }).toEqual({
+		expect({ kind: log.kind, lines: log.lines, errors: log.errors, notes: log.notes }).toEqual({
 			kind: 'empty',
 			lines: [],
-			errors: []
+			errors: [],
+			notes: []
 		});
 	});
 });

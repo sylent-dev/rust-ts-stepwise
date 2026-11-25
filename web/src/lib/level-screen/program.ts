@@ -4,7 +4,7 @@
 // map draws, whether its code can be changed, and what its console shows.
 
 import { ConsoleLog, type LogView } from '#lib/console/console-log.svelte.ts';
-import { check, type ProgramError } from '#lib/core/core.ts';
+import { check, type Outcome, type ProgramError } from '#lib/core/core.ts';
 import type { CodeChange } from '#lib/editor/edits.ts';
 import type { Scene } from '#lib/map/scene.ts';
 import { Playback, type PlaybackOptions, type PlaybackStatus } from '#lib/run/playback.svelte.ts';
@@ -76,6 +76,18 @@ export interface ProgramOptions extends Omit<
 	 * refuse, or the number of errors of the status bar clicked. The screen shows the console.
 	 */
 	onListed?: () => void;
+	/**
+	 * Told once the program has stopped and its last action has ended, with how it stopped and
+	 * the code it ran: the screen of a level keeps a map passed, and says in the console how the
+	 * goals went.
+	 */
+	onStopped?: (outcome: Outcome, code: string) => void;
+	/**
+	 * Where its console log is written. The screen gives the one of its level, which the programs
+	 * of its maps share, so that showing another map keeps what the console says; a log of its own
+	 * by default.
+	 */
+	log?: ConsoleLog;
 }
 
 export class Program implements ProgramControls {
@@ -86,7 +98,7 @@ export class Program implements ProgramControls {
 	 * and the errors that kept it from starting. It follows the program.
 	 */
 	readonly log: LogView;
-	readonly #log = new ConsoleLog();
+	readonly #log: ConsoleLog;
 	readonly #playback: Playback;
 	readonly #text: () => string | undefined;
 	readonly #sounds: ProgramSounds | undefined;
@@ -94,6 +106,7 @@ export class Program implements ProgramControls {
 	readonly #onListed: (() => void) | undefined;
 	/** The code as it was last checked, which a run starts on. */
 	#checked = '';
+	readonly #onStopped: ((outcome: Outcome, code: string) => void) | undefined;
 
 	/**
 	 * The program of the map of `playground`, at rest. `text` gives the code of the editor as it
@@ -103,12 +116,14 @@ export class Program implements ProgramControls {
 	constructor(
 		playground: Playground,
 		text: () => string | undefined,
-		{ sounds, onStart, onListed, ...options }: ProgramOptions = {}
+		{ sounds, onStart, onListed, onStopped, log, ...options }: ProgramOptions = {}
 	) {
 		this.#text = text;
 		this.#sounds = sounds;
 		this.#onStart = onStart;
 		this.#onListed = onListed;
+		this.#onStopped = onStopped;
+		this.#log = log ?? new ConsoleLog();
 		this.log = this.#log;
 		this.#playback = new Playback(
 			{ world: playground.world, start: () => playground.start(this.#checked) },
@@ -120,6 +135,7 @@ export class Program implements ProgramControls {
 				onStopped: (outcome) => {
 					if (outcome.type === 'failed') this.#log.fail(outcome.error);
 					this.#play(stopSound(outcome));
+					this.#onStopped?.(outcome, this.#checked);
 				},
 				onAction: (action, time, rate) => {
 					this.#play(actionSound(action, time, rate));
@@ -127,6 +143,14 @@ export class Program implements ProgramControls {
 			}
 		);
 		this.played = this.#playback;
+	}
+
+	/**
+	 * The code that the program ran, or runs: the one of the editor as **Run** or **Step** started
+	 * it. The learner may have changed the code since the program stopped.
+	 */
+	get ran(): string {
+		return this.#checked;
 	}
 
 	/** Where the program stands. */

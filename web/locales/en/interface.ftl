@@ -348,9 +348,13 @@ status-paused-breakpoint = Paused at line { NUMBER($line, useGrouping: 0) } · b
 status-failed = Error at line { NUMBER($line, useGrouping: 0) }
 # The program ended without error, and a goal of the map isn't met.
 status-goal-not-met = Ended · goal not met
-# The program ended with every goal of the map met.
+# The program ended with every goal of the map met, and another map of the level hasn’t passed
+# with this code yet.
 # $map (Number): the number of the map among those of the level, as its tab names it.
 status-map-passed = Ended · map { $map } passed
+# The program ended with every goal of the map met, and every map of the level has passed with
+# this code.
+status-level-done = Ended · level done
 # The program ended, in the sandbox, which has no goal.
 status-ended = Ended
 # For a moment, in place of the state, when the learner types in the code while it is locked.
@@ -388,6 +392,43 @@ console-cut = Earlier lines are not shown: the console keeps the last { $kept }.
 # The line of an error, before its two sentences: the editor shows its place.
 # $line (Number): the line, from 1.
 console-line = Ln { NUMBER($line, useGrouping: 0) }
+# The messages of the level, once a program has ended without error: one per goal not met, in the
+# order of the goals, after what the program printed. They count the cells, since the core knows
+# what a goal asks, never the shape that the goals draw together.
+console-goal-place = The goal is not met: the robot is not in the right place.
+# One per paint.
+# $count (Number): how many cells don’t have it, never 0.
+# $color (String): the paint, `red`, `yellow` or `blue`.
+console-goal-paint = The goal is not met: { $count ->
+        [one] { $count } cell is
+       *[other] { $count } cells are
+    } not { $color ->
+        [red] red
+        [yellow] yellow
+       *[blue] blue
+    }.
+# The cells painted when the level asks for no other paint than its goals.
+# $count (Number): how many, never 0.
+console-goal-painted = The goal is not met: { $count ->
+        [one] { $count } cell is
+       *[other] { $count } cells are
+    } painted outside the goal.
+# $count (Number): how many item slots hold no item, never 0.
+console-goal-item = The goal is not met: { $count ->
+        [one] { $count } item slot is
+       *[other] { $count } item slots are
+    } empty.
+console-goal-not-carrying = The goal is not met: the robot carries no item.
+console-goal-carrying = The goal is not met: the robot carries an item.
+# A map passed, and another one that this code hasn’t passed yet.
+# $map (Number): the number of the map passed, as its tab names it.
+# $next (Number): the first map that this code hasn’t passed.
+console-map-passed = Map { $map } passed. Try map { $next }.
+# The last map passed: every map of the level has passed with this code.
+# $map (Number): the number of the map passed, as its tab names it.
+console-map-passed-done = Map { $map } passed. Level done!
+# A level of one map done: it shows no tab, so no number names its map.
+console-level-done = Level done!
 # Under the errors that kept the program from starting: why nothing moved on the map.
 # $errors (Number): how many there are, never 0.
 console-fix = Fix { $errors ->
@@ -551,6 +592,11 @@ window-phone-text = It is made for a large window.
 
 # The name of the map, for a screen reader.
 map-name = The map
+# The name of the row of the tabs of the maps of a level, above its map, for a screen reader.
+map-tabs-name = The maps
+# The tab of a map of a level.
+# $map (Number): the number of the map among those of the level, from 1.
+map-tab = Map { $map }
 # The name of the code in the editor, for a screen reader.
 editor-name = Your code
 # Under the pointer, on a line too long, underlined with dots: an advice, not an error.

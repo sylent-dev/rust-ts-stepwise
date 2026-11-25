@@ -11,6 +11,7 @@ export type IconName =
 	| 'chevron'
 	| 'close'
 	| 'diamond'
+	| 'flag'
 	| 'gear'
 	| 'next'
 	| 'pause'
