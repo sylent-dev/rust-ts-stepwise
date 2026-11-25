@@ -21,6 +21,7 @@
 
 mod check;
 mod level;
+mod names;
 mod position;
 mod run;
 mod runtime_error;

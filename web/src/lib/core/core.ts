@@ -54,6 +54,21 @@ export {
 export { type BuiltinFunction, type Vocabulary, vocabulary } from '#lib/wasm/stepwise.js';
 
 /**
+ * The names that a line written at the cursor may use (see crates/wasm/src/names.rs), to call
+ * once `loadCore` has resolved: the functions of the program defined above the cursor, then the
+ * variables that exist there, each in the order of the program and with the place of its name;
+ * or, when a syntax error above the cursor hides them, the line of that error. The cursor is an
+ * offset in the text, as the editor gives it. Only the lines above it are read, nothing of its
+ * own line, which is being written. Give it the text of the document of the editor, as `check`.
+ */
+export {
+	namesAt,
+	type NamesAt,
+	type ProgramFunction,
+	type ProgramVariable
+} from '#lib/wasm/stepwise.js';
+
+/**
  * What each stretch of a line of code is (see crates/wasm/src/stretch.rs), to call once
  * `loadCore` has resolved: a keyword, a function, a number, a text, a color, a comment…, from
  * left to right, the spaces left out, and any blank character before the first stretch. It is
