@@ -27,6 +27,7 @@ const consoleBoards = () => [
   ["Several goals not met", { content: [consoleGoal("The goal is not met: 7 cells are not red."), consoleGoal("The goal is not met: the robot is not in the right place.")].join("") }],
   ["A map passed, others remain", { content: consolePrints(...CONSOLE_PRINTS) + consolePassed("Map 1 passed. Try map 2.") }],
   ["The last map passed", { content: consolePassed("Map 3 passed. Level done!") }],
+  ["A level of one map done: no tab to name", { content: consolePassed("Level done!") }],
 ];
 
 SECTIONS.push(["The elements of the console", () => `<div class="console-boards">${consoleBoards().map(([title, panel], index) => `
