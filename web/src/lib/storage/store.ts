@@ -25,7 +25,10 @@ export interface Store {
 	 * Saves fields under a name, with the version of their shape. A browser that refuses is
 	 * reported by the store (`onRefused` of `openStore`), never to the caller. Nothing is saved
 	 * over a newer version: a tab still open on a version of the website before it would clear
-	 * what the new one saved, which it can't read.
+	 * what the new one saved, which it can't read. So the version of a kind of data never goes
+	 * down: a revert of the website keeps the number that it reached, or raises it again with the
+	 * reading of the shape before, or nothing would be saved again in the browsers that kept the
+	 * newer one, without a word.
 	 */
 	write(name: string, version: number, fields: object): void;
 }

@@ -1,32 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { openStore } from '#lib/storage/store.ts';
-import { memoryBackend } from '#lib/storage/test-support.ts';
-import type { LevelProgress } from './progress.ts';
+import { storeWith } from '#lib/storage/test-support.ts';
 import { loadProgress, PROGRESS_KEY, saveLevelProgress } from './saved-progress.ts';
-
-/** A store over a storage in memory that holds `value` as the progress. */
-function storeWith(value?: string) {
-	const backend = memoryBackend(value === undefined ? {} : { [PROGRESS_KEY]: value });
-	return {
-		store: openStore(
-			() => backend,
-			() => {}
-		),
-		held: backend.held
-	};
-}
+import { level } from './test-support.ts';
 
 /** What the storage holds under the key of the progress, read back as an object. */
 function heldProgress(held: Record<string, string>): unknown {
 	return JSON.parse(held[PROGRESS_KEY] ?? 'null');
-}
-
-/** A level whose maps, by their numbers, passed with these codes. */
-function level(passed: Record<number, string>, done = false): LevelProgress {
-	return {
-		done,
-		passed: new Map(Object.entries(passed).map(([map, code]) => [Number(map), code]))
-	};
 }
 
 describe('the progress saved', () => {
@@ -35,11 +14,11 @@ describe('the progress saved', () => {
 	});
 
 	it('is nothing at a first visit', () => {
-		expect(loadProgress(storeWith().store)).toEqual(new Map());
+		expect(loadProgress(storeWith(PROGRESS_KEY).store)).toEqual(new Map());
 	});
 
 	it('comes back as it was saved, each level under its stable name', () => {
-		const { store, held } = storeWith();
+		const { store, held } = storeWith(PROGRESS_KEY);
 		saveLevelProgress(store, 'paint-a-square', level({ 1: 'forward()\n', 2: 'forward()\n' }, true));
 		saveLevelProgress(store, 'two-squares', level({ 2: 'turn_left()\n' }));
 
@@ -59,7 +38,7 @@ describe('the progress saved', () => {
 	});
 
 	it('replaces the progress of the same level', () => {
-		const { store } = storeWith();
+		const { store } = storeWith(PROGRESS_KEY);
 		saveLevelProgress(store, 'paint-a-square', level({ 1: 'forward()\n' }));
 		saveLevelProgress(store, 'paint-a-square', level({ 1: 'turn_left()\n' }));
 
@@ -71,11 +50,12 @@ describe('the progress saved', () => {
 		['of another version', '{"levels":{"paint-a-square":{"done":true,"passed":{}}},"version":2}'],
 		['levels that are not an object', '{"levels":["paint-a-square"],"version":1}']
 	])('is nothing when it can’t be read: %s', (_, value) => {
-		expect(loadProgress(storeWith(value).store)).toEqual(new Map());
+		expect(loadProgress(storeWith(PROGRESS_KEY, value).store)).toEqual(new Map());
 	});
 
 	it('leaves out a level that is not an object, and keeps the others', () => {
 		const { store } = storeWith(
+			PROGRESS_KEY,
 			'{"levels":{"paint-a-square":true,"two-squares":{"done":true,"passed":{}}},"version":1}'
 		);
 		expect(loadProgress(store)).toEqual(new Map([['two-squares', level({}, true)]]));
@@ -95,12 +75,13 @@ describe('the progress saved', () => {
 			level({ 3: 'forward()' })
 		]
 	])('reads a level with %s', (_, saved, expected) => {
-		const { store } = storeWith(`{"levels":{"paint-a-square":${saved}},"version":1}`);
+		const { store } = storeWith(PROGRESS_KEY, `{"levels":{"paint-a-square":${saved}},"version":1}`);
 		expect(loadProgress(store).get('paint-a-square')).toEqual(expected);
 	});
 
 	it('keeps the other levels as they were saved, with the fields that it doesn’t know', () => {
 		const { store, held } = storeWith(
+			PROGRESS_KEY,
 			'{"levels":{"two-squares":{"done":true,"passed":{},"opened":true}},"version":1}'
 		);
 		saveLevelProgress(store, 'paint-a-square', level({ 1: 'forward()' }));
@@ -116,6 +97,7 @@ describe('the progress saved', () => {
 
 	it('keeps beside the level saved the fields that it doesn’t know', () => {
 		const { store, held } = storeWith(
+			PROGRESS_KEY,
 			'{"levels":{"paint-a-square":{"done":false,"passed":{},"opened":true}},"version":1}'
 		);
 		saveLevelProgress(store, 'paint-a-square', level({ 1: 'forward()' }));
@@ -127,7 +109,7 @@ describe('the progress saved', () => {
 	});
 
 	it('takes the place of what can’t be read at the next save', () => {
-		const { store } = storeWith('{"levels":{"paint-a-squ');
+		const { store } = storeWith(PROGRESS_KEY, '{"levels":{"paint-a-squ');
 		saveLevelProgress(store, 'paint-a-square', level({ 1: 'forward()' }));
 
 		expect(loadProgress(store)).toEqual(new Map([['paint-a-square', level({ 1: 'forward()' })]]));

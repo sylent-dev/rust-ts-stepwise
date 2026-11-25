@@ -6,20 +6,12 @@ import {
 	passedEvery,
 	passMap,
 	progressOf,
-	withLevel,
-	type LevelProgress
+	withLevel
 } from './progress.ts';
+import { level } from './test-support.ts';
 
 const SQUARE = 'repeat 4:\n    forward()\n';
 const OTHER = 'forward()\n';
-
-/** A level whose maps, by their numbers, passed with these codes. */
-function level(passed: Record<number, string>, done = false): LevelProgress {
-	return {
-		done,
-		passed: new Map(Object.entries(passed).map(([map, code]) => [Number(map), code]))
-	};
-}
 
 describe('the progress of a level', () => {
 	it('is not started for a level that no map has passed', () => {

@@ -13,7 +13,8 @@
 	import { t } from '#lib/i18n.ts';
 	import LevelScreen from '#lib/level-screen/level-screen.svelte';
 	import { levelPlayground } from '#lib/level-screen/playground.ts';
-	import { levelMessage, mapAt, mapQuery } from '#lib/levels/levels.ts';
+	import { mapAt, mapQuery } from '#lib/levels/level-maps.ts';
+	import { levelMessage } from '#lib/levels/levels.ts';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();

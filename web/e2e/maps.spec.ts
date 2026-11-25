@@ -27,14 +27,19 @@ function mapTab(page: Page, map: number) {
 	return page.getByRole('tab', { name: `Map ${String(map)}` });
 }
 
-/** The numbers of the maps whose tabs are teal: the code as it is now has passed them. */
-async function tealTabs(page: Page): Promise<number[]> {
-	const tabs = page.getByRole('tablist', { name: 'The maps' }).getByRole('tab');
-	const passed: number[] = [];
-	for (const [index, tab] of (await tabs.all()).entries()) {
-		if ((await tab.getAttribute('class'))?.includes('is-passed')) passed.push(index + 1);
+/** The number of maps of the draft level. */
+const MAPS = 2;
+
+/**
+ * Waits until the tabs of the maps in `passed`, and those alone, say that the code as it is now has
+ * passed their maps, as a screen reader reads it: their teal shows it.
+ */
+async function expectPassed(page: Page, passed: number[]): Promise<void> {
+	for (let map = 1; map <= MAPS; map += 1) {
+		await expect(mapTab(page, map)).toHaveAccessibleDescription(
+			passed.includes(map) ? 'Passed with this code' : ''
+		);
 	}
-	return passed;
 }
 
 test('A tab shows its map, which the address keeps without a new entry in the history', async ({
@@ -74,7 +79,7 @@ test('A map passed turns its tab teal; every map passed with the same code, the 
 	await control(page, 'Run').click();
 	await expect(stateOf(page)).toHaveText('Ended · map 1 passed');
 	await expect(panelOf(page, 'Console')).toContainText('Map 1 passed. Try map 2.');
-	expect(await tealTabs(page)).toEqual([1]);
+	await expectPassed(page, [1]);
 
 	await mapTab(page, 2).click();
 	await expect(stateOf(page)).toHaveText('Ready');
@@ -82,7 +87,7 @@ test('A map passed turns its tab teal; every map passed with the same code, the 
 	await control(page, 'Run').click();
 	await expect(stateOf(page)).toHaveText('Ended · level done');
 	await expect(panelOf(page, 'Console')).toContainText('Map 2 passed. Level done!');
-	expect(await tealTabs(page)).toEqual([1, 2]);
+	await expectPassed(page, [1, 2]);
 
 	const saved = await page.evaluate(() => localStorage.getItem('stepwise.progress'));
 	expect(JSON.parse(saved ?? 'null')).toEqual({
@@ -92,7 +97,19 @@ test('A map passed turns its tab teal; every map passed with the same code, the 
 
 	await page.reload();
 	await expect(codeOf(page)).toBeVisible();
-	await expect.poll(() => tealTabs(page)).toEqual([1, 2]);
+	await expectPassed(page, [1, 2]);
+});
+
+test('A map passed in another tab is passed in this one', async ({ page }) => {
+	await openLevel(page);
+	await writeCode(page, SQUARE);
+	const other = await page.context().newPage();
+	await openLevel(other);
+	await writeCode(other, SQUARE);
+
+	await control(other, 'Run').click();
+	await expect(stateOf(other)).toHaveText('Ended · map 1 passed');
+	await expectPassed(page, [1]);
 });
 
 test('A change of the code takes the teal away, and undoing it brings it back', async ({
@@ -102,13 +119,13 @@ test('A change of the code takes the teal away, and undoing it brings it back', 
 	await writeCode(page, SQUARE);
 	await control(page, 'Run').click();
 	await expect(stateOf(page)).toHaveText('Ended · map 1 passed');
-	expect(await tealTabs(page)).toEqual([1]);
+	await expectPassed(page, [1]);
 
 	await codeOf(page).press('Control+End');
 	await codeOf(page).press('Space');
-	await expect.poll(() => tealTabs(page)).toEqual([]);
+	await expectPassed(page, []);
 	await codeOf(page).press('Control+z');
-	await expect.poll(() => tealTabs(page)).toEqual([1]);
+	await expectPassed(page, [1]);
 });
 
 test('The console says each goal not met', async ({ page }) => {
@@ -119,7 +136,7 @@ test('The console says each goal not met', async ({ page }) => {
 	await expect(panelOf(page, 'Console')).toContainText(
 		'The goal is not met: 12 cells are not red.'
 	);
-	expect(await tealTabs(page)).toEqual([]);
+	await expectPassed(page, []);
 });
 
 test('Another tab ends the program as Reset does, and the console keeps what it said', async ({

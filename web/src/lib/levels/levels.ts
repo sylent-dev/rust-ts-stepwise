@@ -46,31 +46,6 @@ export function levelAt(levels: readonly LevelEntry[], number: string): LevelEnt
 	return levels.find((level) => String(level.number) === number);
 }
 
-/** The parameter of the address of a level that holds the map shown: `/levels/18?map=2`. */
-const MAP_PARAMETER = 'map';
-
-/**
- * The map that an address shows, by its number among the `count` maps of its level, as its tab
- * names it: the one of its parameter, written as the interface writes it (`?map=2`, never
- * `?map=02`); the first map without one, or for a map that the level doesn't have (decided on
- * 2026-11-25).
- */
-export function mapAt(address: Pick<URL, 'search'>, count: number): number {
-	const asked = new URLSearchParams(address.search).get(MAP_PARAMETER);
-	const map = Array.from({ length: count }, (_, index) => index + 1).find(
-		(number) => String(number) === asked
-	);
-	return map ?? 1;
-}
-
-/**
- * The query of the address of a level that shows the map numbered `map`, `?map=2`, which the
- * first map goes without: its address is the one of its level.
- */
-export function mapQuery(map: number): string {
-	return map === 1 ? '' : `?${MAP_PARAMETER}=${String(map)}`;
-}
-
 /**
  * The way to read the file of the sandbox among `files`, for `new Sandbox(text)`. In a folder
  * without it, the reading fails, as the one of a file that can't load.

@@ -34,7 +34,7 @@
 	import { loadFailed } from '#lib/page/startup.svelte.ts';
 	import { currentPlatform } from '#lib/platform.ts';
 	import { keepPass, levelProgress } from '#lib/progress/current-progress.svelte.ts';
-	import { mapsPassedWith, passedEvery } from '#lib/progress/progress.ts';
+	import { mapsPassedWith, mapToTry } from '#lib/progress/progress.ts';
 	import { chooseSpeed, settings } from '#lib/settings/current-settings.svelte.ts';
 	import SettingsButton from '#lib/settings/settings-button.svelte';
 	import Confirmation from '#lib/shell/confirmation.svelte';
@@ -158,6 +158,13 @@
 	});
 
 	/**
+	 * Whether the last map passed has done the level, every map passed with its code: decided as
+	 * the program ends, as the console says it, so that the status bar says the same. The bar reads
+	 * it only for a map passed, which comes with it.
+	 */
+	let levelDone = $state(false);
+
+	/**
 	 * A program of a map of a level has ended, without error: the console says how its goals
 	 * went, and a map passed is kept in the progress. The sandbox has no goal.
 	 */
@@ -170,6 +177,7 @@
 				break;
 			case 'passed': {
 				const passed = mapsPassedWith(keepPass(name, mapNumber, code, mapCount), code);
+				levelDone = mapToTry(passed, mapCount) === undefined;
 				log?.note([passedNote(mapNumber, mapCount, passed)]);
 				break;
 			}
@@ -185,16 +193,6 @@
 			? mapsPassedWith(levelProgress(playground.name), editing.text)
 			: new Set<number>()
 	);
-
-	/** Whether the code that the program ran has passed every map of the level. */
-	const levelDone = $derived.by(() => {
-		const current = program.current;
-		return (
-			playground?.mapCount !== undefined &&
-			current !== undefined &&
-			passedEvery(levelProgress(playground.name), current.ran, playground.mapCount)
-		);
-	});
 
 	const id = $props.id();
 

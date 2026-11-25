@@ -597,6 +597,9 @@ map-tabs-name = The maps
 # The tab of a map of a level.
 # $map (Number): the number of the map among those of the level, from 1.
 map-tab = Map { $map }
+# Read to a screen reader on the tab of a map that the code as it is now has passed, which its
+# teal shows.
+map-tab-passed = Passed with this code
 # The name of the code in the editor, for a screen reader.
 editor-name = Your code
 # Under the pointer, on a line too long, underlined with dots: an advice, not an error.

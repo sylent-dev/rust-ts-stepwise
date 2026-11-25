@@ -8,7 +8,7 @@ import { Sandbox } from '#lib/core/core.ts';
 import { corridor, loadTestCore, sandboxOf } from '#lib/core/test-support.ts';
 import { pageOf, type TestPage } from '#lib/run/test-support.ts';
 import { sandboxPlayground } from './playground.ts';
-import { Program } from './program.ts';
+import { Program, type ProgramOptions } from './program.ts';
 
 loadTestCore();
 
@@ -22,10 +22,7 @@ afterAll(() => {
 let page: TestPage;
 
 /** The program of an editor that holds `code.text`, which a test changes as a learner would. */
-function programOf(
-	code: { text: string | undefined },
-	options: ConstructorParameters<typeof Program>[2] = {}
-): Program {
+function programOf(code: { text: string | undefined }, options: ProgramOptions = {}): Program {
 	page = pageOf();
 	return new Program(sandboxPlayground(sandbox), () => code.text, {
 		frames: page.frames,
@@ -237,7 +234,6 @@ describe('the program of a screen', () => {
 		code.text = 'turn_left()\n';
 		finish();
 		expect(onStopped.mock.calls).toEqual([[{ type: 'ended' }, 'forward()\n']]);
-		expect(program.ran).toBe('forward()\n');
 		program.free();
 	});
 

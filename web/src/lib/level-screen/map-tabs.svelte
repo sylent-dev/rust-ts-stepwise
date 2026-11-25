@@ -1,11 +1,14 @@
 <!-- The tabs of the maps of a level, in the row above its map (see Variants in specs.md): one per
      map, against the left end of the row and without gaps, on its whole height; the tab of the map
      shown opens on the block of the map. A tab takes a pale teal once the code has passed its map,
-     a full teal on the map shown. The screen shows the row only for a level of more than one map.
-     The tabs are those of a web page, as the ones of the panels: Tab stops on the tab shown, the
-     arrows, Home and End go to another one and show its map. -->
+     a full teal on the map shown, which a screen reader reads as its description. The screen shows
+     the row only for a level of more than one map. The tabs are those of a web page, as the ones
+     of the panels: Tab stops on the tab shown, the arrows, Home and End go to another one and show
+     its map (shell/tab-keys.ts). -->
 <script lang="ts">
 	import { t } from '#lib/i18n.ts';
+	import { mapNumbers } from '#lib/levels/level-maps.ts';
+	import { tabAfter } from '#lib/shell/tab-keys.ts';
 
 	interface Props {
 		/** The number of maps of the level. */
@@ -22,35 +25,20 @@
 
 	let { count, shown, passed, panel, onchoose }: Props = $props();
 
-	const maps = $derived(Array.from({ length: count }, (_, index) => index + 1));
+	const maps = $derived(mapNumbers(count));
+
+	/** The id of the sentence that tells a screen reader that a map has passed, which the teal shows. */
+	const passedId = $derived(`${panel}-passed`);
 
 	/** The buttons of the tabs, by the numbers of their maps, which the arrows give the focus to. */
 	const buttons: Partial<Record<number, HTMLButtonElement>> = $state({});
 
-	/** The map that a key goes to from the one shown: nothing for another key. */
-	function mapAfter(key: string): number | undefined {
-		switch (key) {
-			case 'ArrowLeft':
-				return shown === 1 ? count : shown - 1;
-			case 'ArrowRight':
-				return shown === count ? 1 : shown + 1;
-			case 'Home':
-				return 1;
-			case 'End':
-				return count;
-			default:
-				return undefined;
-		}
-	}
-
 	function onkeydown(event: KeyboardEvent) {
-		// Alt+← goes back a page, and a shortcut of the screen holds Ctrl: only the keys alone.
-		if (event.ctrlKey || event.altKey || event.metaKey) return;
-		const map = mapAfter(event.key);
-		if (map === undefined) return;
+		const index = tabAfter(event, shown - 1, count);
+		if (index === undefined) return;
 		event.preventDefault();
-		onchoose(map);
-		buttons[map]?.focus();
+		onchoose(index + 1);
+		buttons[index + 1]?.focus();
 	}
 </script>
 
@@ -66,6 +54,7 @@
 			id="{panel}-tab-{map}"
 			aria-selected={isShown}
 			aria-controls={panel}
+			aria-describedby={passed.has(map) ? passedId : undefined}
 			tabindex={isShown ? 0 : -1}
 			bind:this={buttons[map]}
 			{onkeydown}
@@ -74,6 +63,7 @@
 			}}>{t('map-tab', { map })}</button
 		>
 	{/each}
+	<span id={passedId} hidden>{t('map-tab-passed')}</span>
 </div>
 
 <style>

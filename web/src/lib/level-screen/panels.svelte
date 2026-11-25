@@ -3,7 +3,7 @@
      program (panel-tabs.svelte.ts), a dot on the tab of the variables after an error; from there,
      side by side, each under its title, without a dot, both being in sight. The tabs are those of a
      web page: Tab stops on the tab shown, the arrows, Home and End go to the other one and show it,
-     and Tab goes on into its panel. A panel hidden keeps its place and where it was scrolled to, so
+     and Tab goes on into its panel (shell/tab-keys.ts). A panel hidden keeps its place and where it was scrolled to, so
      that the console shows its last lines again as it comes back. -->
 <script lang="ts">
 	import { MediaQuery } from 'svelte/reactivity';
@@ -11,6 +11,7 @@
 	import ConsolePanel from '#lib/console/console-panel.svelte';
 	import { t } from '#lib/i18n.ts';
 	import type { CallsView } from '#lib/run/shown-calls.svelte.ts';
+	import { tabAfter } from '#lib/shell/tab-keys.ts';
 	import VariablesPanel from '#lib/variables/variables-panel.svelte';
 	import type { PanelName, PanelTabs } from './panel-tabs.svelte.ts';
 
@@ -49,27 +50,9 @@
 	/** The buttons of the tabs, which the arrows give the focus to. */
 	const buttons: Partial<Record<PanelName, HTMLButtonElement>> = $state({});
 
-	/** The tab that a key goes to from the one shown: nothing for another key. */
-	function tabAfter(key: string): PanelName | undefined {
-		const index = PANELS.indexOf(tabs.shown);
-		switch (key) {
-			case 'ArrowLeft':
-				return PANELS.at((index - 1) % PANELS.length);
-			case 'ArrowRight':
-				return PANELS.at((index + 1) % PANELS.length);
-			case 'Home':
-				return PANELS.at(0);
-			case 'End':
-				return PANELS.at(-1);
-			default:
-				return undefined;
-		}
-	}
-
 	function onkeydown(event: KeyboardEvent) {
-		// Alt+← goes back a page, and a shortcut of the screen holds Ctrl: only the keys alone.
-		if (event.ctrlKey || event.altKey || event.metaKey) return;
-		const panel = tabAfter(event.key);
+		const index = tabAfter(event, PANELS.indexOf(tabs.shown), PANELS.length);
+		const panel = index === undefined ? undefined : PANELS[index];
 		if (!panel) return;
 		event.preventDefault();
 		tabs.choose(panel);

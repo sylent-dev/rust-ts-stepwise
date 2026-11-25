@@ -4,6 +4,8 @@
 // back to that text brings the teal back (decided on 2026-11-25). A level done stays done, whatever
 // its code becomes. Nothing here knows how it is saved (saved-progress.ts).
 
+import { mapNumbers } from '#lib/levels/level-maps.ts';
+
 /** What the learner has done in a level. */
 export interface LevelProgress {
 	/** Whether the level is done: every map passed with the same code. It stays so. */
@@ -49,8 +51,8 @@ export function passMap(
 	code: string,
 	count: number
 ): LevelProgress {
-	const passed = { done: level.done, passed: new Map(level.passed).set(map, code) };
-	return { ...passed, done: passed.done || passedEvery(passed, code, count) };
+	const next = { ...level, passed: new Map(level.passed).set(map, code) };
+	return { ...next, done: next.done || passedEvery(next, code, count) };
 }
 
 /**
@@ -58,5 +60,5 @@ export function passMap(
  * once every map is.
  */
 export function mapToTry(passed: ReadonlySet<number>, count: number): number | undefined {
-	return Array.from({ length: count }, (_, index) => index + 1).find((map) => !passed.has(map));
+	return mapNumbers(count).find((map) => !passed.has(map));
 }

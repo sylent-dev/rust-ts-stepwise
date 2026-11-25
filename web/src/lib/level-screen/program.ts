@@ -145,14 +145,6 @@ export class Program implements ProgramControls {
 		this.played = this.#playback;
 	}
 
-	/**
-	 * The code that the program ran, or runs: the one of the editor as **Run** or **Step** started
-	 * it. The learner may have changed the code since the program stopped.
-	 */
-	get ran(): string {
-		return this.#checked;
-	}
-
 	/** Where the program stands. */
 	get status(): PlaybackStatus {
 		return this.#playback.status;
