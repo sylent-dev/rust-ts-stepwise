@@ -164,3 +164,51 @@ test('The menu opens over the controls in the corner of the code', async ({ page
 	);
 	expect(onTop).toBe(true);
 });
+
+test('Your names lists what the cursor may use, each with its line, and inserts a call', async ({
+	page
+}) => {
+	await writeCode(page, 'let sides = 0\nfunction paint_side(length):\n    forward()\n');
+	await page.keyboard.press('Control+End');
+	await page.keyboard.press('Control+Space');
+	await page.getByRole('button', { name: 'Your names' }).click();
+	await expect(menuList(page).getByRole('option')).toHaveText(['paint_side(length)', 'sides']);
+	await expect(chosenWord(page)).toHaveText('paint_side(length)');
+	await expect(page.getByText('A function of your program, defined on line 2.')).toBeVisible();
+
+	await page.keyboard.press('ArrowDown');
+	await expect(page.getByText('A variable of your program, declared on line 1.')).toBeVisible();
+	await page.keyboard.press('ArrowUp');
+	await page.keyboard.press('Enter');
+	await page.keyboard.type('sid');
+	await page.keyboard.press('Control+Space');
+	await expect(chosenWord(page)).toHaveText('sides');
+	await page.keyboard.press('Tab');
+
+	await expectCode(
+		page,
+		'let sides = 0\nfunction paint_side(length):\n    forward()\npaint_side(sides)'
+	);
+});
+
+test('Your names says why it has no name: none declared above, or an error above', async ({
+	page
+}) => {
+	const said = (sentence: string) => page.getByRole('status').filter({ hasText: sentence });
+
+	await writeCode(page, '');
+	await page.keyboard.press('Control+Space');
+	await page.getByRole('button', { name: 'Your names' }).click();
+	await expect(
+		said('Your variables and functions appear here once they are declared above the cursor.')
+	).toHaveCount(1);
+	await page.keyboard.press('Escape');
+
+	await writeCode(page, 'let sides = 0\nforward(\n');
+	await page.keyboard.press('Control+End');
+	await page.keyboard.press('Control+Space');
+	await page.getByRole('button', { name: 'Your names' }).click();
+	await expect(
+		said('Your variables and functions appear here once the error on line 2 is fixed.')
+	).toHaveCount(1);
+});

@@ -30,13 +30,25 @@ import {
 	menuView,
 	moveChoice
 } from './results.ts';
-import type { Category, MenuEntry, MenuWord } from './words.ts';
+import type { Category, MenuEntry } from './words.ts';
 
 /** The editor as a command of the menu reads it and changes it: on its page, or in a test. */
 type Editor = Pick<EditorView, 'state' | 'dispatch'>;
 
-/** The menu open in the editor. */
-export interface OpenMenu {
+/** What the menu lists, given as it opens. */
+export interface MenuContent {
+	/**
+	 * The words of the language, then the names that a line written at the cursor may use, read as
+	 * the menu opens: while it is open, only the line of the cursor changes, which the names never
+	 * depend on.
+	 */
+	readonly entries: readonly MenuEntry[];
+	/** The line of the syntax error above the cursor that hides the names, when there is one. */
+	readonly namesHiddenBy?: number | undefined;
+}
+
+/** The menu open in the editor, and what it lists. */
+export interface OpenMenu extends MenuContent {
 	/**
 	 * Where the name at the cursor starts: the letters typed from there to the cursor filter
 	 * the words, and the word inserted takes their place.
@@ -99,12 +111,11 @@ function lettersOf(state: EditorState, menu: OpenMenu): string {
 }
 
 /** What the menu open in a state shows, or nothing while it is closed. */
-export function menuViewOf(
-	state: EditorState,
-	entries: readonly MenuEntry[]
-): MenuView | undefined {
+export function menuViewOf(state: EditorState): MenuView | undefined {
 	const menu = openMenuOf(state);
-	return menu ? menuView(entries, lettersOf(state, menu), menu.choice) : undefined;
+	return menu
+		? menuView(menu.entries, lettersOf(state, menu), menu.choice, menu.namesHiddenBy)
+		: undefined;
 }
 
 /**
@@ -119,10 +130,14 @@ export const menuPanel = Facet.define<
 });
 
 /**
- * Opens the menu at the cursor, on a category: under the name that the cursor ends, whose letters
- * filter the words; a selection gives way to the cursor at its end.
+ * Opens the menu at the cursor, on a category, listing `content`: under the name that the cursor
+ * ends, whose letters filter the words; a selection gives way to the cursor at its end.
  */
-export function openMenu(state: EditorState, category: Category): TransactionSpec {
+export function openMenu(
+	state: EditorState,
+	category: Category,
+	content: MenuContent
+): TransactionSpec {
 	const { head } = state.selection.main;
 	const line = state.doc.lineAt(head);
 	const before = line.text.slice(0, head - line.from);
@@ -134,7 +149,7 @@ export function openMenu(state: EditorState, category: Category): TransactionSpe
 	};
 	return {
 		selection: { anchor: head },
-		effects: setMenu.of({ from, choice: { category }, tooltip }),
+		effects: setMenu.of({ ...content, from, choice: { category }, tooltip }),
 		scrollIntoView: true
 	};
 }
@@ -148,20 +163,17 @@ function choose(editor: Editor, choice: Choice): void {
 	if (menu) editor.dispatch(editor.state.update({ effects: setMenu.of({ ...menu, choice }) }));
 }
 
-/** Chooses a word of the menu, as the pointer does. */
-export function chooseWord(editor: Editor, entry: MenuEntry): void {
-	choose(editor, { category: entry.category, word: entry.word });
+/** Chooses an entry of the menu, as the pointer does. */
+export function chooseEntry(editor: Editor, entry: MenuEntry): void {
+	choose(editor, { category: entry.category, text: entry.text });
 }
 
 /** Chooses a category of the menu, as a click does. */
-export function chooseCategoryOf(
-	editor: Editor,
-	entries: readonly MenuEntry[],
-	category: Category
-): void {
+export function chooseCategoryOf(editor: Editor, category: Category): void {
 	const menu = openMenuOf(editor.state);
 	if (!menu) return;
-	choose(editor, chooseCategory(entries, lettersOf(editor.state, menu), menu.choice, category));
+	const letters = lettersOf(editor.state, menu);
+	choose(editor, chooseCategory(menu.entries, letters, menu.choice, category));
 }
 
 /**
@@ -185,7 +197,7 @@ export function insertEntry(editor: Editor, entry: MenuEntry): void {
  * closes the menu and is the Escape of the code too: Tab within two seconds leaves the code, as
  * everywhere in it (decided on 2026-11-24).
  */
-function menuBindings(entries: readonly MenuEntry[]): KeyBinding[] {
+function menuBindings(): KeyBinding[] {
 	/** Runs `act` on the open menu, and takes the key; leaves the key to the code otherwise. */
 	const whileOpen =
 		(act: (editor: Editor, menu: OpenMenu) => void) =>
@@ -197,11 +209,12 @@ function menuBindings(entries: readonly MenuEntry[]): KeyBinding[] {
 		};
 	const move = (direction: MenuMove) =>
 		whileOpen((editor, menu) => {
-			choose(editor, moveChoice(entries, lettersOf(editor.state, menu), menu.choice, direction));
+			const letters = lettersOf(editor.state, menu);
+			choose(editor, moveChoice(menu.entries, letters, menu.choice, direction));
 		});
 	// Nothing to insert while nothing matches the letters: the key does nothing.
 	const insert = whileOpen((editor, menu) => {
-		const chosen = menuView(entries, lettersOf(editor.state, menu), menu.choice).chosen;
+		const chosen = menuView(menu.entries, lettersOf(editor.state, menu), menu.choice).chosen;
 		if (chosen) insertEntry(editor, chosen);
 	});
 	return [
@@ -247,18 +260,21 @@ const closeOnBlur = EditorView.focusChangeEffect.of((state, focusing) =>
 	!focusing && openMenuOf(state) ? closeMenu : null
 );
 
-/** The id of an option of the list of a menu, for a screen reader. */
-export function optionId(listId: string, word: MenuWord): string {
-	return `${listId}-${word.replace(' ', '-')}`;
+/**
+ * The id of an option of the list of a menu, for a screen reader, by the text of its entry. A word
+ * and a name have ids of their own, whatever their texts.
+ */
+export function optionId(listId: string, entry: MenuEntry): string {
+	return `${listId}-${entry.kind}-${entry.text.replace(' ', '-')}`;
 }
 
 /**
  * What a screen reader is told of the open menu, on the code that keeps the keyboard: a list
  * opened from it (`listId`), and the word chosen in it, as the menu of CodeMirror says it.
  */
-function spokenMenu(entries: readonly MenuEntry[], listId: string): Extension {
+function spokenMenu(listId: string): Extension {
 	return EditorView.contentAttributes.compute([menuField], (state) => {
-		const view = menuViewOf(state, entries);
+		const view = menuViewOf(state);
 		if (!view) return {};
 		// While nothing matches the letters, there is no list: the panel says so instead.
 		const { chosen } = view;
@@ -266,23 +282,23 @@ function spokenMenu(entries: readonly MenuEntry[], listId: string): Extension {
 			'aria-autocomplete': 'list',
 			'aria-haspopup': 'listbox',
 			...(chosen
-				? { 'aria-controls': listId, 'aria-activedescendant': optionId(listId, chosen.word) }
+				? { 'aria-controls': listId, 'aria-activedescendant': optionId(listId, chosen) }
 				: {})
 		};
 	});
 }
 
 /**
- * The command menu in the editor, on the words that it lists: its state, its keys before every
- * other key of the editor, the keys of the places to fill in, and what a screen reader is told.
- * `listId` names its list in the page.
+ * The command menu in the editor: its state, its keys before every other key of the editor, the
+ * keys of the places to fill in, and what a screen reader is told. `listId` names its list in the
+ * page. What it lists is given as it opens (`openMenu`).
  */
-export function editorMenu(entries: readonly MenuEntry[], listId: string): Extension {
+export function editorMenu(listId: string): Extension {
 	return [
 		menuField,
-		Prec.highest(keymap.of(menuBindings(entries))),
+		Prec.highest(keymap.of(menuBindings())),
 		snippetKeymap.of(PLACES),
 		closeOnBlur,
-		spokenMenu(entries, listId)
+		spokenMenu(listId)
 	];
 }

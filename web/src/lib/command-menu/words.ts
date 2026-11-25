@@ -1,7 +1,8 @@
 // The words that the command menu lists (see Command menu in specs.md), each in its category, with
-// what the menu inserts for it. The categories and their order belong to the interface; the words
-// belong to the core: the table is keyed by them, so that a word added to the core is refused here
-// until it has its category. The text of each word, its description and its example, are messages.
+// what the menu inserts for it, and the shape of every entry of the menu, a word or a name of the
+// program (names.ts). The categories and their order belong to the interface; the words belong to
+// the core: the table is keyed by them, so that a word added to the core is refused here until it
+// has its category. The text of each word, its description and its example, are messages.
 
 import type { Builtin, BuiltinFunction, Color, Keyword, Vocabulary } from '#lib/core/core.ts';
 import { t } from '#lib/i18n.ts';
@@ -17,11 +18,15 @@ export const CATEGORIES = [
 	'control',
 	'logic',
 	'variables',
-	'functions'
+	'functions',
+	'names'
 ] as const;
 
 /** A category of the menu. */
 export type Category = (typeof CATEGORIES)[number];
+
+/** A category of the words of the language: every category but Your names. */
+type WordCategory = Exclude<Category, 'names'>;
 
 /**
  * A word that the menu lists: a built-in function, a keyword, a color, or `else if`, two keywords
@@ -73,7 +78,7 @@ const CATEGORY_OF = {
 	let: 'variables',
 	function: 'functions',
 	return: 'functions'
-} satisfies Record<MenuWord, Category>;
+} satisfies Record<MenuWord, WordCategory>;
 
 /** Whether a text is a word of the menu. */
 function isMenuWord(text: string): text is MenuWord {
@@ -119,14 +124,38 @@ export const GIVEN_NAMES = ['color', 'values'] as const;
 /** What a built-in function is given. */
 export type Given = (typeof GIVEN_NAMES)[number];
 
-/** A word of the menu, as it shows it and inserts it. */
-export interface MenuEntry {
-	readonly word: MenuWord;
+/** What the menu lists, as it shows it and inserts it: a word of the language, or a name of the program. */
+export type MenuEntry = WordEntry | NameEntry;
+
+/** What every entry of the menu has. */
+interface Entry {
+	/**
+	 * The word or the name, which the letters typed are looked for in: `forward`, `else if`,
+	 * `sides`. No two entries of the menu have the same, since a name of the program is never a
+	 * word of the language.
+	 */
+	readonly text: string;
 	readonly category: Category;
-	/** As the menu shows it: `forward()`, `start_painting(color)`, `else if`. */
+	/** As the menu shows it: `forward()`, `start_painting(color)`, `else if`, `paint_side(length)`. */
 	readonly label: string;
 	/** What the menu inserts, a snippet of CodeMirror (see `STATEMENTS`). */
 	readonly snippet: string;
+}
+
+/** A word of the language. */
+export interface WordEntry extends Entry {
+	readonly kind: 'word';
+	readonly word: MenuWord;
+}
+
+/** A name of the program, in Your names (names.ts). */
+export interface NameEntry extends Entry {
+	readonly kind: 'name';
+	readonly category: 'names';
+	/** What it is and the line where it is declared, in one sentence. */
+	readonly about: string;
+	/** That line, as the program writes it, without its indentation. */
+	readonly declaration: string;
 }
 
 /** The name of the message of a category: `commands-category-move`. */
@@ -153,12 +182,20 @@ export function givenMessage(given: Given): string {
 	return `commands-given-${given}`;
 }
 
+/**
+ * What a call inserts, by whether it gives values: the cursor between the parentheses when it
+ * does, after them otherwise. A function of the program is inserted the same way (names.ts).
+ */
+export function callSnippet(name: string, takesValues: boolean): string {
+	return takesValues ? `${name}(\${})` : `${name}()\${}`;
+}
+
 /** What the call of a built-in function inserts and shows, by the number of its values. */
-function callOf({ name, parameters }: BuiltinFunction): Pick<MenuEntry, 'label' | 'snippet'> {
+function callOf({ name, parameters }: BuiltinFunction): Pick<WordEntry, 'label' | 'snippet'> {
 	const given = GIVEN[name];
 	return {
 		label: `${name}(${given === undefined ? '' : t(givenMessage(given))})`,
-		snippet: parameters === 0 ? `${name}()\${}` : `${name}(\${})`
+		snippet: callSnippet(name, parameters !== 0)
 	};
 }
 
@@ -167,12 +204,12 @@ function callOf({ name, parameters }: BuiltinFunction): Pick<MenuEntry, 'label' 
  * inserted with its parentheses, the cursor between them when it takes values, after them
  * otherwise, as the core says (`vocabulary`).
  */
-export function menuEntries(vocabulary: Vocabulary): readonly MenuEntry[] {
+export function menuEntries(vocabulary: Vocabulary): readonly WordEntry[] {
 	return MENU_WORDS.map((word) => {
-		const category = CATEGORY_OF[word];
+		const entry = { kind: 'word', word, text: word, category: CATEGORY_OF[word] } as const;
 		const builtin = vocabulary.builtins.find(({ name }) => name === word);
-		if (builtin) return { word, category, ...callOf(builtin) };
-		return { word, category, label: word, snippet: STATEMENTS[word] ?? `${word}\${}` };
+		if (builtin) return { ...entry, ...callOf(builtin) };
+		return { ...entry, label: word, snippet: STATEMENTS[word] ?? `${word}\${}` };
 	});
 }
 
