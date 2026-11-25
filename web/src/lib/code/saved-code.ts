@@ -12,9 +12,9 @@
 // that this version doesn't know; the level saved is written whole, as this version knows it, so a
 // tab open on the version before drops from that level a field that it doesn't know. A new version
 // comes only with the reading of the one before it here, since the store gives nothing for another
-// version, and the next save would clear the code of every other level; even then, a tab still open
-// on the version before reads nothing of the new one and clears it the same way, unless the store
-// refuses to write over a newer version (see docs/backlog.md).
+// version, and the next save would clear the code of every other level. A tab still open on the
+// version before reads nothing of the new one, and leaves it as it is: the store never writes over
+// a newer version (lib/storage/store.ts).
 
 import { type Fields, hasFields, type Store } from '#lib/storage/store.ts';
 import type { LevelCode } from './code.ts';

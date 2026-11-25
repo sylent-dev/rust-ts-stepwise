@@ -22,6 +22,8 @@ export interface Playground {
 	 * the sandbox has one map, which has no number.
 	 */
 	readonly mapNumber?: number;
+	/** The number of maps of a level; the sandbox has one map, which has no number. */
+	readonly mapCount?: number;
 	/** The code of a first visit. */
 	readonly startingCode: string;
 	/**
@@ -36,13 +38,15 @@ export interface Playground {
  * without map. `name` is the stable name of the level.
  */
 export function levelPlayground(name: string, level: Level, map: number): Playground | undefined {
-	const found = level.maps()[map];
+	const maps = level.maps();
+	const found = maps[map];
 	if (!found) return undefined;
 	return {
 		name,
 		world: found.world,
 		goals: found.goals,
 		mapNumber: map + 1,
+		mapCount: maps.length,
 		startingCode: level.startingCode(),
 		start: (text) => level.start(map, text)
 	};

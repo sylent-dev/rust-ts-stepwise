@@ -56,6 +56,18 @@ describe('statusState', () => {
 		});
 	});
 
+	it('says the level done once the code that ran has passed every map, in teal', () => {
+		expect(statusState(program('ended', undefined, { type: 'passed' }), 3, true)).toEqual({
+			text: 'Ended · level done',
+			tone: 'passed'
+		});
+		const missed: Outcome = { type: 'goals-not-met', goals: [{ type: 'carrying' }] };
+		expect(statusState(program('ended', undefined, missed), 1, true)).toEqual({
+			text: 'Ended · goal not met',
+			tone: 'band'
+		});
+	});
+
 	it('says Ended alone in the sandbox, which has no goal', () => {
 		expect(statusState(program('ended', undefined, { type: 'ended' }), undefined)).toEqual({
 			text: 'Ended',

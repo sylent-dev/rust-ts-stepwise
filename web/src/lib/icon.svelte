@@ -23,6 +23,7 @@
 		chevron,
 		close,
 		diamond,
+		flag,
 		gear,
 		next,
 		pause,
@@ -62,6 +63,12 @@
 
 {#snippet diamond()}
 	<path d="M8 2.2 13.8 8 8 13.8 2.2 8Z" />
+{/snippet}
+
+<!-- The flag of a goal not met, as the map plants it: a pole and a filled cloth. -->
+{#snippet flag()}
+	<path d="M4.5 14V2.5" />
+	<path fill="currentColor" d="M4.5 3h8l-2.4 3 2.4 3h-8Z" />
 {/snippet}
 
 <!-- Thinner lines than the others: its teeth are close to each other. -->

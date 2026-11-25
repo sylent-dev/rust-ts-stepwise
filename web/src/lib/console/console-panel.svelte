@@ -2,7 +2,8 @@
      program shown (console-log.svelte.ts), in the font of the code. The lines that `print` wrote,
      in order, the last ones in sight while the program writes; the errors, each one big button
      that puts the cursor at its place in the code; under the errors that kept the program from
-     starting, why nothing moved. The block that places it gives it its name and its role
+     starting, why nothing moved; once a program of a level has ended, its messages: each goal not
+     met, with the flag of the map, or the map passed, with a check. The block that places it gives it its name and its role
      (level-screen/panels.svelte): a tab beside the variables, or a title from 1,600 pixels wide,
      where the two stand side by side.
 
@@ -16,6 +17,7 @@
 	import { errorText, type ErrorText } from '#lib/errors/error-text.ts';
 	import { runtimeErrorText } from '#lib/errors/runtime-error-text.ts';
 	import { t } from '#lib/i18n.ts';
+	import Icon from '#lib/icon.svelte';
 	import { KEPT_LINES, type ListedError, type LogView } from './console-log.svelte.ts';
 
 	interface Props extends HTMLAttributes<HTMLDivElement> {
@@ -51,13 +53,17 @@
 		panel.scrollTop = following ? panel.scrollHeight : 0;
 	});
 
-	// More lines, or the error that stopped the program: in sight, unless the learner reads above.
+	// More lines, the error that stopped the program, or the messages of the level: in sight,
+	// unless the learner reads above.
 	// Once the lines kept are as many as the console keeps, a new one takes the place of the first
 	// and the end stays where it was.
 	$effect(() => {
-		const shown = (log?.lines.length ?? 0) + (log?.errors.length ?? 0);
+		const shown = (log?.lines.length ?? 0) + (log?.errors.length ?? 0) + (log?.notes.length ?? 0);
 		if (panel && following && shown > 0) panel.scrollTop = panel.scrollHeight;
 	});
+
+	/** The side of the icon of a message of the level, in pixels. */
+	const ICON_SIZE = 14;
 
 	/** The two sentences of an error listed, of the checks or of the run. */
 	function sentences(listed: ListedError): ErrorText {
@@ -92,6 +98,12 @@
 				<span class="line">{t('console-line', { line: listed.line })}</span>
 				<span><strong>{title}</strong><br />{rule}</span>
 			</button>
+		{/each}
+		{#each log.notes as note, index (index)}
+			<p class="note {note.kind}" style:--icon="{ICON_SIZE}px">
+				<Icon name={note.kind === 'goal' ? 'flag' : 'check'} size={ICON_SIZE} />
+				<span>{note.text}</span>
+			</p>
 		{/each}
 	{/if}
 	<!-- Read as it comes: the region is on the page before its sentence. -->
@@ -136,8 +148,33 @@
 	/* Each kind of message leaves a little room around it. */
 	.prints + .error,
 	.error + .error,
+	.prints + .note,
+	.note + .note,
 	.fix {
 		margin-top: var(--space-8);
+	}
+
+	/* A message of the level, in extra-bold: a goal not met with the red flag of the map, a map
+	   passed in teal with a check. The icon, 14 pixels, stands in the middle of the first line of
+	   its text. */
+	.note {
+		display: flex;
+		align-items: flex-start;
+		gap: var(--space-8);
+		font-weight: var(--weight-code-strong);
+	}
+
+	.note :global(svg) {
+		flex: none;
+		margin-top: calc((var(--line-code-small) - var(--icon)) / 2);
+	}
+
+	.goal :global(svg) {
+		color: var(--error);
+	}
+
+	.passed {
+		color: var(--passed-text);
 	}
 
 	/* An error is one big button to its place in the code, which lights up whole on hover; its

@@ -1,22 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { openStore } from '#lib/storage/store.ts';
-import { memoryBackend } from '#lib/storage/test-support.ts';
+import { memoryBackend, storeWith } from '#lib/storage/test-support.ts';
 import { forgetCode, loadCode, saveCode } from './saved-code.ts';
 
 /** The key of `localStorage` that holds the code of the levels. */
 const KEY = 'stepwise.code';
-
-/** A store over a storage in memory that holds `value` as the code of the levels. */
-function storeWith(value?: string) {
-	const backend = memoryBackend(value === undefined ? {} : { [KEY]: value });
-	return {
-		store: openStore(
-			() => backend,
-			() => {}
-		),
-		held: backend.held
-	};
-}
 
 /** What the storage holds under the key of the code, read back as an object. */
 function heldCode(held: Record<string, string>): unknown {
@@ -25,11 +13,11 @@ function heldCode(held: Record<string, string>): unknown {
 
 describe('the code saved', () => {
 	it('is nothing for a level at a first visit', () => {
-		expect(loadCode(storeWith().store, 'paint-a-square')).toBeUndefined();
+		expect(loadCode(storeWith(KEY).store, 'paint-a-square')).toBeUndefined();
 	});
 
 	it('comes back as it was saved, under the stable name of its level', () => {
-		const { store } = storeWith();
+		const { store } = storeWith(KEY);
 		saveCode(store, 'paint-a-square', { text: 'forward()\n', breakpoints: [] });
 
 		expect(loadCode(store, 'paint-a-square')).toEqual({ text: 'forward()\n', breakpoints: [] });
@@ -37,7 +25,7 @@ describe('the code saved', () => {
 	});
 
 	it('is saved under one key, each level by its name, with the version of its shape', () => {
-		const { store, held } = storeWith();
+		const { store, held } = storeWith(KEY);
 		saveCode(store, 'paint-a-square', { text: 'forward()', breakpoints: [] });
 		saveCode(store, 'sandbox', { text: 'turn_left()', breakpoints: [] });
 
@@ -51,7 +39,7 @@ describe('the code saved', () => {
 	});
 
 	it('replaces the code of the same level', () => {
-		const { store } = storeWith();
+		const { store } = storeWith(KEY);
 		saveCode(store, 'paint-a-square', { text: 'forward()', breakpoints: [] });
 		saveCode(store, 'paint-a-square', { text: 'turn_left()', breakpoints: [] });
 
@@ -76,7 +64,7 @@ describe('the code saved', () => {
 	});
 
 	it('forgets the code of a level, and keeps the others', () => {
-		const { store, held } = storeWith();
+		const { store, held } = storeWith(KEY);
 		saveCode(store, 'paint-a-square', { text: 'forward()', breakpoints: [] });
 		saveCode(store, 'sandbox', { text: 'turn_left()', breakpoints: [] });
 		forgetCode(store, 'paint-a-square');
@@ -97,11 +85,12 @@ describe('the code saved', () => {
 		['another version', '{"levels":{"paint-a-square":{"text":"forward()"}},"version":2}'],
 		['damaged data', '{"levels":{"paint-a-squ']
 	])('is nothing for a level with %s', (_, value) => {
-		expect(loadCode(storeWith(value).store, 'paint-a-square')).toBeUndefined();
+		expect(loadCode(storeWith(KEY, value).store, 'paint-a-square')).toBeUndefined();
 	});
 
 	it('keeps the code of the other levels beside one that can’t be read', () => {
 		const { store } = storeWith(
+			KEY,
 			'{"levels":{"paint-a-square":{"text":42},"sandbox":{"text":"forward()"}},"version":1}'
 		);
 
@@ -111,7 +100,7 @@ describe('the code saved', () => {
 	});
 
 	it('comes back with its breakpoints', () => {
-		const { store, held } = storeWith();
+		const { store, held } = storeWith(KEY);
 		saveCode(store, 'paint-a-square', { text: 'forward()\nforward()', breakpoints: [1, 2] });
 
 		expect(loadCode(store, 'paint-a-square')).toEqual({
@@ -132,6 +121,7 @@ describe('the code saved', () => {
 		['breakpoints that are no lines', ',"breakpoints":["2",0,-1,1.5,null]']
 	])('comes back without breakpoints from a level with %s', (_, field) => {
 		const { store } = storeWith(
+			KEY,
 			`{"levels":{"paint-a-square":{"text":"forward()"${field}}},"version":1}`
 		);
 
@@ -140,6 +130,7 @@ describe('the code saved', () => {
 
 	it('keeps the lines of the breakpoints alone, each once and in order', () => {
 		const { store } = storeWith(
+			KEY,
 			'{"levels":{"paint-a-square":{"text":"forward()","breakpoints":[3,"x",1,3,0]}},"version":1}'
 		);
 
@@ -150,6 +141,7 @@ describe('the code saved', () => {
 	// shape, as the breakpoints were: a tab still open on this version keeps it in the other levels.
 	it('keeps what it doesn’t know of the other levels', () => {
 		const { store, held } = storeWith(
+			KEY,
 			'{"levels":{"paint-a-square":{"text":"forward()","folded":[2]}},"version":1}'
 		);
 
@@ -166,6 +158,7 @@ describe('the code saved', () => {
 
 	it('writes the level saved whole, as this version knows it', () => {
 		const { store, held } = storeWith(
+			KEY,
 			'{"levels":{"paint-a-square":{"text":"forward()","folded":[2]}},"version":1}'
 		);
 		saveCode(store, 'paint-a-square', { text: 'back()', breakpoints: [] });
@@ -177,7 +170,7 @@ describe('the code saved', () => {
 	});
 
 	it('takes the place of what can’t be read at the next save', () => {
-		const { store, held } = storeWith('{"levels":{"paint-a-squ');
+		const { store, held } = storeWith(KEY, '{"levels":{"paint-a-squ');
 		saveCode(store, 'paint-a-square', { text: 'forward()', breakpoints: [] });
 
 		expect(heldCode(held)).toEqual({

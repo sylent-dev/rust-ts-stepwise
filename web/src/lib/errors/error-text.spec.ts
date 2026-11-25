@@ -111,12 +111,12 @@ describe('errorText', () => {
 
 	it('writes the names, the words and the numbers of the error', () => {
 		expect(textOf('print(sidse)\n')).toEqual([
-			'The name sidse doesn’t exist.',
+			'The name sidse does not exist.',
 			'A variable is declared with let before it is used.'
 		]);
-		expect(textOf('let paintSide = 3\n')[0]).toBe('paintSide isn’t in snake_case.');
+		expect(textOf('let paintSide = 3\n')[0]).toBe('paintSide is not in snake_case.');
 		expect(textOf('if a && b:\n    forward()\n')).toEqual([
-			'&& isn’t a sign of Stepwise.',
+			'&& is not a sign of Stepwise.',
 			'Stepwise writes and instead of &&.'
 		]);
 		expect(textOf('let a = 9223372036854775808\n')[1]).toBe(
@@ -166,7 +166,7 @@ describe('errorText', () => {
 
 	it('shows the way of Stepwise for a word of another language', () => {
 		expect(textOf('elif\n')).toEqual([
-			'elif isn’t a word of Stepwise.',
+			'elif is not a word of Stepwise.',
 			'Stepwise writes else if.'
 		]);
 		expect(textOf('def\n')[1]).toBe('Stepwise defines a function with function.');

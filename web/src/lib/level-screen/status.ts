@@ -37,11 +37,12 @@ export interface ProgramStatus {
  * (nothing in the sandbox): `Ready` until **Run** or **Step**, and while the screen has no
  * program yet. While the program runs or is paused, the code can't be changed, which the bar
  * says; once it has ended, the map shows the end of the run, not its start, which the bar says
- * too.
+ * too, and the level done once the code that ran has passed every map (`levelDone`).
  */
 export function statusState(
 	program: ProgramStatus | undefined,
-	mapNumber: number | undefined
+	mapNumber: number | undefined,
+	levelDone = false
 ): StatusState {
 	if (!program) return { text: t('status-ready'), tone: 'band' };
 	switch (program.status) {
@@ -66,29 +67,34 @@ export function statusState(
 			// Both are read from how the program stopped, which a program that has stopped always
 			// has. Without it, which can't happen, the bar would still say that it ended.
 			return program.outcome
-				? endState(program.outcome, mapNumber)
+				? endState(program.outcome, mapNumber, levelDone)
 				: { text: t('status-ended'), tone: 'band' };
 	}
 }
 
 /**
- * What the bar says once the program has stopped. A map passed says its number, as its tab;
- * the level done, every map passed with the same code, comes with the tabs of the maps (step 21).
+ * What the bar says once the program has stopped. A map passed says its number, as its tab, and
+ * the level done once every map has passed with the same code, a level of one map at once.
  */
-function endState(outcome: Outcome, mapNumber: number | undefined): StatusState {
+function endState(
+	outcome: Outcome,
+	mapNumber: number | undefined,
+	levelDone: boolean
+): StatusState {
 	switch (outcome.type) {
 		case 'failed':
 			return { text: t('status-failed', { line: outcome.error.span.line }), tone: 'failed' };
 		case 'passed':
-			return {
-				// A map passed is always one of a level: the sandbox has no goal to meet.
-				text:
-					mapNumber === undefined ? t('status-ended') : t('status-map-passed', { map: mapNumber }),
-				tone: 'passed'
-			};
+			return { text: passedText(mapNumber, levelDone), tone: 'passed' };
 		case 'goals-not-met':
 			return { text: t('status-goal-not-met'), tone: 'band' };
 		case 'ended':
 			return { text: t('status-ended'), tone: 'band' };
 	}
+}
+
+/** What the bar says of a map passed: always one of a level, the sandbox having no goal to meet. */
+function passedText(mapNumber: number | undefined, levelDone: boolean): string {
+	if (mapNumber === undefined) return t('status-ended');
+	return levelDone ? t('status-level-done') : t('status-map-passed', { map: mapNumber });
 }

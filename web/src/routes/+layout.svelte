@@ -1,10 +1,12 @@
 <!-- What every page shares: its styles (lib/styles/app.css); the settings, which the page
-     follows, its sounds included; and the message of a window too small, which takes the place
-     of any screen. -->
+     follows, its sounds included; the progress, which follows another tab; and the message of a
+     window too small, which takes the place of any screen. -->
 <script lang="ts">
 	import '#lib/styles/app.css';
 	import { onMount } from 'svelte';
 	import { applicationStarted } from '#lib/page/startup.svelte.ts';
+	import { followSavedProgress } from '#lib/progress/current-progress.svelte.ts';
+	import { PROGRESS_KEY } from '#lib/progress/saved-progress.ts';
 	import { followSavedSettings, settings } from '#lib/settings/current-settings.svelte.ts';
 	import { SETTINGS_KEY } from '#lib/settings/saved-settings.ts';
 	import { currentWindow } from '#lib/shell/current-window.svelte.ts';
@@ -47,10 +49,12 @@
 
 	/**
 	 * Another tab where Stepwise is open has saved something: a change of the settings applies
-	 * here too, at once. Without a key, everything saved was cleared.
+	 * here too, at once, and a map passed there is passed here. Without a key, everything saved
+	 * was cleared.
 	 */
 	function onstorage(event: StorageEvent) {
 		if (event.key === null || event.key === SETTINGS_KEY) followSavedSettings();
+		if (event.key === null || event.key === PROGRESS_KEY) followSavedProgress();
 	}
 </script>
 

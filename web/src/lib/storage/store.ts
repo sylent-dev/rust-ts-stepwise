@@ -23,7 +23,12 @@ export interface Store {
 	read(name: string, version: number): Saved | undefined;
 	/**
 	 * Saves fields under a name, with the version of their shape. A browser that refuses is
-	 * reported by the store (`onRefused` of `openStore`), never to the caller.
+	 * reported by the store (`onRefused` of `openStore`), never to the caller. Nothing is saved
+	 * over a newer version: a tab still open on a version of the website before it would clear
+	 * what the new one saved, which it can't read. So the version of a kind of data never goes
+	 * down: a revert of the website keeps the number that it reached, or raises it again with the
+	 * reading of the shape before, or nothing would be saved again in the browsers that kept the
+	 * newer one, without a word.
 	 */
 	write(name: string, version: number, fields: object): void;
 }
@@ -42,6 +47,19 @@ const PROBE = keyOf('probe');
  */
 export function hasFields(value: unknown): value is Fields {
 	return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/**
+ * The version of what is saved under a name; 0 when nothing is, or when what is can't be read: a
+ * save may replace it.
+ */
+function savedVersion(backend: Backend, name: string): number {
+	try {
+		const saved: unknown = JSON.parse(backend.getItem(keyOf(name)) ?? 'null');
+		return hasFields(saved) && typeof saved.version === 'number' ? saved.version : 0;
+	} catch {
+		return 0;
+	}
 }
 
 /**
@@ -71,6 +89,7 @@ export function openStore(open: () => Backend, onRefused: () => void): Store {
 		write(name, version, fields) {
 			// Without a storage at all, the refusal was reported when the store opened.
 			if (!backend) return;
+			if (savedVersion(backend, name) > version) return;
 			try {
 				// The version last: no field can take its place.
 				backend.setItem(keyOf(name), JSON.stringify({ ...fields, version }));

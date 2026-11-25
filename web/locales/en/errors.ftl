@@ -52,7 +52,7 @@ error-name-starts-with-digit-rule = A name starts with a letter.
 
 # $symbol (String): the sign, as it is written (`&&`). $keyword (String): the keyword of Stepwise
 # that has its meaning (`and`).
-error-symbol-for-keyword-title = { $symbol } isn’t a sign of Stepwise.
+error-symbol-for-keyword-title = { $symbol } is not a sign of Stepwise.
 error-symbol-for-keyword-rule = Stepwise writes { $keyword } instead of { $symbol }.
 
 # $character (String): the character, which may be a blank one, such as a non-breaking space.
@@ -70,10 +70,10 @@ error-trailing-comma-rule = A ',' separates two values, or two parameters, and n
 error-not-after-operator-title = not comes right after an operator.
 error-not-after-operator-rule = not is written at the start of a value, after and or or, or inside parentheses.
 
-error-unexpected-token-title = This doesn’t fit after what comes before it.
+error-unexpected-token-title = This does not fit after what comes before it.
 error-unexpected-token-rule = A line holds one statement, and a ',' separates two values.
 
-error-unclosed-paren-title = This '(' isn’t closed.
+error-unclosed-paren-title = This '(' is not closed.
 error-unclosed-paren-rule = Each '(' is closed by a ')' on the same line.
 
 error-unmatched-paren-title = This ')' closes no '('.
@@ -83,25 +83,25 @@ error-assign-in-expression-title = This '=' is inside a value.
 error-assign-in-expression-rule = '=' gives a value to a variable, and '==' compares two values.
 
 error-chained-comparison-title = This comparison follows another one.
-error-chained-comparison-rule = Comparisons don’t chain: two of them are joined with and.
+error-chained-comparison-rule = Comparisons do not chain: two of them are joined with and.
 
-error-foreign-word-elif-title = elif isn’t a word of Stepwise.
+error-foreign-word-elif-title = elif is not a word of Stepwise.
 error-foreign-word-elif-rule = Stepwise writes else if.
-error-foreign-word-def-title = def isn’t a word of Stepwise.
+error-foreign-word-def-title = def is not a word of Stepwise.
 error-foreign-word-def-rule = Stepwise defines a function with function.
-error-foreign-word-var-title = var isn’t a word of Stepwise.
+error-foreign-word-var-title = var is not a word of Stepwise.
 error-foreign-word-var-rule = Stepwise declares a variable with let.
-error-foreign-word-const-title = const isn’t a word of Stepwise.
+error-foreign-word-const-title = const is not a word of Stepwise.
 error-foreign-word-const-rule = Stepwise declares a variable with let.
-error-foreign-word-for-title = for isn’t a word of Stepwise.
+error-foreign-word-for-title = for is not a word of Stepwise.
 error-foreign-word-for-rule = Stepwise loops with repeat and while.
-error-foreign-word-continue-title = continue isn’t a word of Stepwise.
+error-foreign-word-continue-title = continue is not a word of Stepwise.
 error-foreign-word-continue-rule = A loop of Stepwise runs its whole block each time, or leaves it with break.
-error-foreign-word-pass-title = pass isn’t a word of Stepwise.
+error-foreign-word-pass-title = pass is not a word of Stepwise.
 error-foreign-word-pass-rule = A block of Stepwise holds at least one line of code.
-error-foreign-word-none-title = none isn’t a word of Stepwise.
+error-foreign-word-none-title = none is not a word of Stepwise.
 error-foreign-word-none-rule = A value of Stepwise is a number, a text, a boolean or a color, never nothing.
-error-foreign-word-null-title = null isn’t a word of Stepwise.
+error-foreign-word-null-title = null is not a word of Stepwise.
 error-foreign-word-null-rule = A value of Stepwise is a number, a text, a boolean or a color, never nothing.
 
 error-expected-name-title = A name is missing after let.
@@ -109,7 +109,7 @@ error-expected-name-rule = let is followed by the name of the variable, then '='
 
 # $keyword (String): the keyword.
 error-keyword-as-name-title = { $keyword } is a keyword of Stepwise.
-error-keyword-as-name-rule = The keywords are reserved: a variable, a function or a parameter can’t take their names.
+error-keyword-as-name-rule = The keywords are reserved: a variable, a function or a parameter cannot take their names.
 
 error-expected-equal-title = The '=' after the name is missing.
 error-expected-equal-rule = A variable is declared with its first value: let, its name, '=' and the value.
@@ -127,7 +127,7 @@ error-empty-block-title = No line is indented under this line.
 error-empty-block-rule = A line ending with ':' opens a block of at least one line, indented by four more spaces.
 
 error-comment-only-block-title = This block holds only comments.
-error-comment-only-block-rule = A block holds at least one line of code: the comments don’t count.
+error-comment-only-block-rule = A block holds at least one line of code: the comments do not count.
 
 error-else-without-if-title = This else follows no if.
 error-else-without-if-rule = An else comes right after the block of an if or of an else if, at the indentation of its if.
@@ -141,7 +141,7 @@ error-expected-function-name-rule = function is followed by the name of the func
 error-expected-parentheses-title = The parentheses after the name are missing.
 error-expected-parentheses-rule = A function is defined with its parentheses, even when it has no parameter.
 
-error-invalid-parameter-title = This can’t be a parameter.
+error-invalid-parameter-title = This cannot be a parameter.
 error-invalid-parameter-rule = The parameters of a function are names separated by ','.
 
 # $limit (Number): the deepest level.
@@ -164,7 +164,7 @@ error-nested-function-title = This function is defined inside a block.
 error-nested-function-rule = Functions are defined at the top level of the program, never in a block or in another function.
 
 # $name (String): the name, as it is written.
-error-not-snake-case-title = { $name } isn’t in snake_case.
+error-not-snake-case-title = { $name } is not in snake_case.
 error-not-snake-case-rule = Names use lowercase letters from a to z, digits and underscores, and start with a letter.
 
 # $word (String): the reserved word. $belongsTo (String): what it is, `function` or `color`.
@@ -172,14 +172,14 @@ error-reserved-name-title = { $word } is { $belongsTo ->
         [color] a color
        *[function] a built-in function
     } of Stepwise.
-error-reserved-name-rule = The names of the built-in functions and of the colors are reserved: a variable, a function or a parameter can’t take them.
+error-reserved-name-rule = The names of the built-in functions and of the colors are reserved: a variable, a function or a parameter cannot take them.
 
 # $name (String): the name of the parameter.
 error-duplicate-parameter-title = The function already has a parameter named { $name }.
-error-duplicate-parameter-rule = Two parameters of a function can’t have the same name.
+error-duplicate-parameter-rule = Two parameters of a function cannot have the same name.
 
 # $name (String): the name read.
-error-unknown-name-title = The name { $name } doesn’t exist.
+error-unknown-name-title = The name { $name } does not exist.
 error-unknown-name-rule = A variable is declared with let before it is used.
 
 # $name (String): the name changed.
@@ -204,11 +204,11 @@ error-already-declared-rule = let declares a variable once, then '=' alone chang
 
 # $name (String): the function. $first (Number): the line of the first definition.
 error-duplicate-function-title = A function named { $name } is already defined, on line { NUMBER($first, useGrouping: 0) }.
-error-duplicate-function-rule = A name is one thing in the whole program: two functions can’t share it.
+error-duplicate-function-rule = A name is one thing in the whole program: two functions cannot share it.
 
 # $name (String): the function. $defined (Number): the line of its definition.
 error-name-of-function-title = { $name } is the name of a function, defined on line { NUMBER($defined, useGrouping: 0) }.
-error-name-of-function-rule = A variable or a parameter can’t take the name of a function of the program.
+error-name-of-function-rule = A variable or a parameter cannot take the name of a function of the program.
 
 # $name (String): the function. $line (Number): the line of the call. $defined (Number): the line
 # of its definition.
@@ -324,13 +324,13 @@ error-text-too-long-title = This text would be longer than { $limit } characters
 error-text-too-long-rule = Two texts joined with '+' make { $limit } characters at most.
 
 # $function (String): the function, as it is written: built in or of the program.
-error-no-value-title = { $function } doesn’t return a value.
+error-no-value-title = { $function } does not return a value.
 error-no-value-rule = A call is used as a value only when its function returns one.
 
 # $limit (Number): the most calls in progress, one inside the other. The function called isn't
 # named: it may not be the one that calls itself (`count` calls `show`, then itself).
 error-too-many-calls-title = { $limit } calls in progress: the limit is reached.
-error-too-many-calls-rule = A function that calls itself needs a case where it doesn’t.
+error-too-many-calls-rule = A function that calls itself needs a case where it does not.
 
 error-bump-title = The robot bumped into a wall.
 error-bump-rule = forward() needs a free cell in front of the robot.
@@ -362,4 +362,4 @@ error-line-too-long-rule = print writes { $limit } characters on a line at most,
 # What the checks rule out, or a mistake of Stepwise: never for a program that the checks let
 # run.
 error-internal-title = Stepwise stopped the program by mistake.
-error-internal-rule = This isn’t an error of the program, but one of Stepwise.
+error-internal-rule = This is not an error of the program, but one of Stepwise.

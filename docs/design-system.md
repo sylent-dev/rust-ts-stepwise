@@ -372,8 +372,8 @@ A message that replaces the screen (see [Error handling](../specs.md#error-handl
 ### Voice
 
 - **You** is the learner: *your code*, *your program*, *your progress*. The robot is *the robot*; it speaks for itself in a bubble only: the title of a goal, a sentence of the manual.
-- When Stepwise is the one that can't, it says so of itself: *"Stepwise couldn’t load"*, *"Stepwise needs a larger window"*. When a program goes wrong, the sentence is about the program, the robot or the name, never about the learner: *"The robot bumped into a wall."*, *"The name `foward` doesn’t exist."*
-- Contractions, as one speaks: *can’t*, *isn’t*, *doesn’t*.
+- When Stepwise is the one that can't, it says so of itself: *"Stepwise could not load"*, *"Stepwise needs a larger window"*. When a program goes wrong, the sentence is about the program, the robot or the name, never about the learner: *"The robot bumped into a wall."*, *"The name `foward` does not exist."*
+- A negation is written in full: *is not*, *cannot*, *does not* (decided on 2026-11-25, rather than the contractions of speech). A learner whose first language is not English reads it more easily, Python writes its own errors so (*name 'x' is not defined*), and the console, in the font of the code, has no apostrophe to draw, whose shape stands out there. *Let’s go* keeps its own, which has no natural full form.
 - No *please*, no *sorry*, no *oops*, and no *invalid* nor *illegal*, which judge without explaining.
 
 ### An error
@@ -385,7 +385,7 @@ A message that replaces the screen (see [Error handling](../specs.md#error-handl
 ### Capitals
 
 - A capital at the first word and at a name: Stepwise, Day Desk, a key (Ctrl, Esc). A title, a button, a menu and a tab are written as a sentence: **Restore starting code**, **Keyboard shortcuts**, never *Restore Starting Code*.
-- No capital after a colon, nor after the dot that separates two parts of a state: *"The goal isn’t met: 7 cells of the square aren’t red."*, *"Ended · level done"*.
+- No capital after a colon, nor after the dot that separates two parts of a state: *"The goal is not met: 7 cells are not red."*, *"Ended · level done"*.
 - The name of a command keeps its capital in a sentence, as on its button, without quotes: *"Paused at line 5 · Reset to edit"*.
 - A title in capitals (*NEW*, the chapter of a level, a group of commands) is written with one capital in the translation file: the style sets its capitals (`text-transform: uppercase`).
 - Code never takes a capital, even at the start of a sentence: *"`forward()` needs a free cell in front of the robot."*
@@ -398,7 +398,7 @@ A message that replaces the screen (see [Error handling](../specs.md#error-handl
 - An ellipsis is one character, `…`, and has one use: at the end of a command that asks a question before it acts, **Restore starting code…** in its menu. The button that answers the question has none, nor **Clear all progress**, which asks nothing. Never for a wait, nor for a sentence left open.
 - ` · ` separates the parts of a state or of a label (*"Running · Reset to edit"*, *"Loop until · while, not, break"*); ` › ` the steps of a path (**Level › Restore starting code…**, *Manual › 2. Commands › Move*).
 - What the learner typed that isn't code, a search or the code of a level, is between typographic quotes: *"No command found with “pizza”."*
-- The apostrophe of a text is the typographic one, `’`, as its quotes: *Let’s go*, *"The goal isn’t met."* The straight one of the keyboard belongs to the code. The translation file holds the typographic one; the other documents, typed at the keyboard, may quote a text with the straight one (decided on 2026-11-17).
+- The apostrophe of a text is the typographic one, `’`, as its quotes: *Let’s go*, *“pizza”*. The straight one of the keyboard belongs to the code. The translation file holds the typographic one; the other documents, typed at the keyboard, may quote a text with the straight one (decided on 2026-11-17).
 
 ### Code in a message
 

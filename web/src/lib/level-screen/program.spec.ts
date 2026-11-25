@@ -2,12 +2,13 @@
 // loads. The pace of its frames is tested with `Playback`: here, only what starts and what stops,
 // read as the screen reads it.
 
-import { afterAll, describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it, vi } from 'vitest';
+import { ConsoleLog } from '#lib/console/console-log.svelte.ts';
 import { Sandbox } from '#lib/core/core.ts';
 import { corridor, loadTestCore, sandboxOf } from '#lib/core/test-support.ts';
 import { pageOf, type TestPage } from '#lib/run/test-support.ts';
 import { sandboxPlayground } from './playground.ts';
-import { Program } from './program.ts';
+import { Program, type ProgramOptions } from './program.ts';
 
 loadTestCore();
 
@@ -21,9 +22,12 @@ afterAll(() => {
 let page: TestPage;
 
 /** The program of an editor that holds `code.text`, which a test changes as a learner would. */
-function programOf(code: { text: string | undefined }): Program {
+function programOf(code: { text: string | undefined }, options: ProgramOptions = {}): Program {
 	page = pageOf();
-	return new Program(sandboxPlayground(sandbox), () => code.text, { frames: page.frames });
+	return new Program(sandboxPlayground(sandbox), () => code.text, {
+		frames: page.frames,
+		...options
+	});
 }
 
 /** Draws the frames that the program asks for until nothing moves, one every 100 ms. */
@@ -220,6 +224,19 @@ describe('the program of a screen', () => {
 		program.free();
 	});
 
+	it('tells the screen how it stopped, with the code that it ran, once', () => {
+		const onStopped = vi.fn();
+		const code = { text: 'forward()\n' };
+		const program = programOf(code, { onStopped });
+		program.runOrPause();
+		expect(onStopped).not.toHaveBeenCalled();
+		finish();
+		code.text = 'turn_left()\n';
+		finish();
+		expect(onStopped.mock.calls).toEqual([[{ type: 'ended' }, 'forward()\n']]);
+		program.free();
+	});
+
 	it('does nothing while the screen has no editor', () => {
 		const program = programOf({ text: undefined });
 		program.runOrPause();
@@ -284,6 +301,20 @@ describe('the console of the program of a screen', () => {
 		finish();
 		expect(shown(program).lines).toEqual(['1']);
 		program.free();
+	});
+
+	it('writes in the log that the screen gives, which another program goes on with', () => {
+		const log = new ConsoleLog();
+		const first = programOf({ text: 'print(1)\n' }, { log });
+		first.runOrPause();
+		finish();
+		first.free();
+		const second = programOf({ text: 'print(2)\n' }, { log });
+		expect(shown(second)).toEqual({ kind: 'ran', lines: ['1'], errors: [] });
+		second.runOrPause();
+		finish();
+		expect(log.lines).toEqual(['2']);
+		second.free();
 	});
 
 	it('keeps the log of the last run on Reset, and on Resume', () => {
