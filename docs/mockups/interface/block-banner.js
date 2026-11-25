@@ -3,7 +3,7 @@
 // shows none.
 // × hides it until the next visit. Pale amber, without icon: the color says it is a warning.
 const appStorageBanner = () => `<div class="app-banner" role="status">
-  <span>Your progress can’t be saved in this browser and will be lost when this tab closes.</span>
+  <span>Your progress cannot be saved in this browser and will be lost when this tab closes.</span>
   <button type="button" title="Hide until the next visit">${ICONS.close(14)}</button>
 </div>`;
 

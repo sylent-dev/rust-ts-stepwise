@@ -17,10 +17,10 @@ function appMessage(kind, [width, height], fix = MESSAGE_FIX) {
   const texts = {
     small: ["Stepwise needs a larger window", `<p>At least 1280 × 720 pixels. This one is <b class="message-size">${width} × ${height}</b>.</p><p>${fix}</p>`],
     phone: ["Stepwise needs a laptop", "<p>It is made for a large window.</p>"],
-    old: ["Stepwise needs a recent browser", `<p>This browser can’t run it. Update it, or open Stepwise in a recent Firefox, Chrome, Edge or Safari.</p>${address}`],
-    offline: ["Stepwise couldn’t load", '<p>The connection seems to be lost. Check it, then try again.</p><button type="button" class="app-primary">Try again</button>'],
+    old: ["Stepwise needs a recent browser", `<p>This browser cannot run it. Update it, or open Stepwise in a recent Firefox, Chrome, Edge or Safari.</p>${address}`],
+    offline: ["Stepwise could not load", '<p>The connection seems to be lost. Check it, then try again.</p><button type="button" class="app-primary">Try again</button>'],
     script: ["Stepwise needs JavaScript", "<p>It is turned off in this browser.</p><p>Turn it on for this website, then reload the page.</p>"],
-    missing: ["This page doesn’t exist", '<p>Stepwise has no page at this address.</p><button type="button" class="app-primary">All levels</button>'],
+    missing: ["This page does not exist", '<p>Stepwise has no page at this address.</p><button type="button" class="app-primary">All levels</button>'],
   };
   const [title, body] = texts[kind];
   // What the message is about, in two or three signs, very pale behind it.
