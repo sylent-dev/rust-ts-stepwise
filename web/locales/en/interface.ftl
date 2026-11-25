@@ -74,7 +74,8 @@ command-reset = Reset
 command-keyboard-shortcuts = Keyboard shortcuts
 
 ## The command menu, which Ctrl+Space opens at the cursor: its categories, the line of its keys,
-## what it says when nothing matches the letters typed, then what it says of each word. Code is
+## what it says when nothing matches the letters typed or when Your names has no name, what it
+## says of a name of the program, then what it says of each word. Code is
 ## written between backticks, and shown in the font of the code.
 
 # The family of the categories, in the order of the menu: `commands-category-<name>`
@@ -89,11 +90,28 @@ commands-category-control = Control
 commands-category-logic = Logic
 commands-category-variables = Variables
 commands-category-functions = Functions
+commands-category-names = Your names
 # The list of the words, read to a screen reader: the text of the command that opens the menu.
 commands-list-name = { command-commands }
 # When no word holds the letters typed.
 # $letters (String): the letters typed, as the learner typed them.
 commands-empty = No command found with “{ $letters }”.
+# The details of a name of the program, in Your names: what it is and the line where it is
+# declared, which the details show under the sentence. A variable of a `let`.
+# $line (Number): the line of its `let`, from 1.
+commands-name-variable = A variable of your program, declared on line { NUMBER($line, useGrouping: 0) }.
+# A parameter of the function whose body holds the cursor.
+# $function (String): the name of that function, which the sentence writes with its parentheses.
+# $line (Number): the line of its definition, from 1.
+commands-name-parameter = A parameter of `{ $function }()`, on line { NUMBER($line, useGrouping: 0) }.
+# A function of the program.
+# $line (Number): the line of its definition, from 1.
+commands-name-function = A function of your program, defined on line { NUMBER($line, useGrouping: 0) }.
+# Your names without a name: none is declared above the cursor.
+commands-names-none = Your variables and functions appear here once they are declared above the cursor.
+# The same, when a syntax error above the cursor hides them.
+# $line (Number): the line of the error.
+commands-names-hidden = Your variables and functions appear here once the error on line { NUMBER($line, useGrouping: 0) } is fixed.
 # The line of the keys, at the bottom of the menu: each key is drawn, then what it does.
 commands-keys-move = move
 commands-keys-category = category

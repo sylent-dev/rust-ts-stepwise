@@ -36,6 +36,7 @@ pub mod foreign_word;
 pub mod interpreter;
 pub mod level;
 pub mod lexer;
+pub mod names;
 pub mod parser;
 pub mod program;
 pub mod run;

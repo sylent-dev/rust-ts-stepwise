@@ -68,24 +68,46 @@ pub(crate) struct Lexed {
 /// unknown escape, a number too large, a word that starts with a digit, or a character that
 /// has no meaning outside a text or a comment.
 pub(crate) fn tokenize(source: &str) -> Result<Lexed, LexError> {
-    let mut lexer = Lexer {
-        tokens: Vec::new(),
-        comments: Vec::new(),
-        levels: Vec::new(),
-    };
+    let mut lexer = Lexer::default();
     let mut end = Position::new(1, 1);
-    for (index, line) in source.split('\n').enumerate() {
-        let number = saturating_u32(index).saturating_add(1);
-        end = lexer.line(line.strip_suffix('\r').unwrap_or(line), number)?;
+    for (number, line) in (1..).zip(lines(source)) {
+        end = lexer.line(line, number)?;
     }
-    for _ in 0..lexer.levels.len() {
-        lexer.push(TokenKind::Dedent, Span::at(end));
+    Ok(lexer.finish(end))
+}
+
+/// The tokens of the lines of `source` above the line of `cursor`, then of a stand-in for that
+/// line: what a line written at the cursor may use comes from the lines above it alone (see
+/// [`names_at`](crate::names::names_at)). The line of the cursor is being written, so none of
+/// its tokens is read: a `break` alone stands for it, in the block that its indentation gives,
+/// counted up to the cursor (see [`Lexer::stand_in`]). The lines under it are never read.
+///
+/// # Errors
+///
+/// The first error of the lines above the cursor.
+pub(crate) fn tokenize_up_to(source: &str, cursor: Position) -> Result<Lexed, LexError> {
+    let mut lexer = Lexer::default();
+    let mut lines = lines(source);
+    for number in 1..cursor.line {
+        let Some(line) = lines.next() else { break };
+        lexer.line(line, number)?;
     }
-    lexer.push(TokenKind::End, Span::at(end));
-    Ok(Lexed {
-        tokens: lexer.tokens,
-        comments: lexer.comments,
-    })
+    let line = lines.next().unwrap_or_default();
+    let spaces = line
+        .chars()
+        .take_while(|&character| character == ' ')
+        .count();
+    let spaces = saturating_u32(spaces).min(cursor.column.saturating_sub(1));
+    let place = Position::new(cursor.line, spaces.saturating_add(1));
+    lexer.stand_in(spaces, place);
+    Ok(lexer.finish(place))
+}
+
+/// The lines of `source`, without their line break: `\n` or `\r\n`.
+fn lines(source: &str) -> impl Iterator<Item = &str> {
+    source
+        .split('\n')
+        .map(|line| line.strip_suffix('\r').unwrap_or(line))
 }
 
 /// The text `text` as a program writes it: between its quotes, its `"`, its `\` and its line
@@ -105,6 +127,7 @@ pub fn text_literal(text: &str) -> impl Iterator<Item = char> {
 }
 
 /// The state kept from one line to the next.
+#[derive(Default)]
 struct Lexer {
     tokens: Vec<Token>,
     /// The comment of each comment line read, from its `#` to its last character.
@@ -173,6 +196,46 @@ impl Lexer {
         }
         self.push(TokenKind::Newline, Span::at(last_end));
         Ok(end)
+    }
+
+    /// A `break` alone at `place`, standing for a line indented by `spaces` that isn't read
+    /// (see [`tokenize_up_to`]), in the block that this indentation gives: the block that the
+    /// line above opens when it ends with `:`, whatever the indentation; else the innermost
+    /// block open that isn't deeper than it. Never an error: an indentation that the
+    /// language refuses there goes to the block where it could be.
+    fn stand_in(&mut self, spaces: u32, place: Position) {
+        let place = Span::at(place);
+        // The tokens of a line end with its `Newline`: the one before is its last.
+        let opens_block = self
+            .tokens
+            .iter()
+            .rev()
+            .nth(1)
+            .is_some_and(|token| token.kind == TokenKind::Colon);
+        if opens_block {
+            self.levels.push(self.level().saturating_add(INDENT_WIDTH));
+            self.push(TokenKind::Indent, place);
+        } else {
+            while self.levels.last().is_some_and(|&level| spaces < level) {
+                self.levels.pop();
+                self.push(TokenKind::Dedent, place);
+            }
+        }
+        self.push(TokenKind::Keyword(Keyword::Break), place);
+        self.push(TokenKind::Newline, place);
+    }
+
+    /// The tokens read, once the source ends at `end`: a `Dedent` for each block still
+    /// open, then `End`.
+    fn finish(mut self, end: Position) -> Lexed {
+        for _ in 0..self.levels.len() {
+            self.push(TokenKind::Dedent, Span::at(end));
+        }
+        self.push(TokenKind::End, Span::at(end));
+        Lexed {
+            tokens: self.tokens,
+            comments: self.comments,
+        }
     }
 
     /// Opens or closes the blocks for a line indented by `found` spaces, `span` covering

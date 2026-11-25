@@ -2,8 +2,6 @@ import { EditorState } from '@codemirror/state';
 import { keymap } from '@codemirror/view';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { editorMenu } from '#lib/command-menu/editor-menu.ts';
-import { menuEntries } from '#lib/command-menu/words.ts';
-import { vocabulary } from '#lib/core/core.ts';
 import { loadTestCore } from '#lib/core/test-support.ts';
 import { type Editing, EDITS } from '#lib/editor/edits.ts';
 import { editorSetup } from '#lib/editor/setup.ts';
@@ -423,10 +421,7 @@ describe('the keys of the editor', () => {
 
 	it('are none of the shortcuts of the commands, which the screen alone hears, those of the command menu included', () => {
 		const bindings = EditorState.create({
-			extensions: [
-				editorSetup('Your code', errorText),
-				editorMenu(menuEntries(vocabulary()), 'command-menu')
-			]
+			extensions: [editorSetup('Your code', errorText), editorMenu('command-menu')]
 		})
 			.facet(keymap)
 			.flat();

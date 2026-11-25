@@ -74,6 +74,18 @@ impl<'a> Variables<'a> {
             .find_map(|block| block.declared.get(name).copied())
     }
 
+    /// The variables that exist here, each with the place of its name in its `let` or among
+    /// the parameters, in the order of the source.
+    pub(super) fn visible(&self) -> Vec<(&'a str, Span)> {
+        let mut variables: Vec<_> = self
+            .blocks
+            .iter()
+            .flat_map(|block| block.declared.iter().map(|(&name, &span)| (name, span)))
+            .collect();
+        variables.sort_by_key(|&(_, span)| span.start);
+        variables
+    }
+
     /// Why `name` is no variable here, or `None` when it is one. When several reasons hold,
     /// the variable that belongs to this place comes first: one declared further down, then
     /// one whose block has ended.

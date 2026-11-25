@@ -21,6 +21,7 @@ import {
 	openMenuOf,
 	optionId
 } from './editor-menu.ts';
+import { namesAtCursor } from './names.ts';
 import { type Category, type MenuEntry, menuEntries } from './words.ts';
 
 let entries: readonly MenuEntry[] = [];
@@ -37,7 +38,7 @@ const lockSlot = new Compartment();
 function stateOf(marked: string): EditorState {
 	return markedState(marked, [
 		indentation,
-		editorMenu(entries, 'menu'),
+		editorMenu('menu'),
 		lockSlot.of(EditorState.readOnly.of(false))
 	]);
 }
@@ -50,12 +51,12 @@ function changed(state: EditorState, spec: TransactionSpec): EditorState {
 /** A state with the menu open at the cursor, on a category. */
 function opened(marked: string, category: Category = 'move'): EditorState {
 	const state = stateOf(marked);
-	return changed(state, openMenu(state, category));
+	return changed(state, openMenu(state, category, { entries }));
 }
 
 /** The letters that filter the words, and the word chosen, while the menu is open. */
 function menuOf(state: EditorState): { letters: string; chosen: string | undefined } | undefined {
-	const view = menuViewOf(state, entries);
+	const view = menuViewOf(state);
 	return view && { letters: view.letters, chosen: view.chosen?.label };
 }
 
@@ -167,14 +168,16 @@ describe('the open menu', () => {
 
 		expect(attributes(opened('pai|'))).toMatchObject({
 			'aria-controls': 'menu',
-			'aria-activedescendant': optionId('menu', 'start_painting')
+			'aria-activedescendant': 'menu-word-start_painting'
 		});
 		expect(attributes(stateOf('pai|'))['aria-controls']).toBeUndefined();
 		expect(attributes(opened('pizza|'))).toEqual({
 			'aria-autocomplete': 'list',
 			'aria-haspopup': 'listbox'
 		});
-		expect(optionId('menu', 'else if')).toBe('menu-else-if');
+		const elseIf = entries.find(({ text }) => text === 'else if');
+
+		expect(elseIf && optionId('menu', elseIf)).toBe('menu-word-else-if');
 	});
 });
 
@@ -183,7 +186,9 @@ describe('the keys of the open menu', () => {
 		expect(menuOf(pressed(opened('|'), 'ArrowDown'))?.chosen).toBe('turn_left()');
 		expect(menuOf(pressed(opened('|'), 'ArrowUp'))?.chosen).toBe('turn_right()');
 		expect(menuOf(pressed(opened('|'), 'ArrowRight'))?.chosen).toBe('start_painting(color)');
-		expect(menuOf(pressed(opened('|'), 'ArrowLeft'))?.chosen).toBe('function');
+		// Your names, the last category, without a name in this code.
+		expect(menuOf(pressed(opened('|'), 'ArrowLeft'))?.chosen).toBeUndefined();
+		expect(menuOf(pressed(opened('|'), 'ArrowLeft', 'ArrowLeft'))?.chosen).toBe('function');
 	});
 
 	it('are left to the code while the menu is closed', () => {
@@ -274,9 +279,48 @@ describe('what the menu inserts', () => {
 
 	it('chooses a word of the code once a place holds one', () => {
 		const inside = pressed(opened('if|'), 'Enter');
-		const filled = pressed(changed(inside, openMenu(inside, 'sense')), 'Enter');
+		const filled = pressed(changed(inside, openMenu(inside, 'sense', { entries })), 'Enter');
 
 		expect(shown(filled)).toBe('if front_is_clear()|:\n    ');
 		expect(shown(press(filled, 'Enter'))).toBe('if front_is_clear():\n    |');
+	});
+});
+
+describe('Your names', () => {
+	/** A state with the menu open at the cursor, listing the names there too, as the screen does. */
+	function openedWithNames(marked: string, category: Category): EditorState {
+		const state = stateOf(marked);
+		const names = namesAtCursor(state);
+		const content = { entries: [...entries, ...names.entries], namesHiddenBy: names.hiddenBy };
+		return changed(state, openMenu(state, category, content));
+	}
+
+	const PROGRAM = 'function paint_side(length):\n    forward()\nlet sides = 0\n';
+
+	it('inserts a function of the program with the cursor between its parentheses', () => {
+		const state = pressed(openedWithNames(`${PROGRAM}|`, 'names'), 'Enter');
+
+		expect(shown(state)).toBe(`${PROGRAM}paint_side(|)`);
+	});
+
+	it('inserts a variable in place of the letters typed, which choose it', () => {
+		const state = openedWithNames(`${PROGRAM}print(sid|)`, 'move');
+
+		expect(menuOf(state)?.chosen).toBe('sides');
+		expect(shown(pressed(state, 'Tab'))).toBe(`${PROGRAM}print(sides|)`);
+	});
+
+	it('says which line hides the names', () => {
+		const state = openedWithNames('forward(\n|', 'names');
+
+		expect(menuViewOf(state)?.empty).toEqual({ kind: 'no-names', hiddenBy: 1 });
+	});
+
+	it('keeps the names as letters are typed, which never change them', () => {
+		const state = openedWithNames(`${PROGRAM}|`, 'names');
+		const typed = type(state, 'pa');
+
+		expect(openMenuOf(typed)?.entries).toBe(openMenuOf(state)?.entries);
+		expect(menuOf(typed)?.chosen).toBe('paint_side(length)');
 	});
 });

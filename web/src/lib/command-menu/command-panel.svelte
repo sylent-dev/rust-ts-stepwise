@@ -3,7 +3,8 @@
      while the learner moves in it: the categories, always in view; the words of the category
      chosen, or every word that the letters typed keep, under the name of its category; the details
      of the word chosen. When nothing matches, the disappointed robot takes the place of the words
-     and of their details. A line at the bottom recalls the keys.
+     and of their details; when Your names has no name, a sentence alone, since nothing went
+     wrong. A line at the bottom recalls the keys.
 
      The keyboard stays in the code, which writes the letters typed and gives the keys of the menu
      to it (editor-menu.ts): a press on the panel never takes the focus. -->
@@ -13,8 +14,8 @@
 	import Icon from '#lib/icon.svelte';
 	import { keyMessage } from '#lib/shell/commands.ts';
 	import { optionId } from './editor-menu.ts';
-	import type { MenuView } from './results.ts';
-	import WordDetails from './word-details.svelte';
+	import EntryDetails from './entry-details.svelte';
+	import type { EmptyMenu, MenuView } from './results.ts';
 	import { type Category, categoryMessage, type MenuEntry } from './words.ts';
 
 	interface Props {
@@ -32,8 +33,20 @@
 
 	let { view, listId, onpoint, onpick, oncategory }: Props = $props();
 
-	/** Nothing matches the letters typed: the robot and its sentence take the place of the words. */
-	const nothing = $derived(view.chosen === undefined && view.letters !== '');
+	/** What takes the place of the words and of their details, when there are none to show. */
+	function sentenceOf(empty: EmptyMenu): string {
+		switch (empty.kind) {
+			case 'nothing-found':
+				return t('commands-empty', { letters: view.letters });
+			case 'no-names':
+				return empty.hiddenBy === undefined
+					? t('commands-names-none')
+					: t('commands-names-hidden', { line: empty.hiddenBy });
+		}
+	}
+
+	/** The sentence in place of the words and of their details, when there are none to show. */
+	const sentence = $derived(view.empty && sentenceOf(view.empty));
 
 	let list = $state<HTMLElement>();
 
@@ -41,19 +54,19 @@
 	$effect(() => {
 		const chosen = view.chosen;
 		if (!chosen || !list) return;
-		list.querySelector(`#${CSS.escape(optionId(listId, chosen.word))}`)?.scrollIntoView({
+		list.querySelector(`#${CSS.escape(optionId(listId, chosen))}`)?.scrollIntoView({
 			block: 'nearest'
 		});
 	});
 </script>
 
 {#snippet rows(entries: readonly MenuEntry[])}
-	{#each entries as entry (entry.word)}
+	{#each entries as entry (entry.text)}
 		<!-- svelte-ignore a11y_click_events_have_key_events (the keys of the menu are heard by the code, which keeps the focus) -->
 		<div
 			class="row"
 			class:chosen={entry === view.chosen}
-			id={optionId(listId, entry.word)}
+			id={optionId(listId, entry)}
 			role="option"
 			tabindex="-1"
 			aria-selected={entry === view.chosen}
@@ -71,7 +84,7 @@
 
 <!-- A press keeps the focus where it is: in the code. -->
 <div class="panel" role="presentation" onmousedown={(event) => event.preventDefault()}>
-	<div class="columns" class:merged={nothing}>
+	<div class="columns" class:merged={sentence !== undefined}>
 		<div class="categories">
 			{#each view.categories as shown (shown.category)}
 				<button
@@ -91,11 +104,13 @@
 				</button>
 			{/each}
 		</div>
-		{#if nothing}
+		{#if sentence !== undefined}
 			<!-- The sentence is said by the status of the panel, under it. -->
 			<div class="empty" aria-hidden="true">
-				<img src={logoDisappointed} alt="" height="56" />
-				<span>{t('commands-empty', { letters: view.letters })}</span>
+				{#if view.empty?.kind === 'nothing-found'}
+					<img src={logoDisappointed} alt="" height="56" />
+				{/if}
+				<span>{sentence}</span>
 			</div>
 		{:else}
 			<div
@@ -122,15 +137,15 @@
 			</div>
 			<div class="details">
 				{#if view.chosen}
-					<WordDetails entry={view.chosen} />
+					<EntryDetails entry={view.chosen} />
 				{/if}
 			</div>
 		{/if}
 	</div>
-	<!-- What a screen reader is told when nothing matches: a status that the panel holds from its
-	     opening, so that the sentence is said as it comes. -->
+	<!-- What a screen reader is told when nothing matches, or when Your names has no name: a status
+	     that the panel holds from its opening, so that the sentence is said as it comes. -->
 	<div class="said" role="status">
-		{nothing ? t('commands-empty', { letters: view.letters }) : ''}
+		{sentence ?? ''}
 	</div>
 	<div class="keys" aria-hidden="true">
 		<span>
@@ -171,7 +186,7 @@
 		grid-template-columns: 142px 202px 1fr;
 	}
 
-	/* Nothing found: the robot and its sentence take the place of the words and of their details. */
+	/* Nothing to show: the sentence takes the place of the words and of their details. */
 	.columns.merged {
 		grid-template-columns: 142px 1fr;
 	}
@@ -229,9 +244,12 @@
 		text-transform: uppercase;
 	}
 
+	/* A name of the program longer than the column ends with an ellipsis. */
 	.row {
 		padding: var(--space-2) var(--space-12);
+		overflow: hidden;
 		white-space: nowrap;
+		text-overflow: ellipsis;
 		cursor: pointer;
 	}
 
@@ -240,14 +258,17 @@
 		color: var(--on-chosen);
 	}
 
-	/* Nothing found: the robot and its sentence in the middle of the whole space. */
+	/* Nothing to show: the sentence in the middle of the whole space, under the robot when nothing
+	   matches the letters. */
 	.empty {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
 		gap: var(--space-12);
+		padding: 0 var(--space-40);
 		color: var(--weak);
+		text-align: center;
 	}
 
 	.details {

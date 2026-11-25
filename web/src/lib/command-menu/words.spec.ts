@@ -8,21 +8,21 @@ import {
 	givenMessage,
 	givenTo,
 	MENU_WORDS,
-	type MenuEntry,
 	menuEntries,
 	type MenuWord,
+	type WordEntry,
 	wordMessage
 } from './words.ts';
 
 beforeAll(loadTestCore);
 
 /** The words of the menu, as the core gives them now. */
-function entries(): readonly MenuEntry[] {
+function entries(): readonly WordEntry[] {
 	return menuEntries(vocabulary());
 }
 
 /** The entry of a word. */
-function entryOf(word: MenuWord): MenuEntry | undefined {
+function entryOf(word: MenuWord): WordEntry | undefined {
 	return entries().find((entry) => entry.word === word);
 }
 
@@ -35,12 +35,12 @@ function writes(program: string, word: MenuWord): boolean {
 }
 
 describe('menuEntries', () => {
-	it('lists every word once, in the order of its categories, each category with a word at least', () => {
+	it('lists every word once, in the order of its categories, each category but Your names with a word at least', () => {
 		const listed = entries();
 		const categories = listed.map(({ category }) => category);
 
 		expect(new Set(listed.map(({ word }) => word)).size).toBe(listed.length);
-		expect([...new Set(categories)]).toEqual([...CATEGORIES]);
+		expect([...new Set(categories)]).toEqual(CATEGORIES.filter((category) => category !== 'names'));
 		expect(categories).toEqual(
 			[...categories].sort((a, b) => CATEGORIES.indexOf(a) - CATEGORIES.indexOf(b))
 		);

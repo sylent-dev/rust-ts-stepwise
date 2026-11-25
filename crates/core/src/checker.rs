@@ -17,6 +17,7 @@ use std::collections::HashSet;
 
 use crate::ast::{Branch, Expression, ExpressionKind, Name, Program, Statement, StatementKind};
 use crate::color::Color;
+use crate::names::{NamesAt, ProgramFunction, ProgramVariable};
 use crate::span::Span;
 use functions::{Callee, Function, Functions};
 use scope::{Missing, Variables, main_program_variables};
@@ -24,42 +25,62 @@ use scope::{Missing, Variables, main_program_variables};
 /// Every error of names and of structure of `program`, in the order of the source.
 #[must_use]
 pub(crate) fn check(program: &Program) -> Vec<CheckError> {
-    let mut checker = Checker {
-        main_variables: main_program_variables(&program.statements),
-        functions: Functions::of(&program.statements),
-        ..Checker::default()
-    };
+    let mut checker = Checker::of(program);
     checker.block(&program.statements, Context::TOP_LEVEL);
     checker.errors
 }
 
+/// The names that the statement of line `line` may use, as the checks see them: the walk notes
+/// them as it reaches that statement, and nothing when no statement starts on that line.
+/// `program` ends with it, a stand-in for the line being written (see
+/// [`names_at`](crate::names::names_at)), so that every function of the program is defined
+/// above it.
+#[must_use]
+pub(crate) fn names_at(program: &Program, line: u32) -> Option<NamesAt> {
+    let mut checker = Checker {
+        asked: Some(line),
+        ..Checker::of(program)
+    };
+    checker.block(&program.statements, Context::TOP_LEVEL);
+    checker.names
+}
+
 /// Where a statement is in the program: what decides whether a `break`, a `return` or a
-/// function may be written there.
+/// function may be written there, and whose parameters the variables there may be.
 #[derive(Debug, Clone, Copy)]
-struct Context {
+struct Context<'a> {
     /// Outside every block and every function.
     top_level: bool,
-    /// In the body of a function, however deep in its blocks.
-    in_function: bool,
+    /// The function whose body holds the statement, however deep in its blocks.
+    function: Option<Enclosing<'a>>,
     /// In a `while` or a `repeat` of the same function, or of the main program.
     in_loop: bool,
 }
 
-impl Context {
+/// A function whose body is being checked.
+#[derive(Debug, Clone, Copy)]
+struct Enclosing<'a> {
+    name: &'a Name,
+    parameters: &'a [Name],
+}
+
+impl<'a> Context<'a> {
     /// The top level of the program.
     const TOP_LEVEL: Self = Self {
         top_level: true,
-        in_function: false,
+        function: None,
         in_loop: false,
     };
 
-    /// The body of a function. The loops around the function, if any, are not its own: a
-    /// `break` in the function leaves none of them.
-    const FUNCTION_BODY: Self = Self {
-        top_level: false,
-        in_function: true,
-        in_loop: false,
-    };
+    /// The body of the function `name`. The loops around the function, if any, are not its
+    /// own: a `break` in the function leaves none of them.
+    const fn function_body(name: &'a Name, parameters: &'a [Name]) -> Self {
+        Self {
+            top_level: false,
+            function: Some(Enclosing { name, parameters }),
+            in_loop: false,
+        }
+    }
 
     /// A block of an `if` written in this context.
     const fn enter_branch(self) -> Self {
@@ -96,15 +117,28 @@ struct Checker<'a> {
     main_variables: HashSet<&'a str>,
     /// Every function of the program, wherever it is defined.
     functions: Functions<'a>,
+    /// The line whose names are asked ([`names_at`]), and nothing for the checks alone.
+    asked: Option<u32>,
+    /// The names found on that line, once the walk has reached it.
+    names: Option<NamesAt>,
 }
 
 impl<'a> Checker<'a> {
+    /// The checker of `program`, before its walk.
+    fn of(program: &'a Program) -> Self {
+        Self {
+            main_variables: main_program_variables(&program.statements),
+            functions: Functions::of(&program.statements),
+            ..Self::default()
+        }
+    }
+
     fn report(&mut self, kind: CheckErrorKind, span: Span) {
         self.errors.push(CheckError { kind, span });
     }
 
     /// The statements of a block, or of the top level, written in `context`.
-    fn block(&mut self, statements: &'a [Statement], context: Context) {
+    fn block(&mut self, statements: &'a [Statement], context: Context<'a>) {
         self.variables.open(statements);
         for statement in statements {
             self.statement(statement, context);
@@ -112,7 +146,10 @@ impl<'a> Checker<'a> {
         self.variables.close();
     }
 
-    fn statement(&mut self, statement: &'a Statement, context: Context) {
+    fn statement(&mut self, statement: &'a Statement, context: Context<'a>) {
+        if self.asked == Some(statement.span.start.line) {
+            self.names = Some(self.names_here(context));
+        }
         match &statement.kind {
             StatementKind::Let { name, value } => self.declaration(name, value, context),
             StatementKind::Assign { name, value } => {
@@ -127,7 +164,7 @@ impl<'a> Checker<'a> {
                 }
             }
             StatementKind::Return { value } => {
-                if !context.in_function {
+                if context.function.is_none() {
                     self.report(CheckErrorKind::ReturnOutsideFunction, statement.span);
                 }
                 if let Some(value) = value {
@@ -171,7 +208,7 @@ impl<'a> Checker<'a> {
                     self.report(CheckErrorKind::NestedFunction, statement.span);
                 }
                 self.check_function_name(name);
-                self.function(parameters, body);
+                self.function(name, parameters, body);
             }
             StatementKind::Expression(expression) => {
                 if !self.is_call_or_function(expression) {
@@ -184,7 +221,7 @@ impl<'a> Checker<'a> {
 
     /// A `let`. Its value is read before the variable exists (`let x = x + 1`), so the name
     /// is checked first, in the order of the source, and declared last.
-    fn declaration(&mut self, name: &'a Name, value: &'a Expression, context: Context) {
+    fn declaration(&mut self, name: &'a Name, value: &'a Expression, context: Context<'a>) {
         let free = self.check_new_variable(name);
         let first = self.variables.declared(&name.text);
         if let (true, Some(first)) = (free, first) {
@@ -205,15 +242,57 @@ impl<'a> Checker<'a> {
 
     /// The parameters and the body of a function, which sees only its own variables: those
     /// of the place where it is written are put aside while it is checked.
-    fn function(&mut self, parameters: &'a [Name], body: &'a [Statement]) {
+    fn function(&mut self, name: &'a Name, parameters: &'a [Name], body: &'a [Statement]) {
         let around = std::mem::take(&mut self.variables);
         // The parameters are variables of a block around the body: a `let` of the body
         // can't take their names.
         self.variables.open(&[]);
         self.parameters(parameters);
-        self.block(body, Context::FUNCTION_BODY);
+        self.block(body, Context::function_body(name, parameters));
         let function = std::mem::replace(&mut self.variables, around);
         self.variables.absorb(function);
+    }
+
+    /// The names that a statement written in `context` may use: the functions of the program,
+    /// all above it in [`names_at`], and the variables that exist here, each in the order of
+    /// the source.
+    fn names_here(&self, context: Context<'a>) -> NamesAt {
+        let functions = self
+            .functions
+            .in_order()
+            .into_iter()
+            .map(|(name, function)| ProgramFunction {
+                name: name.to_owned(),
+                parameters: function
+                    .parameters
+                    .iter()
+                    .map(|parameter| parameter.text.clone())
+                    .collect(),
+                defined: function.defined,
+            })
+            .collect();
+        let variables = self
+            .variables
+            .visible()
+            .into_iter()
+            .map(|(name, declared)| ProgramVariable {
+                name: name.to_owned(),
+                declared,
+                parameter_of: context
+                    .function
+                    .filter(|function| {
+                        function
+                            .parameters
+                            .iter()
+                            .any(|parameter| parameter.span == declared)
+                    })
+                    .map(|function| function.name.text.clone()),
+            })
+            .collect();
+        NamesAt {
+            functions,
+            variables,
+        }
     }
 
     /// The parameters of a function: each a new name, none twice. A name that is reserved or
@@ -249,7 +328,7 @@ impl<'a> Checker<'a> {
     }
 
     /// The names an expression reads and the functions it calls.
-    fn expression(&mut self, expression: &'a Expression, context: Context) {
+    fn expression(&mut self, expression: &'a Expression, context: Context<'a>) {
         match &expression.kind {
             ExpressionKind::Number(_) | ExpressionKind::Boolean(_) | ExpressionKind::Text(_) => {}
             // The errors of a name are on the name, not on the parentheses around it.
@@ -288,11 +367,11 @@ impl<'a> Checker<'a> {
     }
 
     /// A variable read or changed at `span`: it must exist there.
-    fn variable(&mut self, name: &str, span: Span, access: Access, context: Context) {
+    fn variable(&mut self, name: &str, span: Span, access: Access, context: Context<'a>) {
         let Some(missing) = self.variables.missing(name) else {
             return;
         };
-        let of_main_program = context.in_function && self.main_variables.contains(name);
+        let of_main_program = context.function.is_some() && self.main_variables.contains(name);
         // The name is copied only now that there is an error to hold it.
         let name = name.to_owned();
         let kind = match missing {

@@ -106,6 +106,34 @@ impl Offsets {
             .min(line.end)
     }
 
+    /// The position at `offset`, the other way round from [`Offsets::offset`]: the line that
+    /// holds it, and its column in characters. An offset is the place of the cursor of the
+    /// editor, between two characters. In a line break, it gives the end of its line, and
+    /// past the end of the source, the end of the source.
+    #[must_use]
+    pub fn position(&self, offset: u32) -> Position {
+        // The last line that starts at the offset or before it: the first one starts at 0.
+        let index = self
+            .lines
+            .partition_point(|line| line.start <= offset)
+            .saturating_sub(1);
+        let Some(line) = self.lines.get(index) else {
+            return Position::new(1, 1);
+        };
+        let units = offset.min(line.end).saturating_sub(line.start);
+        // Each unit before the offset is a column, but a wide character takes two.
+        let mut columns = units;
+        for (wide_before, &column) in (0_u32..).zip(&line.wide) {
+            let first_unit = column.saturating_sub(1).saturating_add(wide_before);
+            if first_unit >= units {
+                break;
+            }
+            columns = columns.saturating_sub(1);
+        }
+        let number = u32::try_from(index).unwrap_or(u32::MAX).saturating_add(1);
+        Position::new(number, columns.saturating_add(1))
+    }
+
     /// The stretch `span` of the core, for the interface.
     #[must_use]
     pub fn span(&self, span: span::Span) -> Span {
@@ -292,6 +320,42 @@ mod tests {
         }
         let end = u32::try_from(source.encode_utf16().count()).unwrap();
         assert_eq!(offsets.offset(Position::new(line, column)), end);
+    }
+
+    #[test]
+    fn every_offset_between_two_characters_is_a_position_that_gives_it_back() {
+        let source = "let côté = \"🤖 ok 🤖\"\r\n\n# 𝒳 and é\n    print(côté)\r\nend 🤖";
+        let offsets = Offsets::new(source);
+        let mut before = String::new();
+        let (mut line, mut column) = (1, 1);
+        for character in source.chars() {
+            if !(character == '\n' && before.ends_with('\r')) {
+                let offset = u32::try_from(before.encode_utf16().count()).unwrap();
+                assert_eq!(
+                    offsets.position(offset),
+                    Position::new(line, column),
+                    "after {before:?}"
+                );
+            }
+            before.push(character);
+            if character == '\n' {
+                line += 1;
+                column = 1;
+            } else {
+                column += 1;
+            }
+        }
+        let end = u32::try_from(source.encode_utf16().count()).unwrap();
+        assert_eq!(offsets.position(end), Position::new(line, column));
+    }
+
+    #[test]
+    fn an_offset_that_is_no_place_of_a_character_stays_inside_the_source() {
+        // Between the `\r` and the `\n` of a line break: the end of its line.
+        assert_eq!(Offsets::new("ab\r\ncd").position(3), Position::new(1, 3));
+        // Past the end of the source: its end.
+        assert_eq!(Offsets::new("ab\ncd").position(99), Position::new(2, 3));
+        assert_eq!(Offsets::new("").position(u32::MAX), Position::new(1, 1));
     }
 
     /// The lines are cut here as the lexer cuts them, a rule written in both crates: the
