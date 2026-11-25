@@ -214,6 +214,8 @@ The core holds the five failures of the robot under one variant (`RuntimeErrorKi
 
 ### Step 20: the names at the cursor
 
+Settled at step 20b (2026-11-25): `names::names_at(source, cursor) -> Result<NamesAt, SyntaxError>`, beside `check`, gives the functions defined above the cursor, each with its parameters as written, and the variables that exist there, a parameter with the name of its function, each with the place of its name; the bridge gives it as `namesAt(source, offset)`. Only the lines above the cursor are read, then a `break` that stands for its line, in the block that its indentation gives; the walk of the checker notes the names as it reaches it (see Checker in `docs/technical-choices.md`). A syntax error above the cursor hides the names, and its line is given. Step 22 reads the same places for Ctrl+click on a function of the program. The finding:
+
 What the checker knows of the names is private and dropped at the end of its walk: the functions of the program with the place of their definition (`crates/core/src/checker/functions.rs`), the variables visible at a place (`checker/scope.rs`). Ctrl+click on a function of the program (step 16) and **Your names** (step 20) need it; and `let total = ` followed by Ctrl+Space is a syntax error, so `parse` gives no tree when the menu must propose names. The rule of the scopes is written twice already (the checker, the slots of the compiler): in `web/`, it would be a third time, out of reach of the tests of the core. A query of the core beside `check`, which reuses the two modules:
 
 ```rust
