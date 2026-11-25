@@ -1,9 +1,10 @@
 //! The tests of the names at a place, the cursor written `|` in each source.
 
 use super::{NamesAt, ProgramFunction, ProgramVariable, names_at};
-use crate::parser::SyntaxError;
+use crate::checker;
+use crate::parser::{SyntaxError, parse, parse_up_to};
 use crate::span::Position;
-use crate::test_support::span;
+use crate::test_support::{Random, span};
 
 /// The names at the `|` of `marked`, which holds one, in the source without it.
 #[track_caller]
@@ -151,6 +152,28 @@ mod scopes {
     }
 
     #[test]
+    fn a_function_written_in_a_function_leaves_it_its_parameters() {
+        let found = at("function f(a):\n    function g(b):\n        forward()\n    |").unwrap();
+        assert_eq!(found.functions.len(), 2);
+        assert_eq!(found.variables.len(), 1);
+        assert_eq!(found.variables[0].parameter_of.as_deref(), Some("f"));
+    }
+
+    #[test]
+    fn a_function_written_in_a_block_is_listed_and_a_second_of_its_name_is_not() {
+        let source =
+            "if true:\n    function g():\n        forward()\nfunction g():\n    forward()\n|";
+        let found = at(source).unwrap();
+        assert_eq!(found.functions.len(), 1);
+        assert_eq!(found.functions[0].defined.start.line, 2);
+    }
+
+    #[test]
+    fn a_name_refused_for_its_form_is_still_a_variable() {
+        assert_eq!(variables("let Sides = 0\n|"), ["Sides"]);
+    }
+
+    #[test]
     fn a_function_named_as_a_built_in_function_is_no_function() {
         assert_eq!(
             functions("function forward():\n    turn_left()\n|"),
@@ -232,5 +255,68 @@ mod line_of_the_cursor {
         assert_eq!(variables(&format!("{source}|    ")), ["a"]);
         assert_eq!(variables(&format!("{source}    |    ")), ["a", "b"]);
         assert_eq!(variables(&format!("{source}    paint|")), ["a", "b"]);
+    }
+}
+
+mod robustness {
+    use super::*;
+
+    /// Asserts that the names at `cursor` in `source` are read, and that the walk reaches the
+    /// stand-in of the line of the cursor.
+    #[track_caller]
+    fn assert_read(source: &str, cursor: Position) {
+        let program = parse_up_to(source, cursor);
+        assert!(program.is_ok(), "at {cursor:?} in {source:?}: {program:?}");
+        let program = program.unwrap();
+        assert!(
+            checker::names_at(&program, cursor.line).is_some(),
+            "the walk misses the line {} of {source:?}",
+            cursor.line
+        );
+    }
+
+    #[test]
+    fn a_program_that_reads_gives_its_names_wherever_the_cursor_is() {
+        let pieces = [
+            "let sides = 0",
+            "forward()",
+            "sides = sides + 1",
+            "if sides == 0:",
+            "else if sides == 1:",
+            "else:",
+            "while true:",
+            "repeat 2:",
+            "function walk(side):",
+            "function run():",
+            "# A comment",
+            "",
+            "break",
+            "return sides",
+        ];
+        let mut random = Random(11);
+        let mut read = 0;
+        for _ in 0..2000 {
+            let source = random.program(&pieces);
+            if parse(&source).is_err() {
+                continue;
+            }
+            read += 1;
+            let lines: Vec<&str> = source.split('\n').collect();
+            for (line, text) in (1..).zip(&lines) {
+                for column in 1..=text.chars().count() + 2 {
+                    assert_read(&source, Position::new(line, column.try_into().unwrap()));
+                }
+            }
+            // Under the last line, every function of the program is listed.
+            let under = Position::new(u32::try_from(lines.len()).unwrap() + 1, 1);
+            assert_read(&source, under);
+            let functions = names_at(&source, under).unwrap().functions.len();
+            let defined = ["function walk(", "function run("]
+                .into_iter()
+                .filter(|definition| source.contains(definition))
+                .count();
+            assert_eq!(functions, defined, "in {source:?}");
+        }
+        assert!(read > 300, "only {read} programs could be read");
     }
 }

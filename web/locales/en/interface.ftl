@@ -97,11 +97,15 @@ commands-list-name = { command-commands }
 # $letters (String): the letters typed, as the learner typed them.
 commands-empty = No command found with “{ $letters }”.
 # The details of a name of the program, in Your names: what it is and the line where it is
-# declared, which the details show under the sentence.
-# $line (Number): the line where it is declared, from 1.
+# declared, which the details show under the sentence. A variable of a `let`.
+# $line (Number): the line of its `let`, from 1.
 commands-name-variable = A variable of your program, declared on line { NUMBER($line, useGrouping: 0) }.
-# $function (String): the name of the function whose parameter it is.
+# A parameter of the function whose body holds the cursor.
+# $function (String): the name of that function, which the sentence writes with its parentheses.
+# $line (Number): the line of its definition, from 1.
 commands-name-parameter = A parameter of `{ $function }()`, on line { NUMBER($line, useGrouping: 0) }.
+# A function of the program.
+# $line (Number): the line of its definition, from 1.
 commands-name-function = A function of your program, defined on line { NUMBER($line, useGrouping: 0) }.
 # Your names without a name: none is declared above the cursor.
 commands-names-none = Your variables and functions appear here once they are declared above the cursor.

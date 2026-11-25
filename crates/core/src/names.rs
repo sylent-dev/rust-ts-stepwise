@@ -55,7 +55,9 @@ pub struct ProgramVariable {
 /// it can't be read reliably.
 pub fn names_at(source: &str, cursor: Position) -> Result<NamesAt, SyntaxError> {
     let program = parse_up_to(source, cursor)?;
-    Ok(checker::names_at(&program, cursor.line))
+    // The stand-in is the last statement of the tree, which the walk always reaches (a test of
+    // random programs holds it): the default, no name, is never given for a line missed.
+    Ok(checker::names_at(&program, cursor.line).unwrap_or_default())
 }
 
 #[cfg(test)]

@@ -3,8 +3,9 @@
 //! is given too: the menu shows its line, and Ctrl+click on a function will go to it.
 
 use serde::Serialize;
+use stepwise_core::lexer::LexError;
 use stepwise_core::names;
-use stepwise_core::parser::SyntaxError;
+use stepwise_core::parser::{ParseError, SyntaxError};
 use tsify::{Ts, Tsify};
 use wasm_bindgen::JsError;
 use wasm_bindgen::prelude::wasm_bindgen;
@@ -88,11 +89,10 @@ pub fn names(source: &str, cursor: u32) -> NamesAt {
                 })
                 .collect(),
         },
-        Err(SyntaxError::Lex(error)) => NamesAt::Hidden {
-            line: error.span.start.line,
-        },
-        Err(SyntaxError::Parse(error)) => NamesAt::Hidden {
-            line: error.span.start.line,
+        Err(
+            SyntaxError::Lex(LexError { span, .. }) | SyntaxError::Parse(ParseError { span, .. }),
+        ) => NamesAt::Hidden {
+            line: span.start.line,
         },
     }
 }

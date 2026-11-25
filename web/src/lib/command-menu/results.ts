@@ -4,6 +4,18 @@
 
 import { CATEGORIES, type Category, type MenuEntry } from './words.ts';
 
+/** What the menu lists, given as it opens. */
+export interface MenuContent {
+	/**
+	 * The words of the language, then the names that a line written at the cursor may use, read as
+	 * the menu opens: while it is open, only the line of the cursor changes, which the names never
+	 * depend on.
+	 */
+	readonly entries: readonly MenuEntry[];
+	/** The line of the syntax error above the cursor that hides the names, when there is one. */
+	readonly namesHiddenBy?: number | undefined;
+}
+
 /** What the learner chose in the menu: a category, and an entry shown in it or among the results. */
 export interface Choice {
 	readonly category: Category;
@@ -77,13 +89,11 @@ export function matches(entry: MenuEntry, letters: string): boolean {
  * the entry chosen. Until the learner chooses one, the entry chosen is the one written as the
  * letters, or else the first that starts with them, or else the first that holds them: `else`
  * chooses `else` rather than `else if`, and `re` chooses `red` rather than `here_is`.
- * `namesHiddenBy` is the line of a syntax error above the cursor, which hides the names.
  */
 export function menuView(
-	entries: readonly MenuEntry[],
+	{ entries, namesHiddenBy }: MenuContent,
 	letters: string,
-	choice: Choice,
-	namesHiddenBy?: number
+	choice: Choice
 ): MenuView {
 	if (letters === '') {
 		const shown = entries.filter(({ category }) => category === choice.category);
@@ -143,12 +153,12 @@ function around<T>(items: readonly T[], current: T | undefined, step: number): T
  * that has results. Nothing moves while nothing matches the letters.
  */
 export function moveChoice(
-	entries: readonly MenuEntry[],
+	content: MenuContent,
 	letters: string,
 	choice: Choice,
 	move: MenuMove
 ): Choice {
-	const view = menuView(entries, letters, choice);
+	const view = menuView(content, letters, choice);
 	const step = move === 'up' || move === 'left' ? -1 : 1;
 	if (move === 'up' || move === 'down') {
 		const rows = view.groups.flatMap((group) => group.entries);
@@ -158,7 +168,7 @@ export function moveChoice(
 	const open = view.categories.filter(({ pale }) => !pale).map(({ category }) => category);
 	const current = view.categories.find(({ chosen }) => chosen)?.category;
 	const category = around(open, current, step);
-	return category === undefined ? choice : chooseCategory(entries, letters, choice, category);
+	return category === undefined ? choice : chooseCategory(content, letters, choice, category);
 }
 
 /**
@@ -166,7 +176,7 @@ export function moveChoice(
  * result, and nothing changes for a category without result.
  */
 export function chooseCategory(
-	entries: readonly MenuEntry[],
+	{ entries }: MenuContent,
 	letters: string,
 	choice: Choice,
 	category: Category

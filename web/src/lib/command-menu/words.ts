@@ -26,7 +26,7 @@ export const CATEGORIES = [
 export type Category = (typeof CATEGORIES)[number];
 
 /** A category of the words of the language: every category but Your names. */
-type WordCategory = Exclude<Category, 'names'>;
+export type WordCategory = Exclude<Category, 'names'>;
 
 /**
  * A word that the menu lists: a built-in function, a keyword, a color, or `else if`, two keywords
@@ -145,6 +145,7 @@ interface Entry {
 /** A word of the language. */
 export interface WordEntry extends Entry {
 	readonly kind: 'word';
+	readonly category: WordCategory;
 	readonly word: MenuWord;
 }
 

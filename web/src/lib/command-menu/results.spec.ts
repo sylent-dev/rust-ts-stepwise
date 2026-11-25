@@ -13,7 +13,7 @@ beforeAll(() => {
 
 /** The rows of the middle column, a title of a group in capitals, the word chosen between `[ ]`. */
 function rows(letters: string, choice: Choice): string[] {
-	const view = menuView(entries, letters, choice);
+	const view = menuView({ entries }, letters, choice);
 	return view.groups.flatMap(({ category, titled, entries: shown }) => [
 		...(titled ? [category.toUpperCase()] : []),
 		...shown.map((entry) => (entry === view.chosen ? `[${entry.label}]` : entry.label))
@@ -22,7 +22,7 @@ function rows(letters: string, choice: Choice): string[] {
 
 /** The categories, the one chosen between `[ ]`, with its number of results, those pale left out. */
 function categories(letters: string, choice: Choice): string[] {
-	return menuView(entries, letters, choice).categories.flatMap(
+	return menuView({ entries }, letters, choice).categories.flatMap(
 		({ category, count, pale, chosen }) => {
 			if (pale) return [];
 			const name = count === undefined ? category : `${category} ${String(count)}`;
@@ -34,10 +34,10 @@ function categories(letters: string, choice: Choice): string[] {
 /** The word chosen after the moves, from a choice. */
 function after(letters: string, choice: Choice, ...moves: MenuMove[]): string | undefined {
 	const moved = moves.reduce(
-		(current, move) => moveChoice(entries, letters, current, move),
+		(current, move) => moveChoice({ entries }, letters, current, move),
 		choice
 	);
-	return menuView(entries, letters, moved).chosen?.text;
+	return menuView({ entries }, letters, moved).chosen?.text;
 }
 
 describe('menuView', () => {
@@ -79,10 +79,10 @@ describe('menuView', () => {
 	});
 
 	it('chooses first the word written as the letters, then one that starts with them, then one that holds them', () => {
-		expect(menuView(entries, 'if', { category: 'move' }).chosen?.text).toBe('if');
-		expect(menuView(entries, 're', { category: 'move' }).chosen?.text).toBe('red');
-		expect(menuView(entries, 'lef', { category: 'move' }).chosen?.text).toBe('left_is_clear');
-		expect(menuView(entries, 'ward', { category: 'move' }).chosen?.text).toBe('forward');
+		expect(menuView({ entries }, 'if', { category: 'move' }).chosen?.text).toBe('if');
+		expect(menuView({ entries }, 're', { category: 'move' }).chosen?.text).toBe('red');
+		expect(menuView({ entries }, 'lef', { category: 'move' }).chosen?.text).toBe('left_is_clear');
+		expect(menuView({ entries }, 'ward', { category: 'move' }).chosen?.text).toBe('forward');
 	});
 
 	it('reads the letters whatever their case', () => {
@@ -101,7 +101,7 @@ describe('menuView', () => {
 	});
 
 	it('shows nothing when nothing holds the letters, the category chosen pale', () => {
-		const view = menuView(entries, 'pizza', { category: 'move' });
+		const view = menuView({ entries }, 'pizza', { category: 'move' });
 
 		expect(view.groups).toEqual([]);
 		expect(view.chosen).toBeUndefined();
@@ -132,7 +132,7 @@ describe('moveChoice', () => {
 		expect(after('', move, 'right')).toBe('start_painting');
 		expect(after('', { category: 'functions' }, 'left')).toBe('let');
 		// Your names, the last category, has no name here.
-		expect(moveChoice(entries, '', move, 'left')).toEqual({ category: 'names' });
+		expect(moveChoice({ entries }, '', move, 'left')).toEqual({ category: 'names' });
 		expect(after('', { category: 'names' }, 'right')).toBe('forward');
 	});
 
@@ -148,14 +148,16 @@ describe('moveChoice', () => {
 		const choice = { category: 'logic' } as const;
 
 		for (const move of ['up', 'down', 'left', 'right'] as const) {
-			expect(moveChoice(entries, 'pizza', choice, move)).toBe(choice);
+			expect(moveChoice({ entries }, 'pizza', choice, move)).toBe(choice);
 		}
 	});
 });
 
 describe('chooseCategory', () => {
 	it('shows a category clicked, on its first word', () => {
-		expect(chooseCategory(entries, '', { category: 'move', text: 'turn_left' }, 'logic')).toEqual({
+		expect(
+			chooseCategory({ entries }, '', { category: 'move', text: 'turn_left' }, 'logic')
+		).toEqual({
 			category: 'logic'
 		});
 	});
@@ -163,11 +165,11 @@ describe('chooseCategory', () => {
 	it('goes to the first result of a category clicked, and nowhere for one without result', () => {
 		const choice = { category: 'paint', text: 'stop_painting' } as const;
 
-		expect(chooseCategory(entries, 'paint', choice, 'sense')).toEqual({
+		expect(chooseCategory({ entries }, 'paint', choice, 'sense')).toEqual({
 			category: 'sense',
 			text: 'is_painting'
 		});
-		expect(chooseCategory(entries, 'paint', choice, 'logic')).toBe(choice);
+		expect(chooseCategory({ entries }, 'paint', choice, 'logic')).toBe(choice);
 	});
 });
 
@@ -188,7 +190,7 @@ describe('Your names', () => {
 
 	/** The labels of the rows, the one chosen between `[ ]`, and what the menu says in their place. */
 	function shown(letters: string, choice: Choice, all = withNames, hiddenBy?: number) {
-		const view = menuView(all, letters, choice, hiddenBy);
+		const view = menuView({ entries: all, namesHiddenBy: hiddenBy }, letters, choice);
 		return {
 			rows: view.groups.flatMap(({ category, titled, entries: listed }) => [
 				...(titled ? [category.toUpperCase()] : []),
@@ -239,11 +241,11 @@ describe('Your names', () => {
 	});
 
 	it('moves from the words to the names with the arrows', () => {
-		const moved = moveChoice(withNames, '', { category: 'move' }, 'left');
+		const moved = moveChoice({ entries: withNames }, '', { category: 'move' }, 'left');
 
-		expect(menuView(withNames, '', moved).chosen?.text).toBe('paint_side');
+		expect(menuView({ entries: withNames }, '', moved).chosen?.text).toBe('paint_side');
 		expect(
-			moveChoice(withNames, 'turn', { category: 'functions', text: 'return' }, 'down')
+			moveChoice({ entries: withNames }, 'turn', { category: 'functions', text: 'return' }, 'down')
 		).toEqual({ category: 'names', text: 'turn_count' });
 	});
 });

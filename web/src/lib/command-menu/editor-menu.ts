@@ -25,6 +25,7 @@ import {
 import {
 	type Choice,
 	chooseCategory,
+	type MenuContent,
 	type MenuMove,
 	type MenuView,
 	menuView,
@@ -34,18 +35,6 @@ import type { Category, MenuEntry } from './words.ts';
 
 /** The editor as a command of the menu reads it and changes it: on its page, or in a test. */
 type Editor = Pick<EditorView, 'state' | 'dispatch'>;
-
-/** What the menu lists, given as it opens. */
-export interface MenuContent {
-	/**
-	 * The words of the language, then the names that a line written at the cursor may use, read as
-	 * the menu opens: while it is open, only the line of the cursor changes, which the names never
-	 * depend on.
-	 */
-	readonly entries: readonly MenuEntry[];
-	/** The line of the syntax error above the cursor that hides the names, when there is one. */
-	readonly namesHiddenBy?: number | undefined;
-}
 
 /** The menu open in the editor, and what it lists. */
 export interface OpenMenu extends MenuContent {
@@ -113,9 +102,7 @@ function lettersOf(state: EditorState, menu: OpenMenu): string {
 /** What the menu open in a state shows, or nothing while it is closed. */
 export function menuViewOf(state: EditorState): MenuView | undefined {
 	const menu = openMenuOf(state);
-	return menu
-		? menuView(menu.entries, lettersOf(state, menu), menu.choice, menu.namesHiddenBy)
-		: undefined;
+	return menu ? menuView(menu, lettersOf(state, menu), menu.choice) : undefined;
 }
 
 /**
@@ -173,7 +160,7 @@ export function chooseCategoryOf(editor: Editor, category: Category): void {
 	const menu = openMenuOf(editor.state);
 	if (!menu) return;
 	const letters = lettersOf(editor.state, menu);
-	choose(editor, chooseCategory(menu.entries, letters, menu.choice, category));
+	choose(editor, chooseCategory(menu, letters, menu.choice, category));
 }
 
 /**
@@ -210,11 +197,11 @@ function menuBindings(): KeyBinding[] {
 	const move = (direction: MenuMove) =>
 		whileOpen((editor, menu) => {
 			const letters = lettersOf(editor.state, menu);
-			choose(editor, moveChoice(menu.entries, letters, menu.choice, direction));
+			choose(editor, moveChoice(menu, letters, menu.choice, direction));
 		});
 	// Nothing to insert while nothing matches the letters: the key does nothing.
 	const insert = whileOpen((editor, menu) => {
-		const chosen = menuView(menu.entries, lettersOf(editor.state, menu), menu.choice).chosen;
+		const chosen = menuView(menu, lettersOf(editor.state, menu), menu.choice).chosen;
 		if (chosen) insertEntry(editor, chosen);
 	});
 	return [

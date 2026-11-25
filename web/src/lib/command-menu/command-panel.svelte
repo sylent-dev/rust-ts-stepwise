@@ -45,7 +45,8 @@
 		}
 	}
 
-	const empty = $derived(view.empty && sentenceOf(view.empty));
+	/** The sentence in place of the words and of their details, when there are none to show. */
+	const sentence = $derived(view.empty && sentenceOf(view.empty));
 
 	let list = $state<HTMLElement>();
 
@@ -83,7 +84,7 @@
 
 <!-- A press keeps the focus where it is: in the code. -->
 <div class="panel" role="presentation" onmousedown={(event) => event.preventDefault()}>
-	<div class="columns" class:merged={empty !== undefined}>
+	<div class="columns" class:merged={sentence !== undefined}>
 		<div class="categories">
 			{#each view.categories as shown (shown.category)}
 				<button
@@ -103,13 +104,13 @@
 				</button>
 			{/each}
 		</div>
-		{#if empty !== undefined}
+		{#if sentence !== undefined}
 			<!-- The sentence is said by the status of the panel, under it. -->
 			<div class="empty" aria-hidden="true">
 				{#if view.empty?.kind === 'nothing-found'}
 					<img src={logoDisappointed} alt="" height="56" />
 				{/if}
-				<span>{empty}</span>
+				<span>{sentence}</span>
 			</div>
 		{:else}
 			<div
@@ -144,7 +145,7 @@
 	<!-- What a screen reader is told when nothing matches, or when Your names has no name: a status
 	     that the panel holds from its opening, so that the sentence is said as it comes. -->
 	<div class="said" role="status">
-		{empty ?? ''}
+		{sentence ?? ''}
 	</div>
 	<div class="keys" aria-hidden="true">
 		<span>
