@@ -144,7 +144,7 @@ describe('runtimeErrorText', () => {
 
 	it('says that a function returns no value with the word of the language', () => {
 		expect(textOf('let line = print("a")\n')).toEqual([
-			'print doesn’t return a value.',
+			'print does not return a value.',
 			'A call is used as a value only when its function returns one.'
 		]);
 	});
@@ -155,7 +155,7 @@ describe('runtimeErrorText', () => {
 		expect(errorOf(source).kind).toMatchObject({ code: 'too-many-calls', function: 'show' });
 		expect(textOf(source)).toEqual([
 			'200 calls in progress: the limit is reached.',
-			'A function that calls itself needs a case where it doesn’t.'
+			'A function that calls itself needs a case where it does not.'
 		]);
 	});
 });

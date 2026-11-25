@@ -285,7 +285,7 @@ commands-word-true-example =
         forward()
         if item_here():
             looking = false
-commands-word-false-text = The value of a condition that doesn’t hold.
+commands-word-false-text = The value of a condition that does not hold.
 commands-word-false-example =
     let found = false
     if item_here():
@@ -384,7 +384,7 @@ console-name = Console
 console-empty = Run your program to see what it prints.
 # Above the lines kept, once earlier lines are gone.
 # $kept (Number): the most lines that the console keeps.
-console-cut = Earlier lines aren’t shown: the console keeps the last { $kept }.
+console-cut = Earlier lines are not shown: the console keeps the last { $kept }.
 # The line of an error, before its two sentences: the editor shows its place.
 # $line (Number): the line, from 1.
 console-line = Ln { NUMBER($line, useGrouping: 0) }
@@ -493,7 +493,7 @@ restore-action = Restore starting code
 
 ## The banner of a browser that refuses to save.
 
-storage-refused = Your progress can’t be saved in this browser and will be lost when this tab closes.
+storage-refused = Your progress cannot be saved in this browser and will be lost when this tab closes.
 # The tip of the cross that hides the banner.
 storage-refused-hide = Hide until the next visit
 
@@ -502,8 +502,8 @@ storage-refused-hide = Hide until the next visit
 ## take no value.
 
 page-old-title = Stepwise needs a recent browser
-page-old-text = This browser can’t run it. Update it, or open Stepwise in a recent Firefox, Chrome, Edge or Safari.
-page-failed-title = Stepwise couldn’t load
+page-old-text = This browser cannot run it. Update it, or open Stepwise in a recent Firefox, Chrome, Edge or Safari.
+page-failed-title = Stepwise could not load
 page-failed-text = The connection seems to be lost. Check it, then try again.
 page-failed-retry = Try again
 page-no-script-title = Stepwise needs JavaScript
@@ -513,7 +513,7 @@ page-no-script-fix = Turn it on for this website, then reload the page.
 page-no-script-mark = JS
 
 # An address that leads to no screen. Its button is `screen-home`.
-missing-title = This page doesn’t exist
+missing-title = This page does not exist
 missing-text = Stepwise has no page at this address.
 # What the message is about, as `page-no-script-mark`.
 missing-mark = 404
