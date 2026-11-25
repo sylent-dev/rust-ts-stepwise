@@ -17,6 +17,7 @@ use std::collections::HashSet;
 
 use crate::ast::{Branch, Expression, ExpressionKind, Name, Program, Statement, StatementKind};
 use crate::color::Color;
+use crate::names::{NamesAt, ProgramFunction, ProgramVariable};
 use crate::span::Span;
 use functions::{Callee, Function, Functions};
 use scope::{Missing, Variables, main_program_variables};
@@ -24,13 +25,23 @@ use scope::{Missing, Variables, main_program_variables};
 /// Every error of names and of structure of `program`, in the order of the source.
 #[must_use]
 pub(crate) fn check(program: &Program) -> Vec<CheckError> {
-    let mut checker = Checker {
-        main_variables: main_program_variables(&program.statements),
-        functions: Functions::of(&program.statements),
-        ..Checker::default()
-    };
+    let mut checker = Checker::of(program);
     checker.block(&program.statements, Context::TOP_LEVEL);
     checker.errors
+}
+
+/// The names that the statement of line `line` may use, as the checks see them: the walk notes
+/// them as it reaches that statement. `program` ends with it, a stand-in for the line being
+/// written (see [`names_at`](crate::names::names_at)), so that every function of the program
+/// is defined above it.
+#[must_use]
+pub(crate) fn names_at(program: &Program, line: u32) -> NamesAt {
+    let mut checker = Checker {
+        asked: Some(line),
+        ..Checker::of(program)
+    };
+    checker.block(&program.statements, Context::TOP_LEVEL);
+    checker.names.unwrap_or_default()
 }
 
 /// Where a statement is in the program: what decides whether a `break`, a `return` or a
@@ -96,9 +107,24 @@ struct Checker<'a> {
     main_variables: HashSet<&'a str>,
     /// Every function of the program, wherever it is defined.
     functions: Functions<'a>,
+    /// The function whose body is being checked: its name and its parameters.
+    enclosing: Option<(&'a Name, &'a [Name])>,
+    /// The line whose names are asked ([`names_at`]), and nothing for the checks alone.
+    asked: Option<u32>,
+    /// The names found on that line, once the walk has reached it.
+    names: Option<NamesAt>,
 }
 
 impl<'a> Checker<'a> {
+    /// The checker of `program`, before its walk.
+    fn of(program: &'a Program) -> Self {
+        Self {
+            main_variables: main_program_variables(&program.statements),
+            functions: Functions::of(&program.statements),
+            ..Self::default()
+        }
+    }
+
     fn report(&mut self, kind: CheckErrorKind, span: Span) {
         self.errors.push(CheckError { kind, span });
     }
@@ -113,6 +139,9 @@ impl<'a> Checker<'a> {
     }
 
     fn statement(&mut self, statement: &'a Statement, context: Context) {
+        if self.asked == Some(statement.span.start.line) {
+            self.names = Some(self.names_here());
+        }
         match &statement.kind {
             StatementKind::Let { name, value } => self.declaration(name, value, context),
             StatementKind::Assign { name, value } => {
@@ -171,7 +200,9 @@ impl<'a> Checker<'a> {
                     self.report(CheckErrorKind::NestedFunction, statement.span);
                 }
                 self.check_function_name(name);
+                let around = self.enclosing.replace((name, parameters));
                 self.function(parameters, body);
+                self.enclosing = around;
             }
             StatementKind::Expression(expression) => {
                 if !self.is_call_or_function(expression) {
@@ -214,6 +245,46 @@ impl<'a> Checker<'a> {
         self.block(body, Context::FUNCTION_BODY);
         let function = std::mem::replace(&mut self.variables, around);
         self.variables.absorb(function);
+    }
+
+    /// The names that a statement here may use: the functions of the program, all above it
+    /// in [`names_at`], and the variables that exist here, each in the order of the source.
+    fn names_here(&self) -> NamesAt {
+        let functions = self
+            .functions
+            .in_order()
+            .into_iter()
+            .map(|(name, function)| ProgramFunction {
+                name: name.to_owned(),
+                parameters: function
+                    .parameters
+                    .iter()
+                    .map(|parameter| parameter.text.clone())
+                    .collect(),
+                defined: function.defined,
+            })
+            .collect();
+        let variables = self
+            .variables
+            .visible()
+            .into_iter()
+            .map(|(name, declared)| ProgramVariable {
+                name: name.to_owned(),
+                declared,
+                parameter_of: self
+                    .enclosing
+                    .filter(|(_, parameters)| {
+                        parameters
+                            .iter()
+                            .any(|parameter| parameter.span == declared)
+                    })
+                    .map(|(function, _)| function.text.clone()),
+            })
+            .collect();
+        NamesAt {
+            functions,
+            variables,
+        }
     }
 
     /// The parameters of a function: each a new name, none twice. A name that is reserved or

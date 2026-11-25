@@ -26,7 +26,7 @@ use std::vec::IntoIter;
 
 use crate::ast::{Name, Program, Statement, StatementKind};
 use crate::foreign_word::ForeignWord;
-use crate::lexer::{Keyword, Lexed, Token, TokenKind, tokenize};
+use crate::lexer::{Keyword, Lexed, Token, TokenKind, tokenize, tokenize_up_to};
 use crate::span::{Position, Span};
 
 /// The deepest the blocks nest, one inside the other.
@@ -52,6 +52,18 @@ pub const MAX_DEPTH: u32 = 200;
 /// The first syntax error of the source, from the lexer or from the parser.
 pub(crate) fn parse(source: &str) -> Result<Program, SyntaxError> {
     let lexed = tokenize(source)?;
+    Ok(Parser::new(lexed).program()?)
+}
+
+/// The syntax tree of the lines of `source` above the line of `cursor`, then of a stand-in
+/// for that line, a `break` in the block of the cursor (see
+/// [`tokenize_up_to`](crate::lexer::tokenize_up_to)).
+///
+/// # Errors
+///
+/// The first syntax error of the lines above the cursor.
+pub(crate) fn parse_up_to(source: &str, cursor: Position) -> Result<Program, SyntaxError> {
+    let lexed = tokenize_up_to(source, cursor)?;
     Ok(Parser::new(lexed).program()?)
 }
 
