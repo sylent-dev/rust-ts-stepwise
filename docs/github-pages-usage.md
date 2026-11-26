@@ -20,10 +20,10 @@ Rules:
 
 Stepwise is served at **`https://stepwise.sylent.tools/`** (decided by the owner on 2026-11-10, replacing `stepwise.sylent.art` chosen on 2026-10-31), a subdomain of a domain the owner already has, without buying one for Stepwise:
 
-- The DNS of `sylent.tools` is held by Cloudflare. The owner added a `CNAME` record there on 2026-11-10: `stepwise` → `aunimhsn.github.io`, **DNS only** (the grey cloud): proxied by Cloudflare, it would hide the domain from GitHub, which could then not issue its HTTPS certificate.
+- The DNS of `sylent.tools` is held by Cloudflare. The owner added a `CNAME` record there on 2026-11-10: `stepwise` → `sylent-dev.github.io` (`aunimhsn.github.io` until the account was renamed `sylent-dev`), **DNS only** (the grey cloud): proxied by Cloudflare, it would hide the domain from GitHub, which could then not issue its HTTPS certificate.
 - Once the record answers, the custom domain is set in **Settings › Pages** of the repository (done on 2026-11-10), then **Enforce HTTPS** once GitHub has issued the certificate. Set before the record exists, the default address would redirect to a domain that doesn't answer.
 - The owner verifies `sylent.tools` in the GitHub account (**Settings › Pages › Add a domain**, a DNS `TXT` record), so that no one else can claim a subdomain pointing to GitHub without a repository behind it.
-- Without a custom domain, the website is served at its default address, `https://aunimhsn.github.io/rust-ts-stepwise/`; with one, that address redirects to the domain.
+- Without a custom domain, the website is served at its default address, `https://sylent-dev.github.io/rust-ts-stepwise/`; with one, that address redirects to the domain.
 - The website never hard-codes its path: the workflow `.github/workflows/deploy.yml` reads it from the settings of Pages (`actions/configure-pages`) and gives it to SvelteKit as `paths.base` (the variable `BASE_PATH` of `web/vite.config.ts`); it is empty at the root of a domain and `/rust-ts-stepwise` at the default address. The domain can change later without changing the code, but not without deploying again: the path is fixed when the website is built, so a website built for `/rust-ts-stepwise` doesn't find its pages at the root of a domain. After any change of the domain in **Settings › Pages**, run **Actions › Deploy › Run workflow**.
 
 ## Addresses without a page
