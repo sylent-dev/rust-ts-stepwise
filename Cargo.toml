@@ -10,7 +10,7 @@ edition = "2024"
 rust-version = "1.93"
 authors = ["Aunim HASSAN"]
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/aunimhsn/rust-ts-stepwise"
+repository = "https://github.com/sylent-dev/rust-ts-stepwise"
 # An application, never published on crates.io.
 publish = false
 
