@@ -94,7 +94,14 @@ export function levelToPlay(
 	return undefined;
 }
 
-/** How many of `levels`, the stable names of the levels, are done. */
-export function levelsDone(progress: Progress, levels: readonly string[]): number {
-	return levels.filter((name) => progressOf(progress, name).done).length;
+/** The levels done among the levels of the game, and how many there are. */
+export interface LevelsDone {
+	readonly done: number;
+	readonly total: number;
+}
+
+/** The levels done among `levels`, the stable names of the levels, and how many there are. */
+export function levelsDone(progress: Progress, levels: readonly string[]): LevelsDone {
+	const done = levels.filter((name) => progressOf(progress, name).done).length;
+	return { done, total: levels.length };
 }

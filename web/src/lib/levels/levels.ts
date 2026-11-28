@@ -141,11 +141,12 @@ export function chapterMessage(name: string, part: ChapterPart): string {
 const files = import.meta.glob<string>('/levels/*.toml', { query: '?raw', import: 'default' });
 
 /**
- * The stable names of the levels of the website, in the order of the names: as many as their list
- * numbers, since it names each file once. Known before the core loads, they give the pages of the
- * levels written when the website is built.
+ * The stable names of the level files of the website, in the order of the names, never in the
+ * order of the game, which only the list of the chapters gives (`loadLevels`): as many as that
+ * list numbers, since it names each file once. Known before the core loads, they give the pages of
+ * the levels written when the website is built.
  */
-export const LEVEL_NAMES: readonly string[] = levelNames(files);
+export const LEVEL_FILE_NAMES: readonly string[] = levelNames(files);
 
 /** The levels of the website once read, or being read. */
 let reading: Promise<readonly LevelEntry[]> | undefined;

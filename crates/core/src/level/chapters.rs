@@ -15,7 +15,7 @@ impl Chapter {
     /// A chapter named `name`, whose levels are `levels`, in their order. The list of the
     /// chapters checks them ([`Chapters::new`]).
     #[must_use]
-    pub const fn new(name: String, levels: Vec<String>) -> Self {
+    pub(super) const fn new(name: String, levels: Vec<String>) -> Self {
         Self { name, levels }
     }
 
@@ -59,7 +59,7 @@ impl Chapters {
     ///
     /// When there is no chapter, a chapter has no level, a name isn't a stable name, or a
     /// chapter or a level comes twice: the first one met, in the order of the list.
-    pub fn new(chapters: Vec<Chapter>) -> Result<Self, ChaptersError> {
+    pub(super) fn new(chapters: Vec<Chapter>) -> Result<Self, ChaptersError> {
         if chapters.is_empty() {
             return Err(ChaptersError::NoChapter);
         }

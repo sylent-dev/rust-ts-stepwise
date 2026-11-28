@@ -24,7 +24,7 @@ export function loadTestCore(): void {
 	initSync({ module: readFileSync(fileFromHere('..', 'wasm', 'stepwise_bg.wasm')) });
 }
 
-/** The text of a file of `web/levels/`, by its stable name: a level, or `sandbox`. */
+/** The text of a file of `web/levels/`, by its stable name: a level, `sandbox` or `chapters`. */
 export function levelFile(name: string): string {
 	return readFileSync(fileFromHere('..', '..', '..', 'levels', `${name}.toml`), 'utf8');
 }

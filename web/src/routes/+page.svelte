@@ -17,7 +17,7 @@
 	const names = $derived(data.levels.map(({ name }) => name));
 
 	/** The levels done, and how many there are. */
-	const progress = $derived({ done: levelsDone(currentProgress(), names), total: names.length });
+	const progress = $derived(levelsDone(currentProgress(), names));
 
 	/** The chapters, in their order, each with its levels. */
 	const chapters = $derived(inChapters(data.levels));
@@ -28,7 +28,8 @@
 </svelte:head>
 
 <Header {progress}>
-	<p class="done">{t('progress-done', progress)}</p>
+	<!-- A screen reader hears it from the bar of the progress. -->
+	<p class="done" aria-hidden="true">{t('progress-done', { ...progress })}</p>
 	<nav>
 		<a class="band-item" href={resolve('sandbox')}>{t('screen-sandbox')}</a>
 		<a class="band-item" href={resolve('manual')}>{t('screen-manual')}</a>

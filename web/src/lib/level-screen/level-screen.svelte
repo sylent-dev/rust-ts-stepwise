@@ -38,7 +38,7 @@
 	import { loadFailed } from '#lib/page/startup.svelte.ts';
 	import { currentPlatform } from '#lib/platform.ts';
 	import { keepPass, levelProgress } from '#lib/progress/current-progress.svelte.ts';
-	import { mapsPassedWith, mapToTry } from '#lib/progress/progress.ts';
+	import { mapsPassedWith, mapToTry, type LevelsDone } from '#lib/progress/progress.ts';
 	import { chooseSpeed, settings } from '#lib/settings/current-settings.svelte.ts';
 	import SettingsButton from '#lib/settings/settings-button.svelte';
 	import Confirmation from '#lib/shell/confirmation.svelte';
@@ -83,7 +83,7 @@
 				/** The title of its chapter, above its own in the header. */
 				chapter: string;
 				/** The levels done, and how many there are: the bar of the progress. */
-				progress: { done: number; total: number };
+				progress: LevelsDone;
 				/** The numbers of the levels before and after it, while they are open. */
 				beside: Partial<Record<Side, number>>;
 		  }
@@ -314,23 +314,25 @@
 	const commandMenu = new CommandMenu();
 
 	/**
-	 * Whether the code of the next level shown takes the keyboard once its editor is there: the
-	 * menu **Level** leads to it, and gives the keyboard back to the code, as any row does.
+	 * Whether the code of the level that the menu **Level** opens takes the keyboard once its
+	 * editor is there, as any row of a menu gives the keyboard back to the code. A plain field,
+	 * not a `$state`: the effect below must wait for the editor of the new level, and a signal set
+	 * here would run it at once, on the editor that is leaving.
 	 */
-	let focusNextCode = false;
+	let focusArrivingCode = false;
 
 	/** Opens the level on `side` of the one shown, while it is open. */
 	function goTo(side: Side) {
 		const to = beside?.[side];
 		if (to === undefined) return;
-		focusNextCode = true;
+		focusArrivingCode = true;
 		void goto(resolve(`levels/${String(to)}`));
 	}
 
 	// The editor of the level that the menu **Level** opened takes the keyboard, once there.
 	$effect(() => {
-		if (editing && focusNextCode) {
-			focusNextCode = false;
+		if (editing && focusArrivingCode) {
+			focusArrivingCode = false;
 			editing.focus();
 		}
 	});
@@ -514,7 +516,7 @@
 
 	/* A level draws the bar of the progress, which makes its header taller. */
 	.with-progress {
-		--header: calc(var(--header-height) + var(--progress-height));
+		--header: var(--header-height-with-progress);
 	}
 
 	/* The panels are 216 pixels high, 250 from 1600 pixels wide, where they stand side by side,

@@ -33,7 +33,7 @@ import {
 	CHAPTER_PARTS,
 	chapterMessage,
 	CHAPTERS,
-	LEVEL_NAMES,
+	LEVEL_FILE_NAMES,
 	LEVEL_PARTS,
 	levelMessage
 } from '#lib/levels/levels.ts';
@@ -55,7 +55,7 @@ loadTestCore();
 const FAMILIES: Readonly<Record<string, { prefix: string; names: readonly string[] }>> = {
 	levelMessage: {
 		prefix: 'level-',
-		names: LEVEL_NAMES.flatMap((name) => LEVEL_PARTS.map((part) => levelMessage(name, part)))
+		names: LEVEL_FILE_NAMES.flatMap((name) => LEVEL_PARTS.map((part) => levelMessage(name, part)))
 	},
 	chapterMessage: {
 		prefix: 'chapter-',

@@ -129,8 +129,8 @@ export interface Editing {
 	 */
 	showPlace(at: number): void;
 	/**
-	 * Gives the code the keyboard, the cursor where it is: the code of a level that **Next level**
-	 * has just opened.
+	 * Gives the code the keyboard, the cursor where it is: the code of a level that **Previous
+	 * level** or **Next level** has just opened.
 	 */
 	focus(): void;
 }

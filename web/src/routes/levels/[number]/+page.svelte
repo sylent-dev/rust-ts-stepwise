@@ -48,7 +48,7 @@
 	});
 
 	/** The levels done, which the bar of the progress shows. */
-	const progress = $derived({ done: levelsDone(currentProgress(), names), total: names.length });
+	const progress = $derived(levelsDone(currentProgress(), names));
 
 	/**
 	 * The level before the one shown and the level after it, by their numbers, while they are open:

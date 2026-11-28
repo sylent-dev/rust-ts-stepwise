@@ -293,6 +293,7 @@ The sizes of the layout are written in the block that they size, as the mock-up 
 |---|---|---|
 | `--header-height` | `46px` | The header of a screen, without the bar of the progress, which gives 3 pixels more to the screens that draw it. The level screen gives its map the height of the window under the header, less the panels, so that the banner of a browser that refuses to save takes its height from the panels and the map keeps its size. |
 | `--progress-height` | `3px` | The bar of the progress, along the bottom of the header of a level and of the home screen, in `--passed` over `--progress-track`: that header is as much taller, its content still centered on the 46 pixels above the bar, which the pointer finds on 3 pixels more above it, where the header holds nothing. The sandbox draws none. |
+| `--header-height-with-progress` | `--header-height` + `--progress-height` | The header of a level and of the home screen, the bar of the progress under its content: the level screen gives its map the height of the window under it, less the panels. |
 | `--band-item-height` | `30px` | What is clicked in a band: the name of a menu, a link of the home screen, the square of the gear. Its fill under the pointer leaves 8 pixels above it and under it in a header of 46 pixels. |
 | `--control-side` | `44px` | The side of a control that floats over the code, the three of a program; the code leaves that room under its last line, and `--space-12` on each side of it, so that no line stays under them. |
 

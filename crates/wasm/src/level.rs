@@ -168,7 +168,7 @@ impl From<&level::Chapter> for Chapter {
 /// # Errors
 ///
 /// It throws when the file isn't valid, with the sentence of the core that says why, in
-/// English, for the author of the levels (`the level `paint-a-square` is listed twice`).
+/// English, for the author of the levels (``the level `paint-a-square` is listed twice``).
 #[wasm_bindgen]
 pub fn chapters(toml: &str) -> Result<Vec<Ts<Chapter>>, JsError> {
     chapter_list(toml)

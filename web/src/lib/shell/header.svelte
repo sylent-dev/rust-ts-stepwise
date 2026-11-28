@@ -4,13 +4,14 @@
      that has a header, so not on the manual. -->
 <script lang="ts">
 	import type { Snippet } from 'svelte';
+	import type { LevelsDone } from '#lib/progress/progress.ts';
 	import ProgressBar from './progress-bar.svelte';
 	import StorageBanner from './storage-banner.svelte';
 	import Wordmark from './wordmark.svelte';
 
 	interface Props {
 		/** The levels done, and how many there are: the bar of the progress. */
-		progress?: { done: number; total: number };
+		progress?: LevelsDone;
 		children?: Snippet;
 	}
 
@@ -41,7 +42,7 @@
 	}
 
 	.with-progress {
-		height: calc(var(--header-height) + var(--progress-height));
+		height: var(--header-height-with-progress);
 		padding-bottom: var(--progress-height);
 	}
 </style>

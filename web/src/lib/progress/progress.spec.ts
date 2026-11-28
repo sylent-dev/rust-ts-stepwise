@@ -157,6 +157,11 @@ describe('the level to play before a level locked', () => {
 		expect(levelToPlay(new Map(), LEVELS, 6)).toBe(1);
 	});
 
+	it('is the level open just before it, even when a level further on is done', () => {
+		expect(levelToPlay(doneWith('d'), LEVELS, 3)).toBe(1);
+		expect(levelToPlay(doneWith('d'), LEVELS, 6)).toBe(5);
+	});
+
 	it('is nothing for a level open, or outside the list', () => {
 		expect(levelToPlay(doneWith('a', 'b'), LEVELS, 3)).toBeUndefined();
 		expect(levelToPlay(new Map(), LEVELS, 1)).toBeUndefined();
@@ -166,13 +171,13 @@ describe('the level to play before a level locked', () => {
 });
 
 describe('the levels done', () => {
-	it('count the levels of the list that are done', () => {
-		expect(levelsDone(new Map(), LEVELS)).toBe(0);
-		expect(levelsDone(doneWith('a', 'c'), LEVELS)).toBe(2);
+	it('count the levels of the list that are done, among how many there are', () => {
+		expect(levelsDone(new Map(), LEVELS)).toEqual({ done: 0, total: 6 });
+		expect(levelsDone(doneWith('a', 'c'), LEVELS)).toEqual({ done: 2, total: 6 });
 	});
 
 	it('leave out a level that the list no longer has, and a level not done', () => {
 		const progress = new Map([...doneWith('a', 'gone'), ['b', level({ 1: SQUARE })]]);
-		expect(levelsDone(progress, LEVELS)).toBe(1);
+		expect(levelsDone(progress, LEVELS).done).toBe(1);
 	});
 });

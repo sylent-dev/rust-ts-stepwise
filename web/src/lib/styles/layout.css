@@ -7,6 +7,9 @@
 	/* The bar of the progress, along the bottom of the header of a level and of the home screen:
 	   it gives that header as many pixels more, under its content. */
 	--progress-height: 3px;
+	/* The header of a level and of the home screen, with the bar of the progress under its
+	   content. The level screen gives its map the height of the window under it, less the panels. */
+	--header-height-with-progress: calc(var(--header-height) + var(--progress-height));
 	/* What is clicked in a band, a text or an icon in its square: the fill under the pointer
 	   leaves 8 pixels of the header above it and under it. */
 	--band-item-height: 30px;

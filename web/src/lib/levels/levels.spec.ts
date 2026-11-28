@@ -1,13 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { chapters, Level, Sandbox } from '#lib/core/core.ts';
-import { levelFile, loadTestCore } from '#lib/core/test-support.ts';
+import { Level, Sandbox } from '#lib/core/core.ts';
+import { loadTestCore } from '#lib/core/test-support.ts';
 import {
 	CHAPTERS,
 	inChapters,
-	LEVEL_NAMES,
+	LEVEL_FILE_NAMES,
 	levelAt,
 	levelNames,
 	listLevels,
+	loadLevels,
 	readLevels,
 	SANDBOX,
 	sandboxFile,
@@ -151,21 +152,18 @@ describe('sandboxIn', () => {
 });
 
 describe('the levels of the website', () => {
-	const listed = listLevels(
-		Object.fromEntries(LEVEL_NAMES.map((name) => [name, () => Promise.resolve(levelFile(name))])),
-		chapters(levelFile(CHAPTERS))
-	);
-
 	// A wrong path of the folder would list no file, without an error.
-	it('has at least one level, each in the list of the chapters', () => {
-		expect(LEVEL_NAMES.length).toBeGreaterThan(0);
-		expect(listed.map(({ name }) => name).sort()).toEqual([...LEVEL_NAMES]);
+	it('lists every level file once, in the order of the chapters', async () => {
+		expect(LEVEL_FILE_NAMES.length).toBeGreaterThan(0);
+		const names = (await loadLevels()).map(({ name }) => name).sort();
+		expect(names).toEqual([...LEVEL_FILE_NAMES]);
 	});
 
 	// What the folder gives is the text of each file, not its address: the core reads it. The
 	// content of a level file is checked by the tests of the core.
-	it.each(LEVEL_NAMES)('%s reaches the core as the text of its file', (name) => {
-		using read = new Level(levelFile(name));
+	it.each(LEVEL_FILE_NAMES)('%s reaches the core as the text of its file', async (name) => {
+		const level = (await loadLevels()).find((entry) => entry.name === name);
+		using read = new Level((await level?.file()) ?? '');
 		expect(read.maps().length).toBeGreaterThan(0);
 	});
 });
