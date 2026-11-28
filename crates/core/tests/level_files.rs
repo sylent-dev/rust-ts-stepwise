@@ -1,11 +1,12 @@
 //! Every level file of the website, read and checked as the core reads it, with its starting
 //! code checked as a program is before it runs: a level that starts wrong is a bug of the
-//! level.
+//! level. The list of the chapters names every level once, and only levels that have a file.
 
+use std::collections::BTreeSet;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use stepwise_core::level::{Level, Sandbox};
+use stepwise_core::level::{Chapter, Chapters, Level, Sandbox, is_stable_name};
 use stepwise_core::program::{Refused, check};
 
 /// The folder of the level files, `web/levels/`.
@@ -13,7 +14,21 @@ fn levels_folder() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("../../web/levels")
 }
 
-/// The level files, sorted by name.
+/// The file of the chapters, in the folder of the levels: not a level.
+const CHAPTERS: &str = "chapters";
+
+/// The file of the sandbox, in the folder of the levels: not a level.
+const SANDBOX: &str = "sandbox";
+
+/// The name of a file without its folder nor its extension.
+fn stem(file: &Path) -> &str {
+    file.file_stem()
+        .and_then(|stem| stem.to_str())
+        .unwrap_or_default()
+}
+
+/// The files of the folder of the levels, the sandbox and the chapters included, sorted by
+/// name.
 fn level_files() -> Vec<PathBuf> {
     let mut files: Vec<_> = fs::read_dir(levels_folder())
         .expect("the folder of the levels")
@@ -25,18 +40,6 @@ fn level_files() -> Vec<PathBuf> {
         .collect();
     files.sort();
     files
-}
-
-/// Whether `name` is in kebab-case: the stable name of a level, in the progress saved and in
-/// the names of its Fluent messages.
-fn is_kebab_case(name: &str) -> bool {
-    !name.is_empty()
-        && !name.starts_with('-')
-        && !name.ends_with('-')
-        && !name.contains("--")
-        && name.chars().all(|character| {
-            character.is_ascii_lowercase() || character.is_ascii_digit() || character == '-'
-        })
 }
 
 /// The errors of the starting code, empty when it has none.
@@ -60,16 +63,13 @@ fn every_level_file_is_valid() {
         levels_folder().display()
     );
     let mut failures = Vec::new();
-    for file in &files {
-        let name = file
-            .file_stem()
-            .and_then(|stem| stem.to_str())
-            .unwrap_or_default();
-        if !is_kebab_case(name) {
+    for file in files.iter().filter(|file| stem(file) != CHAPTERS) {
+        let name = stem(file);
+        if !is_stable_name(name) {
             failures.push(format!("{name}: the name of a level is in kebab-case"));
         }
         let source = fs::read_to_string(file).expect("a level file");
-        let starting_code = if name == "sandbox" {
+        let starting_code = if name == SANDBOX {
             Sandbox::from_toml(&source).map(|sandbox| sandbox.starting_code().to_owned())
         } else {
             Level::from_toml(&source).map(|level| level.starting_code().to_owned())
@@ -87,21 +87,36 @@ fn every_level_file_is_valid() {
 }
 
 #[test]
-fn the_names_of_the_levels_are_in_kebab_case() {
-    for name in ["sandbox", "paint-a-square", "level-2"] {
-        assert!(is_kebab_case(name), "{name}");
-    }
-    for name in [
-        "",
-        "Paint",
-        "paint_a_square",
-        "-paint",
-        "paint-",
-        "paint--a",
-        "carré",
-    ] {
-        assert!(!is_kebab_case(name), "{name}");
-    }
+fn the_chapters_list_every_level_once() {
+    let file = levels_folder().join(format!("{CHAPTERS}.toml"));
+    let source = fs::read_to_string(&file).expect("the file of the chapters");
+    let chapters = match Chapters::from_toml(&source) {
+        Ok(chapters) => chapters,
+        Err(error) => panic!("{}: {error}", file.display()),
+    };
+    // The list refuses a level listed twice: each name of it is one level.
+    let listed: BTreeSet<&str> = chapters
+        .chapters()
+        .iter()
+        .flat_map(Chapter::levels)
+        .map(String::as_str)
+        .collect();
+    let files = level_files();
+    let levels: BTreeSet<&str> = files
+        .iter()
+        .map(|file| stem(file))
+        .filter(|name| *name != CHAPTERS && *name != SANDBOX)
+        .collect();
+    let without_file: Vec<_> = listed.difference(&levels).collect();
+    let not_listed: Vec<_> = levels.difference(&listed).collect();
+    assert!(
+        without_file.is_empty(),
+        "levels listed in {CHAPTERS}.toml without a file: {without_file:?}"
+    );
+    assert!(
+        not_listed.is_empty(),
+        "level files that {CHAPTERS}.toml doesn't list: {not_listed:?}"
+    );
 }
 
 #[test]

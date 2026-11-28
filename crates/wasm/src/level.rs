@@ -1,7 +1,7 @@
 //! The levels and the sandbox, for the interface (see *Levels and progression* and *Sandbox*
 //! in `specs.md`): [`Level`] and [`Sandbox`] read a file and keep what the core checked in it,
 //! give as data the code it starts with, the world of each map and the goals to mark, and
-//! start a program on one of their maps.
+//! start a program on one of their maps. [`chapters`] reads the order of the levels.
 
 use serde::Serialize;
 use stepwise_core::{level, run};
@@ -144,6 +144,50 @@ impl Sandbox {
     }
 }
 
+/// A chapter: its stable name, and the stable names of its levels in their order.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Tsify)]
+pub struct Chapter {
+    /// Its stable name: the name of its messages.
+    pub name: String,
+    /// The stable names of its levels, in their order: the names of their files.
+    pub levels: Vec<String>,
+}
+
+impl From<&level::Chapter> for Chapter {
+    fn from(chapter: &level::Chapter) -> Self {
+        Self {
+            name: chapter.name().to_owned(),
+            levels: chapter.levels().to_vec(),
+        }
+    }
+}
+
+/// Reads and checks the file of the chapters, `chapters.toml`: the chapters in their order,
+/// each with its levels in their order, which give the levels their numbers.
+///
+/// # Errors
+///
+/// It throws when the file isn't valid, with the sentence of the core that says why, in
+/// English, for the author of the levels (`the level `paint-a-square` is listed twice`).
+#[wasm_bindgen]
+pub fn chapters(toml: &str) -> Result<Vec<Ts<Chapter>>, JsError> {
+    chapter_list(toml)
+        .map_err(|error| refused(&error))?
+        .iter()
+        .map(|chapter| Ok(Ts::from_rust(chapter)?))
+        .collect()
+}
+
+/// The chapters [`chapters`] gives, before they cross to JavaScript.
+///
+/// # Errors
+///
+/// As [`level::Chapters::from_toml`].
+pub fn chapter_list(toml: &str) -> Result<Vec<Chapter>, level::LevelError> {
+    let chapters = level::Chapters::from_toml(toml)?;
+    Ok(chapters.chapters().iter().map(Chapter::from).collect())
+}
+
 /// The error thrown for a file the core refuses: its sentence, as the tests of the core
 /// print it.
 fn refused(error: &level::LevelError) -> JsError {
@@ -215,7 +259,7 @@ impl From<&level::Goals> for Goals {
 mod tests {
     use stepwise_core::level;
 
-    use super::{Goals, Level, LevelMap, PaintGoal, Sandbox};
+    use super::{Chapter, Goals, Level, LevelMap, PaintGoal, Sandbox, chapter_list};
     use crate::world::Direction::{self, East, North, South, West};
     use crate::world::{Color, Point};
 
@@ -276,6 +320,34 @@ robot = { at = [0, 0], facing = "north" }
     fn maps(source: &str) -> Vec<LevelMap> {
         let level = level::Level::from_toml(source).expect("a valid level file");
         level.maps().iter().map(LevelMap::from).collect()
+    }
+
+    #[test]
+    fn the_chapters_give_their_levels_in_their_order() {
+        let chapters = chapter_list(
+            "version = 1\n\n[[chapters]]\nname = 'paint'\nlevels = ['b', 'a']\n\n\
+             [[chapters]]\nname = 'functions'\nlevels = ['c']\n",
+        )
+        .expect("a valid file of chapters");
+        assert_eq!(
+            chapters,
+            [
+                Chapter {
+                    name: "paint".to_owned(),
+                    levels: vec!["b".to_owned(), "a".to_owned()]
+                },
+                Chapter {
+                    name: "functions".to_owned(),
+                    levels: vec!["c".to_owned()]
+                },
+            ]
+        );
+    }
+
+    #[test]
+    fn a_file_of_chapters_that_is_not_valid_says_why() {
+        let error = chapter_list("version = 1\nchapters = []\n").expect_err("no chapter");
+        assert_eq!(error.to_string(), "the list has no chapter");
     }
 
     #[test]

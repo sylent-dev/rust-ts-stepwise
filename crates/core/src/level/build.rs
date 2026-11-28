@@ -1,8 +1,9 @@
 //! What a level file describes, built into worlds and goals: the walls first, then the items,
 //! the paints and the robot, with the methods of the map, which refuse what can't be; then
-//! the goals, which check their own rules.
+//! the goals, which check their own rules. The list of the chapters checks its own rules too.
 
-use super::file::{GoalsFile, LevelFile, MapFile, SandboxFile, StrokeFile, point};
+use super::chapters::{Chapter, Chapters};
+use super::file::{ChaptersFile, GoalsFile, LevelFile, MapFile, SandboxFile, StrokeFile, point};
 use super::stroke::{Stroke, StrokeError};
 use super::{Goals, Level, LevelError, LevelErrorKind, LevelMap, MAX_MAPS, Sandbox};
 use crate::world::{Map, Point, Robot, World};
@@ -39,6 +40,16 @@ pub(super) fn sandbox(file: SandboxFile) -> Result<Sandbox, LevelError> {
         starting_code: file.starting_code,
         world,
     })
+}
+
+/// The chapters, in the order of the file.
+pub(super) fn chapters(file: ChaptersFile) -> Result<Chapters, LevelError> {
+    let chapters = file
+        .chapters
+        .into_iter()
+        .map(|chapter| Chapter::new(chapter.name, chapter.levels))
+        .collect();
+    Chapters::new(chapters).map_err(|error| LevelError::file(error.into()))
 }
 
 fn level_map(map: MapFile) -> Result<LevelMap, LevelErrorKind> {
