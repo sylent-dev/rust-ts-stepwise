@@ -33,11 +33,20 @@ function row(screen: LevelScreenKind, menu: string, name: string): MenuRow | und
 }
 
 describe('levelMenus', () => {
-	it('gives a level and the sandbox the same menus and the same rows, in the same order', () => {
+	it('gives a level and the sandbox the same menus and the same rows, in the same order, but the levels beside it', () => {
 		const names = (screen: LevelScreenKind) =>
 			levelMenus(screen, commands, speed).map((menu) => [menu.id, ...menu.rows.map(nameOf)]);
 		expect(names('level')).toEqual([
-			['level', 'all-levels', 'sandbox', '-', 'restore-starting-code'],
+			[
+				'level',
+				'previous-level',
+				'next-level',
+				'-',
+				'all-levels',
+				'sandbox',
+				'-',
+				'restore-starting-code'
+			],
 			[
 				'edit',
 				'undo',
@@ -55,7 +64,10 @@ describe('levelMenus', () => {
 			['run', 'run', 'step', 'reset', '-', 'speed'],
 			['help', 'manual', '-', 'keyboard-shortcuts']
 		]);
-		expect(names('sandbox')).toEqual(names('level'));
+		expect(names('sandbox')).toEqual([
+			['level', 'all-levels', 'sandbox', '-', 'restore-starting-code'],
+			...names('level').slice(1)
+		]);
 	});
 
 	it('leads from a level to the sandbox', () => {

@@ -172,6 +172,16 @@ describe('followEditing', () => {
 		expect(editor.focused()).toBe(1);
 	});
 
+	it('gives the code the keyboard, the cursor where it is', () => {
+		const editor = editorOf('forward()\nfoward()\n');
+		editor.moveTo(4);
+
+		editor.editing.focus();
+
+		expect(editor.selection()).toMatchObject({ anchor: 4, head: 4 });
+		expect(editor.focused()).toBe(1);
+	});
+
 	it('sets and removes a breakpoint on the line of the cursor, and takes them all away', () => {
 		const editor = editorOf('forward()\n\nturn_right()\nturn_left()');
 

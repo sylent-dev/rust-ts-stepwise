@@ -36,11 +36,15 @@ export function levelMenus(
 		screen === 'sandbox'
 			? { kind: 'here', id: 'sandbox', label: t('screen-sandbox') }
 			: { kind: 'link', id: 'sandbox', label: t('screen-sandbox'), to: 'sandbox' };
+	// The sandbox has no level beside it.
+	const beside: MenuRow[] =
+		screen === 'sandbox' ? [] : [command('previous-level'), command('next-level'), SEPARATOR];
 	return [
 		{
 			id: 'level',
 			name: t('menu-level'),
 			rows: [
+				...beside,
 				{ kind: 'link', id: 'all-levels', label: t('screen-home'), to: '' },
 				sandbox,
 				SEPARATOR,

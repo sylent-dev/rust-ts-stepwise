@@ -1,6 +1,7 @@
 // The messages that replace the whole screen, under the head of the disappointed robot (as an empty search),
 // without the name: the window too small, the phone, the browser
-// too old, the files that can't load, JavaScript turned off, an address that doesn't exist. Behind the
+// too old, the files that can't load, JavaScript turned off, an address that doesn't exist, a level
+// still locked opened by its address (decided on 2026-11-28). Behind the
 // last two, what they are about, written large and very pale: JS, 404. They follow the theme saved: the two written in the page itself read
 // it with a small script, and stay in Day Desk when JavaScript doesn't run.
 
@@ -21,6 +22,8 @@ function appMessage(kind, [width, height], fix = MESSAGE_FIX) {
     offline: ["Stepwise could not load", '<p>The connection seems to be lost. Check it, then try again.</p><button type="button" class="app-primary">Try again</button>'],
     script: ["Stepwise needs JavaScript", "<p>It is turned off in this browser.</p><p>Turn it on for this website, then reload the page.</p>"],
     missing: ["This page does not exist", '<p>Stepwise has no page at this address.</p><button type="button" class="app-primary">All levels</button>'],
+    // The sentence of a level locked on the home screen, which names the level to play.
+    locked: ["This level is locked", '<p>Finish 3. The long way to unlock this level.</p><button type="button" class="app-primary">All levels</button>'],
   };
   const [title, body] = texts[kind];
   // What the message is about, in two or three signs, very pale behind it.

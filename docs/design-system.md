@@ -291,7 +291,9 @@ The sizes of the layout are written in the block that they size, as the mock-up 
 
 | Token | Value | Role |
 |---|---|---|
-| `--header-height` | `46px` | The header of a screen, without the bar of the progress, which gives 3 pixels more to the screens that draw it (step 21). The level screen gives its map the height of the window under the header, less the panels, so that the banner of a browser that refuses to save takes its height from the panels and the map keeps its size. |
+| `--header-height` | `46px` | The header of a screen, without the bar of the progress, which gives 3 pixels more to the screens that draw it. The level screen gives its map the height of the window under the header, less the panels, so that the banner of a browser that refuses to save takes its height from the panels and the map keeps its size. |
+| `--progress-height` | `3px` | The bar of the progress, along the bottom of the header of a level and of the home screen, in `--passed` over `--progress-track`: that header is as much taller, its content still centered on the 46 pixels above the bar, which the pointer finds on 3 pixels more above it, where the header holds nothing. The sandbox draws none. |
+| `--header-height-with-progress` | `--header-height` + `--progress-height` | The header of a level and of the home screen, the bar of the progress under its content: the level screen gives its map the height of the window under it, less the panels. |
 | `--band-item-height` | `30px` | What is clicked in a band: the name of a menu, a link of the home screen, the square of the gear. Its fill under the pointer leaves 8 pixels above it and under it in a header of 46 pixels. |
 | `--control-side` | `44px` | The side of a control that floats over the code, the three of a program; the code leaves that room under its last line, and `--space-12` on each side of it, so that no line stays under them. |
 
@@ -303,6 +305,7 @@ What stands over the screen has a layer: its place in the stacking order, by its
 |---|---|---|
 | `--layer-code` | `5` | The column of the code of the level screen, whose tips and command menu open over the map and the panels beside it (step 20a): under what opens from the header. |
 | `--layer-pop` | `10` | What opens from a control, over the blocks of the screen: a menu of the header. |
+| `--layer-level-number` | `15` | The number of a level in its amber circle, on the crossing of the header and the two columns: over the code and the map that meet under it, and over the bubble of the goal, which opens from the header (step 21c). Written beside the place of the level, which keeps its own order by its `transform`. |
 | `--layer-screen-message` | `20` | A message of the application in place of the screen: over the screen and what it opened. |
 | `--layer-page-message` | `30` | A message of the page itself, which says that nothing runs: over one of the application. |
 

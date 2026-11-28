@@ -27,12 +27,24 @@ import {
 import { ERROR_PARTS, ERROR_SUBJECTS, errorMessage } from '#lib/errors/error-text.ts';
 import { RUNTIME_ERROR_SUBJECTS } from '#lib/errors/runtime-error-text.ts';
 import { COMMAND_TEXTS, commandMessage } from '#lib/level-screen/level-commands.ts';
-import { LEVEL_PARTS, levelMessage, levels } from '#lib/levels/levels.ts';
+import { chapters } from '#lib/core/core.ts';
+import { levelFile, loadTestCore } from '#lib/core/test-support.ts';
+import {
+	CHAPTER_PARTS,
+	chapterMessage,
+	CHAPTERS,
+	LEVEL_FILE_NAMES,
+	LEVEL_PARTS,
+	levelMessage
+} from '#lib/levels/levels.ts';
 import { SOUNDS, soundsMessage, themeMessage, THEMES } from '#lib/settings/settings.ts';
 import { KEY_NAMES, keyMessage } from '#lib/shell/commands.ts';
 import { adviceMessage, WINDOW_ADVICES } from '#lib/shell/window-size.ts';
 import page from '../app.html?raw';
 import { createBundle, english } from './i18n.ts';
+
+// The core reads the list of the chapters, whose names name their messages.
+loadTestCore();
 
 /**
  * The families: the messages whose names hold a name of the data. Each is known by the one
@@ -43,7 +55,13 @@ import { createBundle, english } from './i18n.ts';
 const FAMILIES: Readonly<Record<string, { prefix: string; names: readonly string[] }>> = {
 	levelMessage: {
 		prefix: 'level-',
-		names: levels.flatMap(({ name }) => LEVEL_PARTS.map((part) => levelMessage(name, part)))
+		names: LEVEL_FILE_NAMES.flatMap((name) => LEVEL_PARTS.map((part) => levelMessage(name, part)))
+	},
+	chapterMessage: {
+		prefix: 'chapter-',
+		names: chapters(levelFile(CHAPTERS)).flatMap(({ name }) =>
+			CHAPTER_PARTS.map((part) => chapterMessage(name, part))
+		)
 	},
 	themeMessage: { prefix: 'theme-', names: THEMES.map(themeMessage) },
 	soundsMessage: { prefix: 'sounds-', names: SOUNDS.map(soundsMessage) },

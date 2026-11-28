@@ -1,9 +1,10 @@
 //! The levels and the sandbox, read from their TOML files (see *Levels and progression* and
 //! *Sandbox* in `specs.md`, and Levels in `docs/technical-choices.md`): the starting code, and
 //! the maps, each a world with its goals, checked when the file is read so that a level never
-//! starts wrong.
+//! starts wrong; and the order of the levels, in their chapters.
 
 mod build;
+mod chapters;
 mod error;
 mod file;
 mod goals;
@@ -12,6 +13,7 @@ mod stroke;
 #[cfg(test)]
 mod tests;
 
+pub use chapters::{Chapter, Chapters, ChaptersError, is_stable_name};
 pub use error::{LevelError, LevelErrorKind};
 pub use goals::{GoalNotMet, Goals, GoalsError};
 pub use stroke::StrokeError;
@@ -70,6 +72,18 @@ impl LevelMap {
     #[must_use]
     pub const fn goals(&self) -> &Goals {
         &self.goals
+    }
+}
+
+impl Chapters {
+    /// Reads and checks the file of the chapters, `chapters.toml`.
+    ///
+    /// # Errors
+    ///
+    /// When the file isn't valid TOML, has another version or the wrong fields, or describes a
+    /// list that can't be (see [`ChaptersError`]).
+    pub fn from_toml(source: &str) -> Result<Self, LevelError> {
+        build::chapters(file::parse(source)?)
     }
 }
 

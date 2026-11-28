@@ -5,7 +5,7 @@
 // default, and a map whose number or code can't be read is a map not passed.
 //
 // The shape is a contract between the versions of the website, as the one of the code is
-// (lib/code/saved-code.ts): a field added to a level later (the levels opened by a code, step 21f)
+// (lib/code/saved-code.ts): a field added to a level later (the levels opened by a code, step 21g)
 // is read alone and takes its default when it is missing, without a new version. A save writes back
 // the other levels as they were, and keeps beside the level saved the fields that this version
 // doesn't know: a tab still open on the version before drops nothing that a newer one added. The

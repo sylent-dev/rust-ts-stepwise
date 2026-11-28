@@ -1,0 +1,23 @@
+# A draft level (step 21b), so that the level screen has more than one level to move between:
+# two small squares to paint, on one map. The levels of the game are designed at steps 23 and
+# 24, which replace it.
+version = 1
+
+starting_code = '''
+# Paint two red squares of side 2
+'''
+
+[[maps]]
+terrain = '''
+.......
+.......
+.......
+.......
+'''
+robot = { at = [1, 1], facing = "east" }
+
+[maps.goals]
+paints = [
+    { color = "red", path = [[1, 1], [2, 1], [2, 2], [1, 2], [1, 1]] },
+    { color = "red", path = [[4, 1], [5, 1], [5, 2], [4, 2], [4, 1]] },
+]

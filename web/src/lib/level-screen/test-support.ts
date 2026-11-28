@@ -2,7 +2,7 @@
 // an editor that stands for the one on its page. Used by the tests alone.
 
 import { type Edit, type Editing, EDITS } from '#lib/editor/edits.ts';
-import type { CommandTarget } from './level-commands.ts';
+import type { CommandTarget, Side } from './level-commands.ts';
 import type { ProgramControls, RunAction } from './program.ts';
 import type { SpeedSetting } from './speeds.ts';
 
@@ -30,7 +30,8 @@ export function editorFor(
 		removeBreakpoints: () => asked.push('remove-breakpoints'),
 		settleBreakpoints: () => asked.push('settle-breakpoints'),
 		reopen: () => {},
-		showPlace: () => {}
+		showPlace: () => {},
+		focus: () => {}
 	};
 }
 
@@ -56,17 +57,28 @@ export function programFor(
 /**
  * What a screen gives its commands: the editor shown, if any, whether its code has something
  * to restore, and its program, if any. It counts the confirmations, the panels of the shortcuts
- * and the command menus it was asked to open; the menu can open while there is an editor.
+ * and the command menus it was asked to open, and lists the levels it was asked to open; the
+ * menu can open while there is an editor, and no level beside it is open.
  */
 export function screenWith(
 	editing: () => Editing | undefined = () => undefined,
 	restorable = false,
 	program: () => ProgramControls | undefined = () => undefined
-): CommandTarget & { confirmations: number; shortcutPanels: number; commandMenus: number } {
+): CommandTarget & {
+	confirmations: number;
+	shortcutPanels: number;
+	commandMenus: number;
+	wentTo: Side[];
+} {
 	const screen = {
 		confirmations: 0,
 		shortcutPanels: 0,
 		commandMenus: 0,
+		wentTo: [] as Side[],
+		canGoTo: () => false,
+		goTo: (side: Side) => {
+			screen.wentTo.push(side);
+		},
 		editing,
 		canRestore: () => restorable,
 		confirmRestore: () => {

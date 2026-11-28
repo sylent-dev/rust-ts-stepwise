@@ -18,9 +18,13 @@
      A level of more than one map shows a tab per map above it; showing another map ends the
      program as **Reset** does, the console kept. Once a program of a level has ended, the console
      says how its goals went, and a map passed is kept in the progress, its tab teal while the code
-     is the one that passed it (see Variants in specs.md). -->
+     is the one that passed it (see Variants in specs.md). The header of a level names its chapter
+     and its number, draws the bar of the progress, and its menu **Level** leads to the levels
+     beside it while they are open. -->
 <script lang="ts">
 	import { untrack } from 'svelte';
+	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { differsFromStart, type LevelCode } from '#lib/code/code.ts';
 	import { CommandMenu } from '#lib/command-menu/command-menu.svelte.ts';
 	import { ConsoleLog } from '#lib/console/console-log.svelte.ts';
@@ -34,7 +38,7 @@
 	import { loadFailed } from '#lib/page/startup.svelte.ts';
 	import { currentPlatform } from '#lib/platform.ts';
 	import { keepPass, levelProgress } from '#lib/progress/current-progress.svelte.ts';
-	import { mapsPassedWith, mapToTry } from '#lib/progress/progress.ts';
+	import { mapsPassedWith, mapToTry, type LevelsDone } from '#lib/progress/progress.ts';
 	import { chooseSpeed, settings } from '#lib/settings/current-settings.svelte.ts';
 	import SettingsButton from '#lib/settings/settings-button.svelte';
 	import Confirmation from '#lib/shell/confirmation.svelte';
@@ -45,7 +49,7 @@
 	import ScreenShortcuts from '#lib/shell/screen-shortcuts.svelte';
 	import ShortcutsPanel from '#lib/shell/shortcuts-panel.svelte';
 	import { pageSounds } from '#lib/sounds/page-sounds.ts';
-	import { levelCommands } from './level-commands.ts';
+	import { levelCommands, type Side } from './level-commands.ts';
 	import { levelMenus, type LevelScreenKind } from './level-menus.ts';
 	import { goalNotes, passedNote } from './level-notes.ts';
 	import { levelShortcuts } from './level-shortcuts.ts';
@@ -76,11 +80,24 @@
 				screen: 'level';
 				/** The number of the level, before its title where a sentence names it. */
 				number: number;
+				/** The title of its chapter, above its own in the header. */
+				chapter: string;
+				/** The levels done, and how many there are: the bar of the progress. */
+				progress: LevelsDone;
+				/** The numbers of the levels before and after it, while they are open. */
+				beside: Partial<Record<Side, number>>;
 		  }
-		| { screen: 'sandbox'; number?: undefined }
+		| {
+				screen: 'sandbox';
+				number?: undefined;
+				chapter?: undefined;
+				progress?: undefined;
+				beside?: undefined;
+		  }
 	);
 
-	let { screen, title, playground, onchoosemap, number }: Props = $props();
+	let { screen, title, playground, onchoosemap, number, chapter, progress, beside }: Props =
+		$props();
 
 	/** The stable name of the level shown, or of the sandbox; nothing until the core is ready. */
 	const shownName = $derived(playground?.name);
@@ -296,9 +313,35 @@
 	/** The command menu, in the editor of the level shown. */
 	const commandMenu = new CommandMenu();
 
+	/**
+	 * Whether the code of the level that the menu **Level** opens takes the keyboard once its
+	 * editor is there, as any row of a menu gives the keyboard back to the code. A plain field,
+	 * not a `$state`: the effect below must wait for the editor of the new level, and a signal set
+	 * here would run it at once, on the editor that is leaving.
+	 */
+	let focusArrivingCode = false;
+
+	/** Opens the level on `side` of the one shown, while it is open. */
+	function goTo(side: Side) {
+		const to = beside?.[side];
+		if (to === undefined) return;
+		focusArrivingCode = true;
+		void goto(resolve(`levels/${String(to)}`));
+	}
+
+	// The editor of the level that the menu **Level** opened takes the keyboard, once there.
+	$effect(() => {
+		if (editing && focusArrivingCode) {
+			focusArrivingCode = false;
+			editing.focus();
+		}
+	});
+
 	/** The commands of the screen: the rows of its menus run them, and its shortcuts. */
 	const commands = levelCommands(
 		{
+			canGoTo: (side) => beside?.[side] !== undefined,
+			goTo,
 			editing: () => editing,
 			canRestore: () => {
 				const code = shownCode();
@@ -366,11 +409,11 @@
 
 <ScreenShortcuts commands={Object.values(commands)} />
 <svelte:window {onpointermove} />
-<div class="level-screen">
-	<Header>
+<div class="level-screen" class:with-progress={progress !== undefined}>
+	<Header {progress}>
 		<MenuBar menus={levelMenus(screen, commands, speed)} />
 		<!-- The diamond is the mark of the sandbox. -->
-		<Place {title} icon={screen === 'sandbox' ? 'diamond' : undefined} />
+		<Place {title} {chapter} {number} icon={screen === 'sandbox' ? 'diamond' : undefined} />
 		<SettingsButton gear />
 	</Header>
 	<main>
@@ -468,6 +511,12 @@
 	.level-screen {
 		display: contents;
 		--crossing: min(50%, 768px);
+		--header: var(--header-height);
+	}
+
+	/* A level draws the bar of the progress, which makes its header taller. */
+	.with-progress {
+		--header: var(--header-height-with-progress);
 	}
 
 	/* The panels are 216 pixels high, 250 from 1600 pixels wide, where they stand side by side,
@@ -476,7 +525,7 @@
 	   height (see Error handling in specs.md). */
 	main {
 		--panels: 216px;
-		--map-row: calc(100vh - var(--header-height) - var(--panels));
+		--map-row: calc(100vh - var(--header) - var(--panels));
 		display: grid;
 		grid-template-columns: var(--crossing) minmax(0, 1fr);
 		grid-template-rows: minmax(0, var(--map-row)) minmax(0, 1fr);

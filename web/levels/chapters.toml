@@ -1,0 +1,16 @@
+# The order of the levels and their chapters (see Levels and progression in specs.md): the
+# chapters in their order, each with the stable names of its levels in their order, the names of
+# their files. The numbers of the levels follow this list, across the chapters. The texts of a
+# chapter are messages named after it (`chapter-paint-title`, in `locales/en/levels.ftl`).
+#
+# Draft chapters and levels, so that the level screen has a list to read while it is built
+# (step 21): the levels of the game are designed at steps 23 and 24, which replace them.
+version = 1
+
+[[chapters]]
+name = "paint"
+levels = ["paint-a-square", "a-red-line"]
+
+[[chapters]]
+name = "functions"
+levels = ["two-squares", "the-staircase"]

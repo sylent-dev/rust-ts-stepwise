@@ -2,9 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { Level, Sandbox } from '#lib/core/core.ts';
 import { loadTestCore } from '#lib/core/test-support.ts';
 import {
+	CHAPTERS,
+	inChapters,
+	LEVEL_FILE_NAMES,
 	levelAt,
-	levels,
+	levelNames,
 	listLevels,
+	loadLevels,
+	readLevels,
 	SANDBOX,
 	sandboxFile,
 	sandboxIn,
@@ -18,33 +23,102 @@ function folder(...paths: string[]): LevelFiles {
 	return Object.fromEntries(paths.map((path) => [path, () => Promise.resolve(path)]));
 }
 
-describe('listLevels', () => {
-	it('names each level after its file and numbers them from 1, in the order of the names', () => {
-		const found = listLevels(folder('/levels/turn-left.toml', '/levels/forward.toml'));
-		expect(found.map(({ number, name }) => [number, name])).toEqual([
-			[1, 'forward'],
-			[2, 'turn-left']
-		]);
-	});
+/** Two chapters of the tests, by the stable names of their levels. */
+const TWO_CHAPTERS = [
+	{ name: 'first-steps', levels: ['turn-left', 'forward'] },
+	{ name: 'repeat', levels: ['again'] }
+];
 
-	it('leaves the sandbox out, without a number', () => {
-		const found = listLevels(
-			folder('/levels/forward.toml', '/levels/sandbox.toml', '/levels/turn.toml')
-		);
-		expect(found.map(({ number, name }) => [number, name])).toEqual([
-			[1, 'forward'],
-			[2, 'turn']
+describe('listLevels', () => {
+	const files = folder('/levels/forward.toml', '/levels/again.toml', '/levels/turn-left.toml');
+
+	it('numbers the levels from 1 in the order of the chapters, across them', () => {
+		const found = listLevels(files, TWO_CHAPTERS);
+		expect(found.map(({ number, name, chapter }) => [number, name, chapter])).toEqual([
+			[1, 'turn-left', 'first-steps'],
+			[2, 'forward', 'first-steps'],
+			[3, 'again', 'repeat']
 		]);
 	});
 
 	it('keeps the way to read the file of each level', async () => {
-		const found = listLevels(folder('/levels/turn-left.toml', '/levels/forward.toml'));
-		expect(await found[1]?.file()).toBe('/levels/turn-left.toml');
+		const found = listLevels(files, TWO_CHAPTERS);
+		expect(await found[1]?.file()).toBe('/levels/forward.toml');
+	});
+
+	it('gives a level listed without a file a file that fails to load', async () => {
+		const found = listLevels(folder('/levels/forward.toml'), [
+			{ name: 'first-steps', levels: ['forward', 'lost'] }
+		]);
+		expect(found.map(({ number, name }) => [number, name])).toEqual([
+			[1, 'forward'],
+			[2, 'lost']
+		]);
+		await expect(found[1]?.file()).rejects.toThrow('lost.toml');
+	});
+
+	it('gives no number to a file that no chapter lists', () => {
+		const found = listLevels(files, [{ name: 'repeat', levels: ['again'] }]);
+		expect(found.map(({ name }) => name)).toEqual(['again']);
+	});
+});
+
+describe('levelNames', () => {
+	it('names the levels of a folder after their files, without the sandbox and the chapters', () => {
+		const names = levelNames(
+			folder(
+				'/levels/turn.toml',
+				`/levels/${SANDBOX}.toml`,
+				`/levels/${CHAPTERS}.toml`,
+				'/levels/forward.toml'
+			)
+		);
+		expect(names).toEqual(['forward', 'turn']);
+	});
+});
+
+describe('readLevels', () => {
+	it('lists the levels in the order of the file of the chapters, which the core reads', async () => {
+		const files = {
+			...folder('/levels/forward.toml', '/levels/again.toml', '/levels/turn-left.toml'),
+			'/levels/chapters.toml': () =>
+				Promise.resolve(
+					"version = 1\n[[chapters]]\nname = 'repeat'\nlevels = ['again', 'forward']\n"
+				)
+		};
+		const found = await readLevels(files);
+		expect(found.map(({ number, name }) => [number, name])).toEqual([
+			[1, 'again'],
+			[2, 'forward']
+		]);
+	});
+
+	it('fails without the file of the chapters', async () => {
+		await expect(readLevels(folder('/levels/forward.toml'))).rejects.toThrow('chapters.toml');
+	});
+});
+
+describe('inChapters', () => {
+	it('groups the levels by their chapters, each in its order', () => {
+		const files = folder('/levels/forward.toml', '/levels/again.toml', '/levels/turn-left.toml');
+		const grouped = inChapters(listLevels(files, TWO_CHAPTERS));
+		expect(grouped.map(({ chapter, levels }) => [chapter, levels.map(({ name }) => name)])).toEqual(
+			[
+				['first-steps', ['turn-left', 'forward']],
+				['repeat', ['again']]
+			]
+		);
+	});
+
+	it('gives no chapter without a level', () => {
+		expect(inChapters([])).toEqual([]);
 	});
 });
 
 describe('levelAt', () => {
-	const found = listLevels(folder('/levels/forward.toml', '/levels/turn-left.toml'));
+	const found = listLevels(folder('/levels/forward.toml', '/levels/turn-left.toml'), [
+		{ name: 'first-steps', levels: ['forward', 'turn-left'] }
+	]);
 
 	it('gives the level of a number', () => {
 		expect(levelAt(found, '1')?.name).toBe('forward');
@@ -78,17 +152,18 @@ describe('sandboxIn', () => {
 });
 
 describe('the levels of the website', () => {
-	const each = levels.map((level) => [level.name, level] as const);
-
 	// A wrong path of the folder would list no file, without an error.
-	it('has at least one level', () => {
-		expect(levels.length).toBeGreaterThan(0);
+	it('lists every level file once, in the order of the chapters', async () => {
+		expect(LEVEL_FILE_NAMES.length).toBeGreaterThan(0);
+		const names = (await loadLevels()).map(({ name }) => name).sort();
+		expect(names).toEqual([...LEVEL_FILE_NAMES]);
 	});
 
 	// What the folder gives is the text of each file, not its address: the core reads it. The
 	// content of a level file is checked by the tests of the core.
-	it.each(each)('%s reaches the core as the text of its file', async (_name, level) => {
-		using read = new Level(await level.file());
+	it.each(LEVEL_FILE_NAMES)('%s reaches the core as the text of its file', async (name) => {
+		const level = (await loadLevels()).find((entry) => entry.name === name);
+		using read = new Level((await level?.file()) ?? '');
 		expect(read.maps().length).toBeGreaterThan(0);
 	});
 });

@@ -1,0 +1,31 @@
+# A draft level (step 21b), so that the level screen has more than one level to move between:
+# a staircase to climb to its top, on two maps. The levels of the game are designed at steps 23
+# and 24, which replace it.
+version = 1
+
+starting_code = '''
+# Climb the staircase to the flag
+'''
+
+[[maps]]
+terrain = '''
+...#
+..##
+.###
+'''
+robot = { at = [0, 2], facing = "north" }
+
+[maps.goals]
+robot_at = [2, 0]
+
+[[maps]]
+terrain = '''
+....#
+...##
+..###
+.####
+'''
+robot = { at = [0, 3], facing = "north" }
+
+[maps.goals]
+robot_at = [3, 0]

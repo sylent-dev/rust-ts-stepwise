@@ -1,5 +1,6 @@
-//! The errors of a level file: what only a file can have wrong, and the errors of what it
-//! describes (a map, a stroke, goals), which belong to the domain and are wrapped here. Unlike
+//! The errors of a file of the levels (a level, the sandbox, the list of the chapters): what
+//! only a file can have wrong, and the errors of what it describes (a map, a stroke, goals, the
+//! chapters), which belong to the domain and are wrapped here. Unlike
 //! those of the language, only the authors of the levels see them, in the tests: they are
 //! codes with their values, and also a sentence in English (`Display`), written here for them
 //! all, without a translation until a level editor exists.
@@ -10,11 +11,12 @@ use crate::world::{BuildError, MAX_COLUMNS, MAX_ROWS, Point};
 
 use super::MAX_MAPS;
 use super::build::{FLOOR, WALL};
+use super::chapters::ChaptersError;
 use super::file::FORMAT_VERSION;
 use super::goals::GoalsError;
 use super::stroke::StrokeError;
 
-/// Why a level file can't be read.
+/// Why a file of the levels can't be read.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LevelError {
     /// The map concerned, numbered from 1 in the order of the file, `None` for the file as a
@@ -74,6 +76,8 @@ pub enum LevelErrorKind {
     Stroke(StrokeError),
     /// The goals can't be those of their map.
     Goals(GoalsError),
+    /// The list of the chapters can't be.
+    Chapters(ChaptersError),
 }
 
 impl From<BuildError> for LevelErrorKind {
@@ -91,6 +95,12 @@ impl From<StrokeError> for LevelErrorKind {
 impl From<GoalsError> for LevelErrorKind {
     fn from(error: GoalsError) -> Self {
         Self::Goals(error)
+    }
+}
+
+impl From<ChaptersError> for LevelErrorKind {
+    fn from(error: ChaptersError) -> Self {
+        Self::Chapters(error)
     }
 }
 
@@ -135,6 +145,7 @@ impl fmt::Display for LevelErrorKind {
             Self::Map(error) => write_build_error(f, *error),
             Self::Stroke(error) => write_stroke_error(f, *error),
             Self::Goals(error) => write_goals_error(f, *error),
+            Self::Chapters(error) => write_chapters_error(f, error),
         }
     }
 }
@@ -183,6 +194,21 @@ fn write_goals_error(f: &mut fmt::Formatter<'_>, error: GoalsError) -> fmt::Resu
             f,
             "the goals need {needed} items, while the map has {available}"
         ),
+    }
+}
+
+fn write_chapters_error(f: &mut fmt::Formatter<'_>, error: &ChaptersError) -> fmt::Result {
+    match error {
+        ChaptersError::NoChapter => write!(f, "the list has no chapter"),
+        ChaptersError::EmptyChapter(name) => write!(f, "the chapter `{name}` has no level"),
+        ChaptersError::Name(name) => write!(
+            f,
+            "`{name}` is not in kebab-case, as the name of a chapter or of a level is"
+        ),
+        ChaptersError::DuplicateChapter(name) => {
+            write!(f, "the chapter `{name}` is listed twice")
+        }
+        ChaptersError::DuplicateLevel(name) => write!(f, "the level `{name}` is listed twice"),
     }
 }
 

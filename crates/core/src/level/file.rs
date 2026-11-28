@@ -1,5 +1,5 @@
-//! The level files as they are written: their schema, read with `serde`, and their version.
-//! What they describe is built by `build.rs`.
+//! The files of the levels as they are written (a level, the sandbox, the list of the chapters):
+//! their schema, read with `serde`, and their version. What they describe is built by `build.rs`.
 
 use serde::de::{DeserializeOwned, Error as _};
 use serde::{Deserialize, Deserializer};
@@ -54,6 +54,28 @@ impl Versioned for SandboxFile {
     fn version(&self) -> u32 {
         self.version
     }
+}
+
+/// The file of the chapters, `chapters.toml`: the order of the levels.
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(super) struct ChaptersFile {
+    version: u32,
+    pub(super) chapters: Vec<ChapterFile>,
+}
+
+impl Versioned for ChaptersFile {
+    fn version(&self) -> u32 {
+        self.version
+    }
+}
+
+/// A chapter: its stable name, and the stable names of its levels in their order.
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(super) struct ChapterFile {
+    pub(super) name: String,
+    pub(super) levels: Vec<String>,
 }
 
 /// A map: its terrain in rows of characters, the rest by coordinates `[x, y]`.

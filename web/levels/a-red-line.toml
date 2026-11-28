@@ -1,0 +1,21 @@
+# A draft level (step 21b), so that the level screen has more than one level to move between:
+# a line to paint, on one map. The levels of the game are designed at steps 23 and 24, which
+# replace it.
+version = 1
+
+starting_code = '''
+# Paint a red line to the end of the row
+'''
+
+[[maps]]
+terrain = '''
+......
+......
+......
+'''
+robot = { at = [0, 1], facing = "east" }
+
+[maps.goals]
+paints = [
+    { color = "red", path = [[0, 1], [1, 1], [2, 1], [3, 1], [4, 1], [5, 1]] },
+]
