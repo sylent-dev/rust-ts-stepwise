@@ -9,6 +9,11 @@ import { loadProgress, saveLevelProgress } from './saved-progress.ts';
 
 let current = $state.raw<Progress>(loadProgress(store));
 
+/** The progress of every level. It follows the progress as it changes. */
+export function currentProgress(): Progress {
+	return current;
+}
+
 /** The progress of a level, by its stable name. It follows the progress as it changes. */
 export function levelProgress(level: string): LevelProgress {
 	return progressOf(current, level);

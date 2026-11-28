@@ -1,9 +1,12 @@
 /* The sizes of the layout that several blocks share, and the layers of what stands over the
    screen (docs/design-system.md, Layout). */
 :root {
-	/* The header of a screen, without the bar of the progress (step 21). The level screen gives
-	   its map the height of the window under it, less the panels. */
+	/* The header of a screen, without the bar of the progress. The level screen gives its map the
+	   height of the window under it, less the panels. */
 	--header-height: 46px;
+	/* The bar of the progress, along the bottom of the header of a level and of the home screen:
+	   it gives that header as many pixels more, under its content. */
+	--progress-height: 3px;
 	/* What is clicked in a band, a text or an icon in its square: the fill under the pointer
 	   leaves 8 pixels of the header above it and under it. */
 	--band-item-height: 30px;
@@ -23,6 +26,9 @@
 	--layer-code: 5;
 	/* What opens from a control, over the blocks of the screen: a menu of the header. */
 	--layer-pop: 10;
+	/* The number of a level, on the crossing of the header and the two columns: over the code
+	   and the map under it, and over the bubble of the goal, which opens from the header. */
+	--layer-level-number: 15;
 	/* A message of the application in place of the screen, over it and what it opened. */
 	--layer-screen-message: 20;
 	/* A message of the page itself, which says that nothing runs: over one of the application. */

@@ -14,7 +14,7 @@ import {
 	type ScreenCommand,
 	type Shortcut
 } from '#lib/shell/commands.ts';
-import { commandMessage, LEVEL_COMMANDS, levelCommands } from './level-commands.ts';
+import { commandMessage, LEVEL_COMMANDS, levelCommands, type Side } from './level-commands.ts';
 import type { ProgramControls } from './program.ts';
 import { type EditorAsk, editorFor, programFor, screenWith } from './test-support.ts';
 
@@ -83,6 +83,8 @@ describe('levelCommands', () => {
 			LEVEL_COMMANDS.map((name) => [name, name])
 		);
 		expect(Object.values(commands).map(({ label }) => label)).toEqual([
+			'Previous level',
+			'Next level',
 			'Restore starting code…',
 			'Undo',
 			'Redo',
@@ -260,6 +262,25 @@ describe('levelCommands', () => {
 		expect(second.asked).toEqual(['undo']);
 	});
 
+	it('opens the level before or after the one shown while it is open, without a shortcut', () => {
+		let open: Side | undefined;
+		const screen = { ...screenWith(), canGoTo: (side: Side) => side === open };
+		const commands = levelCommands(screen, 'other');
+		const previous = commands['previous-level'];
+		const next = commands['next-level'];
+
+		expect([previous.enabled, next.enabled]).toEqual([false, false]);
+		open = 'next';
+		expect([previous.enabled, next.enabled]).toEqual([false, true]);
+		open = 'previous';
+		expect([previous.enabled, next.enabled]).toEqual([true, false]);
+
+		previous.run();
+		next.run();
+		expect(screen.wentTo).toEqual(['previous', 'next']);
+		expect([previous.shortcut, next.shortcut]).toEqual([undefined, undefined]);
+	});
+
 	it('can restore the starting code while the code shown is another one', () => {
 		let canRestore = false;
 		const screen = { ...screenWith(), canRestore: () => canRestore };
@@ -304,6 +325,8 @@ describe('levelCommands', () => {
 		const commands = levelCommands(screenWith(), 'other');
 
 		expect(LEVEL_COMMANDS.map((name) => shownKeys(commands[name], 'other'))).toEqual([
+			undefined,
+			undefined,
 			undefined,
 			'Ctrl+Z',
 			'Ctrl+Y',

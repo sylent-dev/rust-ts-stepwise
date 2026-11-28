@@ -38,6 +38,18 @@ screen-level = { $number }. { $title }
 screen-sandbox = Sandbox
 screen-manual = Manual
 
+## The bar of the progress, along the bottom of the header of a level and of the home screen.
+
+# Its name, for a screen reader.
+progress-name = Your progress
+# Under the pointer, and for a screen reader.
+# $done (Number): how many levels are done.
+# $total (Number): how many levels there are.
+progress-done = { $done } of { $total ->
+        [one] { $total } level
+       *[other] { $total } levels
+    } done
+
 ## The menus of the level screen and of the sandbox. A row that leads to a screen takes its name
 ## above.
 
@@ -52,6 +64,8 @@ menu-help = Help
 ## the tip of a button and the panel of the keyboard shortcuts: `command-<name>`
 ## (`commandMessage`).
 
+command-previous-level = Previous level
+command-next-level = Next level
 # It asks before it acts: `…` ends its text (see Messages in docs/design-system.md).
 command-restore-starting-code = Restore starting code…
 command-undo = Undo
@@ -558,6 +572,12 @@ missing-title = This page does not exist
 missing-text = Stepwise has no page at this address.
 # What the message is about, as `page-no-script-mark`.
 missing-mark = 404
+
+# A level still locked, opened by its address. Its button is `screen-home`. The sentence is the
+# one of a level locked on the home screen.
+locked-title = This level is locked
+# $level (String): the level to play, `screen-level`: `3. The long way`.
+locked-text = Finish { $level } to unlock this level.
 
 window-small-title = Stepwise needs a larger window
 # $least (String): the smallest size a screen fits in, as `window-size` writes it.

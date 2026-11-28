@@ -128,6 +128,11 @@ export interface Editing {
 	 * lists. A place past the end of the code is its end.
 	 */
 	showPlace(at: number): void;
+	/**
+	 * Gives the code the keyboard, the cursor where it is: the code of a level that **Next level**
+	 * has just opened.
+	 */
+	focus(): void;
 }
 
 /**

@@ -83,6 +83,14 @@ export {
 export { classifyLine, type Stretch, type StretchKind } from '#lib/wasm/stepwise.js';
 
 /**
+ * The order of the levels (see crates/wasm/src/level.rs), to call once `loadCore` has resolved:
+ * `chapters(toml)` reads the text of `web/levels/chapters.toml` and gives its chapters in their
+ * order, each with the stable names of its levels in their order; it throws an `Error` with the
+ * reason, in English, when the file isn't valid. Plain objects, built again at each call.
+ */
+export { chapters, type Chapter } from '#lib/wasm/stepwise.js';
+
+/**
  * The levels and the sandbox (see crates/wasm/src/level.rs and world.rs), to create once
  * `loadCore` has resolved: `new Level(toml)` and `new Sandbox(toml)` read the text of a file of
  * `web/levels/`, and throw an `Error` with the reason, in English, when it isn't valid.

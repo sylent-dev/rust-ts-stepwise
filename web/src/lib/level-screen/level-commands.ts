@@ -3,7 +3,7 @@
 // runs. The rows of the menus (level-menus.ts) and the shortcuts of the screen read them here. A
 // command arrives with the step that codes it: the edits of the editor first, then **Restore
 // starting code**, then the three of the program, then **Keyboard shortcuts**, then the two of
-// the breakpoints, then **Commands**.
+// the breakpoints, then **Commands**, then **Previous level** and **Next level**.
 
 import { EDITS, type Edit, type Editing } from '#lib/editor/edits.ts';
 import { t } from '#lib/i18n.ts';
@@ -16,6 +16,8 @@ import type { ProgramControls, RunAction } from './program.ts';
  * command, which does what the program allows now.
  */
 export const LEVEL_COMMANDS = [
+	'previous-level',
+	'next-level',
 	'restore-starting-code',
 	...EDITS,
 	'commands',
@@ -41,11 +43,21 @@ export const COMMAND_TEXTS = [...LEVEL_COMMANDS, 'pause', 'resume'] as const sat
 /** What names a command. */
 export type CommandText = (typeof COMMAND_TEXTS)[number];
 
+/** A level beside the one shown: the one before it, or the one after it. */
+export type Side = 'previous' | 'next';
+
 /**
  * What the commands act on, which the screen gives them. Each is asked when a command runs or
  * says whether it can, so a command follows the level shown and its code as it changes.
  */
 export interface CommandTarget {
+	/**
+	 * Whether the level on `side` of the one shown is open: none in the sandbox, nor before the
+	 * first level and after the last one.
+	 */
+	canGoTo(side: Side): boolean;
+	/** Opens the level on `side` of the one shown. */
+	goTo(side: Side): void;
 	/** The editor shown; nothing while the screen has none, and its edits can't run then. */
 	editing(): Editing | undefined;
 	/** Whether the code shown has something to restore: it isn't the starting code. */
@@ -117,7 +129,22 @@ export function levelCommands(target: CommandTarget, platform: Platform): LevelC
 			target.editing()?.apply(name);
 		}
 	});
+	const goTo = (side: Side): ScreenCommand => ({
+		id: `${side}-level`,
+		label: t(commandMessage(`${side}-level`)),
+		get enabled() {
+			return target.canGoTo(side);
+		},
+		run() {
+			target.goTo(side);
+		}
+	});
 	return {
+		// Only in the menu, without a shortcut, so that a click or a key pressed by mistake never
+		// changes the level (see Level screen in specs.md); greyed while the level they lead to is
+		// locked.
+		'previous-level': goTo('previous'),
+		'next-level': goTo('next'),
 		// It asks before it acts, so it has no shortcut: a key pressed by mistake would open the
 		// confirmation for nothing.
 		'restore-starting-code': {

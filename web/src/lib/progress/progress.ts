@@ -62,3 +62,39 @@ export function passMap(
 export function mapToTry(passed: ReadonlySet<number>, count: number): number | undefined {
 	return mapNumbers(count).find((map) => !passed.has(map));
 }
+
+/**
+ * Whether the level numbered `number`, from 1, among `levels`, the stable names of the levels in
+ * their order, is open: the first, a level done, or a level whose level before it is done. A level
+ * added later after a level done is so open, and the learner goes on where they were (decided on
+ * 2026-11-28). Not a level of the list: never.
+ */
+export function isOpen(progress: Progress, levels: readonly string[], number: number): boolean {
+	const name = levels[number - 1];
+	if (name === undefined) return false;
+	if (number === 1 || progressOf(progress, name).done) return true;
+	const before = levels[number - 2];
+	return before !== undefined && progressOf(progress, before).done;
+}
+
+/**
+ * The level to play before the level numbered `number`, which is locked: the last level open
+ * before it, which isn't done, since the one after it would be open. Nothing for a level that is
+ * open, or not of the list.
+ */
+export function levelToPlay(
+	progress: Progress,
+	levels: readonly string[],
+	number: number
+): number | undefined {
+	if (number < 1 || number > levels.length || isOpen(progress, levels, number)) return undefined;
+	for (let before = number - 1; before >= 1; before -= 1) {
+		if (isOpen(progress, levels, before)) return before;
+	}
+	return undefined;
+}
+
+/** How many of `levels`, the stable names of the levels, are done. */
+export function levelsDone(progress: Progress, levels: readonly string[]): number {
+	return levels.filter((name) => progressOf(progress, name).done).length;
+}

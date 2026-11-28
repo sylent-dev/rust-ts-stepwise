@@ -79,7 +79,8 @@ export function followEditing(
 				const place = Math.min(Math.max(at, 0), state.doc.length);
 				editor.dispatch(state.update({ selection: { anchor: place }, scrollIntoView: true }));
 				focus();
-			}
+			},
+			focus
 		},
 		follow: (state) => {
 			latest = state;
